@@ -1,6 +1,9 @@
 data
+data_smoke
 taming
 src\mtcnn_ort
 outputs
+exp
+.venv
 *.pyc
 __pycache__

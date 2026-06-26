@@ -1,0 +1,22 @@
+# Face2Parameter dependencies (pinned, verified on Python 3.13 + RTX 4080 / CUDA 13).
+#
+# torch/torchvision are CUDA (cu130) builds. Install them from the PyTorch index:
+#   pip install torch==2.11.0 torchvision==0.26.0 --index-url https://download.pytorch.org/whl/cu130
+# then install the rest normally:
+#   pip install -r requirements.txt
+#
+# Note: mtcnn_ort (face detector, used only by src/face_data_utils/FaceCrop.py) and the
+# HS2ABMX.exe card serializer are NOT on PyPI and are only needed for the real-data
+# alignment/inference path, not for training or the skeleton smoke test.
+
+torch==2.11.0
+torchvision==0.26.0
+numpy==2.4.3
+opencv-python==4.13.0.92
+tensorboard==2.20.0
+tqdm==4.67.3
+msgpack==1.2.1
+scikit-image==0.26.0
+onnxruntime==1.27.0
+onnxscript==0.7.0
+requests==2.32.5
