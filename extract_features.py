@@ -43,13 +43,19 @@ def read_image(path: str, img_size: int) -> np.ndarray:
     return np.ascontiguousarray(np.transpose(img, (2, 0, 1)))  # CHW
 
 
-def run(cfg, images_dir: str | None = None) -> int:
-    images_dir = images_dir or os.path.join(cfg.data_dir, "images")
-    save_dir = cfg.features_dir
-    os.makedirs(save_dir, exist_ok=True)
+# variant -> (images subdir, features subdir)
+VARIANTS = {
+    "game": ("images", "features"),
+    "aug": ("aug_images", "aug_features"),
+}
 
-    device = torch.device(cfg.device if torch.cuda.is_available() else "cpu")
-    backbone = build_backbone(cfg).to(device).eval()
+
+def run(cfg, images_dir: str, save_dir: str, backbone=None, device=None) -> int:
+    os.makedirs(save_dir, exist_ok=True)
+    if device is None:
+        device = torch.device(cfg.device if torch.cuda.is_available() else "cpu")
+    if backbone is None:
+        backbone = build_backbone(cfg).to(device).eval()
 
     paths = list_images(images_dir)
     if not paths:
@@ -94,10 +100,20 @@ def run(cfg, images_dir: str | None = None) -> int:
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--config", default="dinov2_vits14")
-    ap.add_argument("--images-dir", default=None,
-                    help="override; defaults to <data_dir>/images")
+    ap.add_argument("--variant", choices=["game", "aug", "both"], default="game",
+                    help="game: images/->features/ ; aug: aug_images/->aug_features/")
     args = ap.parse_args()
-    run(get_config(args.config), images_dir=args.images_dir)
+    cfg = get_config(args.config)
+
+    variants = ["game", "aug"] if args.variant == "both" else [args.variant]
+    # build the (heavy) backbone once and reuse across variants
+    device = torch.device(cfg.device if torch.cuda.is_available() else "cpu")
+    backbone = build_backbone(cfg).to(device).eval()
+    for v in variants:
+        img_sub, feat_sub = VARIANTS[v]
+        print(f"=== variant '{v}': {img_sub}/ -> {feat_sub}/ ===")
+        run(cfg, os.path.join(cfg.data_dir, img_sub),
+            os.path.join(cfg.data_dir, feat_sub), backbone=backbone, device=device)
 
 
 if __name__ == "__main__":

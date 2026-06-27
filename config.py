@@ -36,9 +36,12 @@ class Config:
     num_layers: int = 4
 
     # --- data ---
-    data_dir: str = "data/"         # holds features/, labels.json, {train,val}_features.txt
+    data_dir: str = "data/"         # holds features/, labels.json, {train,val,test}_features.txt
     batch_size: int = 32
     num_workers: int = 8
+    # P(use aug_features/ instead of features/) per sample during training. Mixes the
+    # realistic (aug_images) and in-game (images) domains. 0 disables aug sampling.
+    aug_prob: float = 0.5
 
     # --- optimization ---
     lr: float = 5e-5
@@ -54,6 +57,11 @@ class Config:
 
     # split index of the loss: [:base_dim] = shapeValueFace, [base_dim:] = bone params
     base_dim: int = 54
+
+    # Bundled HS2 character card used by infer.py when --template is not given. The
+    # model only predicts the 205 face-shape params; the template supplies everything
+    # else (body/hair/clothes), and we overwrite just the face fields.
+    default_template: str = "assets/default_template.png"
 
     @property
     def exp_dir(self) -> str:
@@ -90,6 +98,7 @@ _PRESETS = {
         backbone="dinov2_vits14",
         feature_dim=384,
         data_dir="data/",
+        num_epoch=30,
     ),
     "dinov2_vitb14": Config(
         exp_name="dinov2_vitb14_head",
@@ -109,6 +118,7 @@ _PRESETS = {
         batch_size=8,
         num_workers=0,
         num_epoch=2,
+        aug_prob=0.0,
         device="cuda",
     ),
 }

@@ -14,9 +14,15 @@ assert its real output dim matches ``cfg.feature_dim``.
 
 from __future__ import annotations
 
+import warnings
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+
+# DINOv2's hub code warns once per layer that the optional xFormers speedup is
+# absent; it silently falls back to standard attention (identical results). Mute it.
+warnings.filterwarnings("ignore", message=".*xFormers is not available.*")
 
 # ImageNet statistics; backbones receive [0,1] RGB and normalize internally so the
 # rest of the pipeline never has to know about the backbone's expected stats.

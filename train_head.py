@@ -47,8 +47,11 @@ class HeadTrainer:
         os.makedirs(cfg.tb_log_dir, exist_ok=True)
         self.tb = SummaryWriter(log_dir=cfg.tb_log_dir)
 
-        self.train_set = FeatureDataset(cfg.data_dir, is_train=True, seed=cfg.seed)
-        self.val_set = FeatureDataset(cfg.data_dir, is_train=False, seed=cfg.seed)
+        # Train mixes domains (aug_prob); val is deterministic on the in-game features.
+        self.train_set = FeatureDataset(cfg.data_dir, is_train=True,
+                                        aug_prob=cfg.aug_prob, seed=cfg.seed)
+        self.val_set = FeatureDataset(cfg.data_dir, is_train=False,
+                                      aug_prob=0.0, seed=cfg.seed)
         self.train_loader = DataLoader(
             self.train_set, batch_size=cfg.batch_size, shuffle=True,
             num_workers=cfg.num_workers, pin_memory=True,

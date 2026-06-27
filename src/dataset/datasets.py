@@ -181,28 +181,33 @@ class FeatureDataset(Dataset):
         self.root_dir = root_dir
 
         labels_path = os.path.join(self.root_dir,"labels.json")
-        self.labels:dict = None
         if not os.path.exists(labels_path):
             raise FileNotFoundError("labels.json not found in the root directory")
-        
-        with open(labels_path,'r',encoding="utf-8") as f:
-            self.labels:dict = json.load(f)
 
-        # self.feat_names = [os.path.basename(img_path)[:-4] for img_path in glob.glob(os.path.join(self.root_dir, "features","*.npy"))]
         with open(os.path.join(self.root_dir,"train_features.txt" if is_train else "val_features.txt"),'r',encoding="utf-8") as f:
             self.feat_names = [line.strip() for line in f.readlines()]
 
-    
+        # Keep ONLY this split's labels, as one compact float32 matrix aligned with
+        # feat_names. labels.json can be ~750MB; the full dict-of-lists balloons to
+        # ~2GB and, pickled into spawned DataLoader workers on Windows, exhausts RAM.
+        # A (N, out_dim) float32 array is ~tens of MB and cheap to share with workers.
+        with open(labels_path,'r',encoding="utf-8") as f:
+            all_labels:dict = json.load(f)
+        try:
+            self.labels = np.stack(
+                [np.asarray(all_labels[name], dtype=np.float32) for name in self.feat_names])
+        except KeyError as e:
+            raise KeyError(f"feature {e} listed in the split has no entry in labels.json")
+        del all_labels  # free the big dict before workers fork/spawn
+
+
     def __getitem__(self, index):
         is_aug = True if self.rng.uniform() < self.aug_prob else False
         feat_name = self.feat_names[index]
         feat_path = os.path.join(self.root_dir,"features" if not is_aug else "aug_features",f"{feat_name}.npy")
         feat = torch.from_numpy(np.load(feat_path)).float()
 
-        label = self.labels[feat_name]
-        label=torch.tensor(label,dtype=torch.float32)
-
-
+        label = torch.from_numpy(self.labels[index])
 
         return {'feat': feat, 'label': label, 'name': feat_name}
     

@@ -7,3 +7,6 @@ exp
 .venv
 *.pyc
 __pycache__
+templates
+inputs
+logs

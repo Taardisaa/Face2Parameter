@@ -1,4 +1,12 @@
+import warnings
+
 import cv2
+# mtcnn_ort (pip: mtcnn-onnxruntime 0.0.1) uses the obsolete `from cv2 import cv2`;
+# expose the alias so it imports on modern OpenCV.
+if not hasattr(cv2, "cv2"):
+    cv2.cv2 = cv2
+# skimage>=0.26 deprecates SimilarityTransform.estimate (still works); mute the notice.
+warnings.filterwarnings("ignore", message=".*estimate.*is deprecated.*")
 from mtcnn_ort import MTCNN
 import numpy as np
 from skimage import transform as trans

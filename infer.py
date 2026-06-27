@@ -17,29 +17,27 @@ Usage:
 from __future__ import annotations
 
 import argparse
+import glob
 import os
 
-import cv2
 import numpy as np
 import torch
 
 from config import get_config
+from src.img_utils import load_face_rgb
 from src.models.face2param import Face2Param
 
 
-def read_face(path: str, img_size: int, use_face_detector: bool, device) -> torch.Tensor:
-    img = cv2.imdecode(np.fromfile(path, dtype=np.uint8), -1)
-    img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-    if use_face_detector:
-        from src.face_data_utils.FaceCrop import FaceCrop  # lazy: needs mtcnn_ort
-        faces = FaceCrop().crop(img)
-        if len(faces) == 0:
-            raise RuntimeError("No face detected in the image")
-        if len(faces) > 1:
-            raise RuntimeError("More than one face detected in the image")
-        img = faces[0]
-    if img.shape[0] != img_size or img.shape[1] != img_size:
-        img = cv2.resize(img, (img_size, img_size), interpolation=cv2.INTER_AREA)
+def latest_head(cfg) -> str:
+    paths = glob.glob(os.path.join(cfg.weights_dir, "head_*.pth"))
+    if not paths:
+        raise FileNotFoundError(
+            f"no head weights in {cfg.weights_dir}; train first (train_head.py).")
+    return max(paths, key=os.path.getmtime)
+
+
+def read_face(path: str, img_size: int, use_face_detector: bool, device):
+    img = load_face_rgb(path, img_size, use_face_detector)        # HWC RGB uint8
     chw = np.ascontiguousarray(np.transpose(img, (2, 0, 1)))
     return torch.from_numpy(chw).float().div(255).unsqueeze(0).to(device), img
 
@@ -62,7 +60,7 @@ def infer(cfg, head_path: str, image_path: str, template_path: str,
     face_data.set_image(face_img.astype(np.uint8))
 
     name = os.path.splitext(os.path.basename(image_path))[0]
-    save_path = os.path.join(out_dir, name + ".png")
+    save_path = os.path.join(out_dir, name + "_out.png")
     face_data.save(save_path)
     print(f"[infer] wrote card -> {save_path}")
     return vector.tolist()
@@ -71,13 +69,22 @@ def infer(cfg, head_path: str, image_path: str, template_path: str,
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--config", default="dinov2_vits14")
-    ap.add_argument("--head", required=True, help="trained head weights (.pth)")
+    ap.add_argument("--head", default=None,
+                    help="trained head weights (.pth); defaults to latest in exp weights")
     ap.add_argument("--image", required=True)
-    ap.add_argument("--template", required=True, help="character card to write into")
+    ap.add_argument("--template", default=None,
+                    help="HS2 card to write into; defaults to the bundled assets/default_template.png")
     ap.add_argument("--out", default="outputs")
-    ap.add_argument("--no-detector", action="store_true")
+    ap.add_argument("--no-detector", action="store_true",
+                    help="skip mtcnn face alignment; aspect-preserving center-crop instead")
     args = ap.parse_args()
-    infer(get_config(args.config), args.head, args.image, args.template,
+    cfg = get_config(args.config)
+    head = args.head or latest_head(cfg)
+    template = args.template or cfg.default_template
+    if not os.path.exists(template):
+        raise FileNotFoundError(
+            f"template card not found: {template} (pass --template <card.png>)")
+    infer(cfg, head, args.image, template,
           out_dir=args.out, use_face_detector=not args.no_detector)
 
 
