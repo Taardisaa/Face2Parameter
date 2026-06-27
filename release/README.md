@@ -14,15 +14,18 @@ Both were trained to epoch 30 on the HS_FACE dataset.
 
 ## Use
 
-After `git clone` + `pip install -r requirements.txt` (see the top-level [README](../README.md)):
+After `git clone` + `pip install -r requirements.txt` (see the top-level [README](../README.md)),
+these heads are used **automatically** — with no `exp/` from training, `predict.py`/`infer.py` fall
+back to the `release/` head for the chosen `--config` (resolved by `config.resolve_head`):
 
 ```bash
 # image -> 205-dim param vector (no card serializer needed)
-python predict.py --config arcface --head release/head_arcface.pth --image my.png
+python predict.py --config arcface --image my.png
 
 # image -> a full HS2 character card (uses assets/default_template.png)
-python infer.py   --config arcface --head release/head_arcface.pth --image my.png --out outputs/
+python infer.py   --config arcface --image my.png --out outputs/
 ```
 
-Swap `--config dinov2_vits14 --head release/head_dinov2_vits14.pth` to use the DINOv2 head.
-Pass `--no-detector` if you don't have/want mtcnn alignment (uses a center-crop instead).
+Swap `--config dinov2_vits14` to use the DINOv2 head. Pass an explicit
+`--head release/head_arcface.pth` to force a specific file, or `--no-detector` to skip mtcnn
+alignment (uses a center-crop instead).

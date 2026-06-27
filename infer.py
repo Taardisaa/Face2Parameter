@@ -17,23 +17,14 @@ Usage:
 from __future__ import annotations
 
 import argparse
-import glob
 import os
 
 import numpy as np
 import torch
 
-from config import get_config
+from config import get_config, resolve_head
 from src.img_utils import load_face_rgb
 from src.models.face2param import Face2Param
-
-
-def latest_head(cfg) -> str:
-    paths = glob.glob(os.path.join(cfg.weights_dir, "head_*.pth"))
-    if not paths:
-        raise FileNotFoundError(
-            f"no head weights in {cfg.weights_dir}; train first (train_head.py).")
-    return max(paths, key=os.path.getmtime)
 
 
 def read_face(path: str, img_size: int, use_face_detector: bool, device):
@@ -70,7 +61,8 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--config", default="dinov2_vits14")
     ap.add_argument("--head", default=None,
-                    help="trained head weights (.pth); defaults to latest in exp weights")
+                    help="head weights (.pth); defaults to latest trained exp checkpoint, "
+                         "else the bundled release/ head")
     ap.add_argument("--image", required=True)
     ap.add_argument("--template", default=None,
                     help="HS2 card to write into; defaults to the bundled assets/default_template.png")
@@ -79,7 +71,7 @@ def main():
                     help="skip mtcnn face alignment; aspect-preserving center-crop instead")
     args = ap.parse_args()
     cfg = get_config(args.config)
-    head = args.head or latest_head(cfg)
+    head = resolve_head(cfg, args.head)
     template = args.template or cfg.default_template
     if not os.path.exists(template):
         raise FileNotFoundError(

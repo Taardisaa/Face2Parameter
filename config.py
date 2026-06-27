@@ -14,6 +14,7 @@ Presets
 
 from __future__ import annotations
 
+import glob
 import os
 from dataclasses import dataclass, field, replace
 
@@ -69,6 +70,11 @@ class Config:
     # else (body/hair/clothes), and we overwrite just the face fields.
     default_template: str = "assets/default_template.png"
 
+    # Bundled pretrained head shipped under release/, used by predict.py/infer.py as the
+    # fallback when there is no --head and no locally trained exp/ checkpoint (i.e. a
+    # fresh clone). Empty = no released head for this config.
+    release_head: str = ""
+
     @property
     def exp_dir(self) -> str:
         return os.path.join(self.exp_root, self.exp_name)
@@ -113,6 +119,7 @@ _PRESETS = {
         feature_dim=384,
         data_dir="data/",
         num_epoch=30,
+        release_head="release/head_dinov2_vits14.pth",
     ),
     "dinov2_vitb14": Config(
         exp_name="dinov2_vitb14_head",
@@ -130,6 +137,7 @@ _PRESETS = {
         num_epoch=30,
         aug_prob=1.0,        # ArcFace: train on the realistic (aug) domain only
         val_aug_prob=1.0,    # ...and validate on it too
+        release_head="release/head_arcface.pth",
     ),
     # Offline skeleton: no downloads, no real data, tiny + fast.
     "smoke": Config(
@@ -147,6 +155,28 @@ _PRESETS = {
         device="cuda",
     ),
 }
+
+
+def resolve_head(cfg: Config, override: str | None = None) -> str:
+    """Resolve which head-weights .pth to load for inference.
+
+    Priority: explicit ``override`` (``--head``) > latest locally trained checkpoint in
+    ``cfg.weights_dir`` (the dev workflow) > the bundled ``cfg.release_head`` under
+    ``release/`` (so a fresh clone with no ``exp/`` runs out of the box).
+    """
+    if override:
+        return override
+    local = glob.glob(os.path.join(cfg.weights_dir, "head_*.pth"))
+    if local:
+        return max(local, key=os.path.getmtime)
+    if cfg.release_head and os.path.exists(cfg.release_head):
+        return cfg.release_head
+    raise FileNotFoundError(
+        f"no head weights found for config '{cfg.exp_name}': pass --head <weights.pth>, "
+        f"or train first (writes to {cfg.weights_dir})."
+        + (f" Expected bundled head at {cfg.release_head} but it is missing."
+           if cfg.release_head else " This config has no bundled release head.")
+    )
 
 
 def get_config(name: str = "dinov2_vits14", **overrides) -> Config:

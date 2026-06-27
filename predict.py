@@ -15,7 +15,6 @@ Usage:
 from __future__ import annotations
 
 import argparse
-import glob
 import json
 import os
 
@@ -23,17 +22,9 @@ import cv2
 import numpy as np
 import torch
 
-from config import get_config
+from config import get_config, resolve_head
 from src.img_utils import load_face_rgb
 from src.models.face2param import Face2Param
-
-
-def latest_head(cfg) -> str:
-    paths = glob.glob(os.path.join(cfg.weights_dir, "head_*.pth"))
-    if not paths:
-        raise FileNotFoundError(
-            f"no head weights in {cfg.weights_dir}; train first (train_head.py).")
-    return max(paths, key=os.path.getmtime)
 
 
 def predict(cfg, head_path, image_path, use_detector=True):
@@ -51,14 +42,16 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--config", default="dinov2_vits14")
     ap.add_argument("--image", required=True)
-    ap.add_argument("--head", default=None, help="defaults to latest head in exp weights")
+    ap.add_argument("--head", default=None,
+                    help="head weights (.pth); defaults to latest trained exp checkpoint, "
+                         "else the bundled release/ head")
     ap.add_argument("--out", default=None, help="defaults to outputs/<image>.json (+.npy)")
     ap.add_argument("--no-detector", action="store_true",
                     help="skip mtcnn face alignment; aspect-preserving center-crop instead")
     args = ap.parse_args()
 
     cfg = get_config(args.config)
-    head_path = args.head or latest_head(cfg)
+    head_path = resolve_head(cfg, args.head)
     vec = predict(cfg, head_path, args.image, use_detector=not args.no_detector)
 
     stem = os.path.splitext(os.path.basename(args.image))[0]

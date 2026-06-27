@@ -144,7 +144,9 @@ python infer.py --config dinov2_vits14 \
     --image test/my.png --out outputs/
 ```
 
-`--head` defaults to the latest weights in the config's `exp` dir; `--template` defaults to the
+`--head` defaults to the latest weights in the config's `exp` dir, and if none exist (a fresh
+clone) it falls back to the bundled [`release/`](release/) head for that config — so `predict.py`
+/ `infer.py` run out of the box with no training. `--template` defaults to the
 bundled [`assets/default_template.png`](assets/default_template.png) (the model only predicts the
 face-shape params — the template supplies body/hair/clothes). Pass `--no-detector` to skip mtcnn
 alignment and use an aspect-preserving center-crop instead.
