@@ -48,10 +48,12 @@ class HeadTrainer:
         self.tb = SummaryWriter(log_dir=cfg.tb_log_dir)
 
         # Train mixes domains (aug_prob); val is deterministic on the in-game features.
+        feat_kw = dict(features_subdir=cfg.features_subdir,
+                       aug_features_subdir=cfg.aug_features_subdir)
         self.train_set = FeatureDataset(cfg.data_dir, is_train=True,
-                                        aug_prob=cfg.aug_prob, seed=cfg.seed)
+                                        aug_prob=cfg.aug_prob, seed=cfg.seed, **feat_kw)
         self.val_set = FeatureDataset(cfg.data_dir, is_train=False,
-                                      aug_prob=0.0, seed=cfg.seed)
+                                      aug_prob=cfg.val_aug_prob, seed=cfg.seed, **feat_kw)
         self.train_loader = DataLoader(
             self.train_set, batch_size=cfg.batch_size, shuffle=True,
             num_workers=cfg.num_workers, pin_memory=True,

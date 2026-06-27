@@ -17,9 +17,15 @@ tensorboard==2.20.0
 tqdm==4.67.3
 msgpack==1.2.1
 scikit-image==0.26.0
-onnxruntime==1.27.0
 onnxscript==0.7.0
 requests==2.32.5
+
+# onnxruntime runs mtcnn + the ArcFace recognizer. On this Windows box we use the
+# DirectML build so they run on the GPU regardless of CUDA version (the CUDA-13 stack
+# has no matching onnxruntime-gpu wheel). On Linux/CPU-only, swap this for plain
+# `onnxruntime`; with a supported CUDA, `onnxruntime-gpu`. ArcFace is fixed-batch-1 under
+# DirectML, so src/models/arcface.py runs it per-image (still ~3.4ms/img on GPU).
+onnxruntime-directml==1.24.4
 
 # Face detection/alignment for inference (predict.py/infer.py with face cropping).
 # mtcnn-onnxruntime imports as `mtcnn_ort` and bundles its ONNX weights; it predates

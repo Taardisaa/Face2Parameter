@@ -19,6 +19,7 @@ import os
 import cv2
 import numpy as np
 import torch
+from torch.utils.data import DataLoader, Dataset
 
 from config import get_config
 from src.models.backbone import build_backbone
@@ -43,11 +44,36 @@ def read_image(path: str, img_size: int) -> np.ndarray:
     return np.ascontiguousarray(np.transpose(img, (2, 0, 1)))  # CHW
 
 
-# variant -> (images subdir, features subdir)
-VARIANTS = {
-    "game": ("images", "features"),
-    "aug": ("aug_images", "aug_features"),
+# variant -> image subdir (the feature output subdir comes from cfg, so it can be
+# namespaced per backbone, e.g. features_arcface/)
+VARIANT_IMAGES = {
+    "game": "images",
+    "aug": "aug_images",
 }
+
+
+class _ImageReadDataset(Dataset):
+    """Parallel image decode (the bottleneck): workers decode/resize, main runs the backbone."""
+
+    def __init__(self, paths, img_size):
+        self.paths = paths
+        self.img_size = img_size
+
+    def __len__(self):
+        return len(self.paths)
+
+    def __getitem__(self, i):
+        p = self.paths[i]
+        try:
+            return p, read_image(p, self.img_size)  # CHW uint8 RGB
+        except Exception:  # noqa: BLE001 - mark unreadable; skipped in main loop
+            return "", np.zeros((3, self.img_size, self.img_size), dtype=np.uint8)
+
+
+def _collate(batch):
+    paths = [b[0] for b in batch]
+    imgs = torch.from_numpy(np.stack([b[1] for b in batch]))
+    return paths, imgs
 
 
 def run(cfg, images_dir: str, save_dir: str, backbone=None, device=None) -> int:
@@ -64,34 +90,23 @@ def run(cfg, images_dir: str, save_dir: str, backbone=None, device=None) -> int:
     print(f"[extract_features] {len(paths)} images | backbone={cfg.backbone} "
           f"| feature_dim={cfg.feature_dim} | device={device}")
 
+    loader = DataLoader(_ImageReadDataset(paths, cfg.img_size),
+                        batch_size=cfg.batch_size, num_workers=cfg.num_workers or 8,
+                        collate_fn=_collate, persistent_workers=False)
     n_done = 0
-    batch_paths, batch_imgs = [], []
-
-    def flush():
-        nonlocal n_done
-        if not batch_paths:
-            return
-        x = torch.from_numpy(np.stack(batch_imgs)).float().div(255).to(device)
+    for batch_paths, imgs in loader:
+        x = imgs.float().div(255).to(device)
         with torch.no_grad():
             feats = backbone(x).cpu().numpy()
         for p, f in zip(batch_paths, feats):
+            if not p:
+                continue
             name = os.path.splitext(os.path.basename(p))[0]
             np.save(os.path.join(save_dir, name + ".npy"), f.astype(np.float32))
         n_done += len(batch_paths)
-        print(f"[extract_features] {n_done}/{len(paths)}")
-        batch_paths.clear()
-        batch_imgs.clear()
-
-    for p in paths:
-        try:
-            batch_imgs.append(read_image(p, cfg.img_size))
-            batch_paths.append(p)
-        except Exception as exc:  # noqa: BLE001
-            print(f"[extract_features] skip {p}: {exc}")
-            continue
-        if len(batch_paths) >= cfg.batch_size:
-            flush()
-    flush()
+        if n_done % (cfg.batch_size * 20) < cfg.batch_size:
+            print(f"[extract_features] {n_done}/{len(paths)}")
+    print(f"[extract_features] decoded {n_done} images")
 
     print(f"[extract_features] done -> {save_dir} ({n_done} vectors)")
     return n_done
@@ -109,8 +124,9 @@ def main():
     # build the (heavy) backbone once and reuse across variants
     device = torch.device(cfg.device if torch.cuda.is_available() else "cpu")
     backbone = build_backbone(cfg).to(device).eval()
+    feat_subs = {"game": cfg.features_subdir, "aug": cfg.aug_features_subdir}
     for v in variants:
-        img_sub, feat_sub = VARIANTS[v]
+        img_sub, feat_sub = VARIANT_IMAGES[v], feat_subs[v]
         print(f"=== variant '{v}': {img_sub}/ -> {feat_sub}/ ===")
         run(cfg, os.path.join(cfg.data_dir, img_sub),
             os.path.join(cfg.data_dir, feat_sub), backbone=backbone, device=device)

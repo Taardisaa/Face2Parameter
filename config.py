@@ -37,11 +37,17 @@ class Config:
 
     # --- data ---
     data_dir: str = "data/"         # holds features/, labels.json, {train,val,test}_features.txt
+    # Suffix on the cached-feature dirs so different backbones don't collide, e.g.
+    # "" -> features/ aug_features/ (dinov2);  "_arcface" -> features_arcface/ ...
+    feat_tag: str = ""
     batch_size: int = 32
     num_workers: int = 8
     # P(use aug_features/ instead of features/) per sample during training. Mixes the
     # realistic (aug_images) and in-game (images) domains. 0 disables aug sampling.
     aug_prob: float = 0.5
+    # Same, for validation (kept 0 = deterministic in-game features for DINOv2; set to
+    # 1.0 for ArcFace, which is only meaningful on the realistic/aug domain).
+    val_aug_prob: float = 0.0
 
     # --- optimization ---
     lr: float = 5e-5
@@ -80,8 +86,16 @@ class Config:
         return os.path.join(self.exp_dir, "tb_logs")
 
     @property
+    def features_subdir(self) -> str:
+        return f"features{self.feat_tag}"
+
+    @property
+    def aug_features_subdir(self) -> str:
+        return f"aug_features{self.feat_tag}"
+
+    @property
     def features_dir(self) -> str:
-        return os.path.join(self.data_dir, "features")
+        return os.path.join(self.data_dir, self.features_subdir)
 
 
 # --- backbone -> feature_dim registry (asserted against the real model at build time) ---
@@ -105,6 +119,17 @@ _PRESETS = {
         backbone="dinov2_vitb14",
         feature_dim=768,
         data_dir="data/",
+    ),
+    # Expression-invariant ArcFace identity backbone (see docs/expression-invariance.md).
+    "arcface": Config(
+        exp_name="arcface_head",
+        backbone="arcface",
+        feature_dim=512,
+        feat_tag="_arcface",
+        data_dir="data/",
+        num_epoch=30,
+        aug_prob=1.0,        # ArcFace: train on the realistic (aug) domain only
+        val_aug_prob=1.0,    # ...and validate on it too
     ),
     # Offline skeleton: no downloads, no real data, tiny + fast.
     "smoke": Config(

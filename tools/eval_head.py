@@ -80,7 +80,7 @@ def main():
     names, labels = load_split(cfg, args.split)
     print(f"head={os.path.basename(head_path)} | split={args.split} | n={len(names)}")
 
-    for domain, sub in [("game", "features"), ("aug/realistic", "aug_features")]:
+    for domain, sub in [("game", cfg.features_subdir), ("aug/realistic", cfg.aug_features_subdir)]:
         r = evaluate(cfg, head_path, args.split, sub, names, labels, device)
         if r is None:
             print(f"  {domain:14s}: (no features found in {sub}/)")

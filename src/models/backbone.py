@@ -125,6 +125,33 @@ class DummyBackbone(Backbone):
         return self.proj(x)
 
 
+class ArcFaceBackbone(Backbone):
+    """Expression-invariant face-recognition embedding (InsightFace w600k_r50, 512-d).
+
+    See docs/expression-invariance.md. Runs the ArcFace ONNX on onnxruntime. Face
+    alignment is handled upstream (FaceCrop at inference; dataset images are pre-aligned),
+    so here we just resize to ArcFace's 112x112 and embed — keeping the uniform
+    ``forward(img)`` interface and consistent train/inference preprocessing.
+    """
+
+    def __init__(self):
+        super().__init__()
+        from src.models.arcface import ArcFaceONNX
+        self.arc = ArcFaceONNX()
+        self._feature_dim = 512
+
+    @property
+    def feature_dim(self) -> int:
+        return self._feature_dim
+
+    @torch.no_grad()
+    def forward(self, img: torch.Tensor) -> torch.Tensor:
+        x = F.interpolate(img, size=(112, 112), mode="bilinear", align_corners=False)
+        arr = (x.clamp(0, 1) * 255).round().to(torch.uint8).permute(0, 2, 3, 1).cpu().numpy()
+        emb = self.arc.embed(arr)  # (B, 512) float32, L2-normalized
+        return torch.from_numpy(emb).to(img.device)
+
+
 def build_backbone(cfg) -> Backbone:
     """Construct the backbone named by ``cfg.backbone`` and verify its feature dim."""
     if cfg.backbone == "dummy":
@@ -132,6 +159,8 @@ def build_backbone(cfg) -> Backbone:
     elif cfg.backbone in _DINOV2_HUB_NAME:
         backbone = DINOv2Backbone(name=cfg.backbone, feature_mode=cfg.feature_mode,
                                   img_size=cfg.img_size)
+    elif cfg.backbone == "arcface":
+        backbone = ArcFaceBackbone()
     else:
         raise ValueError(f"Unknown backbone '{cfg.backbone}'.")
 

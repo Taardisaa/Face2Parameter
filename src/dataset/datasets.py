@@ -170,6 +170,8 @@ class FeatureDataset(Dataset):
                 is_train:bool=True,
                 aug_prob:float=0.0,
                 seed:int=1234,
+                features_subdir:str="features",
+                aug_features_subdir:str="aug_features",
                 ):
         super(FeatureDataset, self).__init__()
         assert isinstance(root_dir, str)
@@ -179,6 +181,8 @@ class FeatureDataset(Dataset):
         self.aug_prob = aug_prob
         self.is_train = is_train
         self.root_dir = root_dir
+        self.features_subdir = features_subdir
+        self.aug_features_subdir = aug_features_subdir
 
         labels_path = os.path.join(self.root_dir,"labels.json")
         if not os.path.exists(labels_path):
@@ -204,7 +208,7 @@ class FeatureDataset(Dataset):
     def __getitem__(self, index):
         is_aug = True if self.rng.uniform() < self.aug_prob else False
         feat_name = self.feat_names[index]
-        feat_path = os.path.join(self.root_dir,"features" if not is_aug else "aug_features",f"{feat_name}.npy")
+        feat_path = os.path.join(self.root_dir, self.aug_features_subdir if is_aug else self.features_subdir, f"{feat_name}.npy")
         feat = torch.from_numpy(np.load(feat_path)).float()
 
         label = torch.from_numpy(self.labels[index])
