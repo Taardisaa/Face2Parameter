@@ -68,16 +68,19 @@ def predict_set(cfg, head_path, image_paths, use_detector=True,
     and a representative (medoid) image for the card thumbnail.
     """
     model, device = _load_model(cfg, head_path)
+    print(f"[predict_set] {len(image_paths)} image(s) found; backbone={cfg.backbone}, "
+          f"detector={'on' if use_detector else 'off'}")
     feats, vecs, names, imgs, skipped = [], [], [], [], []
     for p in image_paths:
+        nm = os.path.basename(p)
         try:
             img, detected = load_face_rgb(p, cfg.img_size, use_detector, return_detected=True)
         except Exception as exc:  # noqa: BLE001 - unreadable file: skip and report
-            print(f"[predict_set] skip unreadable {p}: {exc}")
+            print(f"[predict_set]   skip (unreadable) {nm}: {exc}")
             skipped.append(p)
             continue
         if use_detector and not detected:
-            print(f"[predict_set] skip (no face detected) {p}")
+            print(f"[predict_set]   skip (no face)    {nm}")
             skipped.append(p)
             continue
         feat, vec = _embed_and_predict(model, img, device)
@@ -85,11 +88,15 @@ def predict_set(cfg, head_path, image_paths, use_detector=True,
         vecs.append(vec)
         names.append(p)
         imgs.append(img)
+        print(f"[predict_set]   ok                {nm}"
+              + (" (face detected)" if use_detector else " (center-crop)"))
 
     if not feats:
         raise RuntimeError("no usable images (all skipped); try --no-detector or check inputs")
     feats, vecs = np.stack(feats), np.stack(vecs)
     n_used = len(feats)
+    print(f"[predict_set] using {n_used}/{len(image_paths)} image(s)"
+          + (f"; skipped {len(skipped)}" if skipped else ""))
     if n_used < 5:
         print(f"[predict_set] note: only {n_used} usable image(s); ~5-10 varied shots give the "
               f"most stable result (see docs/multi-image-aggregation.md)")

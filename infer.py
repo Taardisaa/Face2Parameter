@@ -76,16 +76,24 @@ def main():
         config_names = [c.strip() for c in args.ensemble.split(",") if c.strip()]
         vector, results = ensemble_predict(config_names, image_paths, use_detector,
                                            method=args.aggregate, space=args.aggregate_space)
-        face_img = results[0][1]["representative_img"]
+        rep = results[0][1]
+        face_img = rep["representative_img"]
         tmpl_cfg = get_config(config_names[0])
+        print(f"[infer] ensemble({'+'.join(config_names)}), "
+              f"aggregate={args.aggregate}/{args.aggregate_space}")
     else:
         cfg = get_config(args.config)
         head = resolve_head(cfg, args.head)
-        res = predict_set(cfg, head, image_paths, use_detector,
+        rep = predict_set(cfg, head, image_paths, use_detector,
                           method=args.aggregate, space=args.aggregate_space)
-        vector = res["vector"]
-        face_img = res["representative_img"]
+        vector = rep["vector"]
+        face_img = rep["representative_img"]
         tmpl_cfg = cfg
+        print(f"[infer] config={args.config}, aggregate={args.aggregate}/{args.aggregate_space}")
+
+    print(f"[infer] {rep['n_used']} image(s) used"
+          + (f", {len(rep['skipped'])} skipped" if rep['skipped'] else "")
+          + f"; thumbnail from {os.path.basename(rep['representative_name'])}")
 
     template = args.template or tmpl_cfg.default_template
     if not os.path.exists(template):
