@@ -27,8 +27,8 @@ import numpy as np
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from config import get_config
-from predict import latest_head, predict
+from config import get_config, resolve_head
+from predict import predict
 
 _EXTS = ("*.png", "*.jpg", "*.jpeg", "*.webp")
 
@@ -49,7 +49,7 @@ def _identity_groups(root: str) -> dict:
 
 def evaluate(cfg_name: str, groups: dict, use_detector: bool = True) -> dict:
     cfg = get_config(cfg_name)
-    head = latest_head(cfg)
+    head = resolve_head(cfg)
     per_identity_std = []
     for ident, imgs in groups.items():
         vecs = np.stack([predict(cfg, head, p, use_detector=use_detector) for p in imgs])

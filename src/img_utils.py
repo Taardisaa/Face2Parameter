@@ -10,8 +10,28 @@ Centralizes the preprocessing so both entry points behave identically:
 
 from __future__ import annotations
 
+import glob
+import os
+
 import cv2
 import numpy as np
+
+_IMAGE_EXTS = ("*.png", "*.jpg", "*.jpeg", "*.webp")
+
+
+def list_images(path: str) -> list:
+    """Resolve an image input that may be a single file or a directory.
+
+    A file path returns ``[path]``; a directory returns its images (png/jpg/jpeg/webp,
+    recursive, sorted). Lets predict.py/infer.py accept either a photo or a folder of
+    photos of one person for multi-image aggregation.
+    """
+    if os.path.isdir(path):
+        paths = []
+        for ext in _IMAGE_EXTS:
+            paths.extend(glob.glob(os.path.join(path, "**", ext), recursive=True))
+        return sorted(paths)
+    return [path]
 
 
 def center_square(img: np.ndarray) -> np.ndarray:
@@ -22,8 +42,14 @@ def center_square(img: np.ndarray) -> np.ndarray:
     return img[y0:y0 + s, x0:x0 + s]
 
 
-def load_face_rgb(path: str, img_size: int, use_detector: bool = True) -> np.ndarray:
-    """Return an (img_size, img_size, 3) RGB uint8 face crop ready for the backbone."""
+def load_face_rgb(path: str, img_size: int, use_detector: bool = True,
+                  return_detected: bool = False):
+    """Return an (img_size, img_size, 3) RGB uint8 face crop ready for the backbone.
+
+    With ``return_detected=True`` also returns a bool of whether mtcnn actually found a
+    face (vs. the center-crop fallback) -- multi-image mode uses this to skip unaligned
+    frames. Default return shape is unchanged for existing single-image callers.
+    """
     img = cv2.imdecode(np.fromfile(path, dtype=np.uint8), -1)
     if img is None:
         raise RuntimeError(f"could not read image: {path}")
@@ -42,8 +68,10 @@ def load_face_rgb(path: str, img_size: int, use_detector: bool = True) -> np.nda
                 print("[img] no face detected; falling back to center-crop")
         except Exception as exc:  # noqa: BLE001
             print(f"[img] detector unavailable ({type(exc).__name__}); center-crop fallback")
-    img = crop if crop is not None else center_square(img)
+    detected = crop is not None
+    img = crop if detected else center_square(img)
 
     if img.shape[0] != img_size or img.shape[1] != img_size:
         img = cv2.resize(img, (img_size, img_size), interpolation=cv2.INTER_AREA)
-    return np.ascontiguousarray(img)
+    img = np.ascontiguousarray(img)
+    return (img, detected) if return_detected else img

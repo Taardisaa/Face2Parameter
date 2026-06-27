@@ -1,5 +1,7 @@
 # Face2Parameter: Modeling facial parameters of game characters from images
 
+**English** | [中文](README_CN.md)
+
 Predict the **facial parameters of game characters** (Tested on HoneySelect2) directly from a face image, using a **frozen pretrained backbone** followed by an MLP
 regression head. The predicted vector can be written straight back into a real game character card.
 
@@ -150,6 +152,24 @@ clone) it falls back to the bundled [`release/`](release/) head for that config 
 bundled [`assets/default_template.png`](assets/default_template.png) (the model only predicts the
 face-shape params — the template supplies body/hair/clothes). Pass `--no-detector` to skip mtcnn
 alignment and use an aspect-preserving center-crop instead.
+
+**Multiple photos of one person → a stabler vector.** Pass a *directory* to `--image` and the
+per-image predictions are aggregated into one consolidated vector (defaults: aggregate in embedding
+space with a per-dimension median, which rejects a bad frame). This averages out pose/lighting/
+detector noise and — for DINOv2 — cancels expression leakage across varied shots. Aim for ~5–10
+varied photos; diversity matters more than count. See
+[docs/multi-image-aggregation.md](docs/multi-image-aggregation.md).
+
+```bash
+python predict.py --config arcface --image dir_of_photos/          # one averaged vector
+python predict.py --config arcface --image dir_of_photos/ --aggregate trimmed --save-per-image
+# optional ensemble: run both backbones and merge in param space
+python predict.py --ensemble dinov2_vits14,arcface --image dir_of_photos/
+```
+
+Flags: `--aggregate {median,mean,trimmed}`, `--aggregate-space {embedding,param}`, `--ensemble
+<configs>`, `--save-per-image`. `infer.py` accepts the same directory + flags and writes the merged
+result into a card (the most representative photo becomes the card thumbnail).
 
 Export the combined model to ONNX (use `--head-only` to export just the regression head):
 
