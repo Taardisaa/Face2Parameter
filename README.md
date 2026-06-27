@@ -155,6 +155,21 @@ Export the combined model to ONNX (use `--head-only` to export just the regressi
 python export_onnx.py --config dinov2_vits14 --head <weights.pth> --out outputs/face2param.onnx
 ```
 
+## Known Limitations
+
+1. **Expression leakage on smiling inputs.** A strong smile can bleed into the predicted geometry
+   (typically a slightly off mouth/jaw), because the DINOv2 features encode expression as well as
+   identity. The expression-invariant ArcFace backbone largely fixes this — see
+   [docs/expression-invariance.md](docs/expression-invariance.md).
+2. **Not meant for 2D anime images.** The intended inputs are HS2 character screenshots and real
+   human photos. A 2D illustration can still be mapped to a plausible-looking face vector, but the
+   result tends to be uncanny: for 2D→3D, the goal isn't geometric face-fitting so much as matching
+   the character's *style* (hairstyle, outfit, accessories), which this face-shape pipeline doesn't
+   model. See [docs/stylization-and-anime-inputs.md](docs/stylization-and-anime-inputs.md).
+3. **Face-shape params only.** The model predicts the 54-dim `shapeValueFace` + bone params and
+   nothing else. Other details — head/body proportions, hairstyle, skin tone, eyelashes, eyebrow
+   detail, etc. — come from the template card and need manual touch-up.
+
 ## About the HS_FACE dataset
 
 The [HS_FACE](https://pan.baidu.com/s/1yPftN5rmtY5QDF7G2RjN4A?pwd=p8qd) dataset is a collection of
