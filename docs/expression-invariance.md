@@ -52,6 +52,146 @@ face.
 - **Cons:** adds a heavy generative dependency; the neutralized image carries GAN/render artifacts
   and must still land in our training distribution; an extra failure point and latency at inference.
 
+#### Why a generic diffusion edit is unsafe
+
+Prompting a general image generator for "the same person with a neutral expression" is tempting,
+but the generator is free to alter exactly the geometry this project is trying to recover: lip
+thickness, mouth width, jaw contour, cheek volume, and even apparent age. A visually plausible
+result is not necessarily a geometrically faithful one. If neutralization is added, it should use
+an explicitly controlled expression representation rather than unconstrained text-guided editing.
+
+#### Option A — LivePortrait neutralizer (fastest plugin prototype)
+
+[LivePortrait](https://github.com/KlingAIResearch/LivePortrait) supports portrait animation,
+expression retargeting, and precise expression editing. Its output remains photorealistic enough to
+feed the current image backbones, so it is the shortest path to an inference-only plugin:
+
+```
+aligned face crop
+    -> LivePortrait expression edit
+    -> neutralized RGB crop
+    -> existing DINOv2 / ArcFace backbone
+    -> existing MLP head
+```
+
+The neutralizer must change **expression only**. It should retain the source identity, head pose,
+scale, translation, crop, and appearance. In particular, the default relative-driving workflow is
+not sufficient for this use case: it treats the source expression as the motion baseline, so a
+smiling source may remain smiling when the driving sequence starts at neutral. The implementation
+needs absolute expression replacement or direct expression-latent editing while preserving the
+source pose.
+
+This is the easiest route to test, but it is still a neural renderer and can subtly move facial
+geometry. It therefore needs an identity/geometry quality gate before its output is accepted. Also
+check deployment licensing: the LivePortrait code is MIT, while its license notes that bundled
+InsightFace models are restricted to non-commercial research.
+
+#### Option B — 3DMM/FLAME neutralization (more geometrically explicit)
+
+A 3D face model such as [DECA](https://github.com/YadiraF/DECA) or
+[SMIRK](https://github.com/georgeretsi/smirk) decomposes a face into approximately independent
+factors:
+
+```
+identity shape beta + expression psi + jaw pose + pose + appearance/lighting
+```
+
+Neutralization then becomes an explicit operation:
+
+```
+psi      = neutral
+jaw pose = neutral
+```
+
+The neutral face can be rendered and passed to the existing pipeline. This gives stronger control
+than a prompt-based generator, although disentanglement is imperfect and a rendered face may fall
+outside the training-image distribution.
+
+For several photos of one person, fit or aggregate a **shared identity shape** instead of processing
+each image independently:
+
+```
+shared beta across the subject
+per-image psi_i / pose_i / lighting_i
+set every psi_i to neutral
+render several neutral views
+```
+
+Sharing the identity variable prevents independent edits from drifting toward slightly different
+people. DECA and related FLAME models have non-commercial/research-oriented licensing, which must be
+considered before making this a distributed dependency. SMIRK's repository is MIT, but it still
+depends on FLAME assets and their terms.
+
+#### Option C — regress directly from neutral identity geometry (cleanest architecture)
+
+[MICA](https://github.com/Zielon/MICA) maps an ArcFace identity representation to a neutral FLAME
+shape. Instead of rendering a neutral image, it could become a new feature extractor:
+
+```
+input photos -> MICA neutral shape -> MLP -> HS2 205-dim parameters
+```
+
+This avoids generative image artifacts entirely and makes expression removal part of the feature
+representation. It is architecturally cleaner, but no longer a drop-in inference plugin: the MICA
+features must be extracted for the training set and a matching MLP head must be trained. Its model
+and FLAME dependencies also use research-oriented licenses.
+
+#### Proposed neutralizer interface
+
+Keep neutralization optional and in front of the existing `Face2Param` model:
+
+```
+input image(s)
+    -> detect and align
+    -> Neutralizer(off | liveportrait | 3dmm)
+    -> quality gate
+    -> current backbone + head
+    -> multi-image aggregation
+```
+
+The plugin should consume and return aligned RGB crops, cache generated crops, and support a
+`neutralize-only` mode so outputs can be inspected independently of parameter prediction.
+
+The quality gate should reject a generated crop when:
+
+- ArcFace similarity to the original identity drops too far (threshold calibrated on validation
+  identities, not chosen arbitrarily);
+- a face/expression estimator still reports a strong smile, open jaw, or other non-neutral motion;
+- face detection or landmark alignment becomes unreliable; or
+- estimated identity geometry changes materially between the original and neutralized image.
+
+Rejected edits should fall back to the original crop or be excluded from multi-image aggregation;
+they should never silently enter the prediction set.
+
+#### Recommended MVP and A/B test
+
+Start with a `LivePortraitNeutralizer`, but keep the experiment isolated from the production path.
+For the same identity and image set, compare:
+
+1. original images -> ArcFace head;
+2. neutralized images -> DINOv2 head;
+3. neutralized images -> ArcFace head; and
+4. optional DINOv2/ArcFace param-space ensemble.
+
+The second arm is important: ArcFace already suppresses much expression information but may lose
+fine shape detail. Once the image itself is neutralized, DINOv2 may retain that detail without
+receiving the original smile deformation.
+
+Evaluate both **identity retention** and **expression consistency**. Useful measurements include
+ArcFace similarity before/after neutralization, within-identity variance across expressions,
+mouth/jaw parameter drift, and comparison against a real neutral photo of the subject when one is
+available.
+
+#### What neutralization cannot fix
+
+Over-thick lips are not necessarily caused only by expression leakage. The MLP is trained with MSE
+and can regress toward the mean HS2 face, particularly after aggregation reduces feature variance.
+The training distribution may also contain expression/label correlations. If original and
+neutralized inputs produce the same mouth bias, the remaining problem is in the head, labels, loss,
+or training distribution—not the input expression. At that point the appropriate fixes are
+expression-augmented training, a better loss, more balanced labels, or a calibrated mouth/jaw
+residual model rather than a stronger neutralizer.
+
 ### 3. Expression-augmented training (learn invariance)
 
 Keep DINOv2, but during training **synthesize expressions** on the face images (e.g. **LivePortrait**
@@ -71,6 +211,12 @@ fall back to **hybrid ArcFace ⊕ DINOv2** (concat 512+384 = 896-d): ArcFace sup
 expression-invariant identity anchor, DINOv2 adds appearance detail. Expression-augmented training
 (3) can later be layered on top of either for extra robustness.
 
+For the observed **all-smiling multi-image** failure, however, aggregation and ArcFace alone cannot
+guarantee a neutral mouth: the residual smile bias is systematic across every input. The next
+targeted experiment should therefore be the optional LivePortrait neutralizer above. If it improves
+mouth/jaw consistency without identity drift, keep it as an inference plugin. If it changes identity
+geometry too often, move to shared-shape 3DMM neutralization or the MICA-to-HS2 route.
+
 ## How we measure success
 
 Two axes — both matter:
@@ -88,6 +234,7 @@ Two axes — both matter:
 - MICA — Towards Metrical Reconstruction of Human Faces (ECCV 2022): arXiv [2204.06607](https://arxiv.org/abs/2204.06607), code [github.com/Zielon/MICA](https://github.com/Zielon/MICA)
 - DECA — Learning an Animatable Detailed 3D Face Model from In-The-Wild Images: arXiv [2012.04012](https://arxiv.org/abs/2012.04012)
 - EMOCA / Pixel3DMM (MICA-initialized identity): [pixel3dmm](https://simongiebenhain.github.io/pixel3dmm/)
+- SMIRK — 3D Facial Expressions through Analysis-by-Neural-Synthesis (CVPR 2024): arXiv [2404.04104](https://arxiv.org/abs/2404.04104), code [github.com/georgeretsi/smirk](https://github.com/georgeretsi/smirk)
 - ArcFace / InsightFace (Additive Angular Margin, buffalo_l, 512-d): [insightface.ai/research/arcface](https://www.insightface.ai/research/arcface)
 - Deep Face Normalization (expression/pose/lighting neutralization, SIGGRAPH Asia 2019): [hao-li.com](https://www.hao-li.com/publications/papers/siggraphAsia2019DFN.pdf)
-- LivePortrait (efficient portrait reenactment for expression augmentation): arXiv [2407.03168](https://arxiv.org/abs/2407.03168), code [github.com/KwaiVGI/LivePortrait](https://github.com/KwaiVGI/LivePortrait)
+- LivePortrait (portrait animation, stitching, and retargeting control): arXiv [2407.03168](https://arxiv.org/abs/2407.03168), code [github.com/KlingAIResearch/LivePortrait](https://github.com/KlingAIResearch/LivePortrait)
