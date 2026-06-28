@@ -150,6 +150,12 @@ python tools/neutralize.py --image inputs/person/ --out outputs/_neutral_check  
 python infer.py --config arcface --image inputs/person/ --neutralize liveportrait --name person_neutral
 ```
 
+还有一个更强的后端 **`--neutralize kontext`**，用 **FLUX.1 Kontext [dev]**（GGUF 量化的指令式图像编辑器）把表情编辑成中性、同时保持身份——比 LivePortrait 更能压平笑脸。它跑在自己专用的 venv 里，需要先接受 FLUX 许可并提供 HF token（仓库根目录 `hf_token.txt`，已 gitignore）。安装步骤见 [docs/expression-invariance.md](docs/expression-invariance.md)：
+
+```bash
+python infer.py --config arcface --image inputs/person/ --neutralize kontext --name person_kontext
+```
+
 每次编辑都要通过 ArcFace 身份相似度门槛（`--gate-threshold`）；不通过则回退到原图。默认 `--neutralize off`（无需任何外部依赖）。
 
 将完整模型导出为 ONNX；如只需导出回归头，可添加 `--head-only`：

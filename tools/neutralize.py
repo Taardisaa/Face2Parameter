@@ -27,7 +27,9 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--image", required=True, help="image file OR a directory")
     ap.add_argument("--out", default="outputs/_neutral_check", help="where to copy neutral crops + report")
-    ap.add_argument("--alpha", type=float, default=0.0, help="0=full neutral, 1=unchanged")
+    ap.add_argument("--backend", choices=["liveportrait", "kontext"], default="liveportrait")
+    ap.add_argument("--alpha", type=float, default=0.0, help="liveportrait: 0=full neutral, 1=unchanged")
+    ap.add_argument("--steps", type=int, default=28, help="kontext diffusion steps")
     ap.add_argument("--gate-threshold", type=float, default=0.6, help="min ArcFace id sim to accept")
     args = ap.parse_args()
 
@@ -35,7 +37,8 @@ def main():
     if not image_paths:
         raise SystemExit(f"no images found at {args.image}")
 
-    neut = Neutralizer(mode="liveportrait", alpha=args.alpha, gate_threshold=args.gate_threshold)
+    neut = Neutralizer(mode=args.backend, alpha=args.alpha, steps=args.steps,
+                       gate_threshold=args.gate_threshold)
     kept, report = neut(image_paths)
 
     os.makedirs(args.out, exist_ok=True)

@@ -166,11 +166,13 @@ def main():
                          "e.g. dinov2_vits14,arcface (overrides --config)")
     ap.add_argument("--save-per-image", action="store_true",
                     help="also write each image's pre-aggregation 205-dim vector")
-    ap.add_argument("--neutralize", choices=["off", "liveportrait"], default="off",
-                    help="relax inputs to a neutral expression before Stage 1 (LivePortrait "
-                         "delta-zeroing; see docs/expression-invariance.md); default off")
+    ap.add_argument("--neutralize", choices=["off", "liveportrait", "kontext"], default="off",
+                    help="relax inputs to a neutral expression before Stage 1 (liveportrait=delta-zero, "
+                         "kontext=FLUX edit; see docs/expression-invariance.md); default off")
     ap.add_argument("--neutralize-alpha", type=float, default=0.0,
-                    help="expression retain factor for --neutralize: 0=full neutral, 1=unchanged")
+                    help="liveportrait expression retain factor: 0=full neutral, 1=unchanged")
+    ap.add_argument("--neutralize-prompt", default=None, help="override the kontext edit prompt")
+    ap.add_argument("--neutralize-steps", type=int, default=28, help="kontext diffusion steps")
     ap.add_argument("--gate-threshold", type=float, default=0.6,
                     help="min ArcFace identity similarity to accept a neutralized image")
     args = ap.parse_args()
@@ -183,6 +185,7 @@ def main():
     if args.neutralize != "off":
         from src.neutralize import Neutralizer
         image_paths, _ = Neutralizer(mode=args.neutralize, alpha=args.neutralize_alpha,
+                                     prompt=args.neutralize_prompt, steps=args.neutralize_steps,
                                      gate_threshold=args.gate_threshold)(image_paths)
 
     if args.ensemble:

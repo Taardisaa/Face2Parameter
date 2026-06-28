@@ -11,3 +11,6 @@ templates
 inputs
 logs
 /docs/ignored/
+hf_token.txt
+*.token
+tests/

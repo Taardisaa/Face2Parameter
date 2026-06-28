@@ -31,14 +31,23 @@ from predict import ensemble_predict, predict_set
 from src.img_utils import list_images
 
 
-def write_card(vector, face_img, template_path: str, out_dir: str, out_name: str) -> str:
-    """Write a 205-dim vector + thumbnail into a copy of the template card."""
+def write_card(vector, face_img, template_path: str, out_dir: str, out_name: str,
+               desmile: float = 0.0) -> str:
+    """Write a 205-dim vector + thumbnail into a copy of the template card.
+
+    ``desmile`` (0..1) optionally relaxes the smile-carrying bones toward their neutral population
+    mean after the vector is written (see src/desmile.py); 0 is a strict no-op.
+    """
     from src.face_data_utils.utils import FaceData  # lazy: needs .exe + stat JSONs
 
     os.makedirs(out_dir, exist_ok=True)
     face_data = FaceData(template_path)
     face_data.set_from_vector(vector, is_simplify=True, without_right=True,
                               denormalize=True, use_gaussian=False)
+    if desmile > 0.0:
+        from src.desmile import desmile_face  # lazy: pulls in the stat tables
+        touched = desmile_face(face_data, desmile)
+        print(f"[infer] de-smile alpha={desmile} -> relaxed {len(touched)} bones toward neutral")
     face_data.set_image(np.asarray(face_img).astype(np.uint8))
     save_path = os.path.join(out_dir, out_name + "_out.png")
     face_data.save(save_path)
@@ -68,13 +77,19 @@ def main():
     ap.add_argument("--ensemble", default=None,
                     help="comma-separated configs to run and merge in param space, "
                          "e.g. dinov2_vits14,arcface (overrides --config)")
-    ap.add_argument("--neutralize", choices=["off", "liveportrait"], default="off",
-                    help="relax inputs to a neutral expression before Stage 1 (LivePortrait "
-                         "delta-zeroing; see docs/expression-invariance.md); default off")
+    ap.add_argument("--neutralize", choices=["off", "liveportrait", "kontext"], default="off",
+                    help="relax inputs to a neutral expression before Stage 1 (liveportrait=delta-zero, "
+                         "kontext=FLUX edit; see docs/expression-invariance.md); default off")
     ap.add_argument("--neutralize-alpha", type=float, default=0.0,
-                    help="expression retain factor for --neutralize: 0=full neutral, 1=unchanged")
+                    help="liveportrait expression retain factor: 0=full neutral, 1=unchanged")
+    ap.add_argument("--neutralize-prompt", default=None, help="override the kontext edit prompt")
+    ap.add_argument("--neutralize-steps", type=int, default=28, help="kontext diffusion steps")
     ap.add_argument("--gate-threshold", type=float, default=0.6,
                     help="min ArcFace identity similarity to accept a neutralized image")
+    ap.add_argument("--desmile", type=float, default=0.0,
+                    help="relax the smile in PARAMETER space: pull mouth/cheek bones toward the neutral "
+                         "population mean by this factor (0=off, 1=fully neutral; try 0.5-0.8). "
+                         "Model-free; see src/desmile.py")
     args = ap.parse_args()
 
     image_paths = list_images(args.image)
@@ -85,6 +100,7 @@ def main():
     if args.neutralize != "off":
         from src.neutralize import Neutralizer
         image_paths, _ = Neutralizer(mode=args.neutralize, alpha=args.neutralize_alpha,
+                                     prompt=args.neutralize_prompt, steps=args.neutralize_steps,
                                      gate_threshold=args.gate_threshold)(image_paths)
 
     if args.ensemble:
@@ -116,7 +132,7 @@ def main():
 
     base = os.path.basename(os.path.normpath(args.image))
     out_name = args.name or (base if os.path.isdir(args.image) else os.path.splitext(base)[0])
-    write_card(vector, face_img, template, out_dir=args.out, out_name=out_name)
+    write_card(vector, face_img, template, out_dir=args.out, out_name=out_name, desmile=args.desmile)
 
 
 if __name__ == "__main__":

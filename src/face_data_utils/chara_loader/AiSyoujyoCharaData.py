@@ -5,7 +5,7 @@ import io
 import json
 import struct
 
-from .funcs import get_png, load_length, load_type, msg_pack, msg_unpack
+from .funcs import get_png, load_length, load_type, msg_pack, msg_unpack, splice_map
 
 
 def bin_to_str(serial):
@@ -334,8 +334,24 @@ class About(BlockData):
 
 
 class KKEx(BlockData):
+    """ExtensibleSaveFormat plugin data (typeless dicts). On save we must NOT re-encode plugins we
+    didn't touch, or msgpack int-minimization corrupts their C# types (see funcs.splice_map). So we
+    keep the original block bytes and only repack the keys actually modified."""
+
     def __init__(self, data, version):
         super().__init__(name="KKEx", data=data, version=version)
+        self._raw = data            # original block bytes
+        self._modified = set()      # keys changed via __setitem__
+
+    def __setitem__(self, key, value):
+        self._modified.add(key)
+        self.data[key] = value
+
+    def serialize(self):
+        if not self._modified:
+            return self._raw, self.name, self.version
+        overrides = {k: self.data[k] for k in self._modified}
+        return splice_map(self._raw, overrides), self.name, self.version
 
 
 class UnknownBlockData(BlockData):

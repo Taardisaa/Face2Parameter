@@ -143,6 +143,17 @@ InsightFace models are restricted to non-commercial research.
 
 #### Option B — 3DMM/FLAME neutralization (more geometrically explicit)
 
+> **Tried (SMIRK) and rejected — render-back loses identity.** Set up SMIRK (CVPR'24) in a WSL2
+> py3.10 env (torch2.0.1/cu118 + pytorch3d; Windows has no pytorch3d wheel). It *does* neutralize
+> expression at the geometry level (flattens the smiling cheeks LivePortrait can't), but the output
+> is a **different person**: FLAME's identity is a coarse 300-dim shape model and SMIRK's neural
+> generator resynthesizes the face region from the generic neutral mesh. Measured **ArcFace id-sim
+> 0.18** to the original (vs **0.98** for LivePortrait) — below the 0.6 gate, so it would be rejected
+> for every image. Conclusion: 3DMM **render-back** is unsuitable when identity preservation is the
+> point. The only viable 3DMM direction is Option C (use the neutral *shape coefficients* as features,
+> never render an image), which is a retrain project, not an inference plugin. Setup scripts kept at
+> `scripts/smirk_*` for the record.
+
 A 3D face model such as [DECA](https://github.com/YadiraF/DECA) or
 [SMIRK](https://github.com/georgeretsi/smirk) decomposes a face into approximately independent
 factors:
@@ -190,6 +201,57 @@ This avoids generative image artifacts entirely and makes expression removal par
 representation. It is architecturally cleaner, but no longer a drop-in inference plugin: the MICA
 features must be extracted for the training set and a matching MLP head must be trained. Its model
 and FLAME dependencies also use research-oriented licenses.
+
+#### Option D — instruction image editor (FLUX.1 Kontext) — **implemented**
+
+> Modern instruction-based editors preserve identity far better than LivePortrait's warp or a 3DMM
+> render. Wired as `--neutralize kontext` via [scripts/flux_neutralize.py](../scripts/flux_neutralize.py)
+> behind the multi-backend [src/neutralize.py](../src/neutralize.py); the same ArcFace gate de-risks it.
+>
+> - **Model:** FLUX.1 Kontext [dev], **GGUF-quantized** transformer (QuantStack `Q4_K_M`, ~6.5 GB,
+>   *not* gated) loaded via diffusers `FluxTransformer2DModel.from_single_file` + `FluxKontextPipeline`,
+>   with `enable_sequential_cpu_offload()` to fit ~5–12 GB VRAM (slow, tens of s/img — fine for filtering).
+> - **Env:** dedicated **Windows uv venv** (`../flux-kontext/.venv`, torch2.6/cu124 + diffusers0.38),
+>   separate from the main venv; linked via `FLUX_PYTHON` / `FLUX_MODEL`. No WSL needed (no compiled-CUDA
+>   blocker, unlike SMIRK's pytorch3d).
+> - **Gating:** the base T5/CLIP/VAE components are gated — accept the license at
+>   huggingface.co/black-forest-labs/FLUX.1-Kontext-dev and provide a token (`hf_token.txt` at repo root,
+>   gitignored, or `HF_TOKEN`). The GGUF transformer is not gated. License is **non-commercial**.
+> - **Prompt:** constrained to expression only ("change expression to neutral, mouth closed; keep
+>   identity / pose / hair / lighting / background"); override with `--neutralize-prompt`.
+> - **Why it should beat the others:** in-context editing keeps the *original pixels* for everything it
+>   isn't told to change, so identity holds (unlike the 3DMM resynthesis that scored 0.18), while still
+>   editing the smile away (unlike LivePortrait, which can't flatten cheek volume). The ArcFace gate is
+>   the safety net: any edit that drifts identity below `--gate-threshold` falls back to the original.
+> - **Outcome (parked):** in practice the de-smile was weak and unreliable even with `--true-cfg` /
+>   negative prompts, the model footprint kept growing (12 B transformer), and prompt tuning had little
+>   effect. Superseded by **Option E** once exact-identity preservation was no longer required.
+
+#### Option E — parameter-space de-smile (model-free) — **recommended**
+
+> Options A–D all fight the smile in **image space** because they assume identity must be preserved
+> *exactly*. Once that constraint is relaxed (minor face adjustments are acceptable as long as the person
+> stays recognizable), the smile can be removed far more simply — in **parameter space**, after prediction.
+>
+> The smile is carried by named bones in the 205-d vector (see
+> [src/face_data_utils/utils.py](../src/face_data_utils/utils.py)): the mouth (`cf_J_Mouth_L/R`,
+> `cf_J_Mouthup`, `cf_J_MouthLow`, `cf_J_MouthBase_tr`, `cf_J_MouthMove`) and the apple/lower cheeks
+> (`cf_J_CheekUp_L/R`, `cf_J_CheekLow_L/R`). We already have each bone's population **mean** in
+> `STATISTICAL_BONE_DATA` (the neutral resting value). De-smile just blends those bones toward their mean:
+>
+> ```
+> new = (1 - alpha) * predicted + alpha * mean      # per smile bone, scale/position/rotation/length
+> ```
+>
+> Wired as `infer.py --desmile <alpha>` ([src/desmile.py](../src/desmile.py), `desmile_face`), applied
+> after `set_from_vector` in `write_card`. `alpha=0` is a strict no-op; `alpha=1` is fully neutral; ~0.5–0.8
+> partially relaxes. Eyes are deliberately untouched (strong identity, not where a closed-mouth smile lives).
+>
+> - **Cost:** none — pure arithmetic, runs in the main `.venv` in microseconds. No model, GPU, env, or
+>   subprocess; no identity gate needed (we're editing geometry directly, not resynthesizing a face).
+> - **Trade-off:** pulling toward the mean removes the subject's genuine mouth/cheek detail in those dims
+>   along with the smile. Accepted under the relaxed-identity constraint. A future refinement is to learn
+>   the *smile direction* from paired neutral/smiling data and subtract only that component.
 
 #### Proposed neutralizer interface
 

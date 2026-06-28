@@ -172,10 +172,23 @@ Flags: `--aggregate {median,mean,trimmed}`, `--aggregate-space {embedding,param}
 overwrite the same `<input>_out.png`). `infer.py` accepts the same directory + flags and writes the
 merged result into a card (the most representative photo becomes the card thumbnail).
 
-**Optional: neutralize inputs (LivePortrait).** If every photo of a subject is smiling, aggregation
-can't remove the smile (it's systematic) and it leaks into the geometry. The optional `--neutralize
-liveportrait` step relaxes each input to a neutral expression *before* Stage 1, then runs the normal
-pipeline. It uses **delta-zeroing** — taking the subject's own face keypoints and zeroing the
+**Recommended: de-smile in parameter space (`--desmile`).** If every photo of a subject is smiling,
+aggregation can't remove the smile (it's systematic) and it leaks into the geometry. The simplest fix is
+*not* to edit the image at all, but to relax the smile **after prediction**: the smile lives in named
+mouth/cheek bones of the 205-d vector, so we pull those toward their neutral population mean by a factor
+`alpha`. Model-free, deterministic, runs in this venv in microseconds — no extra deps, GPU, or identity
+gate. `alpha=0` is off (default), `alpha=1` is fully neutral; `0.5–0.8` partially relaxes. It does adjust
+the subject's real mouth/cheek detail along with the smile, which is fine when exact identity isn't required.
+
+```bash
+python infer.py --config arcface --image inputs/person/ --desmile 0.7 --name person_desmile
+```
+
+**Older alternative: image-space neutralization (parked).** Before the parameter-space approach we tried
+removing the smile in the *image* under a strict identity-preservation constraint. These backends still
+exist but are no longer recommended (weaker results, much heavier). If every photo of a subject is smiling,
+the optional `--neutralize liveportrait` step relaxes each input to a neutral expression *before* Stage 1,
+then runs the normal pipeline. It uses **delta-zeroing** — taking the subject's own face keypoints and zeroing the
 expression deviation (no driver image, so no cross-identity distortion); `--neutralize-alpha` keeps a
 fraction of the expression (0 = full neutral). It's a **prototype**: LivePortrait runs in **this same
 venv** (its torch is unpinned; a few extra deps + ~500 MB weights — one-time setup in
@@ -187,6 +200,16 @@ python tools/neutralize.py --image inputs/person/ --out outputs/_neutral_check  
 python infer.py --config arcface --image inputs/person/ --neutralize liveportrait --name person_neutral
 ```
 
+There's also a stronger backend, **`--neutralize kontext`**, which uses **FLUX.1 Kontext [dev]** (a
+GGUF-quantized instruction image-editor) to edit the expression to neutral while preserving identity —
+better at flattening a smile than LivePortrait. It runs in its own dedicated venv and needs an accepted
+FLUX license + HF token (`hf_token.txt` at repo root, gitignored). Setup in
+[docs/expression-invariance.md](docs/expression-invariance.md):
+
+```bash
+python infer.py --config arcface --image inputs/person/ --neutralize kontext --name person_kontext
+```
+
 Each edit passes an ArcFace identity gate (`--gate-threshold`); failures fall back to the original
 crop. Default is `--neutralize off` (no external dependency).
 
@@ -196,11 +219,74 @@ Export the combined model to ONNX (use `--head-only` to export just the regressi
 python export_onnx.py --config dinov2_vits14 --head <weights.pth> --out outputs/face2param.onnx
 ```
 
+## 6. Offline geometry: mesh, ratio diagnostics & editor
+
+Once you have a card, you can analyse and **refine** it entirely offline — no game, no rendering engine.
+The HS2 face-construction pipeline was reverse-engineered (managed C# + extractable assets, **no Ghidra**),
+so a card's 205-dim vector can be turned into the actual **3D head mesh** it implies, anthropometric **facial
+ratios** can be measured on that mesh, and parameters can be **nudged** to hit named ratio targets. Details:
+[docs/hs2-renderer-and-mesh.md](docs/hs2-renderer-and-mesh.md) (the constructor) and
+[docs/facial-harmony-metric.md](docs/facial-harmony-metric.md) (the metric + editor).
+
+The key enabler: the rig's **named bones are the anthropometric landmarks** (eye corners, nose tip, mouth
+corners, chin, cheek/face-width, brow), so ratios fall out of the bone positions with no vertex labeling and
+the character side is always expression-neutral.
+
+```bash
+# card -> offline 3D head mesh (.obj) + a pure-numpy software render (no game)
+python scripts/hs2_render_mesh.py --card tests/yua_desmile08_out.png
+```
+
+**One-time reference** — the harmony/fidelity scores compare against a population distribution of facial
+ratios sampled from `labels.json` (cached to `data/hs2_head/ratio_reference.npz`):
+
+```bash
+python scripts/face_report.py --build-reference          # ~5000 cards, runs in a minute
+```
+
+**Harmony — is the face a coordinated/typical *combination*?** Per-ratio robust z + a Mahalanobis
+percentile (low = typical). Surfaces "every feature fits but the whole reads off" as numbers. `--card-a/-b`
+compares two cards in σ units.
+
+```bash
+python scripts/face_report.py --card tests/yua_desmile08_out.png
+python scripts/face_report.py --card-a tests/yua_desmile08_out.png --card-b tests/HS2ChaF_20240901192905747.png
+```
+
+**Fidelity — does the card match the input photo?** Reduces both sides to the same ratios and reports
+per-ratio drift in σ. Needs a 68-point detector (`pip install face-alignment`). `--render-backend` detects
+on a render of the card with the *same* detector used on the photo, so landmark-definition bias cancels —
+**trust those deltas** (without it, a rig-bone-vs-skin offset inflates differences).
+
+```bash
+python scripts/face_report.py --card tests/yua_desmile08_out.png --photo tests/yua_ariga_06.jpg --render-backend
+```
+
+**Editor — nudge named ratios → a new card.** Solves for the smallest parameter change that hits your
+targets while holding the other ratios (damped Gauss-Newton over the normalized vector, clamped in range,
+symmetric by construction). Reports the achieved targets, *coupled collateral drift*, and the harmony cost.
+
+```bash
+# presets: thinner face, eyes closer together  (-> new card + before/after render)
+python scripts/face_edit.py --card tests/yua_desmile08_out.png --thinner --eyes-closer \
+    --out tests/yua_thinner_out.png --render
+
+# precise targets (absolute / percent / sigma); --dry-run reports without writing
+python scripts/face_edit.py --card tests/yua_desmile08_out.png \
+    --set "icd/facewidth=-1.5sigma" --set "face_height/width=+8%"
+```
+
+Presets: `--thinner --wider --eyes-closer --eyes-wider --bigger-eyes --smaller-eyes --longer-face
+--rounder-face --slimmer-jaw --narrower-nose` (`--strength`, `--sliders-only` to edit only the in-game
+sliders). Because ratios are face-width-normalized they encode *proportion*, not absolute size. Scripts
+default their output to the gitignored `outputs/`; pass `--out tests/...` to keep results visible.
+
 ## Known Limitations
 
 1. **Expression leakage on smiling inputs.** A strong smile can bleed into the predicted geometry
    (typically a slightly off mouth/jaw), because the DINOv2 features encode expression as well as
-   identity. The expression-invariant ArcFace backbone largely fixes this — see
+   identity. The expression-invariant ArcFace backbone largely fixes this; residual smile can be
+   relaxed directly with `--desmile <alpha>` (parameter-space, no extra deps) — see
    [docs/expression-invariance.md](docs/expression-invariance.md).
 2. **Not meant for 2D anime images.** The intended inputs are HS2 character screenshots and real
    human photos. A 2D illustration can still be mapped to a plausible-looking face vector, but the
