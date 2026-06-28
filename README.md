@@ -168,8 +168,9 @@ python predict.py --ensemble dinov2_vits14,arcface --image dir_of_photos/
 ```
 
 Flags: `--aggregate {median,mean,trimmed}`, `--aggregate-space {embedding,param}`, `--ensemble
-<configs>`, `--save-per-image`. `infer.py` accepts the same directory + flags and writes the merged
-result into a card (the most representative photo becomes the card thumbnail).
+<configs>`, `--save-per-image`, and `--name <basename>` (names the output file so repeated runs don't
+overwrite the same `<input>_out.png`). `infer.py` accepts the same directory + flags and writes the
+merged result into a card (the most representative photo becomes the card thumbnail).
 
 Export the combined model to ONNX (use `--head-only` to export just the regression head):
 

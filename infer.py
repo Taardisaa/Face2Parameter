@@ -56,6 +56,9 @@ def main():
     ap.add_argument("--template", default=None,
                     help="HS2 card to write into; defaults to the bundled assets/default_template.png")
     ap.add_argument("--out", default="outputs")
+    ap.add_argument("--name", default=None,
+                    help="base name for the output card (-> <out>/<name>_out.png); "
+                         "defaults to the image/dir name. Use it to avoid overwriting earlier runs.")
     ap.add_argument("--no-detector", action="store_true",
                     help="skip mtcnn face alignment; aspect-preserving center-crop instead")
     ap.add_argument("--aggregate", choices=["median", "mean", "trimmed"], default="median",
@@ -100,7 +103,7 @@ def main():
         raise FileNotFoundError(f"template card not found: {template} (pass --template <card.png>)")
 
     base = os.path.basename(os.path.normpath(args.image))
-    out_name = base if os.path.isdir(args.image) else os.path.splitext(base)[0]
+    out_name = args.name or (base if os.path.isdir(args.image) else os.path.splitext(base)[0])
     write_card(vector, face_img, template, out_dir=args.out, out_name=out_name)
 
 

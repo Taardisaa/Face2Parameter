@@ -140,7 +140,7 @@ python predict.py --config arcface --image dir_of_photos/ --aggregate trimmed --
 python predict.py --ensemble dinov2_vits14,arcface --image dir_of_photos/
 ```
 
-相关参数：`--aggregate {median,mean,trimmed}`、`--aggregate-space {embedding,param}`、`--ensemble <configs>`、`--save-per-image`。`infer.py` 同样支持目录与上述参数，并把合并后的结果写入角色卡（其中最具代表性的那张照片会作为卡片缩略图）。
+相关参数：`--aggregate {median,mean,trimmed}`、`--aggregate-space {embedding,param}`、`--ensemble <configs>`、`--save-per-image`，以及 `--name <basename>`（指定输出文件名，避免多次运行总是覆盖同一个 `<输入名>_out.png`）。`infer.py` 同样支持目录与上述参数，并把合并后的结果写入角色卡（其中最具代表性的那张照片会作为卡片缩略图）。
 
 将完整模型导出为 ONNX；如只需导出回归头，可添加 `--head-only`：
 

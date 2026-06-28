@@ -61,6 +61,47 @@ win is mostly pose / lighting / detector-noise reduction.
   varied shots beat fifteen near-identical selfies. Aim for a mix: a neutral front shot plus a
   few different angles and expressions.
 
+## When aggregation hurts (observed)
+
+Aggregating a real person's photos produced a result that looked **more uncanny and more generic**
+than both a hand-tuned card and a single-image prediction — notably **over-thick lips**. The inputs
+were a set of photos where the subject was **smiling in nearly all of them**. This is not a bug; two
+mechanisms compound:
+
+1. **Averaging cancels *random* error, not *systematic* bias.** Aggregation removes the part that
+   *differs* between photos. If expressions vary (some smiling, some neutral), the smile is random
+   across the set and the median cancels it → the mouth moves toward neutral. But if **every** photo
+   smiles, the smile is *systematic* — every image "votes" for the same smile-stretched mouth, so the
+   median doesn't remove it, it **locks it in**. A homogeneous (all-smiling) set is the worst case:
+   multi-image cannot synthesize a neutral face out of uniformly non-neutral inputs. (This is the
+   sharp edge of "diversity beats count" above.) ArcFace suppresses *some* expression but not all;
+   the residual, made consistent across the set, becomes visible.
+
+2. **Variance reduction pulls toward the model's mean face (regression to the mean).** The MLP head
+   is an MSE regressor, which is biased toward the training-set mean ("the average HS2 face").
+   Aggregation lowers variance, which pushes the result *closer to that mean point*. So a single-image
+   prediction is noisier but keeps more of the person's idiosyncratic detail, while the aggregate is
+   smoother, more generic, less recognizable. If the mean HS2 face has fuller lips, aggregating makes
+   the lips fuller.
+
+The **thick-lip symptom** is both mechanisms pointing at the mouth: a smile-stretched mouth read as a
+fuller-lip shape param, plus fullness pulled toward the mean — and a uniformly-smiling set freezes it
+in instead of averaging it out.
+
+### Practical guidance (highest leverage first)
+- **Add expression diversity, especially neutral / closed-mouth shots.** This is the only thing that
+  lets the median cancel a smile. With an all-smiling set, multi-image won't fix the mouth.
+- **A/B a single neutral photo vs the aggregate** (`--save-per-image`, then run the most neutral image
+  alone). If the single neutral shot has a better mouth, the homogeneous-set effect is confirmed.
+- **For ArcFace, try `--aggregate mean`** — the canonical face-recognition template is the mean of
+  L2-normalized embeddings; `median` (our default) is more outlier-robust but offers no advantage when
+  all inputs share the same expression.
+- **Try `--ensemble dinov2_vits14,arcface`** and **`--aggregate-space param`** as quick comparisons.
+
+**Bottom line:** aggregation is for erasing random jitter across *diverse* shots, not for distilling a
+neutral identity from many similar (e.g. all-smiling) photos. Homogeneous inputs + the mean-pull
+compound into a more generic, more uncanny result.
+
 ## Cross-backbone ensemble
 
 ArcFace (512-d) and DINOv2 (384-d) have **incompatible feature spaces** — they cannot share an

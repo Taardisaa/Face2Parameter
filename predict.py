@@ -151,7 +151,10 @@ def main():
     ap.add_argument("--head", default=None,
                     help="head weights (.pth); defaults to latest trained exp checkpoint, "
                          "else the bundled release/ head (ignored with --ensemble)")
-    ap.add_argument("--out", default=None, help="defaults to outputs/<image>_out.json (+.npy)")
+    ap.add_argument("--out", default=None, help="defaults to outputs/<name>_out.json (+.npy)")
+    ap.add_argument("--name", default=None,
+                    help="base name for the output files; defaults to the image/dir name. "
+                         "Use it to avoid overwriting earlier runs.")
     ap.add_argument("--no-detector", action="store_true",
                     help="skip mtcnn face alignment; aspect-preserving center-crop instead")
     ap.add_argument("--aggregate", choices=["median", "mean", "trimmed"], default="median",
@@ -188,7 +191,7 @@ def main():
         n_used = {args.config: res["n_used"]}
 
     base = os.path.basename(os.path.normpath(args.image))
-    stem = base if os.path.isdir(args.image) else os.path.splitext(base)[0]
+    stem = args.name or (base if os.path.isdir(args.image) else os.path.splitext(base)[0])
     out_json = args.out or os.path.join("outputs", stem + "_out.json")
     os.makedirs(os.path.dirname(out_json) or ".", exist_ok=True)
     np.save(os.path.splitext(out_json)[0] + ".npy", vec)
