@@ -52,6 +52,8 @@ def main():
     ap.add_argument("--out", required=True, help="output directory")
     ap.add_argument("--alpha", type=float, default=0.0,
                     help="expression retain factor: 0=full neutral, 1=unchanged (try 0.0-0.3)")
+    ap.add_argument("--close-lips", action=argparse.BooleanOptionalAction, default=True,
+                    help="force lips to a closed/neutral state (recommended; avoids open-mouth output)")
     args = ap.parse_args()
 
     # resolve all user paths to absolute BEFORE chdir into the LivePortrait repo
@@ -96,6 +98,14 @@ def main():
             t_new[..., 2].fill_(0)
             x_d_new = x_s_info["scale"] * (x_c_s @ R_s + delta) + t_new
             x_d_new = wrapper.stitching(x_s, x_d_new)
+
+            # force the mouth closed: zeroing exp can leave a parted neutral mouth, and the head has
+            # no mouth-open/close param, so an open mouth gets "matched" by inflating lip thickness.
+            if args.close_lips:
+                source_lmk = crop_info["lmk_crop"]
+                lip_ratio = wrapper.calc_combined_lip_ratio([0.0], source_lmk)  # target = fully closed
+                if lip_ratio[0][0] >= inf_cfg.lip_normalize_threshold:
+                    x_d_new = x_d_new + wrapper.retarget_lip(x_s, lip_ratio)
 
             out = wrapper.warp_decode(f_s, x_s, x_d_new)
             I_p = wrapper.parse_output(out["out"])[0]            # 512x512 RGB crop

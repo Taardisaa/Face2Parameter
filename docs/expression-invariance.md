@@ -98,6 +98,15 @@ an explicitly controlled expression representation rather than unconstrained tex
 >   pose/scale/translation: `x_d = scale·(kp @ R_s + α·exp) + t`, `α=0` for full neutral, then
 >   `stitching`/`warp_decode`. No foreign expression imported → no cross-identity warp. `--neutralize-alpha`
 >   exposes `α` (try 0.0–0.3). The script loads models once and batches a whole folder.
+> - **Lips are force-closed** (lip-normalization: `calc_combined_lip_ratio([0.]) → retarget_lip`).
+>   Without it, zeroing `exp` can leave a parted neutral mouth, and the head has *no* mouth-open/close
+>   param — so an open mouth gets "matched" by inflating lip thickness. Closing the mouth removes that.
+> - **What it does NOT fix — a LivePortrait ceiling:** residual *cheek volume / dimples / overall
+>   smiling gestalt* survives even at `α=0`. LivePortrait's ~21-keypoint expression model doesn't
+>   capture cheek bulge well, and the appearance feature `f_s` bakes in the smile's shading
+>   (cheek highlights, dimple shadows) which warping can't repaint. Fully removing this needs a
+>   different tool (a 3DMM like DECA/EMOCA/SMIRK that models cheek/jaw blendshapes explicitly) or the
+>   training-side fix (expression-augmented training so the head ignores residual smile cues).
 > - **Identity gate:** each edit is accepted only if its ArcFace similarity to the original clears
 >   `--gate-threshold` (reusing this repo's [ArcFaceONNX](../src/models/arcface.py)); else it falls back
 >   to the original. Crops cache under `outputs/_neutralized/`. Delta-zeroing preserves identity far
