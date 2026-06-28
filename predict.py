@@ -166,12 +166,24 @@ def main():
                          "e.g. dinov2_vits14,arcface (overrides --config)")
     ap.add_argument("--save-per-image", action="store_true",
                     help="also write each image's pre-aggregation 205-dim vector")
+    ap.add_argument("--neutralize", choices=["off", "liveportrait"], default="off",
+                    help="relax inputs to a neutral expression before Stage 1 (LivePortrait "
+                         "delta-zeroing; see docs/expression-invariance.md); default off")
+    ap.add_argument("--neutralize-alpha", type=float, default=0.0,
+                    help="expression retain factor for --neutralize: 0=full neutral, 1=unchanged")
+    ap.add_argument("--gate-threshold", type=float, default=0.6,
+                    help="min ArcFace identity similarity to accept a neutralized image")
     args = ap.parse_args()
 
     image_paths = list_images(args.image)
     if not image_paths:
         raise SystemExit(f"no images found at {args.image}")
     use_detector = not args.no_detector
+
+    if args.neutralize != "off":
+        from src.neutralize import Neutralizer
+        image_paths, _ = Neutralizer(mode=args.neutralize, alpha=args.neutralize_alpha,
+                                     gate_threshold=args.gate_threshold)(image_paths)
 
     if args.ensemble:
         config_names = [c.strip() for c in args.ensemble.split(",") if c.strip()]

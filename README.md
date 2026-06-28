@@ -172,6 +172,24 @@ Flags: `--aggregate {median,mean,trimmed}`, `--aggregate-space {embedding,param}
 overwrite the same `<input>_out.png`). `infer.py` accepts the same directory + flags and writes the
 merged result into a card (the most representative photo becomes the card thumbnail).
 
+**Optional: neutralize inputs (LivePortrait).** If every photo of a subject is smiling, aggregation
+can't remove the smile (it's systematic) and it leaks into the geometry. The optional `--neutralize
+liveportrait` step relaxes each input to a neutral expression *before* Stage 1, then runs the normal
+pipeline. It uses **delta-zeroing** — taking the subject's own face keypoints and zeroing the
+expression deviation (no driver image, so no cross-identity distortion); `--neutralize-alpha` keeps a
+fraction of the expression (0 = full neutral). It's a **prototype**: LivePortrait runs in **this same
+venv** (its torch is unpinned; a few extra deps + ~500 MB weights — one-time setup in
+[docs/expression-invariance.md](docs/expression-invariance.md)). Just point `LIVEPORTRAIT_DIR` at the clone.
+
+```bash
+python tools/check_neutralizer.py                                   # verify the external install + flags
+python tools/neutralize.py --image inputs/person/ --out outputs/_neutral_check   # inspect de-smiled crops first
+python infer.py --config arcface --image inputs/person/ --neutralize liveportrait --name person_neutral
+```
+
+Each edit passes an ArcFace identity gate (`--gate-threshold`); failures fall back to the original
+crop. Default is `--neutralize off` (no external dependency).
+
 Export the combined model to ONNX (use `--head-only` to export just the regression head):
 
 ```bash

@@ -142,6 +142,16 @@ python predict.py --ensemble dinov2_vits14,arcface --image dir_of_photos/
 
 相关参数：`--aggregate {median,mean,trimmed}`、`--aggregate-space {embedding,param}`、`--ensemble <configs>`、`--save-per-image`，以及 `--name <basename>`（指定输出文件名，避免多次运行总是覆盖同一个 `<输入名>_out.png`）。`infer.py` 同样支持目录与上述参数，并把合并后的结果写入角色卡（其中最具代表性的那张照片会作为卡片缩略图）。
 
+**可选：中性化输入（LivePortrait）。** 如果某人的所有照片都在笑，聚合无法消除这个（系统性的）笑容，它会泄漏进脸型。可选的 `--neutralize liveportrait` 会在 Stage 1 之前把每张输入图放松成中性表情，再走正常流程。它用的是 **delta-zeroing**——取被试本人的脸部关键点、把表情偏移量归零（不用驱动图，因此没有跨身份的形变失真）；`--neutralize-alpha` 可保留一部分表情（0 = 完全中性）。这是一个**原型**：LivePortrait 可以直接跑在**本项目的同一个 venv** 里（它的 torch 未固定版本；只需额外装几个依赖 + 约 500MB 权重，一次性安装步骤见 [docs/expression-invariance.md](docs/expression-invariance.md)）。把 `LIVEPORTRAIT_DIR` 指向 clone 目录即可。
+
+```bash
+python tools/check_neutralizer.py                                   # 检查外部安装与可用参数
+python tools/neutralize.py --image inputs/person/ --out outputs/_neutral_check   # 先肉眼检查去笑后的裁剪
+python infer.py --config arcface --image inputs/person/ --neutralize liveportrait --name person_neutral
+```
+
+每次编辑都要通过 ArcFace 身份相似度门槛（`--gate-threshold`）；不通过则回退到原图。默认 `--neutralize off`（无需任何外部依赖）。
+
 将完整模型导出为 ONNX；如只需导出回归头，可添加 `--head-only`：
 
 ```bash

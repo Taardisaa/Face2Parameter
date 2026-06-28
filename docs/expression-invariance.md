@@ -62,6 +62,52 @@ an explicitly controlled expression representation rather than unconstrained tex
 
 #### Option A — LivePortrait neutralizer (fastest plugin prototype)
 
+> **Status: implemented (prototype), verified working.** Wired as an optional `--neutralize
+> liveportrait` step in `predict.py`/`infer.py` via [src/neutralize.py](../src/neutralize.py), with an
+> inspect-only [tools/neutralize.py](../tools/neutralize.py) and an install checker
+> [tools/check_neutralizer.py](../tools/check_neutralizer.py). Default is **off**.
+>
+> Realities found while building it:
+> - **LivePortrait runs in *this* venv** (py3.13 / torch2.11 / numpy2). Its torch is *unpinned*; the
+>   "py3.9 / torch2.3" in its guide is just a recommendation, not a hard requirement. The plugin still
+>   shells out to its `inference.py` (simple + isolated) but with **this** interpreter by default.
+>   Setup that worked:
+>   ```bash
+>   git clone --depth 1 https://github.com/KwaiVGI/LivePortrait.git ../LivePortrait
+>   # extra deps not already in our venv (numpy stays 2.x — do NOT install their requirements_base.txt,
+>   # which pins numpy==1.26.4):
+>   .venv/Scripts/python.exe -m pip install tyro imageio-ffmpeg pykalman huggingface_hub
+>   # an ffmpeg binary (inference.py hard-checks `ffmpeg -version`); reuse imageio-ffmpeg's bundled one:
+>   #   copy it to ../LivePortrait/ffmpeg/ffmpeg.exe  (the script adds ./ffmpeg to PATH)
+>   # weights (~500 MB):
+>   .venv/Scripts/python.exe -c "from huggingface_hub import snapshot_download as s; \
+>       s(repo_id='KwaiVGI/LivePortrait', local_dir='../LivePortrait/pretrained_weights', \
+>         allow_patterns=['liveportrait/*','insightface/*'])"
+>   export LIVEPORTRAIT_DIR=../LivePortrait
+>   ```
+> - **Windows console:** LivePortrait's rich progress bar prints a 🚀 emoji that crashes on a GBK
+>   console; the plugin runs the subprocess with `PYTHONUTF8=1 PYTHONIOENCODING=utf-8`.
+> - **Driver-image transfer was tried and abandoned.** There's no native "neutralize" flag
+>   ([#500](https://github.com/KwaiVGI/LivePortrait/issues/500)), and the CLI recipe (drive the source
+>   with a neutral face + `--animation_region exp --no-flag-relative-motion`) **fails**: absolute
+>   *cross-identity* transfer imposes the driver's keypoint geometry on a differently-shaped face,
+>   producing distortion (a neutral painting driver turned a slight smile into a pronounced frown).
+>   Relative motion with a single image nets zero change. So driver-based neutralization is a dead end.
+> - **Method used: delta-zeroing (driver-free)**, in [scripts/lp_neutralize.py](../scripts/lp_neutralize.py).
+>   Take the subject's OWN LivePortrait keypoints and zero the expression deviation while keeping their
+>   pose/scale/translation: `x_d = scale·(kp @ R_s + α·exp) + t`, `α=0` for full neutral, then
+>   `stitching`/`warp_decode`. No foreign expression imported → no cross-identity warp. `--neutralize-alpha`
+>   exposes `α` (try 0.0–0.3). The script loads models once and batches a whole folder.
+> - **Identity gate:** each edit is accepted only if its ArcFace similarity to the original clears
+>   `--gate-threshold` (reusing this repo's [ArcFaceONNX](../src/models/arcface.py)); else it falls back
+>   to the original. Crops cache under `outputs/_neutralized/`. Delta-zeroing preserves identity far
+>   better than the driver approach — verified id-sim **0.98 / 0.79** on real inputs (vs ~0.76 for the
+>   driver), and visually a clean "same person, neutral".
+> - **Licensing:** LivePortrait code is MIT, but its bundled InsightFace weights are
+>   non-commercial-research only.
+> - Still one subprocess per `Neutralizer` call (models load once per call, not per image). A fully
+>   in-process path is a possible future optimization.
+
 [LivePortrait](https://github.com/KlingAIResearch/LivePortrait) supports portrait animation,
 expression retargeting, and precise expression editing. Its output remains photorealistic enough to
 feed the current image backbones, so it is the shortest path to an inference-only plugin:
