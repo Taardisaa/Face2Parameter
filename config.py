@@ -139,6 +139,19 @@ _PRESETS = {
         val_aug_prob=1.0,    # ...and validate on it too
         release_head="release/head_arcface.pth",
     ),
+    # Facial-attractiveness (beauty) head: same frozen DINOv2 backbone, but the MLP
+    # regresses a single 1-5 beauty score (out_dim=1) trained on SCUT-FBP5500.
+    # See docs/beauty-score.md; data prepared by tools/prep_beauty_data.py.
+    "beauty_dinov2_vits14": Config(
+        exp_name="beauty_dinov2_vits14_head",
+        backbone="dinov2_vits14",
+        feature_dim=384,            # backbone-coupled, asserted at build time
+        out_dim=1,                  # single beauty score (raw [1,5], no normalize)
+        data_dir="face2beauty/data/",
+        aug_prob=0.0,               # SCUT has no aug domain
+        val_aug_prob=0.0,
+        num_epoch=30,
+    ),
     # Offline skeleton: no downloads, no real data, tiny + fast.
     "smoke": Config(
         exp_name="smoke",

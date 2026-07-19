@@ -79,6 +79,11 @@ class HeadTrainer:
     # --- loss: split MSE on base (shapeValueFace) vs bone params, matching the old convention ---
     def _loss(self, output, labels):
         b = self.cfg.base_dim
+        # Degenerate split (e.g. the 1-dim beauty head, out_dim <= base_dim): the
+        # output[:, b:] slice would be empty and MSELoss would return NaN. Fall back
+        # to a plain MSE over the whole output.
+        if output.shape[1] <= b:
+            return self.lossfunc(output, labels)
         return self.lossfunc(output[:, :b], labels[:, :b]) + \
             self.lossfunc(output[:, b:], labels[:, b:])
 

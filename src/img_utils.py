@@ -43,12 +43,16 @@ def center_square(img: np.ndarray) -> np.ndarray:
 
 
 def load_face_rgb(path: str, img_size: int, use_detector: bool = True,
-                  return_detected: bool = False):
+                  return_detected: bool = False, detector=None):
     """Return an (img_size, img_size, 3) RGB uint8 face crop ready for the backbone.
 
     With ``return_detected=True`` also returns a bool of whether mtcnn actually found a
     face (vs. the center-crop fallback) -- multi-image mode uses this to skip unaligned
     frames. Default return shape is unchanged for existing single-image callers.
+
+    ``detector`` may be a pre-built ``FaceCrop`` instance to reuse across many calls
+    (constructing one loads the mtcnn ONNX models, so batch callers -- e.g.
+    tools/prep_beauty_data.py -- pass a single shared instance instead of one per image).
     """
     img = cv2.imdecode(np.fromfile(path, dtype=np.uint8), -1)
     if img is None:
@@ -60,8 +64,11 @@ def load_face_rgb(path: str, img_size: int, use_detector: bool = True,
     crop = None
     if use_detector:
         try:
-            from src.face_data_utils.FaceCrop import FaceCrop  # needs mtcnn-onnxruntime
-            faces = FaceCrop().crop(img)
+            fc = detector
+            if fc is None:
+                from src.face_data_utils.FaceCrop import FaceCrop  # needs mtcnn-onnxruntime
+                fc = FaceCrop()
+            faces = fc.crop(img)
             if faces and np.ndim(faces[0]) == 3:
                 crop = faces[0]
             else:

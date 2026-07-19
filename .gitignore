@@ -14,3 +14,6 @@ logs
 hf_token.txt
 *.token
 tests/
+face2beauty/SCUT-FBP5500-Database-Release/
+face2beauty/data/
+face2beauty/zips/
