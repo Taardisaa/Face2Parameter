@@ -32,3 +32,13 @@ onnxruntime-directml==1.24.4
 # Python 3.13 so it needs the imghdr backport, and FaceCrop.py shims its old cv2 import.
 mtcnn-onnxruntime==0.0.1
 standard-imghdr==3.13.0
+
+# Differentiable rasterizer for the offline HS2 face renderer (scripts/hs2_render_textured.py).
+# Not on PyPI; build from source against the venv torch, and compile its CUDA plugin (lazy,
+# on first use) inside an MSVC dev environment:
+#   pip install ninja
+#   "<VS>\VC\Auxiliary\Build\vcvars64.bat"   # puts cl.exe on PATH (needs nvcc + ninja too)
+#   pip install --no-build-isolation git+https://github.com/NVlabs/nvdiffrast.git
+# Once the plugin is compiled it is cached, so later runs need no MSVC env.
+ninja==1.13.0
+# nvdiffrast==0.4.0  (installed from git+https://github.com/NVlabs/nvdiffrast.git)

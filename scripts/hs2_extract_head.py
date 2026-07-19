@@ -89,6 +89,11 @@ def extract_mesh_and_skeleton():
     faces = np.asarray(h.m_IndexBuffer, dtype=np.int64).reshape(-1, 3)
     bidx = np.asarray(h.m_BoneIndices, dtype=np.int64).reshape(-1, 4)
     bw = np.asarray(h.m_BoneWeights, dtype=np.float32).reshape(-1, 4)
+    # UV0 (per-vertex texture coords) for textured rendering; some meshes may lack it
+    uv = (np.asarray(h.m_UV0, dtype=np.float32).reshape(-1, 2)
+          if getattr(h, "m_UV0", None) is not None and len(h.m_UV0)
+          else np.zeros((len(verts), 2), np.float32))
+    print(f"[mesh] uv0: {uv.shape[0]} coords")
     # bindpose (Matrix4x4) list -> (N,4,4)
     bind = []
     for m4 in mesh.m_BindPose:
@@ -123,11 +128,74 @@ def extract_mesh_and_skeleton():
 
     return {
         "verts": verts, "faces": faces, "bone_idx": bidx, "bone_w": bw,
-        "bindpose": bind,
+        "bindpose": bind, "uv": uv,
         "skin_bone_pids": [str(p) for p in skin_bone_pids],
         "skin_bone_names": skin_bone_names,
         "skel": skel,
     }
+
+
+def extract_head_textures(out_dir):
+    """Export the o_head material's IN-BUNDLE textures to out_dir/textures/*.png + a manifest.
+
+    The face material is ``cf_m_skin_head_01_create``; its in-bundle slots are the head
+    detail/mask layers (``cf_head_00_ml`` / ``cf_head_00_mask`` / ``detail_skin_s``). The base
+    skin ``_MainTex`` is an EXTERNAL/runtime-composed asset (m_FileID != 0) and is logged+skipped
+    here (a later brick resolves it cross-bundle + reproduces the runtime skin composition).
+    """
+    env = UnityPy.load(FO_HEAD)
+    objs = list(env.objects)
+    smr_obj = None
+    for o in objs:
+        if o.type.name != "SkinnedMeshRenderer":
+            continue
+        try:
+            if o.read().m_Mesh.read().m_Name == "o_head":
+                smr_obj = o
+                break
+        except Exception:
+            continue
+    if smr_obj is None:
+        print("[tex] o_head SMR not found; skipping textures")
+        return {}
+
+    mat_pids = {mp["m_PathID"] for mp in smr_obj.read_typetree().get("m_Materials", [])}
+    tex_by_pid = {o.path_id: o for o in objs if o.type.name == "Texture2D"}
+    tex_dir = os.path.join(out_dir, "textures")
+    os.makedirs(tex_dir, exist_ok=True)
+
+    material_name, slots = None, {}
+    for o in objs:
+        if o.type.name != "Material" or o.path_id not in mat_pids:
+            continue
+        mtt = o.read_typetree()
+        material_name = mtt.get("m_Name")
+        for te in mtt.get("m_SavedProperties", {}).get("m_TexEnvs", []):
+            slot = te[0] if isinstance(te, (list, tuple)) else te.get("first")
+            tenv = te[1] if isinstance(te, (list, tuple)) else te.get("second")
+            texref = (tenv or {}).get("m_Texture", {}) or {}
+            file_id, pid = texref.get("m_FileID", 0), texref.get("m_PathID", 0)
+            if not pid:
+                continue
+            if file_id != 0 or pid not in tex_by_pid:
+                print(f"[tex]   {slot}: external/unresolved (m_FileID={file_id}) -> skip")
+                continue
+            try:
+                t = tex_by_pid[pid].read()
+                img = t.image
+                fname = f"{t.m_Name}.png"
+                img.save(os.path.join(tex_dir, fname))
+            except Exception as exc:  # noqa: BLE001 - undecodable texture format: log & skip
+                print(f"[tex]   {slot}: decode failed ({type(exc).__name__}: {exc}) -> skip")
+                continue
+            slots[slot] = {"name": t.m_Name, "file": f"textures/{fname}",
+                           "w": img.width, "h": img.height}
+            print(f"[tex]   {slot} -> {fname} ({img.width}x{img.height})")
+
+    with open(os.path.join(tex_dir, "manifest.json"), "w", encoding="utf-8") as f:
+        json.dump({"material": material_name, "slots": slots}, f, indent=2)
+    print(f"[tex] {len(slots)} in-bundle texture(s) -> {tex_dir}")
+    return slots
 
 
 def _read_dotnet_string(br):
@@ -199,7 +267,7 @@ def main():
     m = extract_mesh_and_skeleton()
     np.savez(os.path.join(OUT, "o_head_mesh.npz"),
              verts=m["verts"], faces=m["faces"], bone_idx=m["bone_idx"],
-             bone_w=m["bone_w"], bindpose=m["bindpose"])
+             bone_w=m["bone_w"], bindpose=m["bindpose"], uv=m["uv"])
     with open(os.path.join(OUT, "skeleton.json"), "w", encoding="utf-8") as f:
         json.dump({"skin_bone_pids": m["skin_bone_pids"],
                    "skin_bone_names": m["skin_bone_names"],
@@ -210,6 +278,7 @@ def main():
     ch = parse_customhead()
     with open(os.path.join(OUT, "customhead.json"), "w", encoding="utf-8") as f:
         json.dump(ch, f)
+    extract_head_textures(OUT)
     print(f"\n[done] cached -> {OUT}")
 
 
