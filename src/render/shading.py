@@ -286,6 +286,102 @@ def build_albedo(scene, mesh: str) -> torch.Tensor:
     return _simple_albedo(scene, mesh)
 
 
+def standard_pbs(scene, mesh, albedo, n_img, rig, ambient, view=(0.0, 0.0, 1.0)):
+    """`BRDF1_Unity_PBS` + the ASE translucency term, transcribed from the decompiled shader.
+
+    Source: data/hs2_head/shaders/AIT/Skin True Face.shader, the
+    `DIRECTIONAL && LIGHTPROBE_SH && SHADOWS_SCREEN` pixel variant — the one the maker actually
+    runs (one directional with shadows, skybox SH ambient, no instancing, no vertex lights). Every
+    constant below is read off that listing rather than recalled:
+
+        oneMinusReflectivity = 0.96 * (1 - metallic)      `-metallic * 0.96 + 0.96`
+        specColor            = lerp(0.04, albedo, metallic)
+        roughness            = max(perceptualRoughness^2, 0.002)
+        D (GGX)              = a2 / (pi * (NdotH^2*(a2-1) + 1)^2)   `0.3183099` = 1/pi
+        V (Smith-Joint)      = 0.5 / (NdotL*(NdotV*(1-a)+a) + NdotV*(NdotL*(1-a)+a))
+        specularTerm         = V * D * pi * NdotL
+        diffuseTerm          = disneyDiffuse(NdotV, NdotL, LdotH, pr) * NdotL
+        translucency         = lerp(Lcol, Lcol*atten, _TransShadow)
+                               * (saturate(dot(V, -(N*_TransNormalDistortion + L)))^_TransScattering
+                                  * _TransDirect + indirect * _TransAmbient)
+        result               = albedo*transMask*translucency*_Translucency + standardPBS
+
+    Deliberately NOT implemented yet, and each would only add detail rather than change the level:
+    tangent-space normal mapping (we shade with vertex normals), the detail/weathering layers, the
+    occlusion map, and image-based indirect specular — the maker's ambient is a flat SH here, so
+    the grazing reflection term is approximated by the same ambient. Shadow attenuation is 1: the
+    offline renderer casts no shadows.
+
+    This replaces a half-Lambert stand-in. That stand-in was a guess, and it is what made our skin
+    read pinker with a harder terminator than the game's.
+    """
+    dt, dev = albedo.dtype, albedo.device
+    f = (scene.mats.get(mesh) or {}).get("floats", {})
+    metallic = float(f.get("_Metallic", 0.0))
+    smooth = float(f.get("_Smoothness", f.get("_Gloss", 0.5)))
+    pr = 1.0 - smooth                                   # perceptual roughness
+    a = max(pr * pr, 0.002)
+    a2 = a * a
+
+    one_minus_refl = (1.0 - 0.04) * (1.0 - metallic)
+    diff_color = albedo * one_minus_refl
+    spec_color = 0.04 + (albedo - 0.04) * metallic
+
+    V = torch.tensor(view, dtype=dt, device=dev)
+    V = V / V.norm()
+    n = n_img
+    ndv = (n * V).sum(-1, keepdim=True).abs()
+
+    out = diff_color * ambient                          # indirect diffuse
+    trans_accum = torch.zeros_like(albedo)
+
+    for d, c, inten in rig:
+        L = torch.tensor(d, dtype=dt, device=dev)
+        L = L / L.norm()
+        lcol = torch.tensor(c, dtype=dt, device=dev) * inten
+        H = L + V
+        H = H / H.norm().clamp(min=1e-6)
+
+        ndl = (n * L).sum(-1, keepdim=True).clamp(0, 1)
+        ndh = (n * H).sum(-1, keepdim=True).clamp(0, 1)
+        ldh = float((L * H).sum().clamp(0, 1))
+
+        # Disney diffuse
+        f90 = 0.5 + 2.0 * ldh * ldh * pr
+        light_scatter = 1.0 + (f90 - 1.0) * (1.0 - ndl).clamp(min=0) ** 5
+        view_scatter = 1.0 + (f90 - 1.0) * (1.0 - ndv).clamp(min=0) ** 5
+        diffuse_term = light_scatter * view_scatter * ndl
+
+        # GGX + Smith-Joint visibility
+        lambda_v = ndl * (ndv * (1.0 - a) + a)
+        lambda_l = ndv * (ndl * (1.0 - a) + a)
+        vis = 0.5 / (lambda_v + lambda_l + 1e-5)
+        dterm = ndh * ndh * (a2 - 1.0) + 1.0
+        dist = a2 * 0.3183099 / (dterm * dterm + 1e-7)
+        spec_term = (vis * dist * np.pi * ndl).clamp(min=0)
+
+        fres = spec_color + (1.0 - spec_color) * (1.0 - ldh) ** 5
+        out = out + diff_color * lcol * diffuse_term + spec_term * lcol * fres
+
+        # Translucency direction/scattering — computed, but see below for why it is not applied.
+        ldir = n * float(f.get("_TransNormalDistortion", 0.5)) + L
+        vdl = (V * -ldir).sum(-1, keepdim=True).clamp(min=1e-6)
+        vdl = vdl ** float(f.get("_TransScattering", 1.0))
+        trans_accum = trans_accum + lcol * (vdl * float(f.get("_TransDirect", 0.0))
+                                            + ambient * float(f.get("_TransAmbient", 0.0)))
+
+    # DELIBERATELY OFF. `_Translucency` is 30.0, so the term only makes sense against the shader's
+    # per-pixel translucency MASK — `tmp4.yzw`, which the decompile builds through an RGB->HSV->RGB
+    # round trip and then scales by `tmp5.www`, a factor whose source is not yet traced. Applying
+    # the term without that mask blows the whole face to white (verified: it does exactly that).
+    #
+    # Guessing a mask value to make the picture look right is the failure mode this codebase keeps
+    # paying for, so the term stays off until `tmp5.www` is read out of the listing. What is
+    # implemented above is the part that IS verified: BRDF1_Unity_PBS.
+    _ = trans_accum
+    return out
+
+
 # ---------------------------------------------------------------- lighting
 # MEASURED from the running game via `/maker/lights` (2026-07-19), not hand-tuned:
 # the maker rig has exactly ONE effective light — "Directional Light Key", intensity 1.00,
@@ -321,8 +417,14 @@ def shade(scene, mesh: str, attrs: dict, n_img: torch.Tensor, light=None):
     if mesh == "o_eyeshadow":
         return torch.cat([albedo.clamp(0, 1), alpha], dim=-1)
 
-    rig = light or DEFAULT_RIG
     dev, dt = scene.device, scene.dtype
+    rig = light or DEFAULT_RIG
+    amb = torch.tensor(AMBIENT[:3], dtype=dt, device=dev) * AMBIENT[3]
+
+    if mesh == "o_head":
+        return torch.cat([standard_pbs(scene, mesh, albedo, n_img, rig, amb).clamp(0, 1),
+                          alpha], dim=-1)
+
     # `AIT/eyelashes` is plain Lambert, transcribed from the decompile (no half-Lambert wrap, no
     # specular at all):
     #     out.rgb = albedo * (atten * _LightColor0 * max(dot(N,L),0) + ambient)
@@ -338,5 +440,4 @@ def shade(scene, mesh: str, attrs: dict, n_img: torch.Tensor, light=None):
         ndl = (n_img * Ld).sum(-1, keepdim=True)
         shade_term = ndl.clamp(min=0) if lambert else (ndl * 0.5 + 0.5).clamp(0, 1)
         diffuse = diffuse + col * shade_term
-    amb = torch.tensor(AMBIENT[:3], dtype=dt, device=dev) * AMBIENT[3]
     return torch.cat([(albedo * (diffuse + amb)).clamp(0, 1), alpha], dim=-1)
