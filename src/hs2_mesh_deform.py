@@ -153,10 +153,20 @@ def _fk_world(rig: HeadRig, shape_face=None, ab_data=None):
     src_pos = np.zeros((len(src_names), 3)); src_rot = np.zeros((len(src_names), 3))
     src_scl = np.ones((len(src_names), 3))
     if shape_face is not None:
+        # A category the caller did not supply is NOT harmless. Stage 2 below overwrites a driven
+        # bone's rest transform with its source bone's value, so a missing slider silently writes
+        # the neutral default over the rest pose and deforms that bone — this is exactly how the
+        # ears came out collapsed and crumpled while every self-check still passed. Refuse the
+        # short vector instead of quietly producing a wrong mesh.
+        need = max(row["category"] for row in rig.customhead) + 1
+        if len(shape_face) < need:
+            raise ValueError(
+                f"shape_face has {len(shape_face)} sliders but this rig's customhead table drives "
+                f"categories 0..{need - 1}. The missing ones would overwrite their bones' rest pose "
+                f"with defaults rather than be skipped. NB the 54-dim ML label vector is NOT the "
+                f"rig input — categories 54..58 are the ear knobs (see fd_to_inputs).")
         for row in rig.customhead:
             cat = row["category"]
-            if cat >= len(shape_face):
-                continue
             bone = row["bone"]; use = row["use"]
             if bone not in rig.anm or bone not in src_idx:
                 continue

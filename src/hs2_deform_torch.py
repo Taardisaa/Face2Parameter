@@ -3,8 +3,14 @@
 Same reverse-engineered pipeline, same data tables (data/hs2_head/{head_N/anmShapeHead,customhead,
 enums,update_eqns}.json); only the arithmetic moves to torch so gradients reach the *parameters*:
 
-    shapeValueFace(54) + ABMX(30x10)  ->  keyframe lerp  ->  Update() equations  ->  ABMX
+    shapeValueFace(59) + ABMX(30x10)  ->  keyframe lerp  ->  Update() equations  ->  ABMX
                                       ->  FK world matrices  ->  LBS  ->  verts
+
+NB **59, not 54**. The ML label vector carries 54 sliders; the rig is driven by 59 — categories
+54-58 are the ear knobs (`FaceData.base_data` drops them, commented "without ear data"). Feeding
+the rig 54 does not leave the ears at rest: the Update equations OVERWRITE each driven bone's rest
+transform from its source bone, so absent sliders write neutral defaults over the rest pose and
+the ears come out collapsed and crumpled. Both entry points now refuse a short vector.
 
 Every stage is smooth in the parameters (piecewise-linear interpolation, quaternion composition,
 matrix products), so `verts` is differentiable w.r.t. both inputs — that is what makes
@@ -16,7 +22,7 @@ inherently sequential).
 
     from src.hs2_deform_torch import TorchHeadRig
     trig = TorchHeadRig(HeadRig(2), device="cuda")
-    verts = trig(shape_face, ab)          # (B,54), (B,30,10) -> (B,V,3), autograd-ready
+    verts = trig(shape_face, ab)          # (B,59), (B,30,10) -> (B,V,3), autograd-ready
 
 Self-check (torch vs numpy, and autograd vs finite differences):
     .venv/Scripts/python.exe -m src.hs2_deform_torch --card tests/HS2ChaF_20240901192905747.png
@@ -27,7 +33,7 @@ Two *expected* sources of zero gradient — both verified faithful to the game, 
     mattering once the submeshes are skinned and rendered.
   * sliders parked outside [0,1]. SliderUnlocker lets cards store e.g. -0.35, and the game's
     keyframe table is constant beyond its ends, so the derivative there really is 0. On the test
-    card 5 of 54 sliders sit at or past a rail — an optimizer should keep params inside [0,1].
+    card 5 of 59 sliders sit at or past a rail — an optimizer should keep params inside [0,1].
 """
 from __future__ import annotations
 
@@ -109,8 +115,14 @@ class TorchHeadRig:
         src_names = rig.enums["src"]
         self.n_src = len(src_names)
         src_idx = {n: i for i, n in enumerate(src_names)}
+        # Every category the table drives, NOT just the 54 the ML label vector carries: dropping
+        # categories 54-58 does not leave the ear bones at rest, it lets the Update equations write
+        # neutral defaults over their rest pose. See src/hs2_mesh.fd_to_inputs.
         rows = [r for r in rig.customhead
-                if r["bone"] in rig.anm and r["bone"] in src_idx and r["category"] < 54]
+                if r["bone"] in rig.anm and r["bone"] in src_idx]
+        self.n_slider = max(r["category"] for r in rig.customhead) + 1
+        # kept so the self-check can guarantee it probes the ear knobs (categories 54-58)
+        self.ear_cats = sorted({r["category"] for r in rows if "Ear" in r["bone"]})
         ks = {len(rig.anm[r["bone"]]) for r in rows}
         if len(ks) != 1:
             raise ValueError(f"expected a uniform keyframe count, got {sorted(ks)}")
@@ -202,13 +214,18 @@ class TorchHeadRig:
 
     # ------------------------------------------------------------------ forward
     def source_values(self, shape_face: torch.Tensor) -> torch.Tensor:
-        """(B,54) sliders -> (B, 3*3*n_src) concatenated cf_s_ [pos|rot|scl] source values.
+        """(B,59) sliders -> (B, 3*3*n_src) concatenated cf_s_ [pos|rot|scl] source values.
 
         `AnimationKeyInfo.GetInfo`: keyframes are evenly spaced over [0,1]; the segment index is
         piecewise-constant (no gradient) and the fraction `t` carries it — exactly the derivative
         of the piecewise-linear interpolant the game evaluates.
         """
         B = shape_face.shape[0]
+        if shape_face.shape[1] < self.n_slider:
+            raise ValueError(
+                f"shape_face has {shape_face.shape[1]} sliders, the rig drives {self.n_slider}. "
+                f"Categories 54..58 are the ear knobs and are NOT part of the 54-dim label vector; "
+                f"a short vector silently deforms the ears rather than leaving them at rest.")
         rate = shape_face.index_select(1, self.row_cat).clamp(0, 1)            # (B,R)
         x = rate * (self.n_key - 1)
         i = x.floor().clamp(max=self.n_key - 2).detach().long()                # (B,R) segment
@@ -272,7 +289,7 @@ class TorchHeadRig:
         return torch.stack(world, dim=1)
 
     def forward(self, shape_face=None, ab=None) -> torch.Tensor:
-        """(B,54) sliders + (B,30,10) ABMX -> (B,V,3) skinned vertices."""
+        """(B,59) sliders + (B,30,10) ABMX -> (B,V,3) skinned vertices."""
         world = self.bone_world(shape_face, ab)
         skin = world.index_select(1, self.skin_bone) @ self.bindpose           # (B,43,4,4)
         M = skin[:, self.bone_idx.reshape(-1)].view(
@@ -344,7 +361,7 @@ class TorchHeadRig:
         return torch.as_tensor(v, dtype=self.dtype, device=self.device).unsqueeze(0).repeat(batch, 1, 1)
 
     def from_card(self, card_path: str):
-        """(shape_face (1,54), ab (1,n_ab,10)) for a card — mirrors src/hs2_mesh.fd_to_inputs."""
+        """(shape_face (1,59), ab (1,n_ab,10)) for a card — mirrors src/hs2_mesh.fd_to_inputs."""
         from .face_data_utils.utils import FaceData
         from .hs2_mesh import fd_to_inputs
         shape_face, ab_data = fd_to_inputs(FaceData(card_path))
@@ -382,7 +399,7 @@ def _check(card, head_id=None, seed=0):
               f"{'OK' if err < 1e-9 else 'MISMATCH'}")
 
     # 2) autograd vs finite differences, on BOTH halves of the parameter vector
-    #    (54 sliders and the 30x10 ABMX block — the latter is 150 of the 205 label dims)
+    #    (59 rig sliders and the 30x10 ABMX block — the latter is 150 of the 205 label dims)
     rng = np.random.default_rng(seed)
     sfv, abv = sf.clone().requires_grad_(True), ab.clone().requires_grad_(True)
     trig(sfv, abv).square().sum().backward()
@@ -397,7 +414,12 @@ def _check(card, head_id=None, seed=0):
     atol = abs(loss0) * 2.22e-16 / eps
     print(f"[jacobian] loss={loss0:.4e}  fd noise floor (atol) = {atol:.2e}, rtol = {rtol}")
 
-    probes = [("slider", (int(p),)) for p in rng.choice(54, 5, replace=False)]
+    # Probe the FULL slider range, not the label vector's 54: the ear knobs live at 54..58 and a
+    # probe set that stopped at 54 is part of why they stayed broken while this check kept passing.
+    # The two ear categories are always included so the coverage cannot regress by luck of the draw.
+    ear_cats = [c for c in trig.ear_cats if c >= 54][:2]
+    others = [int(p) for p in rng.choice(trig.n_slider, 5, replace=False) if p not in ear_cats]
+    probes = [("slider", (int(p),)) for p in ear_cats + others[:5 - len(ear_cats)]]
     probes += [("abmx", (int(b), int(c)))
                for b, c in zip(rng.choice(len(trig.ab_names), 5), rng.choice(10, 5))]
     bad = 0

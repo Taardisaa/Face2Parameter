@@ -35,13 +35,23 @@ def card_head_id(card_path: str) -> int:
 
 
 def fd_to_inputs(fd):
-    """(shape_face(54), ab_data) from a loaded FaceData — the inputs build_mesh / landmarks consume.
+    """(shape_face(59), ab_data) from a loaded FaceData — the inputs build_mesh / landmarks consume.
 
     Reads fd.base_data (not card_data.Custom): at load it equals the stored shapeValueFace, and unlike
     card_data.Custom it also reflects an in-memory set_from_vector (which only writes base_data/ab_data).
+
+    ...for the first 54. `FaceData.base_data` deliberately stops there ("without ear data") because
+    the ML LABEL vector excludes the five ear knobs — but the RIG is not the label. Categories 54-58
+    drive `cf_s_Ear*`, and `_fk_world` OVERWRITES a driven bone's rest transform with its source
+    bone's value, so an absent slider does not leave the ear at rest: it writes the default
+    (pos 0 / rot 0 / scl 1) over the rest pose, which is not the same thing as sampling the
+    keyframes at the card's value — even when that value is the neutral 0.5. That silently
+    collapsed and crumpled the ears. Read the ear block straight off the card; the model never
+    writes it, so base_data has nothing newer to offer.
     """
     from .face_data_utils.utils import BONE_NAME_LIST
     shape_face = list(fd.base_data[:54])
+    shape_face += [float(v) for v in fd.card_data.Custom["face"]["shapeValueFace"][54:59]]
     ab_data = {}
     for name in BONE_NAME_LIST:
         ab = fd.ab_data.get(name)
