@@ -306,3 +306,79 @@ dotnet build -c Release && cd USCSandbox/bin/Release/net8.0 && cp ../../../../Fi
 ```
 
 产物已缓存到 `data/hs2_head/shaders/`(gitignore,2.3 MB)。
+
+---
+
+## 2026-07-20 · 消融验证工具,以及被它推翻的四个结论
+
+### 新增能力(bridge v0.15.0)
+
+反编译能告诉你 shader **写了什么**,但不能告诉你某一项在最终图像里**贡献了多少**。
+后者才是移植正确性的判据。两个端点补上这一环:
+
+- `POST /maker/material {mesh, property, value|color, restore}` —— 在游戏里把某个 shader 项归零,
+  与正常截图相减 = **该项的精确贡献**。
+- `GET /maker/render?hide_meshes=o_eyelashes` —— 按网格名隐藏 renderer,两边用**同样方式**做
+  有/无差分来隔离图层。
+
+Python 侧:`scripts/hs2_capture_gt.py::aligned_framing()`(相机对齐,必须先用)。
+
+### 已用它定案的事实
+
+| 项 | 游戏的真实贡献(消融测得) | 结论 |
+| --- | --- | --- |
+| `_Translucency` | 40% 像素,+[21.4, 14.1, 11.3],覆盖全脸 | **暖色主来源**;我们缺它 → 偏冷偏灰 |
+| `_Gloss`(镜面) | 18% 像素,平均仅 **[−1.05, −0.77, −0.61]** | 游戏镜面近乎可忽略;我们强 **16×**,已关停 |
+| 睫毛图层 | ink@40 = 0.320 | 我们 ×1 采样时 1.168、**×2 超采样 0.943** |
+
+### 睫毛:shader 是对的,问题是抗锯齿
+
+`AIT/eyelashes` 完整数学(逐行转录,已验证):
+
+```
+albedo = t.R × _Color.rgb                         // R 通道,不是 alpha
+alpha  = min(t.R^k, 1),  k = (1−_Color.a)×2 + _CutoutScale
+a2     = alpha × saturate(2×_Color.a)
+if (max(Bayer4x4抖动, a2) − _Cutoff < 0) discard  // 我们原先完全没有这个测试
+out.rgb = albedo × (atten × _LightColor0 × max(dot(N,L),0) + ambient)   // 普通 Lambert,有光照
+out.a   = alpha
+```
+
+(recipe 上文那条"睫毛遮罩通道 ⏳ 未定"据此**关闭**:是 **R**。)
+
+游戏通过 **4× MSAA** 的 RenderTexture 截图。我们渲走样图,把睫毛压成"过深的核心 + 缺失的柔和过渡" ——
+这就是肉眼看到的"浓"。`src/render/scene.py::render(ss=2)` 默认 2× 超采样,成本约 0(36.3 vs 35.9 ms)。
+
+### ⚠️ 被推翻的四个结论(记下来避免重犯)
+
+1. ~~"我们的睫毛多 44% 墨水"~~ —— 指标用**各自图像**的局部皮肤亮度作基准,而两边皮肤差 13%。
+2. ~~"超采样没用"~~ —— 用的就是上面那个坏指标。
+3. ~~"我们覆盖面积小 8 倍"~~ —— 游戏侧差分图里混着**整张脸的残差**(鼻/唇/耳都可见),
+   低阈值量到的大部分不是睫毛;只有 |Δ|>40 才在比睫毛。
+4. ~~"眉毛和睫毛都暗 24–38%"~~ —— 阈值指标把"强度"和"扩散"混为一谈。
+
+**教训:数字反直觉时,先验证指标,再解释结果。** 在一个本身错误的指标上测掉了四个假设。
+
+### ⚠️ 第三次踩同一个坑:提取的资产 ≠ 运行时真值
+
+`_Smoothness` 在提取的材质 JSON 里存在,但**运行时材质没有这个属性**(`/maker/material` 返回 404);
+真正的是 `_Gloss`。前两次是①眉毛布局(材质存默认值,运行时由卡片经 Lerp 算出)、
+②皮肤材质运行时被替换。**移植前先用 `/maker/material` 问游戏,不要信 JSON。**
+
+### 未完成:皮肤 translucency
+
+`AIT/Skin True Face` 的 translucency 项结构(已从反编译读出):
+
+```
+mask      = _NailMask.a                    // tmp5 = tex2D(_NailMask, uv),tmp5.w 存活到最后
+transColor= RGB→HSV→RGB 往返,源色由 _Color / _Color13 / _Color4 混合
+                                           // _Color4 = [0.5, 0, 0, 0.66] 是血红色
+trans     = diffColor × transColor × mask
+            × lerp(Lcol, Lcol×atten, _TransShadow)
+            × (VdotL^_TransScattering × _TransDirect + indirect × _TransAmbient)
+            × _Translucency(=30)
+```
+
+**还差**:HSV 链里 `tmp1.w`(明度修正)与源色混合权重的最后几跳。
+`_NailMask.a` 均值 0.58 × 30 = 17.4,量级明显不对,说明链条里还有衰减未读到。
+**验收标准已就位**:用消融隔离出我们的 translucency 贡献,与游戏的 +[21.4, 14.1, 11.3] / 40% 对比。
