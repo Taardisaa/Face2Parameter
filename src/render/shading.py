@@ -207,7 +207,21 @@ def _lash_albedo(scene, mesh: str) -> torch.Tensor:
     k = (1.0 - float(col[3])) * 2.0 + _flt(scene, mesh, "_CutoutScale", 1.0)
     r = t[..., :1]
     a = torch.clamp(r.clamp(min=1e-6) ** max(k, 1e-3), max=1.0)
-    return torch.cat([r * col[:3], a], dim=-1)
+
+    # The shader's alpha TEST, which this was missing entirely. Decompiled:
+    #     tmp1.x = saturate(_Color.w + _Color.w);
+    #     tmp1.x = tmp0.x * tmp1.x;          // alpha, scaled
+    #     ... 4x4 Bayer dither on screen position ...
+    #     tmp1.x = max(dither_passed, tmp1.x);
+    #     if (tmp1.x - _Cutoff < 0) discard;
+    # Without it we kept every faint fringe texel the game throws away, which is what made our
+    # lashes carry 44% more total darkness than the game's and gave the eye a soft speckled rim.
+    # The dither is a screen-door pattern for the cheap transparency; it only ever RESCUES a texel
+    # (`max`), so ignoring it is conservative — it can cost a little coverage, never add any.
+    cutoff = _flt(scene, mesh, "_Cutoff", 0.1)
+    keep = (a * min(2.0 * float(col[3]), 1.0) >= cutoff).to(a.dtype)
+    a = a * keep
+    return torch.cat([r * col[:3] * keep, a], dim=-1)
 
 
 def _eyeshadow_albedo(scene, mesh: str) -> torch.Tensor:
@@ -303,20 +317,26 @@ def shade(scene, mesh: str, attrs: dict, n_img: torch.Tensor, light=None):
     if mesh == "o_head" and attrs.get("uv1") is not None and attrs.get("vcol") is not None:
         albedo = brow_layer(scene, albedo, attrs["uv1"], attrs["vcol"])
 
-    # These two shaders write their result straight to SV_Target with no lighting term at all
-    # (the eyeshadow's frag is a pure tint; the lash's is `t.r * _Color`), so lighting them again
-    # would double-shade them.
-    if mesh in ("o_eyeshadow", "o_eyelashes"):
+    # The eyeshadow's frag is a pure tint, so lighting it again would double-shade it.
+    if mesh == "o_eyeshadow":
         return torch.cat([albedo.clamp(0, 1), alpha], dim=-1)
 
     rig = light or DEFAULT_RIG
     dev, dt = scene.device, scene.dtype
+    # `AIT/eyelashes` is plain Lambert, transcribed from the decompile (no half-Lambert wrap, no
+    # specular at all):
+    #     out.rgb = albedo * (atten * _LightColor0 * max(dot(N,L),0) + ambient)
+    # An earlier version skipped lighting for this mesh entirely on a wrong reading of the shader.
+    # It happens to be invisible on a card whose eyelashesColor is black (0 * anything = 0), which
+    # is exactly why it survived — it only shows on coloured lashes.
+    lambert = mesh == "o_eyelashes"
     diffuse = torch.zeros_like(albedo)
     for d, c, inten in rig:
         Ld = torch.tensor(d, dtype=dt, device=dev)
         Ld = Ld / Ld.norm()
         col = torch.tensor(c, dtype=dt, device=dev) * inten
-        wrap = ((n_img * Ld).sum(-1, keepdim=True) * 0.5 + 0.5).clamp(0, 1)   # half-Lambert
-        diffuse = diffuse + col * wrap
+        ndl = (n_img * Ld).sum(-1, keepdim=True)
+        shade_term = ndl.clamp(min=0) if lambert else (ndl * 0.5 + 0.5).clamp(0, 1)
+        diffuse = diffuse + col * shade_term
     amb = torch.tensor(AMBIENT[:3], dtype=dt, device=dev) * AMBIENT[3]
     return torch.cat([(albedo * (diffuse + amb)).clamp(0, 1), alpha], dim=-1)
