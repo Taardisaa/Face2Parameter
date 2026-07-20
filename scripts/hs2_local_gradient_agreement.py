@@ -36,7 +36,7 @@ import torch
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from scripts.hs2_capture_gt import call  # noqa: E402
+from scripts.hs2_capture_gt import call, aligned_framing  # noqa: E402
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 OUT_DIR = os.path.join(ROOT, "data", "hs2_gt", "_localgrad")
@@ -71,12 +71,19 @@ def game_score(scorer, tag, res):
     `freeze_pose` and `settle` default to on/3 server-side, so a plain render request already gets
     them. What the server cannot do is know that the CALLER just reloaded a card: that needs longer
     to settle than a render can wait, so the caller discards its first scoring pass (see main).
-    Residual score noise is then sd ~0.010, against a perturbation effect of sd ~0.11.
+    Residual score noise is sd ~0.024 on a 5-view mean (NOT the 0.010 this line used to claim --
+    see scripts/hs2_noise_decomposition.py; three repeats had under-sampled it), against a
+    perturbation effect of sd ~0.11. So the signal-to-noise for a joint perturbation is ~4.5x.
     """
+    # Re-fit the framing for THIS slider set, because our renderer does: it recomputes the head
+    # bbox from the deformed vertices on every call. Holding the game's camera fixed while ours
+    # refits would put a camera difference back into every Delta, which is the confound this whole
+    # alignment exercise removed. The bridge's own auto-fit is wrong (see aligned_framing).
+    frame = aligned_framing(res=res)
     paths = []
     for j, y in enumerate(YAWS):
         p = os.path.join(OUT_DIR, f"game_{tag}_{j}.png")
-        call(f"/maker/render?w={res}&h={res}&yaw={y}&hide_hair=1&out={p}", timeout=90)
+        call(f"/maker/render?w={res}&h={res}&yaw={y}&hide_hair=1&{frame}&out={p}", timeout=90)
         paths.append(p)
     return float(np.mean([scorer.score(p, use_detector=True) for p in paths]))
 
