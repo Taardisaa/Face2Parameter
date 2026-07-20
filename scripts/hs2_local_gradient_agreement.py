@@ -59,25 +59,25 @@ def set_shapes(vals, only=None):
 def game_score(scorer, tag, res):
     """Score the character currently in the maker, under the protocol the drift study forced.
 
-    A game render of an UNCHANGED character is not reproducible. Measured over repeated scorings
-    with no parameter writes at all:
+    A game render of an UNCHANGED character was not reproducible. The dominant cause turned out to
+    be BLINKING -- consecutive captures differed almost entirely at the eyes, open in one and shut
+    in the next -- not the idle sway I first blamed. Bridge v0.13.0 pins the blink, freezes the
+    animation and, crucially, lets the character settle for a few frames before capturing, because
+    those settings only reach the mesh through its own LateUpdate.
 
-        hair shown, no warm-up   sd 0.139, spread 0.371   <- swamps any effect worth measuring
-        hair hidden, no warm-up  sd 0.039
-        hair hidden, warm-up discarded  sd 0.008
+        mean pixel difference between repeat captures, blinking     13.8
+        the same, with bridge v0.13.0's freeze + settle              0.014
 
-    Hair physics keeps swaying, and the first pass after a load or a write catches the character
-    before it settles. Both are removed here. The residual is not zero -- successive renders of
-    the same view are not even bit-identical (idle animation, blinking) -- but 0.008 sits far
-    below the effects this script exists to detect.
+    `freeze_pose` and `settle` default to on/3 server-side, so a plain render request already gets
+    them. What the server cannot do is know that the CALLER just reloaded a card: that needs longer
+    to settle than a render can wait, so the caller discards its first scoring pass (see main).
+    Residual score noise is then sd ~0.010, against a perturbation effect of sd ~0.11.
     """
     paths = []
-    for warm in (True, False):                       # first pass rendered, then discarded
-        paths = []
-        for j, y in enumerate(YAWS):
-            p = os.path.join(OUT_DIR, f"game_{tag}_{j}.png")
-            call(f"/maker/render?w={res}&h={res}&yaw={y}&hide_hair=1&out={p}", timeout=60)
-            paths.append(p)
+    for j, y in enumerate(YAWS):
+        p = os.path.join(OUT_DIR, f"game_{tag}_{j}.png")
+        call(f"/maker/render?w={res}&h={res}&yaw={y}&hide_hair=1&out={p}", timeout=90)
+        paths.append(p)
     return float(np.mean([scorer.score(p, use_detector=True) for p in paths]))
 
 
@@ -147,6 +147,9 @@ def main():
     scorer = BeautyScorer()
     bg = np.array([134, 135, 140], np.float64)
 
+    # Discard one full pass: the character keeps settling for a while after a card load, and the
+    # first scoring lands measurably low (3.5985 against 3.69-3.71 for the five that followed).
+    game_score(scorer, "warmup", args.res)
     g0 = game_score(scorer, "base", args.res)
     o0 = ours_score(scorer, scene, sf0, ab, "base", args.res, bg)
     print(f"[baseline] game {g0:.4f}   ours {o0:.4f}\n")
