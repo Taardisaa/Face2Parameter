@@ -175,12 +175,24 @@ def _rot_y(deg, device, dtype):
     return torch.tensor([[c, 0, s], [0, 1, 0], [-s, 0, c]], dtype=dtype, device=device)
 
 
-def render(scene: HeadScene, meshes=None, yaw=0.0, res=512, bg=1.0, light=None):
-    """Rasterize the whole head, blending groups in the game's order. -> (res,res,3) float [0,1]."""
+def _rot_x(deg, device, dtype):
+    a = np.radians(deg)
+    c, s = float(np.cos(a)), float(np.sin(a))
+    return torch.tensor([[1, 0, 0], [0, c, -s], [0, s, c]], dtype=dtype, device=device)
+
+
+def render(scene: HeadScene, meshes=None, yaw=0.0, res=512, bg=1.0, light=None, pitch=0.0):
+    """Rasterize the whole head, blending groups in the game's order. -> (res,res,3) float [0,1].
+
+    `yaw`/`pitch` name the same convention the bridge's /maker/render uses, so a comparison
+    against a game capture at the same angles lines up without hand-matching the camera.
+    """
     import nvdiffrast.torch as dr
     meshes = meshes or scene.deform()
     dev, dt = scene.device, scene.dtype
     R = _rot_y(yaw, dev, dt)
+    if pitch:
+        R = _rot_x(pitch, dev, dt) @ R
 
     head = meshes["o_head"]["verts"] @ R.T
     mn, mx = head.min(0).values, head.max(0).values

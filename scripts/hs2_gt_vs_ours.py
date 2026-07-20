@@ -45,9 +45,15 @@ def fit(img: np.ndarray, size: int) -> np.ndarray:
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--card", default="tests/HS2ChaF_20240901192905747.png")
-    ap.add_argument("--yaws", default="0,25,-25")
-    ap.add_argument("--size", type=int, default=512)
+    # A near-frontal pair says little: the silhouette is where geometry error shows, so sweep out
+    # to profile. Laid out as game-row over ours-row so one angle is directly above its twin.
+    ap.add_argument("--yaws", default="-90,-60,-30,0,30,60,90")
+    ap.add_argument("--pitch", type=float, default=0.0)
+    ap.add_argument("--size", type=int, default=384)
     ap.add_argument("--out", default="outputs/gt_vs_ours.png")
+    ap.add_argument("--capture", action="store_true",
+                    help="re-shoot the game side first (needs the game running); uses the clean "
+                         "protocol — hide_hair + freeze_pose + settle, with a discarded warm-up")
     args = ap.parse_args()
 
     from src.render.scene import HeadScene, render
@@ -58,28 +64,46 @@ def main():
     meshes = scene.deform()
     print(f"[scene] {os.path.basename(scene.head_dir)}  submeshes={scene.present}")
 
-    rows, labels = [], []
-    for y in [float(v) for v in args.yaws.split(",") if v.strip()]:
-        gt_path = os.path.join(gt_dir, f"bald_yaw{int(y):+04d}.png")
+    yaws = [float(v) for v in args.yaws.split(",") if v.strip()]
+
+    if args.capture:
+        from scripts.hs2_capture_gt import call, aligned_framing
+        os.makedirs(gt_dir, exist_ok=True)
+        call("/maker/card/load", "POST", {"path": os.path.abspath(args.card)}, timeout=180)
+        # Discarded warm-up: the character keeps settling well past what one render can wait for.
+        call(f"/maker/render?w=640&h=640&yaw=0&hide_hair=1&out={gt_dir}/_warm.png", timeout=90)
+        # Without this the game's capture is 27% larger than ours with the eye line 0.055 off,
+        # so any difference we then attribute to shading is partly just a different camera.
+        frame = aligned_framing()
+        for y in yaws:
+            p = os.path.join(gt_dir, f"bald_yaw{int(y):+04d}_p{int(args.pitch):+03d}.png")
+            call(f"/maker/render?w=640&h=640&yaw={y}&pitch={args.pitch}&hide_hair=1&{frame}&out={p}",
+                 timeout=90)
+        print(f"  captured {len(yaws)} game views (camera aligned to ours)")
+
+    top, bot, labels = [], [], []
+    for y in yaws:
+        gt_path = os.path.join(gt_dir, f"bald_yaw{int(y):+04d}_p{int(args.pitch):+03d}.png")
         if not os.path.exists(gt_path):
-            print(f"  yaw {y:+.0f}: no game capture at {gt_path} — skipped")
+            gt_path = os.path.join(gt_dir, f"bald_yaw{int(y):+04d}.png")   # older captures
+        if not os.path.exists(gt_path):
+            print(f"  yaw {y:+.0f}: no game capture — skipped (use --capture)")
             continue
-        gt = fit(np.asarray(Image.open(gt_path).convert("RGB")), args.size)
-        ours = render(scene, meshes, yaw=y, res=args.size).detach().cpu().numpy()
-        ours = fit((np.clip(ours, 0, 1) * 255).astype(np.uint8), args.size)
-        gap = np.full((args.size, 10, 3), 255, np.uint8)
-        rows.append(np.concatenate([gt, gap, ours], axis=1))
+        top.append(fit(np.asarray(Image.open(gt_path).convert("RGB")), args.size))
+        ours = render(scene, meshes, yaw=y, pitch=args.pitch, res=args.size).detach().cpu().numpy()
+        bot.append(fit((np.clip(ours, 0, 1) * 255).astype(np.uint8), args.size))
         labels.append(y)
-        print(f"  yaw {y:+.0f}: game | ours")
 
-    if not rows:
-        raise SystemExit(f"no game captures under {gt_dir} — run scripts/hs2_capture_gt.py first")
+    if not top:
+        raise SystemExit(f"no game captures under {gt_dir} — re-run with --capture")
 
-    hgap = np.full((10, rows[0].shape[1], 3), 255, np.uint8)
-    combo = np.concatenate([x for r in rows for x in (r, hgap)][:-1], axis=0)
+    gap = np.full((args.size, 6, 3), 255, np.uint8)
+    row_g = np.concatenate([x for v in top for x in (v, gap)][:-1], axis=1)
+    row_o = np.concatenate([x for v in bot for x in (v, gap)][:-1], axis=1)
+    hgap = np.full((10, row_g.shape[1], 3), 255, np.uint8)
     os.makedirs(os.path.dirname(args.out) or ".", exist_ok=True)
-    Image.fromarray(combo).save(args.out)
-    print(f"\nsaved (left=game, right=ours; rows are yaw {labels}) -> {args.out}")
+    Image.fromarray(np.concatenate([row_g, hgap, row_o], axis=0)).save(args.out)
+    print(f"\nsaved (top=game, bottom=ours; yaws {labels}, pitch {args.pitch:+.0f}) -> {args.out}")
 
 
 if __name__ == "__main__":

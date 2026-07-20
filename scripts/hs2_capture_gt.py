@@ -49,6 +49,40 @@ def call(path: str, method="GET", body=None, timeout=30):
             f"Start HoneySelect2.exe with HS2_McpBridge loaded and open the Character Maker.")
 
 
+def aligned_framing(margin=0.85, res=640):
+    """Framing params that make a game capture match `src/render/scene.py`'s.
+
+    The bridge's own auto-fit under-measures the head — it clips the top of the skull, and a
+    capture came out 26.7% larger than ours with the eye line 0.055 of frame height off.
+
+    Cause, from the `bounds_variants` the bridge now reports: `BakeMesh` output already carries
+    the bones' world scale, and the bridge multiplies it by `smr.transform.localToWorldMatrix`,
+    applying the transform's 0.7705 scale a SECOND time. The evidence is arithmetic —
+    `baked_local` (1.6146) x lossyScale (0.7705) = 1.244 = `baked_world`, and the size that
+    actually matches our render is `baked_local`, not `baked_world`.
+
+    So take the baked size as-is and only translate it into world position. Verified: interocular
+    error 26.7% -> -2.2%, eye line -0.055 -> +0.0105. The remaining ~2% is a genuine geometry
+    difference (our deformed mesh is 1.298x the game's baked one where 1.26x would match), not
+    framing.
+
+    Returns a query fragment to append to /maker/render. The bridge's default is still wrong;
+    this fixes it caller-side so no plugin rebuild is needed to move on.
+    """
+    import os
+    probe_png = os.path.join(os.environ.get("TEMP", "."), "_hs2_frame_probe.png")
+    r = call(f"/maker/render?w={res}&h={res}&yaw=0&hide_hair=1&out={probe_png}")
+    bv = r.get("bounds_variants")
+    if not bv or "baked_local" not in bv:
+        raise SystemExit("bridge is older than v0.14.0 — it does not report bounds_variants")
+    size = bv["baked_local"]["size"]
+    ctr = bv["baked_local"]["center"]
+    pos = bv["smr_position"]
+    ortho = max(size[0], size[1]) / 2.0 / margin
+    tgt = [pos[i] + ctr[i] for i in range(3)]
+    return f"ortho_size={ortho}&target={tgt[0]},{tgt[1]},{tgt[2]}"
+
+
 def probe():
     """Report status + the light rig. Safe to run any time the game is up."""
     st = call("/status")
