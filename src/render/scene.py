@@ -181,7 +181,30 @@ def _rot_x(deg, device, dtype):
     return torch.tensor([[1, 0, 0], [0, c, -s], [0, s, c]], dtype=dtype, device=device)
 
 
-def render(scene: HeadScene, meshes=None, yaw=0.0, res=512, bg=1.0, light=None, pitch=0.0):
+def render(scene: HeadScene, meshes=None, yaw=0.0, res=512, bg=1.0, light=None, pitch=0.0, ss=2):
+    """Rasterize at `ss`x and box-filter down. The game captures through a 4x-MSAA RenderTexture;
+    rendering aliased is not a cosmetic difference. Measured on the eyelash layer, isolated on both
+    sides by rendering with and without the mesh:
+
+        supersample   ink ratio vs game (|delta|>40)   (|delta|>60)
+            x1              1.168                        2.150
+            x2              0.943                        1.268
+            x4              0.922                        1.199
+
+    Aliasing was concentrating the lash into too-dark cores with too little soft falloff, which is
+    what made it read as "heavy" by eye. x2 lands within 6%; x4 barely improves on it, so x2 is the
+    default. An earlier test concluded supersampling did nothing — that test compared a luminance
+    integral over a band, which was dominated by a 13% skin-brightness difference rather than by
+    the lashes.
+    """
+    if ss and ss > 1:
+        import torch.nn.functional as F
+        big = _render_at(scene, meshes, yaw, res * ss, bg, light, pitch)
+        return F.avg_pool2d(big.permute(2, 0, 1)[None], ss)[0].permute(1, 2, 0)
+    return _render_at(scene, meshes, yaw, res, bg, light, pitch)
+
+
+def _render_at(scene: HeadScene, meshes=None, yaw=0.0, res=512, bg=1.0, light=None, pitch=0.0):
     """Rasterize the whole head, blending groups in the game's order. -> (res,res,3) float [0,1].
 
     `yaw`/`pitch` name the same convention the bridge's /maker/render uses, so a comparison
