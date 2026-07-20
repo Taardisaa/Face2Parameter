@@ -67,25 +67,29 @@ def render_ours(cards, res, bg):
         try:
             scene = HeadScene(card)
             meshes = scene.deform()
+            for k, p in paths.items():
+                img = render(scene, meshes, yaw=want[k], res=res).detach().cpu().numpy()
+                img = np.clip(img, 0, 1)
+                if img.shape[2] == 4:
+                    a = img[..., 3:4]
+                    img = img[..., :3] * a + (bg / 255.0) * (1 - a)
+                Image.fromarray((img * 255).astype(np.uint8)).save(p)
         except (Exception, SystemExit) as e:
             # Every card needs its own extraction pass (the head mesh is shared, but the manifest
             # and the card-selected textures are not). SystemExit is in the tuple because
             # HeadScene raises it for a missing manifest — `except Exception` silently let it
             # kill the run. A card we cannot render is a coverage gap; report it, don't hide it.
-            skipped.append((stem, card_head_id(card), str(e)[:60]))
+            try:                      # a card that fails to load also fails to report its headId
+                hid = card_head_id(card)
+            except Exception:
+                hid = "unreadable"
+            skipped.append((stem, hid, str(e)[:60]))
             continue
-        for k, p in paths.items():
-            img = render(scene, meshes, yaw=want[k], res=res).detach().cpu().numpy()
-            img = np.clip(img, 0, 1)
-            if img.shape[2] == 4:
-                a = img[..., 3:4]
-                img = img[..., :3] * a + (bg / 255.0) * (1 - a)
-            Image.fromarray((img * 255).astype(np.uint8)).save(p)
         done.append(stem)
         print(f"  [{i + 1}/{len(cards)}] {stem}")
     if skipped:
         print(f"\n  skipped {len(skipped)} cards whose head is not extracted "
-              f"(headIds {sorted({h for _, h, _ in skipped})}) — coverage gap, reported not hidden")
+              f"(headIds {sorted({str(h) for _, h, _ in skipped})}) — coverage gap, not hidden")
     return done
 
 
