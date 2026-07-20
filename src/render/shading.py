@@ -286,6 +286,20 @@ def build_albedo(scene, mesh: str) -> torch.Tensor:
     return _simple_albedo(scene, mesh)
 
 
+# OFF, and measured rather than assumed. Ablating `_Gloss` in the game (POST /maker/material,
+# value 0) moves 18% of pixels by a mean of just [-1.05, -0.77, -0.61] out of 255 — the game's skin
+# specular is nearly negligible. Ours, isolated the same way, moves 5.4% of pixels by +[15.7, 17.3,
+# 17.1]: about 16x too strong, and it renders as a plastic-looking sheen across the forehead.
+#
+# The reason is in the decompile: perceptual roughness is `1 - tmp2.w`, and tmp2.w is built
+# per-pixel from `_DetailMainTex` scaled by `_DetailMainScale` — skin is mostly rough with gloss
+# only where the map says so. Feeding it the flat material `_Gloss` makes the whole face glossy.
+#
+# So this stays off until that map is wired: no specular is measurably closer to the game than a
+# specular that is 16x too strong, and picking a scale factor to tame it would be a fitted constant.
+SPECULAR = False
+
+
 def standard_pbs(scene, mesh, albedo, n_img, rig, ambient, view=(0.0, 0.0, 1.0)):
     """`BRDF1_Unity_PBS` + the ASE translucency term, transcribed from the decompiled shader.
 
@@ -318,7 +332,10 @@ def standard_pbs(scene, mesh, albedo, n_img, rig, ambient, view=(0.0, 0.0, 1.0))
     dt, dev = albedo.dtype, albedo.device
     f = (scene.mats.get(mesh) or {}).get("floats", {})
     metallic = float(f.get("_Metallic", 0.0))
-    smooth = float(f.get("_Smoothness", f.get("_Gloss", 0.5)))
+    # `_Gloss`, not `_Smoothness`: the extracted material JSON lists a `_Smoothness` that the
+    # RUNTIME material does not have (the bridge's /maker/material returns 404 for it). Same trap
+    # as the eyebrow layout and the runtime material swap — extracted data is not runtime truth.
+    smooth = float(f.get("_Gloss", 0.5))
     pr = 1.0 - smooth                                   # perceptual roughness
     a = max(pr * pr, 0.002)
     a2 = a * a
@@ -361,7 +378,9 @@ def standard_pbs(scene, mesh, albedo, n_img, rig, ambient, view=(0.0, 0.0, 1.0))
         spec_term = (vis * dist * np.pi * ndl).clamp(min=0)
 
         fres = spec_color + (1.0 - spec_color) * (1.0 - ldh) ** 5
-        out = out + diff_color * lcol * diffuse_term + spec_term * lcol * fres
+        out = out + diff_color * lcol * diffuse_term
+        if SPECULAR:
+            out = out + spec_term * lcol * fres
 
         # Translucency direction/scattering — computed, but see below for why it is not applied.
         ldir = n * float(f.get("_TransNormalDistortion", 0.5)) + L
