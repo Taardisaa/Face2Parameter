@@ -128,8 +128,15 @@ class HeadScene:
                     world.shape[0], *self.trig.bone_idx.shape, 4, 4)
                 tv = torch.einsum("bvkij,vj->bvki", M, self.trig.verts_h)[..., :3]
                 v = (self.trig.bone_w.unsqueeze(0).unsqueeze(-1) * tv).sum(dim=2)
-                d = np.load(os.path.join(self.head_dir, "o_head_mesh.npz"))
-                faces, uv, uv1, vcol = self.rig.faces, self.rig.uv, d["uv1"], d["colors"]
+                # Cached rather than re-read per call. (Modest: profiling showed the real cost of
+                # an argument-less deform() was `from_card` shelling out to HS2ABMX.exe to
+                # re-parse the card — 121 ms of the 122. Pass shape_face/ab in, as an optimisation
+                # loop does, and a deform is 8 ms.)
+                if not hasattr(self, "_head_attrs"):
+                    d = np.load(os.path.join(self.head_dir, "o_head_mesh.npz"))
+                    self._head_attrs = (d["uv1"], d["colors"])
+                uv1, vcol = self._head_attrs
+                faces, uv = self.rig.faces, self.rig.uv
             else:
                 sub = self.trig.load_submesh(name)
                 v = self.trig.skin(sub, world)
