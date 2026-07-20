@@ -3,23 +3,35 @@
     from src.hs2_mesh import card_to_mesh
     verts, faces = card_to_mesh("outputs/xxx_out.png")
 
-Pure offline (no game): see docs/hs2-renderer-and-mesh.md. v1 supports the stock female head (headId via
-fo_head_00 / cf_anmShapeHead_00); other heads need their own extracted rig.
+Pure offline (no game): see docs/hs2-renderer-and-mesh.md. The rig is per-head — a card's `headId`
+picks both the mesh and its shapeValueFace keyframe table — so each head must be extracted once
+(scripts/hs2_extract_head.py --card <card>) before it can be built.
 """
 from __future__ import annotations
 
 import numpy as np
 
-from .hs2_mesh_deform import HeadRig, build_mesh
+from .hs2_mesh_deform import HeadRig, available_heads, build_mesh
 
-_RIG = None
+_RIGS: dict[int, HeadRig] = {}
 
 
-def _rig() -> HeadRig:
-    global _RIG
-    if _RIG is None:
-        _RIG = HeadRig()
-    return _RIG
+def _rig(head_id: int | None = None) -> HeadRig:
+    """Cached rig for `head_id`. With no id, uses the only extracted head (else raises)."""
+    if head_id is None:
+        heads = available_heads()
+        if len(heads) != 1:
+            raise ValueError(f"head_id required — extracted heads: {heads}")
+        head_id = heads[0]
+    if head_id not in _RIGS:
+        _RIGS[head_id] = HeadRig(head_id)
+    return _RIGS[head_id]
+
+
+def card_head_id(card_path: str) -> int:
+    """The card's headId — which head mesh/rig the game would load for it."""
+    from .face_data_utils.utils import AiSyoujyoCharaData
+    return int(AiSyoujyoCharaData.load(card_path, True).Custom["face"]["headId"])
 
 
 def fd_to_inputs(fd):
@@ -45,7 +57,7 @@ def card_to_mesh(card_path: str):
     from .face_data_utils.utils import FaceData
     fd = FaceData(card_path)
     shape_face, ab_data = fd_to_inputs(fd)
-    verts, faces = build_mesh(_rig(), shape_face=shape_face, ab_data=ab_data)
+    verts, faces = build_mesh(_rig(card_head_id(card_path)), shape_face=shape_face, ab_data=ab_data)
     return verts, faces
 
 

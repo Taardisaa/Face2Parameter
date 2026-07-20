@@ -61,23 +61,47 @@ def _trs(pos, quat, scl):
 
 
 # ---------- data ----------
+def available_heads(data_dir=_DATA):
+    """headIds that scripts/hs2_extract_head.py has already cached, ascending."""
+    if not os.path.isdir(data_dir):
+        return []
+    return sorted(int(n[5:]) for n in os.listdir(data_dir)
+                  if n.startswith("head_") and n[5:].isdigit())
+
+
 class HeadRig:
-    def __init__(self, data_dir=_DATA):
-        d = np.load(os.path.join(data_dir, "o_head_mesh.npz"))
+    """One head type's rig. `head_id` is the card's `headId` — it selects both the mesh and the
+    shapeValueFace keyframe table, which differ per head (see scripts/hs2_extract_head.py)."""
+
+    def __init__(self, head_id: int, data_dir=_DATA):
+        self.head_id = int(head_id)
+        head_dir = self.data_dir = os.path.join(data_dir, f"head_{self.head_id}")
+        self.root_dir = data_dir
+        if not os.path.isdir(head_dir):
+            raise FileNotFoundError(
+                f"no rig for headId={head_id} at {head_dir} (extracted: {available_heads(data_dir)})"
+                f" — run: .venv/Scripts/python.exe scripts/hs2_extract_head.py --card <card>")
+
+        d = np.load(os.path.join(head_dir, "o_head_mesh.npz"))
         self.verts = d["verts"].astype(np.float64)
         self.faces = d["faces"]
         self.bone_idx = d["bone_idx"]
         self.bone_w = d["bone_w"].astype(np.float64)
         self.bindpose = d["bindpose"].astype(np.float64)
-        sk = json.load(open(os.path.join(data_dir, "skeleton.json")))
+        # authored per-vertex attributes — the renderer needs them (tangents for normal mapping)
+        self.normals = d["normals"]
+        self.tangents = d["tangents"]
+        self.uv = d["uv"]
+        sk = json.load(open(os.path.join(head_dir, "skeleton.json")))
         self.skin_bone_names = sk["skin_bone_names"]
         self.bones = sk["bones"]  # pid(str) -> {name,parent,pos,rot,scale}
         self.name2pid = {}
         for pid, b in self.bones.items():
             self.name2pid.setdefault(b["name"], pid)
+        self.anm = json.load(open(os.path.join(head_dir, "anmShapeHead.json")))
+        # head-agnostic tables (from cf_customhead / the decompiled ShapeHeadInfoFemale)
         self.enums = json.load(open(os.path.join(data_dir, "enums.json")))
         self.customhead = json.load(open(os.path.join(data_dir, "customhead.json")))
-        self.anm = json.load(open(os.path.join(data_dir, "anmShapeHead_00.json")))
         self.eqns = json.load(open(os.path.join(data_dir, "update_eqns.json")))
         # topo order of bones (parents first)
         self._topo = self._toposort()
@@ -224,7 +248,13 @@ def bone_world(rig: HeadRig, shape_face=None, ab_data=None, names=None):
 
 
 if __name__ == "__main__":
-    rig = HeadRig()
+    import argparse
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--head-id", type=int, default=None, help="default: the only extracted head")
+    a = ap.parse_args()
+    heads = available_heads()
+    rig = HeadRig(a.head_id if a.head_id is not None else heads[0])
+    print(f"[rig] headId={rig.head_id} (extracted: {heads})")
     # NEUTRAL SANITY: rest locals (no shape, no abmx) must reproduce the extracted bind-pose mesh.
     out, faces = build_mesh(rig, shape_face=None, ab_data=None)
     err = np.linalg.norm(out - rig.verts, axis=1)

@@ -55,9 +55,12 @@ material / lighting**。保真度是"移植完整度"的函数,奔着游戏风�
 白模已是完整 `params → (verts, faces)` 几何管线,连玩具渲染器都有。逆向细节见
 [hs2-renderer-and-mesh.md](hs2-renderer-and-mesh.md)。
 
-- **几何 deform(纯 numpy)**:`src/hs2_mesh_deform.py`(`HeadRig` / `_fk_world` / `build_mesh`,V=3254、
-  skin 到 43 骨)、`src/hs2_mesh.py`(`card_to_mesh` / `fd_to_inputs` / `save_obj`)。吃 **54 slider + 30
-  ABMX 骨**,产出顶点 + 三角面 + `.obj`。
+- **几何 deform(纯 numpy)**:`src/hs2_mesh_deform.py`(`HeadRig(head_id)` / `_fk_world` / `build_mesh`,
+  headId=2 → V=4439、skin 到 43 骨)、`src/hs2_mesh.py`(`card_to_mesh` / `fd_to_inputs` / `save_obj`)。吃
+  **54 slider + 30 ABMX 骨**,产出顶点 + 三角面 + `.obj`。
+  > **勘误(2026-07-19):** 之前写的 V=3254 是**碰撞网格**(`p_cf_head_NN_hit`)——旧提取器按"顶点数最大的
+  > `o_head`"选,选中了碰撞体且是错的 head 类型。现在按 list 解析出的**渲染** prefab `p_cf_head_02` 选,
+  > UV 才对得上。详见 [hs2-renderer-and-mesh.md](hs2-renderer-and-mesh.md) 第 0/1 条。
 - **软渲染器(玩具)**:`scripts/hs2_render_mesh.py::render()` —— 纯 numpy z-buffer,着色仅
   `0.25+0.75·max(n·L,0)` 单向光 Lambert、逐面法线、**单通道灰度**。无贴图 / UV / 颜色 / 平滑法线 / AA。
 - **比例度量 + 反解编辑器**:`src/face_metrics/`(landmark = 骨骼世界坐标;25 个尺度无关比例;Gauss-Newton
@@ -66,19 +69,43 @@ material / lighting**。保真度是"移植完整度"的函数,奔着游戏风�
   verts/faces/skin 权重/bindpose → `data/hs2_head/*.npz`(**gitignore,需装游戏跑**)。
   → 这就是"trace 游戏"的既有基建:**加贴图 / 材质 = 给它扩几行**(拔 `m_UV`、texture、材质参数)。
 
-## 缺的"调料"在哪 & 难度(已核实)
+## 面部资产实测清单(直接扫 fo_head_00 + st_eyebrow,2026-07-19)
 
-| 调料 | 现状 / 在哪 | 工作量 |
-| --- | --- | --- |
-| 几何(bone + LBS) | **已有**(纯 numpy;可导,但要 torch 移植才有解析梯度) | ✅ |
-| **UV 坐标** | 提取器没拔 `m_UV`;`o_head_mesh.npz` 只有 verts/faces/权重 | 小(给 `hs2_extract_head.py` 加 `m_UV`) |
-| 皮肤/眼/眉 贴图 | 未提取;游戏 bundle 里有 | 中(扩提取器拔 texture) |
-| 肤色/腮红/唇/眼影 颜色 | card 有字段,但**没接进 mesh**(`Card.py` 里大多注释掉) | 小-中(读卡颜色 → 喂材质) |
-| 顶点法线 + 真实着色 | 只有逐面 flat 法线、单光、灰度;无平滑法线 / Phong / PBR / 次表面 | 中 |
-| **shader(皮肤/眼睛)** | 完全没有;Illusion 自定义 shader | **难**(移植;MaterialEditor 有参数文档可 trace) |
-| 光照 | 单个硬编码方向光 | 易(补打光台:几盏灯 + 环境) |
-| 眼/眉/睫/齿/发 子网格 | 只提取了 `o_head` 一个头网 | 中(逐个提取) |
-| 彩色 / 真渲染器 | 玩具灰度光栅器;仓库无 3D 库依赖 | 中(换 nvdiffrast/PyTorch3D → 同时拿到**可导**) |
+不再靠猜。整张脸 = 以下 skinned 子网格(都绑在同一套 head 骨架上),每个 = mesh + UV + material +
+textures + shader:
+
+| 部件 | mesh | material | shader | 关键贴图 | 状态 |
+| --- | --- | --- | --- | --- | --- |
+| 皮肤 | `o_head` | cf_m_skin_head_*_create | `AIT/Skin True Face` (+ `Skin Translucency`) | detail✅ / mask✅;`_MainTex`+occlusion **外部** | 几何+UV✅;皮肤 diffuse+shader ❌ |
+| 眼球 L/R | `o_eyebase_L/R` | c_m_eye(_01) | `AIT/Eye Translucency` | 巩膜 c_t_eye_white_01;**虹膜/瞳孔 外部(卡选)**;normal c_t_eye_n;overlay c_t_eye_o_01 | ❌(视觉差最大) |
+| 睫毛 | `o_eyelashes` | c_m_eyelashes | `AIT/eyelashes` | `_MainTex` 外部(卡选) | ❌(需 alpha) |
+| 泪膜 | `o_namida` | c_m_eye_namida | `AIT/main namida` | namida_1_t | ❌(透明,可后置) |
+| 眼影 | `o_eyeshadow` | c_m_eyekage(_cf2) | `AIT/main eyeshadow lambert` | c_t_eyeshadow_00/01 | ❌(妆容 overlay,卡选色) |
+| 牙齿 | `o_tooth` | c_m_tooth | (matcap) | c_tooth_t/n + occlusion | ❌(仅张嘴可见) |
+| 舌头 | `o_tang` | c_m_tang | (matcap) | c_tang_t/n/o | ❌(仅张嘴可见) |
+| **眉毛** | `st_eyebrow_00.unity3d`(**独立 bundle**) | ? | ? | 卡选眉型 | ❌ 需从该 bundle 提取 |
+
+跨部件的实现工作(即"还得 implement 什么"):
+1. **提取器泛化** — 一次拔 fo_head_00 里全部子网格(verts/faces/uv/bone_idx/bone_w/bindpose + 各自
+   material + 馆内贴图),外加 st_eyebrow_00。
+2. **外部/卡选贴图** — 皮肤 `_MainTex`、虹膜(fid2-4)、睫毛(fid5)、occlusion 等是**卡驱动**、在别的
+   bundle。需 ①从 FaceData 读卡的选择(skinId / 眼睛 id / 眉型…),②跨 bundle 解析这些贴图 = "运行时合成"。
+3. **子网格形变** — 每个子网格绑同一套 head 骨架 → 复用现有 FK/LBS,只需各自 skin 权重/bindpose(眼球还有
+   注视旋转,中性可略)。
+4. **渲染器升级** — 多网格 + **alpha 混合 + 绘制顺序**(睫毛/泪膜/眼影是半透明 overlay);逐 material 着色。
+5. **Shader** — 复刻 `AIT/Skin True Face`(次表面)、`AIT/Eye Translucency` 等(保真度)。名字已知 → 可
+   trace(dnSpy / MaterialEditor / 社区实现)。
+
+**已完成**:几何 deform、UV、in-bundle 头部贴图、**nvdiffrast 可导渲染器 + 平滑法线 + 近似皮肤**、game 对比。
+
+**2026-07-19 新增(Phase 0,见 `.claude/plans/read-docs-offline-renderer-research-md-*.md`):**
+1. **离线 ChaListControl**(`src/hs2_assets.py`)—— 合并全部 `list/characustom/*.unity3d`,
+   `category → id → row`。上表"外部/卡选贴图"这一项**已解决**:皮肤/虹膜/睫毛/眉/眼影/唇彩全部按卡上的 id
+   解析到具体 bundle + asset。
+2. **card-driven 提取器**(`scripts/hs2_extract_head.py --card <卡>`)—— 按 list 选**渲染** prefab(不是
+   碰撞体)、提 normals/tangents/uv/uv1/colors、全部子网格(眼球/睫毛/泪膜/眼影/牙/舌)+ 各自 material
+   与 shader 名、卡选贴图,并写 `data/hs2_head/cards/<卡>.json` 清单。
+3. 渲染器已接上**该卡真实的皮肤 diffuse**(`cf_head_02_00_t`),UV 对位正确(唇/耳/鼻翼各就各位)。
 
 ## 判断 & 建议
 
@@ -91,12 +118,22 @@ material / lighting**。保真度是"移植完整度"的函数,奔着游戏风�
 4. **诚实提醒:** 只要 recipe 没移植完整,残余渲染差 + 之前的 OOD 会**叠加**。移植越全渲染差越小,但
    "优化结果人眼真更好看"仍取决于 ①reward 在游戏脸域准不准 ②移植保真度。所以策略 1 当验证器是必须的。
 
-## 开放问题(Q1 已答,见"现有资产")
+## 开放问题(Q1/Q4/Q7 已答)
 
 1. ~~现有白模吐了什么~~ → **已答**:纯几何 `params→(verts,faces)` + 玩具灰度渲染器,零 appearance。
 2. 策略 1 的自动化:能否无头运行?还是必须开游戏后台截图?单张渲染耗时?
-3. 渲染器选型:nvdiffrast vs PyTorch3D vs Mitsuba3;先做到什么保真度就够喂 beauty reward?(换它同时拿到可导)
-4. shader:社区(MaterialEditor 等)已有多少可复用的皮肤/眼睛实现或参数文档?值不值得重写,还是近似 PBR 够。
+   → 计划:给 `HS2_McpBridge` 加 camera/screenshot 端点(游戏须运行 + Maker 打开)。
+3. 渲染器选型:~~nvdiffrast vs PyTorch3D vs Mitsuba3~~ → **定 nvdiffrast**(已在用)。
+   保真度门槛待 Phase 4 用真渲染标定后定量。
+4. shader → **已答(2026-07-19)**:`AIT/*` 全是 **Amplify Shader Editor 生成的 Unity Standard *surface*
+   shader**(`m_CustomEditorName = ASEMaterialInspector`),forward-only(ASE 的 translucency 端口强制
+   `exclude_path:deferred`),光照 = stock `BRDF1_Unity_PBS` + 加性 translucency
+   (Barré-Brisebois/DICE 快速 SSS)。**社区没有 HS2 `AIT/Skin*` 的开源反编译**(Koikatsu 的
+   `Shader Forge/*` 是另一套 toon,不通用;Hanmen 的 skin/eye 是闭源付费)→ 必须自己反编译(已获批准)。
+   另:皮肤 `_MainTex` 是运行时 `Graphics.Blit` 合成的,合成 shader = `chara/mm_base.unity3d` 里的
+   `Create/skin color`(唇/腮红/眼影/痣/纹身各一层)+ `Create/skin detail`。
 5. 保真度指标:怎么量化"近似渲染 vs 真游戏渲染"的差距(像素?ArcFace 身份?beauty 分一致性?)。
+   → 计划三者都报:掩膜内 L1/PSNR + ArcFace 余弦 + beauty 分差。
 6. 几何可导化:把 numpy deform 移植到 torch 的成本?还是有限差分 Jacobian 就够(小规模优化)?
-7. 提取器扩展:`hs2_extract_head.py` 加 `m_UV` + texture + 材质参数 + 眼/眉/齿子网格,一次能拔多少?
+   → 决定移植(Phase 1),因为要给 amortized head 反传,不只是小规模优化。
+7. ~~提取器扩展~~ → **已答**:一次全拔。见上面"2026-07-19 新增"。

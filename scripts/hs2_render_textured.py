@@ -74,8 +74,34 @@ def _to_clip(v_view: torch.Tensor, margin: float = 0.85) -> torch.Tensor:
     return torch.stack([x, y, z, torch.ones_like(x)], dim=1)
 
 
-def render_head(verts, faces, uv=None, tex=None, yaw=0.0, res=512,
-                skin=(0.90, 0.75, 0.66), light=(0.35, 0.45, 0.82),
+def load_card_manifest(card_path):
+    """The card's extraction manifest (head dir, resolved texture assets, ids)."""
+    stem = os.path.splitext(os.path.basename(card_path))[0]
+    path = os.path.join(HEAD_DIR, "cards", f"{stem}.json")
+    if not os.path.exists(path):
+        raise SystemExit(f"no manifest for {stem} — run:\n"
+                         f"    .venv/Scripts/python.exe scripts/hs2_extract_head.py --card {card_path}")
+    return json.load(open(path, encoding="utf-8"))
+
+
+def load_skin_material(head_dir, name="cf_m_skin_head_02"):
+    """Real skin shading params extracted from the game material (<head_dir>/materials/)."""
+    path = os.path.join(head_dir, "materials", f"{name}.json")
+    d = json.load(open(path, encoding="utf-8")) if os.path.exists(path) else {"colors": {}, "floats": {}}
+    c, f = d.get("colors", {}), d.get("floats", {})
+    pick = lambda k, dv: (c[k][:3] if k in c else dv)
+    return {
+        "base": pick("_Color", [0.80, 0.70, 0.63]),
+        "sss": pick("_ColorTranslucency", [0.80, 0.55, 0.44]),
+        "spec": pick("_SpecColor", [0.5, 0.5, 0.5]),
+        "smoothness": float(f.get("_Smoothness", 0.65)),
+        "rim": float(f.get("_Rim", 0.5)),
+        "rim_exp": float(f.get("_RimExp", 1.0)),
+    }
+
+
+def render_head(verts, faces, uv=None, tex=None, yaw=0.0, res=512, mat=None,
+                skin=None, light=(0.35, 0.45, 0.82),
                 ambient=0.38, bg=1.0, device="cuda"):
     """Render (verts,faces) to an (res,res,3) uint8 RGB image with nvdiffrast.
 
@@ -94,31 +120,56 @@ def render_head(verts, faces, uv=None, tex=None, yaw=0.0, res=512,
     rast, _ = dr.rasterize(_glctx(), clip, f, resolution=[res, res])
     mask = (rast[..., 3:4] > 0).float()                    # (1,H,W,1)
 
-    # smooth-normal Lambert + ambient (two-sided so back-facing interpolated normals don't go black)
     n_img, _ = dr.interpolate(n[None], rast, f)            # (1,H,W,3)
     n_img = n_img / (n_img.norm(dim=-1, keepdim=True) + 1e-9)
-    L = torch.tensor(light, dtype=torch.float32, device=device)
-    L = L / L.norm()
-    ndl = (n_img * L).sum(-1, keepdim=True).abs()          # two-sided
-    shade = ambient + (1.0 - ambient) * ndl.clamp(0, 1)    # (1,H,W,1)
+    n_img = torch.where(n_img[..., 2:3] < 0, -n_img, n_img)   # orient toward camera (view dir +z)
 
-    if tex is not None and uv is not None:
+    # Skin shading driven by the GAME's real material params (<head_dir>/materials/).
+    if mat is None:
+        raise ValueError("mat= (load_skin_material result) is required")
+    base = torch.tensor(skin if skin is not None else mat["base"], dtype=torch.float32, device=device)
+    if tex is not None and uv is not None:                  # Unity: albedo = _MainTex * _Color
         uvt = torch.as_tensor(np.ascontiguousarray(uv), dtype=torch.float32, device=device)
         uv_img, _ = dr.interpolate(uvt[None], rast, f)     # (1,H,W,2)
-        text = torch.as_tensor(tex, dtype=torch.float32, device=device)[None]  # (1,th,tw,3)
-        albedo = dr.texture(text, uv_img, filter_mode="linear")               # (1,H,W,3)
+        text = torch.as_tensor(tex, dtype=torch.float32, device=device)[None]
+        albedo = dr.texture(text, uv_img, filter_mode="linear") * base
     else:
-        albedo = torch.tensor(skin, dtype=torch.float32, device=device).view(1, 1, 1, 3)
+        albedo = base.view(1, 1, 1, 3)
 
-    color = albedo * shade
+    view = torch.tensor([0.0, 0.0, 1.0], device=device)
+    # Soft character-maker-ish rig (2 balanced lights so it isn't blown out).
+    rig = [((0.30, 0.30, 0.90), (1.00, 0.97, 0.93), 0.80),   # warm key, front-upper
+           ((-0.55, -0.15, 0.60), (0.82, 0.88, 1.00), 0.28)]  # cool fill, lower-side
+    sss_col = torch.tensor(mat["sss"], dtype=torch.float32, device=device)      # _ColorTranslucency
+    spec_col = torch.tensor(mat["spec"], dtype=torch.float32, device=device)    # _SpecColor
+    shininess = 2.0 ** (mat["smoothness"] * 6.0 + 2.0)     # _Smoothness -> Blinn exponent
+    diffuse = torch.zeros_like(albedo)
+    specular = torch.zeros_like(albedo)
+    for d, c, inten in rig:
+        Ld = torch.tensor(d, dtype=torch.float32, device=device)
+        Ld = Ld / Ld.norm()
+        col = torch.tensor(c, dtype=torch.float32, device=device) * inten
+        wrap = ((n_img * Ld).sum(-1, keepdim=True) * 0.5 + 0.5).clamp(0, 1)     # half-Lambert
+        diffuse = diffuse + col * wrap
+        diffuse = diffuse + sss_col * (wrap * (1.0 - wrap)) * inten * 0.5       # subsurface (translucency)
+        half = Ld + view
+        half = half / half.norm()
+        specular = specular + spec_col * inten * (
+            (n_img * half).sum(-1, keepdim=True).clamp(0, 1) ** shininess) * 0.35
+    ndv = (n_img * view).sum(-1, keepdim=True).clamp(0, 1)
+    rim = ((1.0 - ndv) ** (1.0 + mat["rim_exp"])) * mat["rim"] * 0.12          # subtle rim
+    ambient_col = torch.tensor([0.42, 0.44, 0.48], device=device) * 0.5
+    color = albedo * (diffuse + ambient_col) + specular + rim
+    color = color.clamp(0, 1)
+
     img = color * mask + bg * (1.0 - mask)                 # composite over background
     img = dr.antialias(img, rast, clip, f)                 # silhouette AA
     img = img[0].flip(0).clamp(0, 1)                       # flip: nvdiffrast row0 = NDC y=-1 (bottom)
     return (img.detach().cpu().numpy() * 255).astype(np.uint8)
 
 
-def load_uv():
-    npz = np.load(os.path.join(HEAD_DIR, "o_head_mesh.npz"))
+def load_uv(head_dir):
+    npz = np.load(os.path.join(head_dir, "o_head_mesh.npz"))
     return npz["uv"] if "uv" in npz.files else None
 
 
@@ -137,6 +188,9 @@ def main():
     ap.add_argument("--texture", default=None,
                     help="albedo texture PNG to map via UV (default: flat skin tone)")
     ap.add_argument("--res", type=int, default=512)
+    ap.add_argument("--composite", action="store_true",
+                    help="compose _MainTex from the card (skin tone + makeup) instead of the raw skin texture")
+    ap.add_argument("--tex-res", type=int, default=2048, help="composition resolution")
     ap.add_argument("--yaws", default="0,-25,25")
     ap.add_argument("--compare", action="store_true",
                     help="also save our front render beside the card's in-game portrait (face-cropped)")
@@ -146,17 +200,38 @@ def main():
     out_png = args.out or f"outputs/{stem}_head_textured.png"
     os.makedirs("outputs", exist_ok=True)
 
+    man = load_card_manifest(args.card)
+    head_dir = os.path.join(HEAD_DIR, man["head_dir"])
+    mat = load_skin_material(head_dir, man["head_material"])
+
     verts, faces = card_to_mesh(args.card)
     save_obj(verts, faces, f"outputs/{stem}_head.obj")
-    uv = load_uv()
-    tex = load_texture(args.texture) if args.texture else None
-    if args.texture:
-        print(f"[render] albedo texture: {args.texture} {tex.shape}")
+    uv = load_uv(head_dir)
+
+    # Albedo. --composite reproduces the game's runtime texture composition (skin tone recolour +
+    # lipstick/eyeshadow/blush/mole); otherwise we use the raw card-selected skin texture, which
+    # is the composition's *input* and so carries no makeup.
+    print(f"[render] head={man['head_dir']} prefab={man['prefab']} mat={man['head_material']}")
+    tex_path = args.texture
+    if args.composite and tex_path is None:
+        from src.render.composite import FaceCompositor, linear_to_srgb
+        comp = FaceCompositor.from_card(args.card, res=args.tex_res,
+                                        device="cuda" if torch.cuda.is_available() else "cpu")
+        # the compositor returns LINEAR light; this renderer still shades display-referred, so
+        # encode back to sRGB here (Phase 3b moves shading into linear and drops this).
+        tex = linear_to_srgb(comp.color_pass()).detach().cpu().numpy()[::-1].copy()
+        print(f"[render] albedo: composed _MainTex {tex.shape} (makeup applied)")
     else:
-        print("[render] flat skin tone (approx skin; base diffuse is a later brick)")
+        if tex_path is None:
+            slot = man["textures"].get("ft_skin_f.MainTex")
+            if slot and slot.get("file"):
+                tex_path = os.path.join(HEAD_DIR, slot["file"])
+        tex = load_texture(tex_path) if tex_path else None
+        print(f"[render] albedo: {tex_path or 'flat skin tone'}"
+              + (f" {tex.shape}" if tex is not None else ""))
 
     yaws = [float(y) for y in args.yaws.split(",") if y.strip()]
-    views = [render_head(verts, faces, uv=uv, tex=tex, yaw=y, res=args.res) for y in yaws]
+    views = [render_head(verts, faces, uv=uv, tex=tex, yaw=y, res=args.res, mat=mat) for y in yaws]
     gap = np.full((views[0].shape[0], 8, 3), 255, np.uint8)
     combo = np.concatenate([x for v in views for x in (v, gap)][:-1], axis=1)
     Image.fromarray(combo).save(out_png)
@@ -168,7 +243,7 @@ def main():
         # and place our front render beside it. Rough eyeball: our render lacks eyes/skin/hair, so
         # this compares FACE SHAPE / proportions, not appearance.
         from src.img_utils import load_face_rgb
-        ours = render_head(verts, faces, uv=uv, tex=tex, yaw=0.0, res=args.res)
+        ours = render_head(verts, faces, uv=uv, tex=tex, yaw=0.0, res=args.res, mat=mat)
         portrait = load_face_rgb(args.card, args.res, use_detector=True)  # RGB uint8 aligned face
         gap = np.full((args.res, 12, 3), 255, np.uint8)
         cmp = np.concatenate([portrait, gap, ours], axis=1)

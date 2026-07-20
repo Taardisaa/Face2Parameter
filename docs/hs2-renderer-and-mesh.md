@@ -4,10 +4,20 @@
 
 How HS2 builds a female face from a card, traced via UnityPy + ILSpy decompile of `Assembly-CSharp.dll`:
 
-1. **Head mesh** = `o_head` (3254 verts, skinned to 43 bones) in `abdata/chara/00/fo_head_00.unity3d`
-   (`fo_head_NN` = female heads; `ao_head` = hats; `mo_head` = male). It carries **58 blendshapes that are
-   ALL expressions** (`e*` eyes, `g*` brows, `k*` mouth/visemes) — **none are shape sliders**. So for a
-   neutral static face, expression blendshapes = 0.
+0. **Asset selection goes through the game's lists — nothing is derivable from the id alone.**
+   `ChaListControl` merges every `abdata/list/characustom/*.unity3d` (msgpack `ChaListData`:
+   `categoryNo → id → row`) and each row names the bundle + asset. Reproduced offline by
+   [src/hs2_assets.py](../src/hs2_assets.py). Worked example — `headId=2` (category 210 `fo_head`):
+   → bundle `chara/38/fo_head_38.unity3d`, prefab `p_cf_head_02`, **`ShapeAnime = cf_anmShapeHead_01`**
+   (head 02 *reuses head 01's* keyframe table), `MatData = cf_m_skin_head_02`.
+   Likewise `skinId=20` (category 211 `ft_skin_f`) → `chara/30/ft_skin_f_30.unity3d :: cf_head_02_00_t`
+   — so the skin `_MainTex` that looked "external/unresolvable" is fully resolvable offline.
+1. **Head mesh** = the `o_head` under the **render** prefab `p_cf_head_NN` (headId 0/1/2 →
+   4418/4438/**4439** verts, skinned to 43 bones). ⚠️ Each bundle *also* holds a **collision** prefab
+   `p_cf_head_NN_hit` whose `o_head` is bigger (3254 / 9811 verts) but has useless UVs — selecting by
+   "most vertices" silently picks the collision mesh (this was a real bug; fixed 2026-07-19).
+   The head carries **58 blendshapes that are ALL expressions** (`e*` eyes, `g*` brows, `k*`
+   mouth/visemes) — **none are shape sliders**. So for a neutral static face, expression blendshapes = 0.
 2. **`shapeValueFace` (54) is BONE-DRIVEN**, not blendshapes. `ChaControl.InitShapeFace` →
    `sibFace = new ShapeHeadInfoFemale()` (a `ShapeInfoBase`) → `sibFace.InitShapeInfo(... "list/customshape.unity3d", assetAnmShapeFace, ChaABDefine.ShapeHeadListAsset(sex) ...)` then
    `sibFace.ChangeValue(i, fileFace.shapeValueFace[i])` for each of the 54.
