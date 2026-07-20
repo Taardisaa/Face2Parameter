@@ -36,7 +36,11 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 MV_DIR = os.path.join(ROOT, "data", "hs2_gt", "_multiview")
-OUR_DIR = os.path.join(ROOT, "data", "hs2_gt", "_ours")
+# v2 = both sides re-captured after the measurement fixes. The v1 dirs are not comparable: the
+# game side blinked (pixel diff 13.8 between repeat captures) and its camera was 27% zoomed in
+# relative to ours, and our side predates supersampling, the PBS port and the specular fix.
+GAME_DIR = os.path.join(ROOT, "data", "hs2_gt", "_proxy_game_v2")
+OUR_DIR = os.path.join(ROOT, "data", "hs2_gt", "_proxy_ours_v2")
 CARD_DIR = os.environ.get("HS2_CARD_DIR", r"E:\HoneySelect2_ArcticFox\UserData\chara\female")
 
 YAWS_A = [-20.0, -10.0, 0.0, 10.0, 20.0]
