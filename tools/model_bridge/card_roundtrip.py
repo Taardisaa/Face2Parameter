@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import time
 from pathlib import Path
 
 import numpy as np
@@ -36,6 +37,15 @@ def main():
     cleared = request(args.base, "DELETE")
     loaded = request(args.base, "POST", {"path": str(args.card.resolve())}, route="/maker/card/load")
     after = request(args.base, "GET")
+    # HS2API's character reload notifications can finish after the native writer/
+    # loader returns, particularly while initial Maker loading is still settling.
+    # Wait for this card's record; geometry equality checks below remain unchanged.
+    deadline = time.monotonic() + 30
+    while not (after.get("active") and after.get("artifact_sha256") == before["artifact_sha256"]):
+        if time.monotonic() >= deadline:
+            break
+        time.sleep(0.25)
+        after = request(args.base, "GET")
     equal_vertices = np.array_equal(np.asarray(before.pop("render_vertices"), dtype=np.float32),
                                    np.asarray(after.pop("render_vertices", []), dtype=np.float32))
     equal_triangles = np.array_equal(np.asarray(before.pop("render_triangles"), dtype=np.int32),

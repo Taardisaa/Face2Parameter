@@ -105,3 +105,10 @@ expression, plain Standard material, unjoined neck and no native facial controls
 The controller lifecycle supports character ownership, but Studio/multiple-character
 scene persistence has not received live acceptance. Current reproducible integration
 and source provenance are in `../HS2Mod/docs/hs2_model_parameter_bridge.md`.
+
+The card command waits for the expected embedded record to become active after
+load, because HS2API reload notifications may finish after the HTTP response,
+especially during initial Maker loading. Vertex, triangle and placement equality
+checks still apply to the final state; readiness waiting does not weaken them.
+Final installed binary reload is recorded in `final_load_0315.json` in the same
+ignored output directory.
