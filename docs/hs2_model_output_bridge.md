@@ -442,3 +442,100 @@ arbitrary ABMX head shear/nonuniform changes is still a gap. Source UV/material,
 eye/mouth appearance, clean HS2 parameter mapping and neutral source identity
 accuracy remain the next work. Existing paired-scan discrepancies cannot be
 dismissed as a makeup-only effect.
+
+## Source UV and explicit surface, Bridge 0.31.8
+
+`surface.py` exports `hs2_source_head_mesh_v3`: the original canonical geometry,
+parameters and rig remain unchanged. Source OBJ face corners must match the model's
+literal topology and order. `(canonical vertex, authored UV index)` pairs create a
+render-only seam gather; positions and normals are gathered after canonical rig
+evaluation. No OBJ template position, tolerance welding or replacement shape is
+used. The declared FLAME assets have 5,023 canonical and 5,118 render vertices.
+
+The inspected SMIRK renderer uses its authored UV asset but constant gray shape
+color. Official MICA defaults to white vertex color and its supplied head OBJ lacks
+corner UVs. **Neither pipeline outputs inferred identity albedo.** MICA's v3 case
+explicitly uses the topology-identical SMIRK UV OBJ as an external asset, not a
+claimed MICA prediction. An optional externally supplied opaque PNG in that layout
+is embedded with byte and decoded RGBA hashes. The native material is Unity
+`Unlit/Texture`, sRGB, Clamp/Bilinear, without mipmaps. This is an explicit surface
+display branch, not recovered appearance or game shader parity. Eye/mouth surface
+appearance and textured neck blending remain unfinished.
+
+Source files inspected: SMIRK `src/renderer/renderer.py` SHA256
+`8d9c45d7c127715b9b0f24f35ed789b49afb5d8c43a81d288f458e0e0d06223e`;
+official MICA renderer `550cb1f2b1ba4b5de82de613af1376642f8bba93b3d8ae7259d036447673d153`;
+SMIRK `assets/head_template.obj`
+`dd5bfbce75adb99b1963f43bca7ec3557bd4a7321f8fc515f4100599e80d99f2`.
+The MICA OBJ's missing-UV rejection is retained as `surface_0318/mica_obj_uv_failure.json`.
+
+Positive uniform world frames are now checked continuously. Nonuniform scale,
+shear or reflection suppresses source display, releases the collar and restores
+the native face/body fallback; returning to a supported frame restores the source.
+No compensation is applied to canonical vertices. Native HTTP source-card save
+refuses unsupported frames or unresolved attachments. This does **not** establish
+that native Maker UI save aborts: HS2API catches controller save exceptions.
+
+The first final run exposed stale render ownership after card reload: held arrays
+were correct while the actual MeshFilter/material referenced copies. v1 failure is
+preserved. `SourceRenderOwnership` now adopts only isolated equivalent copies with
+literal position/topology/normal/tangent/UV/color equality and matching preview
+material state, tracks their lifetime, and updates the actual bound asset. Unknown
+replacements are refused. Actual source, cut-body and collar binding checks were
+added. The responsible replacement caller remains unidentified; inspected direct
+`MeshFilter.get_mesh` callsites did not establish the reload caller. No plugin is
+blamed without source evidence. In-place edits to an already owned reference are
+not continuously full-content monitored.
+
+```powershell
+.venv/Scripts/python.exe -m tools.model_bridge.surface `
+  --mesh outputs/model_bridge_20261007/smirk_raw_v1/source_head_rig.json `
+  --source-obj C:/Users/13666/Workspace/smirk/assets/head_template.obj `
+  --texture outputs/model_bridge_20261007/surface_0318/diagnostic_uv_chart.png `
+  --out outputs/model_bridge_20261007/surface_0318/smirk_surface.json
+
+# Explicit external UV for MICA; no texture or albedo prediction invented.
+.venv/Scripts/python.exe -m tools.model_bridge.surface `
+  --mesh outputs/model_quality_20261007/mica_pair_raw_v2/source_head_rig.json `
+  --source-obj C:/Users/13666/Workspace/smirk/assets/head_template.obj `
+  --out outputs/model_bridge_20261007/surface_0318/mica_surface_explicit_uv.json
+
+.venv/Scripts/python.exe -m tools.model_bridge.attachment_runtime `
+  --proposal outputs/model_bridge_20261007/neck_cut_posed_v4.json `
+  --native-state outputs/model_bridge_20261007/neck_body_state_v1/native_body.json `
+  --source-state outputs/model_bridge_20261007/neck_body_state_v1/source_head.json `
+  --source-artifact outputs/model_bridge_20261007/surface_0318/smirk_surface.json `
+  --out outputs/model_bridge_20261007/surface_0318/smirk_attachment.json
+
+.venv/Scripts/python.exe -m tools.model_bridge.surface_acceptance `
+  --smirk outputs/model_bridge_20261007/surface_0318/smirk_surface.json `
+  --mica outputs/model_bridge_20261007/surface_0318/mica_surface_explicit_uv.json `
+  --attachment outputs/model_bridge_20261007/surface_0318/smirk_attachment.json `
+  --backup-card C:/Users/13666/Workspace/HS2Mod/artifacts/model_bridge_20261007/before_surface_0318.png `
+  --thumbnail C:/Users/13666/Workspace/HS2Mod/artifacts/model_bridge_20261007/source_head_front.png `
+  --out outputs/model_bridge_20261007/surface_acceptance_0318_v2
+```
+
+Commands executed; use fresh output paths to repeat them. The supplied acceptance
+texture was a generated 32×16 RGB diagnostic chart, not a face/model texture. PNG
+SHA256 `6a8850314b9a351245bc43e2c4a71c3633e02140b9910d97cafa6894aab4dcad`;
+SMIRK v3 artifact `090ed375cfdb7358a9e4fe902ed07da4072637d7bb6828c0f212db914ba6e60c`;
+MICA v3 artifact `5b718ebae9d3b490c33b965e568dd5f9d6617ddccc2bb873c7a6786f2bf1f1c0`;
+attachment `d00977624ea1d33b8c3284f99f10c6a7de1bdc1f6d5ed3690c7b1b0a5e0af1c0`.
+Installed DLL0.31.8 SHA256
+`aeefd027248d5e0788072aa2bc76d0bd91e5fbccf0f3710a19f19b2572738150`.
+
+`surface_acceptance_0318_v2/receipt.json` passes the same predeclared cases after
+the source fix: both models' literal canonical/render gather, authored UVs and
+actual binding; one source pose each; embedded-card reload with external JSON/PNG
+temporarily absent; exact reset; one nonuniform ABMX head-frame rejection and
+recovery; source/body/collar binding; original backup restoration. v1 is retained,
+thresholds unchanged. These are geometry/asset/lifecycle checks, not appearance
+similarity or source-model accuracy measurements. `attachment_acceptance.py` now
+requires the 0.31.8 binding fields; the historical 0.31.7 receipt covered its older
+declared assertions. No screenshot campaign or new model inference was performed.
+
+Next work remains independent matched neutral geometry evidence, explicit eye/mouth
+appearance and correspondence, and clean native parameter mapping feasibility.
+The paired anger-scan discrepancies and missing neutral truth are unchanged; see
+[source model quality](source_model_quality.md). No full character fidelity claim.

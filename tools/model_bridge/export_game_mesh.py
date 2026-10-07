@@ -8,7 +8,7 @@ from pathlib import Path
 from .artifact import ModelArtifact, sha
 
 
-def export(artifact, output, *, head_local, with_rig=False):
+def export(artifact, output, *, head_local, with_rig=False, source_obj=None, texture=None):
     vertices, faces = artifact.mesh(head_local=head_local)
     if vertices.ndim != 2 or vertices.shape[1] != 3 or faces.ndim != 2 or faces.shape[1] != 3:
         raise ValueError("Triangle mesh required")
@@ -35,6 +35,13 @@ def export(artifact, output, *, head_local, with_rig=False):
         payload["format"] = "hs2_source_head_mesh_v2"
         payload["rig"] = export_rig(artifact)
         payload["game_support"] = "Original source LBS rig; fixed shape/expression, source pose controls; native facial retargeting and neck join separate"
+    if source_obj is not None:
+        if not head_local:
+            raise ValueError('Source surface requires explicit head-local geometry')
+        from .surface import add_surface
+        add_surface(payload, Path(source_obj), Path(texture) if texture is not None else None)
+    elif texture is not None:
+        raise ValueError('Texture requires the corresponding source corner-UV OBJ')
     output = Path(output)
     output.parent.mkdir(parents=True, exist_ok=True)
     with output.open("x", encoding="utf-8") as stream:
@@ -51,9 +58,12 @@ def main():
     parser.add_argument("--out", type=Path, required=True)
     parser.add_argument("--head-local", action="store_true")
     parser.add_argument("--with-rig", action="store_true", help="Carry complete original FLAME LBS and pose-corrective state")
+    parser.add_argument('--source-obj', type=Path, help='Exact source face/corner-UV OBJ; template positions are ignored')
+    parser.add_argument('--texture', type=Path, help='Explicit external opaque PNG in the source UV layout; not inferred albedo')
     args = parser.parse_args()
     artifact = ModelArtifact(args.manifest, args.image_index)
-    print(json.dumps(export(artifact, args.out, head_local=args.head_local, with_rig=args.with_rig)))
+    print(json.dumps(export(artifact, args.out, head_local=args.head_local, with_rig=args.with_rig,
+                            source_obj=args.source_obj, texture=args.texture)))
 
 
 if __name__ == "__main__":

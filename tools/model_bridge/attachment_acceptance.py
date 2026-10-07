@@ -33,7 +33,7 @@ def check(state, descriptor, expected_faces, out, name):
     count = descriptor['native']['vertex_count']
     body = np.asarray(attachment['body_vertices'], dtype=np.float32)
     native = np.asarray(attachment['native_baked_vertices'], dtype=np.float32)
-    source = np.asarray(state['render_vertices'], dtype=np.float32)
+    source = np.asarray(state.get('canonical_vertices', state['render_vertices']), dtype=np.float32)
     collar = np.asarray(attachment['collar_vertices'], dtype=np.float32)
     edges = np.asarray(descriptor['edge_interpolation'])
     t = edges[:, 2:3].astype(np.float32)
@@ -47,13 +47,15 @@ def check(state, descriptor, expected_faces, out, name):
     checks = {
         'untouched_native_vertices_literal': bool(np.array_equal(body[:count], native)),
         'body_cut_topology_literal': bool(np.array_equal(attachment['body_triangles'], descriptor['triangles'])),
-        'source_topology_literal': bool(np.array_equal(state['render_triangles'], expected_faces)),
+        'source_topology_literal': bool(np.array_equal(state.get('canonical_triangles', state['render_triangles']), expected_faces)),
         'collar_topology_literal': bool(np.array_equal(attachment['collar_triangles'], descriptor['collar_triangles'])),
         'native_collar_endpoints_literal': bool(np.array_equal(collar[n:], body[descriptor['native_ring_cut_indices']])),
         'native_skin_target_retained': attachment['native_shared_mesh_unchanged'],
         'native_renderer_hidden': not attachment['native_renderer_enabled'],
         'visibility_cache_registered': attachment['visibility_cache_registered'],
         'material_references_preserved': attachment['materials_shared_with_native'],
+        'actual_body_mesh_bound': attachment.get('body_display_mesh_bound', False),
+        'actual_collar_mesh_bound': attachment.get('collar_display_mesh_bound', False),
         **{key: attachment[key] for key in ['original_posed_normals_preserved', 'original_posed_tangents_preserved',
             'original_uv_preserved', 'original_uv2_preserved', 'original_colors_preserved']},
         'replacement_follows_native_active': attachment['replacement_active_in_hierarchy'] == attachment['native_body_active_in_hierarchy'],

@@ -39,7 +39,7 @@ def main():
         raise FileExistsError("Use a new receipt path")
     path = args.mesh.resolve()
     source = json.loads(path.read_text(encoding="utf-8"))
-    if source.get("format") not in {"hs2_source_head_mesh_v1", "hs2_source_head_mesh_v2"} or source.get("geometry_mode") != "head_local":
+    if source.get("format") not in {"hs2_source_head_mesh_v1", "hs2_source_head_mesh_v2", "hs2_source_head_mesh_v3"} or source.get("geometry_mode") != "head_local":
         raise ValueError("Explicit head-local source-model interchange required")
     vertices = np.asarray(source["vertices"], dtype=np.float32)
     triangles = np.asarray(source["triangles"], dtype=np.int32)
@@ -55,12 +55,20 @@ def main():
                                          "scale": scale, "translation": translation.tolist()})
     actual_vertices = np.asarray(result.pop("render_vertices"), dtype=np.float32)
     actual_triangles = np.asarray(result.pop("render_triangles"), dtype=np.int32)
-    passed = np.array_equal(vertices, actual_vertices) and np.array_equal(triangles, actual_triangles)
+    canonical = np.asarray(result.pop('canonical_vertices', actual_vertices), dtype=np.float32)
+    canonical_faces = np.asarray(result.pop('canonical_triangles', actual_triangles), dtype=np.int32)
+    surface = source.get('surface')
+    render_expected = vertices if surface is None else vertices[surface['render_to_canonical']]
+    faces_expected = triangles if surface is None else np.asarray(surface['render_triangles'], dtype=np.int32)
+    passed = (np.array_equal(vertices, canonical) and np.array_equal(triangles, canonical_faces) and
+              np.array_equal(render_expected, actual_vertices) and np.array_equal(faces_expected, actual_triangles))
     report = {
         "source": {"path": str(path), "sha256": sha(path)},
         "game": result,
-        "vertex_arrays_equal": bool(np.array_equal(vertices, actual_vertices)),
-        "triangle_arrays_equal": bool(np.array_equal(triangles, actual_triangles)),
+        "canonical_vertex_arrays_equal": bool(np.array_equal(vertices, canonical)),
+        "canonical_triangle_arrays_equal": bool(np.array_equal(triangles, canonical_faces)),
+        "vertex_arrays_equal": bool(np.array_equal(render_expected, actual_vertices)),
+        "triangle_arrays_equal": bool(np.array_equal(faces_expected, actual_triangles)),
         "placement_policy": "Single reference head-height uniform scale, center translation; no per-axis scaling, remeshing, vertex fitting or parameter conversion",
         "native_slider_mapping": False, "card_persistence": result.get("card_persistence", False),
         "native_expression_retargeting": False,

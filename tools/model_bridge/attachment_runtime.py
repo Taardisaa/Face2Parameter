@@ -90,7 +90,7 @@ def package(proposal, native, source, replacement_artifact=None):
     }
     if replacement_artifact is not None:
         artifact = json.loads(replacement_artifact.read_text(encoding='utf-8'))
-        if artifact.get('format') not in {'hs2_source_head_mesh_v1', 'hs2_source_head_mesh_v2'} or artifact.get('geometry_mode') != 'head_local' or (
+        if artifact.get('format') not in {'hs2_source_head_mesh_v1', 'hs2_source_head_mesh_v2', 'hs2_source_head_mesh_v3'} or artifact.get('geometry_mode') != 'head_local' or (
                 not np.array_equal(np.asarray(artifact['vertices'], dtype=np.float32), np.asarray(source['render_vertices'], dtype=np.float32)) or
                 not np.array_equal(np.asarray(artifact['triangles'], dtype=np.int32), np.asarray(source['render_triangles'], dtype=np.int32))):
             raise ValueError("Alternate source artifact must preserve every original vertex and triangle")
