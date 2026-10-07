@@ -149,6 +149,8 @@ def body_asset(bundle):
     active = np.flatnonzero(head_weights > 0)
     pure = np.flatnonzero(head_weights == 1)
     used = np.unique(arrays["faces"])
+    bind_head = arrays["bindpose"][index].astype(np.float64)
+    head_local = arrays["verts"][active] @ bind_head[:3, :3].T + bind_head[:3, 3]
     return arrays, {"bundle": str(bundle.resolve()), "bundle_sha256": sha(bundle),
         "prefab": "p_cf_body_00", "mesh": mesh.m_Name, "renderer_path_id": obj.path_id,
         "mesh_path_id": mesh.object_reader.path_id, "transform_chain": chain,
@@ -157,6 +159,9 @@ def body_asset(bundle):
         "head_weight_one_vertices": pure.tolist(), "used_y_max": float(arrays["verts"][used, 1].max()),
         "head_influenced_bounds_min": arrays["verts"][active].min(0).tolist(),
         "head_influenced_bounds_max": arrays["verts"][active].max(0).tolist(),
+        "head_influenced_bounds_in_head_bind_frame": {
+            "min": head_local.min(0).tolist(), "max": head_local.max(0).tolist(),
+            "policy": "Literal native body Head_s bindpose; head-weight support is not an anatomical posterior-skull label"},
         "topology": topology(arrays["verts"], arrays["faces"]),
         "head_support_is_not_a_cut_mask": True,
         "warning": "Body retains head-weighted surface when only o_head/eye renderers are hidden; positive head weights alone do not define an anatomical neck cut"}
@@ -187,7 +192,7 @@ def main():
         "source_uv": source_uv(args.source_obj, artifact.faces), "native_female_body": body,
         "implemented_attachment": False,
         "remaining": ["Identify anatomical native head/body seam from authored topology and transforms",
-                      "Replace native posterior head surface as well as separate face renderer",
+                      "Resolve retained native upper-neck/head interface against source full neck; do not classify posterior skull from weights alone",
                       "Add explicit connector without changing source face vertices",
                       "Carry original UV corner mapping with exact seam duplication",
                       "Keep source eyeballs; native eye components require separate explicit correspondence"]}
