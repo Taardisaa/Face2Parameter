@@ -544,3 +544,121 @@ Paired 0.31.8 implementation commits: HS2Mod
 `21478b4a67186516eb933051bf8ff78fb402ccdc`; Face2Parameter
 `6352aeedfbd915fdcac64c1b5037804b49fe031d`. Both pushed normally to their
 configured origin branches. This note adds no geometry or accuracy claim.
+
+## 0.31.9: original eyeball components and separate appearance slots
+
+`components.py` derives the three original index-connected FLAME parts and
+requires exact equality of the left/right eyeball components to the pinned
+authored masks. Canonical vertices, topology, raw parameters, the complete original
+five-joint rig and corner UVs remain literal. Small non-eye skin weights are kept;
+there is no rigid-eye approximation. The source contains a head mouth boundary,
+but no separate teeth/tongue asset. This exporter does not invent those parts.
+
+Pinned mask SHA256:
+`ccefbe1ac0774ff78c68caf2c627b4abc067a6555ebeb0be5d5b0812366ab492`.
+Component vertex counts are head3931, left546, right546; authored OBJ provenance
+remains the 0.31.8 UV hash above. Original triangles interleave the parts. Six
+maximal contiguous material runs, rather than three reordered face groups, keep
+the complete face-corner sequence unchanged. `flame_component_uv_v1` explicitly
+distinguishes this layout from the older single-material surface; older bridges
+reject the new format. The total artifact still has the native 16 MiB bound.
+
+Native `ChaControl.ChangeEyesKind/ChangeEyesWH` operates on native `rendEyes`
+materials through `ChaShader.PupilTex/PupilLayout`, including original slider
+Lerp semantics. It is not a correspondence to source eyeball UVs. The inspected
+installed decompilation SHA256 is
+`e7c303c4ca47f5dbfffd04f393ea11de207871d30d759ce9b5632400e37058a1`.
+0.31.9 instead accepts optional explicit left/right opaque PNGs in the source
+UV layout. Each overrides that component's appearance; absent overrides inherit
+the existing head appearance/preview. All image byte/pixel checks, embedding,
+similarity guards and native cut/collar support remain as declared previously.
+No photo albedo, native eye-material retargeting or native facial animation is
+claimed. Texture images in this run are diagnostic colors only.
+
+Executed preparation from Face2Parameter (existing 0.31.8 inputs retained):
+
+```powershell
+# Reproduce the two explicit 32x16 diagnostic images. Use a fresh output directory.
+@'
+from pathlib import Path
+import numpy as np
+from PIL import Image
+p=Path('outputs/model_bridge_20261007/components_0319')
+p.mkdir(exist_ok=False)
+y,x=np.indices((16,32))
+rgba=np.stack([x*8,y*16,np.full_like(x,80),np.full_like(x,255)],-1).astype('uint8')
+Image.fromarray(rgba).save(p/'left_eye_diagnostic.png')
+rgba[:,:,:3]=rgba[:,:,[2,0,1]]
+Image.fromarray(rgba).save(p/'right_eye_diagnostic.png')
+'@ | .venv/Scripts/python.exe -
+
+.venv/Scripts/python.exe -m tools.model_bridge.components `
+  --mesh outputs/model_bridge_20261007/surface_0318/smirk_surface.json `
+  --mask C:/Users/13666/Workspace/smirk/assets/FLAME_masks/FLAME_masks.pkl `
+  --left-eye-texture outputs/model_bridge_20261007/components_0319/left_eye_diagnostic.png `
+  --right-eye-texture outputs/model_bridge_20261007/components_0319/right_eye_diagnostic.png `
+  --out outputs/model_bridge_20261007/components_0319/smirk_components.json
+
+.venv/Scripts/python.exe -m tools.model_bridge.components `
+  --mesh outputs/model_bridge_20261007/surface_0318/mica_surface_explicit_uv.json `
+  --mask C:/Users/13666/Workspace/smirk/assets/FLAME_masks/FLAME_masks.pkl `
+  --left-eye-texture outputs/model_bridge_20261007/components_0319/left_eye_diagnostic.png `
+  --right-eye-texture outputs/model_bridge_20261007/components_0319/right_eye_diagnostic.png `
+  --out outputs/model_bridge_20261007/components_0319/mica_components.json
+
+.venv/Scripts/python.exe -m tools.model_bridge.attachment_runtime `
+  --proposal outputs/model_bridge_20261007/neck_cut_posed_v4.json `
+  --native-state outputs/model_bridge_20261007/neck_body_state_v1/native_body.json `
+  --source-state outputs/model_bridge_20261007/neck_body_state_v1/source_head.json `
+  --source-artifact outputs/model_bridge_20261007/components_0319/smirk_components.json `
+  --out outputs/model_bridge_20261007/components_0319/smirk_attachment.json
+
+.venv/Scripts/python.exe -m tools.model_bridge.surface_acceptance `
+  --smirk outputs/model_bridge_20261007/components_0319/smirk_components.json `
+  --mica outputs/model_bridge_20261007/components_0319/mica_components.json `
+  --attachment outputs/model_bridge_20261007/components_0319/smirk_attachment.json `
+  --backup-card C:/Users/13666/Workspace/HS2Mod/artifacts/model_bridge_20261007/before_components_0319.png `
+  --thumbnail C:/Users/13666/Workspace/HS2Mod/artifacts/model_bridge_20261007/source_head_front.png `
+  --out outputs/model_bridge_20261007/components_acceptance_0319_v1
+```
+
+The backup was saved through the existing native HTTP source-card writer before
+restarting the verified game process with the new DLL. This run reused the
+existing thumbnail, took no new screenshots, and ran no new model inference.
+Before importing, static checks confirmed literal canonical/rig/raw-output/UV
+arrays against the two existing inputs. Original pose geometry was replayed through
+each model's original LBS source, not reconstructed from exported rig arrays.
+
+Source hashes: left PNG
+`d2d08065ff55683a82082e5776ccd4a63d2e0f7cef2a003e6628d4be559a2ec6`;
+right PNG `5e29a056d709b76b1bab87cd67ced62b4bfa3e8b1c8bf727d72403075160291c`;
+SMIRK component artifact
+`509c89c7bfb8fdb3020ad1dfa96d9ee74d17771d4427917175d9a6508525d601`;
+MICA `0f34c178ff40625c38d46470690c773e00d495ece42a76524c1bf90045e52834`;
+attachment `5df3fbe2a916f7feb6d765578b4aa00d7aafceb42c783c3516206227159be0c4`.
+Installed0.31.9 DLL
+`947d5b0969cd0f10c2f77a77f343fe566c2cfdd0963b6f9bab239a0999abcf1c`.
+Receipt `components_acceptance_0319_v1/receipt.json` SHA256
+`287d5d3c495f73a1c2f66151df162963036f6c4894973386ffc9756161149f75`.
+
+Final acceptance passed both models' canonical positions/topology, full render
+face order/UV gather, literal component partitions, actual per-run material/PNG
+and decoded-pixel hashes. One composite neck/jaw/left/right-eye pose per model
+matches original decoder vertices and joints within the existing1e-6 raw bound
+(vertex maxima SMIRK2.98e-8, MICA1.49e-8). External JSON and all explicit PNGs
+were temporarily absent for embedded-card reload; posed geometry was preserved,
+then reset to literal originals. The existing one nonuniform ABMX guard and native
+body/collar actual binding checks passed; original backup restored. No sweeps,
+threshold changes, numerical fitting or source-model accuracy claims.
+
+A source-found old v1/v2 ownership issue also synchronizes an attachment's borrowed
+canonical mesh after adopting an isolated exact render copy. That old non-surface
+branch was not independently exercised by this v3 final run. Already owned objects'
+arbitrary in-place edits remain outside the continuous ownership check scope.
+
+Next integration gaps are genuine appearance/inner-mouth asset provenance and
+retargeting boundaries, plus the remaining clean native parameter conversion
+scope. Independent model accuracy remains governed by
+[source_model_quality.md](source_model_quality.md): one associated neutral tracked
+case does not certify arbitrary photos, and this geometry-preserving material
+integration does not alter or supersede its findings.

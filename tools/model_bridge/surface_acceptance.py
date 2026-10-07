@@ -14,7 +14,7 @@ from urllib.error import HTTPError
 
 import numpy as np
 
-from .artifact import sha
+from .artifact import ModelArtifact, host_path, sha
 from .attachment_acceptance import check as check_attachment, require
 from .game_import import request
 
@@ -48,12 +48,37 @@ def verify(state, artifact, out, name, original=False):
         checks['material_mode'] = surface['material_mode'] == 'unlit_srgb_opaque' and state['shader'] == 'Unlit/Texture'
     else:
         checks['no_texture_invented'] = not surface['explicit_texture']
+    component_report = []
+    if layout['format'] == 'flame_component_uv_v1':
+        components = layout['components']
+        labels = np.full(len(canonical), -1, dtype=np.int32)
+        for i, part in enumerate(components['components']):
+            labels[part['canonical_vertex_ids']] = i
+        checks['component_labels_literal'] = bool(np.array_equal(surface['canonical_vertex_components'], labels))
+        checks['component_names_literal'] = surface['component_names'] == [part['name'] for part in components['components']]
+        checks['material_run_count_literal'] = len(surface['material_runs']) == len(components['material_runs'])
+        for i, expected in enumerate(components['material_runs']):
+            actual = surface['material_runs'][i]
+            a = expected['first_triangle'] * 3; b = a + expected['triangle_count'] * 3
+            checks[f'run_{i}_original_indices'] = actual['render_indices'] == layout['render_triangles'][a:b]
+            checks[f'run_{i}_partition'] = all(actual[key] == value for key, value in expected.items())
+            checks[f'run_{i}_material_binding'] = actual['texture_matches_component']
+            name = components['components'][expected['component']]['name']
+            texture = components['textures'].get(name, layout.get('texture'))
+            if texture is not None:
+                checks[f'run_{i}_png_hash'] = actual['texture']['texture_png_sha256'] == texture['sha256']
+                checks[f'run_{i}_pixel_hash'] = actual['texture']['decoded_rgba8_top_down_sha256'] == texture['rgba8_top_down_sha256']
+                checks[f'run_{i}_shader'] = actual['shader'] == 'Unlit/Texture'
+            else:
+                checks[f'run_{i}_no_invented_texture'] = actual['texture'] is None and not actual['explicit_texture']
+            component_report.append({key: value for key, value in actual.items() if key != 'render_indices'})
     np.savez_compressed(out/(name+'.npz'), canonical=canonical, render=render, mapping=mapping,
                         canonical_faces=canonical_faces, render_faces=render_faces,
                         uv=np.asarray(surface['uv'], dtype=np.float32))
     report = {'checks': checks, 'shader': state['shader'], 'canonical_vertices': len(canonical),
               'render_vertices': len(render), 'source_obj': surface['source_obj'],
-              'texture_png_sha256': surface['texture_png_sha256'], 'source_accuracy_certified': False}
+              'texture_png_sha256': surface['texture_png_sha256'], 'material_runs': component_report,
+              'source_accuracy_certified': False}
     (out/(name+'.json')).write_text(json.dumps(report, indent=2)+'\n', encoding='utf-8')
     require(all(checks.values()), 'Source surface contract differs; geometry evidence retained')
     return report
@@ -128,11 +153,28 @@ def accept(base, mesh_path, descriptor_path, out, thumbnail):
     if descriptor is not None:
         state = request(base, 'POST', {'path': str(descriptor_path.resolve()), 'sha256': sha(descriptor_path)}, route='/maker/face/model/attachment')
         report['original_attachment'] = check_attachment(state, descriptor, artifact['triangles'], out, 'original_attachment')
+    component_mode = artifact['surface']['format'] == 'flame_component_uv_v1'
     pose = list(state['source_pose_axis_angle']); pose[4] += .035; pose[6] += .07
+    if component_mode:
+        # One predeclared composite pose; original eye weights/correctives are kept.
+        pose[10] += .05; pose[13] -= .06
+        from .rig import replay_source_pose
+        manifest = host_path(artifact['source']['manifest'])
+        require(sha(manifest) == artifact['source']['manifest_sha256'], 'Original source manifest changed')
+        expected, expected_joints = replay_source_pose(ModelArtifact(manifest), pose)
     state = request(base, 'POST', {'pose': pose}, route='/maker/face/model/pose')
     report['posed'] = verify(state, artifact, out, 'posed')
     posed = np.asarray(state['canonical_vertices'], dtype=np.float32)
     require(np.any(posed != np.asarray(artifact['vertices'], dtype=np.float32)), 'Declared source pose did not move geometry')
+    if component_mode:
+        vertex_error = float(np.max(np.abs(posed - expected)))
+        joint_error = float(np.max(np.abs(np.asarray(state['source_posed_joints']) - expected_joints)))
+        np.savez_compressed(out/'original_decoder_pose.npz', expected=expected, actual=posed,
+                            expected_joints=expected_joints, pose=np.asarray(pose, dtype=np.float32))
+        report['original_decoder_pose'] = {'vertex_error': vertex_error, 'joint_error': joint_error,
+            'raw_tolerance': 1e-6, 'pose': pose}
+        (out/'original_decoder_pose.json').write_text(json.dumps(report['original_decoder_pose'], indent=2)+'\n')
+        require(vertex_error <= 1e-6 and joint_error <= 1e-6, 'Eye/neck/jaw source pose differs from original decoder')
     if descriptor is not None:
         report['guard'] = guard(base, state, descriptor, artifact, out, thumbnail)
     card = out/'source_surface_card.png'
@@ -142,6 +184,9 @@ def accept(base, mesh_path, descriptor_path, out, thumbnail):
     paths = [mesh_path]
     if artifact['surface'].get('texture'):
         paths.append(Path(artifact['surface']['texture']['source_path']))
+    for texture in artifact['surface'].get('components', {}).get('textures', {}).values():
+        paths.append(Path(texture['source_path']))
+    paths = list(dict.fromkeys(paths))
     renamed = []
     try:
         for path in paths:
