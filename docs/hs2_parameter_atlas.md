@@ -10,12 +10,15 @@ HeadRig／TorchHeadRig 缓存，不连接游戏、不写人物卡、不训练或
 
 ```powershell
 .venv/Scripts/python.exe tools/parameter_atlas/test_atlas.py -v
+.venv/Scripts/python.exe -m unittest discover -s tools/parameter_atlas -p 'test_*.py' -v
 .venv/Scripts/python.exe tools/parameter_atlas/generate.py --out outputs/parameter_atlas --device cpu
 .venv/Scripts/python.exe tools/parameter_atlas/inspect_atlas.py outputs/parameter_atlas/manifest.json --out outputs/parameter_atlas/exterior_effects.json
+.venv/Scripts/python.exe tools/parameter_atlas/view_displacement.py outputs/parameter_atlas/head_2/slider_unlocker_18_2/atlas.json --control 30 --out outputs/parameter_atlas/control_30.html
 ```
 
 默认处理缓存中的底模0／1／2、全部59个原生参数（包含耳朵），逐个测试
 `-.25,0,.25,.5,.75,1,1.25`。其余参数保持 `.5`。
+新增 `--baseline` 后，可以保持当前人物的其余58个参数，而不必回到全 `.5`。
 同时生成 `vanilla` 与 `slider_unlocker_18_2` 两种**离线采样语义**。
 MCP 的 native 范围模式只是接受写入值的校验策略，不会卸载游戏中已经安装的
 SliderUnlocker；不能把范围内写入理解为实际游戏退回了无插件模式。
@@ -23,6 +26,41 @@ SliderUnlocker；不能把范围内写入理解为实际游戏退回了无插件
 可重复指定 `--head-id`／`--profile`，或改变 `--levels=...`、`--step`、
 `--effect-threshold`、`--device` 和 `--batch-size`。默认数值差分步长为 `1e-3`，
 顶点效果阈值为该网格 baseline bbox 对角线的 `1e-6`。
+
+### 当前人物的完整 baseline
+
+`--baseline current.json` 接受以下三种明确格式：完整59个 JSON 数字的数组、
+`{"head_id": 2, "native_input": [59个数值]}`，或原生桥导出的几何 snapshot
+（读取 `character.head_id` 与 `character.shape_value_face`）。拒绝54维ML向量、
+缺项／多项、字符串、布尔值和非有限数值；不会用 `.5` 静默补齐。
+
+```powershell
+.venv/Scripts/python.exe tools/parameter_atlas/generate.py --out outputs/current_character_atlas --baseline current_geometry_snapshot.json --profile slider_unlocker_18_2 --device cpu
+```
+
+baseline 中记录了 head ID 时，默认只运行该底模；显式 `--head-id` 与记录不一致
+会拒绝执行。只提供数值数组时仍可显式选择底模，省略则使用所有已有缓存。
+这不表示一个卡的形状向量经过验证可移植到其他底模。
+
+每份 manifest／atlas 保存原始输入文件 SHA-256、实际使用字段、解析后59维向量
+的规范 JSON SHA-256，以及全部 baseline 数值。每个样本还记录该控制的 baseline
+数值与 `native_delta`；逐参数采样仍使用 `--levels` 的绝对系数，其余58项保持输入值。
+`schema_version=2` 增加这些字段，默认 `.5` 行为、缓存和网格测量定义保持一致。
+
+读取游戏 snapshot **仅提取原生头部形状**，不会复制 ABMX、表情、场景姿态、
+纹理或祖先缩放。因此这是“当前人物参数向量的离线响应”，并非该人物的完整
+游戏状态重建。任意 baseline 输入支持也不等于任意人物组合已通过实机验证。
+
+### 直观检查曲面位移
+
+`view_displacement.py` 导出无需服务或外部依赖的单文件 HTML。可选控制编号和网格，
+在同一页面切换其采样系数；X–Y／Z–Y／X–Z三个投影保持相同资产轴、等比例尺度和
+固定 framing，不因某次采样自动对齐、居中或缩放。显示 baseline 点、候选点、位移
+颜色及稀疏位移线，同时列出系数差、max／RMS、bbox 归一化位移和受影响顶点数。
+颜色范围固定为该控制全部样本的最大位移，切换样本不重新归一化。
+
+投影使用该网格全部顶点，包括背面顶点；它是曲面响应的检查工具，不模拟游戏
+皮肤遮挡、灯光和纹理，也不把未经认证的顶点区域命名为眼角或颧骨。
 
 | 文件 | 内容 |
 | --- | --- |
@@ -67,9 +105,15 @@ SliderUnlocker；不能把范围内写入理解为实际游戏退回了无插件
 
 ## 局部 Jacobian、耦合与 SVD
 
-每个参数在 `.5` 周围单独取 `±step`，从完整曲面位移计算 Jacobian。
+每个参数在指定 baseline（默认 `.5`）周围单独取 `±step`，从完整曲面位移计算 Jacobian。
 记录中央差分以及左右单边斜率。`.5` 可能是动画关键帧的 knot：中央差分是两边
 响应的平均，不应宣称它就是唯一的可微导数。左右斜率差异单独输出。
+
+输入 probe 不裁到 `[0,1]`，是否发生几何 clamp／外推由所选采样语义决定。
+例如 vanilla 的0边界，负向 probe 可以保持端点曲面、左斜率为0；右斜率仍保留
+真实响应，不能把中央差分当成边界的唯一导数。现在同时记录完整 probe 输入、
+实际可表示的左右系数间隔，并按实际间隔计算斜率，避免边界裁切后仍误用
+`2*step`。极大 baseline 导致步长无法在 float64 中表示时会拒绝采集。
 
 为避免大网格或较小 submesh 的原始尺度主导诊断，每个网格的 Jacobian 块除以
 `baseline_bbox_diagonal * sqrt(vertex_count)` 后拼接。原始单位 Jacobian 同时保存，
@@ -134,3 +178,7 @@ head2 控制1与21的列 cosine 约 `.9982`，是当前 metric 下的强耦合�
 七项合成测试验证了统计量、索引效果 mask、有限差分、knot 两侧斜率、coupling／秩、
 范围外相对端点比较，以及来源不匹配／未验证语义区域的拒绝行为。此产物解决参数数字缺乏几何标度的部分
 问题；它不是程儿人物验收，也不替代固定多角度游戏截图与真人留出评估。
+
+新增八项 baseline 测试覆盖严格59维输入、原始与规范 hash、游戏 snapshot 字段提取、底模身份匹配拒绝、
+所有 probe 保持其余58项、不裁边界输入、clamp 两侧斜率与实际不等间隔。
+完整合成生成测试还检查59个控制 archive 的输入向量和已知非线性响应的 Jacobian。

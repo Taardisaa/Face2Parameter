@@ -16,11 +16,11 @@ sys.path.insert(0, str(ROOT))
 
 from core import (  # noqa: E402
     analyze_jacobian,
-    finite_difference_jacobian,
     summarize_displacement,
     summarize_verified_regions,
     validate_regions,
 )
+from baseline import load_baseline, probe_inputs, probe_jacobian  # noqa: E402
 
 from src.hs2_deform_torch import TorchHeadRig  # noqa: E402
 from src.hs2_mesh_deform import HeadRig, available_heads  # noqa: E402
@@ -53,8 +53,16 @@ def render_geometry(trig, values, subs, *, batch_size):
 
 
 def generate_head(head_id, profile, args, region_specs):
+    source_head = args.baseline_provenance["head_id"]
+    if source_head is not None and source_head != head_id:
+        raise ValueError(f"Baseline records head {source_head}; refusing head {head_id}")
     rig = HeadRig(head_id, sampling_profile=profile)
     trig = TorchHeadRig(rig, device=args.device, dtype=torch.float64)
+    baseline_input = args.baseline_input.copy()
+    if len(baseline_input) != trig.n_slider:
+        raise ValueError(
+            f"Baseline count {len(baseline_input)} differs from rig count {trig.n_slider}"
+        )
     directory = args.out / f"head_{head_id}" / profile
     directory.mkdir(parents=True, exist_ok=True)
     mesh_files = {"o_head": Path(rig.data_dir) / "o_head_mesh.npz"}
@@ -66,7 +74,6 @@ def generate_head(head_id, profile, args, region_specs):
     )
     hashes = {name: sha256(path) for name, path in mesh_files.items()}
     subs = {name: trig.load_submesh(name) for name in mesh_files if name != "o_head"}
-    baseline_input = np.full(trig.n_slider, 0.5, dtype=np.float64)
     baseline = {
         name: mesh[0]
         for name, mesh in render_geometry(
@@ -94,13 +101,14 @@ def generate_head(head_id, profile, args, region_specs):
             vertex_count=len(baseline[name]),
         )
     report = {
-        "schema_version": 1,
+        "schema_version": 2,
         "head_id": head_id,
         "sampling_profile": profile,
         "coordinate_contract": "cached prefab-native FK world frame; neutral ancestor scale=1; no scene pose",
         "units": "Unity asset units; physical millimeter/centimeter scale not calibrated",
         "native_input_order": "all59 shapeValueFace controls including ears; index-based, not ML54 label order",
         "baseline_native_input": baseline_input.tolist(),
+        "baseline_provenance": args.baseline_provenance,
         "levels": args.levels,
         "abmx": "none",
         "expression": "no expression blendshape deltas; cached bind surface baseline",
@@ -141,6 +149,8 @@ def generate_head(head_id, profile, args, region_specs):
             samples.append(
                 {
                     "level": level,
+                    "baseline_level": float(baseline_input[control]),
+                    "native_delta": float(level - baseline_input[control]),
                     "native_input": inputs[sample].tolist(),
                     "meshes": measurements,
                 }
@@ -169,15 +179,16 @@ def generate_head(head_id, profile, args, region_specs):
             print(
                 f"head{head_id} {profile}: control{control}/{trig.n_slider}", flush=True
             )
-    probes = np.repeat(baseline_input[None], trig.n_slider * 2, axis=0)
-    for control in range(trig.n_slider):
-        probes[control, control] -= args.step
-        probes[trig.n_slider + control, control] += args.step
+    probes, left_steps, right_steps = probe_inputs(baseline_input, args.step)
     probe_meshes = render_geometry(trig, probes, subs, batch_size=args.batch_size)
     raw_blocks, normalized_blocks, left_blocks, right_blocks = [], [], [], []
     for name, values in probe_meshes.items():
-        center, left, right = finite_difference_jacobian(
-            baseline[name], values[: trig.n_slider], values[trig.n_slider :], args.step
+        center, left, right = probe_jacobian(
+            baseline[name],
+            values[: trig.n_slider],
+            values[trig.n_slider :],
+            left_steps,
+            right_steps,
         )
         diagonal = float(np.linalg.norm(np.ptp(baseline[name], axis=0)))
         if diagonal <= 0:
@@ -200,9 +211,12 @@ def generate_head(head_id, profile, args, region_specs):
     jac_report.update(
         {
             "step": args.step,
+            "left_native_intervals": left_steps.tolist(),
+            "right_native_intervals": right_steps.tolist(),
+            "probe_native_inputs": probes.tolist(),
             "parameter_units": "native keyframe coefficients; no claim of distance units",
             "surface_metric": "permesh divide by baseline bbox diagonal and sqrt(vertexcount), then concatenate",
-            "finite_difference_policy": "central symmetric response; at a keyframe knot averages left/right local slopes",
+            "finite_difference_policy": "secant divided by actual input interval; left/right slopes retained at knots and clamp boundaries; input probes are never clipped",
             "left_right_slope_difference_norms": np.linalg.norm(
                 right - left, axis=0
             ).tolist(),
@@ -219,6 +233,9 @@ def generate_head(head_id, profile, args, region_specs):
         coupling=coupling,
         singular_control_directions=directions,
         baseline_native_input=baseline_input,
+        probe_native_inputs=probes,
+        left_native_intervals=left_steps,
+        right_native_intervals=right_steps,
     )
     jac_report["array_path"] = str(archive.resolve())
     report["local_diagnostics"] = jac_report
@@ -248,6 +265,11 @@ def main():
     parser.add_argument("--out", type=Path, required=True)
     parser.add_argument("--head-id", type=int, action="append")
     parser.add_argument(
+        "--baseline",
+        type=Path,
+        help="complete 59-value JSON array/native_input object or bridge geometry snapshot",
+    )
+    parser.add_argument(
         "--profile", choices=["vanilla", "slider_unlocker_18_2"], action="append"
     )
     parser.add_argument("--levels", default="-.25,0,.25,.5,.75,1,1.25")
@@ -272,9 +294,19 @@ def main():
         parser.error("Batch size must be within1..64")
     if not np.isfinite(args.effect_threshold) or args.effect_threshold < 0:
         parser.error("Effect threshold must be finite and nonnegative")
+    try:
+        args.baseline_input, args.baseline_provenance = load_baseline(args.baseline)
+        probe_inputs(args.baseline_input, args.step)
+    except (ValueError, OSError) as exc:
+        parser.error(str(exc))
+    source_head = args.baseline_provenance["head_id"]
+    if source_head is not None and args.head_id and any(head != source_head for head in args.head_id):
+        parser.error(f"Baseline records head {source_head}; --head-id must match")
     args.out = args.out.resolve()
     args.out.mkdir(parents=True, exist_ok=True)
-    heads = args.head_id if args.head_id is not None else available_heads()
+    heads = args.head_id if args.head_id is not None else (
+        [source_head] if source_head is not None else available_heads()
+    )
     if not heads:
         parser.error("No cached heads available")
     regions = (
@@ -283,8 +315,10 @@ def main():
         else {}
     )
     summary = {
-        "schema_version": 1,
+        "schema_version": 2,
         "purpose": "native surface effects and local conditioning; not a likeness score",
+        "baseline_provenance": args.baseline_provenance,
+        "baseline_native_input": args.baseline_input.tolist(),
         "atlases": [],
     }
     for head in heads:
