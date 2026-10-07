@@ -263,3 +263,94 @@ No new installed DLL or runtime geometry changes were made during this asset
 audit. It changes the implementation order: native posterior head/body integration
 must accompany the neck connector. A connector alone would leave old geometry
 in the composite result. Source-model neutral accuracy remains a separate open item.
+
+## Native neck cut and source collar construction
+
+The previous description of retained body geometry as a **posterior head** was too
+specific. Applying the actual `p_cf_anim` head-parent hierarchy places the vanilla
+body's head-weighted surface at the upper neck/lower head interface. Bone influence
+alone does not establish anatomical labels. This correction does not remove the
+integration issue: the source FLAME includes its own neck, so merely retaining the
+native upper-neck surface can leave an overlapping interface. The previous static
+audit still establishes indexed topology and head support, not a visible skull test.
+
+`tools.model_bridge.neck_patch` now constructs an explicit cut and separate collar.
+This is **new mod attachment geometry**, not a claimed reconstruction of an existing
+game neck-cut algorithm. The current source head vertices are never edited. Body
+triangles outside the selected neck region retain their original indices and winding.
+New cut endpoints store an original native edge and interpolation coefficient.
+They must be evaluated from **actual posed native endpoints**: interpolating skin
+weights and rest positions would introduce cross terms and would not preserve the
+game's posed triangle surface. The body remains governed by native deformation.
+
+A plane at the original neck-joint origin was tried as a construction definition.
+Its source topology crosses shoulder-related surfaces, so it is not the selected
+attachment design. `neck_cut_v1.json` retains that static proposal. The implemented
+design places the plane below the lowest source neck-loop point, along the actual
+native neck-up direction. Clearance is explicitly 5% of the native neck-to-head joint
+distance. This is a declared collar design choice outside the preserved face, not
+a fitted parameter multiplier or an inference about game slider behavior. The cut
+selects plane-positive connected components seeded by pure head support; weights
+alone are not the cutting mask.
+
+One necessary read-only native snapshot was obtained using existing
+`/maker/geometry?meshes=o_body_cf&include_actor_transforms=true&blendshape_frames=true`
+and source-head state. No parameter writes, screenshots, sweeps, card changes or
+DLL replacement were performed. The saved body has unit renderer scale; other
+BakeMesh scale branches are explicitly refused. Current source pose is required.
+Snapshot actor transforms locate the source head in the same body frame. Source
+neck indices come from the explicit audited boundary, not a largest-loop heuristic.
+
+The actual loaded body differs from the vanilla bundle: 11,033 versus 9,594 vertices,
+with a different bone layout. The initial static-array preflight refused this mismatch
+(`neck_cut_posed_v1_failure.json`). Installed Uncensor Selector **3.11.5** explains
+the relevant branch: `ReloadCharacterBody` loads `BodyData.OOBase/Asset`, then
+`UpdateMeshRenderer` replaces `sharedMesh` and `TransferBones` maps source bones by
+name. The destination renderer name/path can remain `o_body_cf`, so it is not proof
+that vanilla geometry is active. Defaults marked Random use a deterministic seed
+from birthday, personality and voice pitch; default selection is not inferred from
+mesh counts. Plugin SHA256:
+`d3d994b275331df322c2a1110326bdfa3af5ec15a9894328c661fe7b5c8cb44c`.
+Decompilation is ignored under `HS2Mod/tools/parameter_audit/source_model_bridge_20261007/UncensorSelector.cs`.
+The exact selected zipmod/GUID remains unresolved; the proposal binds actual source
+arrays and their geometry digest rather than pretending the vanilla bundle supplied them.
+
+Actual source mesh data, original indices/weights/bindposes and current native
+posed vertices are used together. This current body has no blendshapes; bodies
+with blendshapes are refused pending explicit seam-equivalence handling. UV seam
+copies are joined in the **connectivity map only** when their bind position and
+ordered skin data match byte-for-byte. Their render vertices/UVs remain separate.
+Edge evaluation uses identical endpoint order on seam copies. No spatial welding
+tolerance or vertex averaging manufactures a closed ring.
+
+The cut now has a closed neck boundary. A directed-boundary zipper connects it
+to the source neck ring, adding only new triangles. Source and native ring indices
+and collider design points remain explicit; no face coefficient or source vertex
+is adjusted. Original untouched body triangles, opposing collar half-edges and
+nonmanifold-edge absence passed final structural checks. These checks do **not**
+certify runtime rendering, material continuity or absence of every possible
+self-intersection/animation failure.
+
+```powershell
+.venv/Scripts/python.exe -m tools.model_bridge.neck_patch `
+  --game-root E:/HoneySelect2_ArcticFox `
+  --native-state outputs/model_bridge_20261007/neck_body_state_v1/native_body.json `
+  --source-state outputs/model_bridge_20261007/neck_body_state_v1/source_head.json `
+  --attachment-audit outputs/model_bridge_20261007/attachment_audit_v2/report.json `
+  --out outputs/model_bridge_20261007/neck_cut_posed_v4.json
+```
+
+The command executed. Evidence remains ignored:
+`neck_body_state_v1/`, `neck_cut_posed_v2.json` (pre-seam connectivity),
+`neck_cut_posed_v4.json`, `neck_cut_posed_v4_validation.json`.
+The v4 proposal stores renderer-local design vertices, source/native indices,
+exact edge interpolation and original source-array hashes. It is not embedded in
+the current source card and the installed DLL remains 0.31.6.
+
+Next implement body/collar ownership and per-frame native endpoint evaluation in
+the game bridge, preserving native material updates and actual body selection.
+Use source canonical vertices for the other collar endpoint, release all temporary
+surfaces on clear/reload, reject changed source topology, and then embed/reload the
+attachment record. Native clothing/body visibility, UV/material integration, other
+body scale/blendshape branches and selected asset provenance remain required work.
+The face-parameter conversion and neutral source-model accuracy requirements remain open.
