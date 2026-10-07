@@ -5,6 +5,17 @@ geometry they generate. It does not train a converter, fit HS2 sliders, or
 reconstruct a replacement photograph. HS2 parameter conversion and native head
 integration remain separate stages.
 
+The same artifact reader and unchanged-mesh interchange now also support official
+MICA canonical identity outputs. Original `pred_shape_code`, canonical vertices and
+identity embedding are retained; `shape_params` is a checked alias. MICA already
+outputs canonical geometry, so head-local export does not invent pose/expression
+parameters. Original MICA decoder replay uses its complete saved FLAME state and
+own LBS, not SMIRK's decoder. The new interchange embeds model/checkpoint/source
+hashes as provenance, which the existing card record retains with its raw JSON.
+Actual source, commands and the limited paired-view quality findings are recorded
+in [source model quality](source_model_quality.md). No claim of MICA game acceptance
+or accurate neutral identity is made from export/replay alone.
+
 ## Export using the existing environment
 
 ```bash
