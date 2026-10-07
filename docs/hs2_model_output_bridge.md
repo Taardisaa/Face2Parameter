@@ -51,3 +51,26 @@ This confirms parameter/geometry preservation at the source-model stage, not
 photo likeness or compatibility with the HS2 deformation space. Outputs, model
 buffers, weights and input photos stay ignored; reproducible source and commands
 are tracked. Current cross-repository plan: `../HS2Mod/ROADMAP.md`.
+
+## Native source mesh preview
+
+Bridge 0.31.4 exposes GET/POST/DELETE `/maker/face/model`. Import the unchanged
+head-local interchange with one positive uniform scale and a translation:
+
+```powershell
+.venv/Scripts/python.exe -m tools.model_bridge.game_import `
+  --mesh outputs/model_bridge_20261007/smirk_raw_v1/source_head.json `
+  --receipt outputs/model_bridge_20261007/smirk_raw_v1/game_import_receipt.json
+```
+
+This command ran in female Maker on 2026-10-07. Unity's actual vertex and triangle
+arrays equalled the exported arrays. Placement uses a native head bounds reference;
+it never adjusts individual vertices or scales axes independently. The bridge
+rejects a sheared, reflected or nonuniformly scaled parent at import time. The
+preview follows the head rigidly and temporarily hides native head renderers.
+DELETE restores their previous visibility. This is a fixed-expression geometry
+preview with a plain Standard material; eye appearance, neck joining, native
+facial controls and card persistence are not implemented in this version.
+
+Raw export milestone: Face2Parameter `d11abe0465bc81d9b8b0ea1930a832d2ffc430c7`.
+Runtime preview evidence remains ignored under the output directory above.
