@@ -15,11 +15,11 @@ import numpy as np
 from .artifact import sha
 
 
-def request(base, method, body=None):
+def request(base, method, body=None, route="/maker/face/model"):
     encoded = None if body is None else json.dumps(body).encode("utf-8")
-    req = Request(base.rstrip("/") + "/maker/face/model", data=encoded, method=method,
+    req = Request(base.rstrip("/") + route, data=encoded, method=method,
                   headers={"Content-Type": "application/json"})
-    with urlopen(req, timeout=30) as response:
+    with urlopen(req, timeout=60) as response:
         return json.load(response)
 
 
@@ -62,7 +62,7 @@ def main():
         "vertex_arrays_equal": bool(np.array_equal(vertices, actual_vertices)),
         "triangle_arrays_equal": bool(np.array_equal(triangles, actual_triangles)),
         "placement_policy": "Single reference head-height uniform scale, center translation; no per-axis scaling, remeshing, vertex fitting or parameter conversion",
-        "native_slider_mapping": False, "card_persistence": False,
+        "native_slider_mapping": False, "card_persistence": result.get("card_persistence", False),
         "native_expression_retargeting": False,
     }
     args.receipt.parent.mkdir(parents=True, exist_ok=True)

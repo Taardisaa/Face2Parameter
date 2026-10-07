@@ -74,3 +74,34 @@ facial controls and card persistence are not implemented in this version.
 
 Raw export milestone: Face2Parameter `d11abe0465bc81d9b8b0ea1930a832d2ffc430c7`.
 Runtime preview evidence remains ignored under the output directory above.
+
+## Embedded card persistence (Bridge 0.31.5)
+
+The registered HS2API character controller owns each character's mesh independently.
+ExtensibleSaveFormat stores the full original interchange JSON, its SHA256, uniform
+scale and translation in the character card. Reload reads that embedded content;
+it does not read the interchange path, model checkpoint, FLAME buffers or photograph.
+Normal card save/reload hooks are connected. The native HTTP loader explicitly reads
+the current ChaFile, bypassing Maker's stale LastLoadedChaFile UI cache.
+
+```powershell
+.venv/Scripts/python.exe -m tools.model_bridge.card_roundtrip `
+  --card C:/Users/13666/Workspace/HS2Mod/artifacts/model_bridge_20261007/source_head_card_0315.png `
+  --thumbnail C:/Users/13666/Workspace/HS2Mod/artifacts/model_bridge_20261007/source_head_front.png `
+  --receipt outputs/model_bridge_20261007/smirk_raw_v1/card_roundtrip_0315.json
+```
+
+This saves a **new** card, clears the preview, then replaces the current Maker
+character by reloading that card. Existing card/receipt paths are refused. The
+command passed in female Maker: source digest, actual vertex and triangle arrays,
+uniform scale and translation survived. Native renderer visibility was restored
+on clear. The thumbnail is reused from the earlier native capture; no new screenshot
+or parameter sweep was needed. First import with the new persistence code failed
+because generic JsonConvert loaded missing System.Data; the implementation now
+uses the existing bridge JsonUtil serializer. Failure is retained separately.
+
+This is persistable geometry preview, **not** a complete native base: fixed source
+expression, plain Standard material, unjoined neck and no native facial controls.
+The controller lifecycle supports character ownership, but Studio/multiple-character
+scene persistence has not received live acceptance. Current reproducible integration
+and source provenance are in `../HS2Mod/docs/hs2_model_parameter_bridge.md`.
