@@ -1,5 +1,6 @@
 """Check that the bridge cannot silently change original MICA output aliases."""
 from pathlib import Path
+import copy
 import json
 import tempfile
 import unittest
@@ -68,6 +69,60 @@ class ArtifactPreservationTests(unittest.TestCase):
             (root / "source.py").write_text("# different implementation\n")
             with self.assertRaises(ValueError):
                 artifact.verify_sources()
+
+    def two_images(self, root):
+        path = self.fixture(root)
+        manifest = json.loads(path.read_text())
+        with np.load(root / 'image.npz') as data:
+            second = {key: data[key].copy() for key in data.files}
+        for key in ('param__shape_params', 'output__pred_shape_code'):
+            second[key][0, 0] = 2
+        for key in ('geometry__vertices', 'head_local__vertices', 'output__pred_canonical_shape_vertices'):
+            second[key][0, :, 2] = .25
+        np.savez(root / 'image2.npz', **second)
+        row = copy.deepcopy(manifest['images'][0])
+        row.update(file='image2.npz', sha256=sha(root / 'image2.npz'), input_sha256='fixture-second-image')
+        manifest['images'].append(row)
+        path.write_text(json.dumps(manifest))
+        return path
+
+    def test_selected_second_image_is_exported_and_resolved(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory); path = self.two_images(root)
+            original = ModelArtifact(path, 1)
+            export(original, root / 'second.json', head_local=True)
+            source = json.loads((root / 'second.json').read_text())['source']
+            self.assertEqual(source['image_index'], 1)
+            resolved = ModelArtifact.from_game_source(source)
+            self.assertEqual(resolved.image_index, 1)
+            np.testing.assert_array_equal(resolved.mesh(head_local=True)[0], original.mesh(head_local=True)[0])
+            self.assertFalse(np.array_equal(resolved.parameters['shape_params'], ModelArtifact(path, 0).parameters['shape_params']))
+            source.pop('image_index')  # Legacy record: unique image+NPZ hashes still select row 1.
+            self.assertEqual(ModelArtifact.from_game_source(source).image_index, 1)
+
+    def test_wrong_index_and_provenance_are_rejected(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory); path = self.two_images(root)
+            export(ModelArtifact(path, 1), root / 'second.json', head_local=True)
+            source = json.loads((root / 'second.json').read_text())['source']
+            for key, value in [('image_index', 0), ('image_index', True), ('image_index', 2),
+                               ('manifest_sha256', 'wrong'), ('model_revision', 'wrong'),
+                               ('artifact_sha256', 'wrong')]:
+                with self.subTest(key=key, value=value), self.assertRaises(ValueError):
+                    ModelArtifact.from_game_source({**source, key: value})
+
+    def test_ambiguous_legacy_record_requires_explicit_index(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory); path = self.fixture(root)
+            manifest = json.loads(path.read_text())
+            manifest['images'].append(copy.deepcopy(manifest['images'][0]))
+            path.write_text(json.dumps(manifest))
+            export(ModelArtifact(path, 1), root / 'second.json', head_local=True)
+            source = json.loads((root / 'second.json').read_text())['source']
+            self.assertEqual(ModelArtifact.from_game_source(source).image_index, 1)
+            source.pop('image_index')
+            with self.assertRaises(ValueError):
+                ModelArtifact.from_game_source(source)
 
 
 if __name__ == "__main__":

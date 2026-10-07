@@ -667,3 +667,108 @@ Paired 0.31.9 implementation commits: HS2Mod
 `e4820991c4572d095c5a90e666ca39b446c41e09`; Face2Parameter
 `5d84250ba3f8fe6fd4b5ebe4cbee5d1ae3864eb3`. Paired notes do not change
 the verified installed DLL or the original-decoder/accuracy evidence above.
+
+## Selected photo provenance and native oral driver audit
+
+Export now records `source.image_index` as well as the existing photo/NPZ and
+manifest hashes. `ModelArtifact.from_game_source` validates that exact tuple and
+the recorded model/checkpoint/source metadata. Legacy exports resolve a unique
+matching photo+NPZ tuple; missing or ambiguous matches are refused rather than
+silently selecting row zero. The final surface reference decoder now uses this
+resolver. Its previous unconditional row-zero lookup would select the wrong
+oracle for a second-image export. Both already executed0.31.9 game cases actually
+selected row zero, confirmed from their source hashes; their evidence is unchanged.
+
+The normal raw-model exporter can now include original rig, UV and authored
+component slots in one invocation. This reduces intermediate artifact handling
+while preserving source outputs; all branches enforce the existing native16 MiB
+limit. Explicit optional eye textures still require the authored masks and UVs.
+
+```powershell
+.venv/Scripts/python.exe -m tools.model_bridge.export_game_mesh `
+  --manifest outputs/model_quality_20261007/multiface_mica_raw_v1/manifest.json `
+  --image-index 1 --head-local --with-rig `
+  --source-obj C:/Users/13666/Workspace/smirk/assets/head_template.obj `
+  --source-mask C:/Users/13666/Workspace/smirk/assets/FLAME_masks/FLAME_masks.pkl `
+  --out outputs/model_bridge_20261007/selected_image_source_v1/mica_second_components.json
+
+.venv/Scripts/python.exe -m tools.model_bridge.export_game_mesh `
+  --manifest outputs/model_quality_20261007/multiface_smirk_raw_v1/manifest.json `
+  --image-index 1 --head-local --with-rig `
+  --source-obj C:/Users/13666/Workspace/smirk/assets/head_template.obj `
+  --source-mask C:/Users/13666/Workspace/smirk/assets/FLAME_masks/FLAME_masks.pkl `
+  --out outputs/model_bridge_20261007/selected_image_source_v1/smirk_second_components.json
+```
+
+Executed on the existing raw neutral exports, without new inference or game calls.
+Both select the second photo and its original identity/parameters, preserve literal
+canonical vertices/topology, and replay that selected model's original decoder.
+The recorded first-photo identity differs, so accidental row-zero selection is
+detectable. Existing1e-6 replay bounds pass. Six artifact tests cover original
+preservation, source-change rejection, second-photo selection, wrong tuple/index,
+and ambiguous legacy records. Evidence `selected_image_source_v1/receipt.json`
+SHA256 `ebb7ba8642341fc93732f4c92040bbde2a10ac81da5b1049c71702ee905da02c`.
+This is provenance/preservation evidence, not additional model-accuracy evidence.
+
+For mouth integration, `oral_audit.py` resolves the saved vanilla headID through
+fresh installed lists and selects the exact render prefab, excluding other heads
+and hit meshes. It reads the serialized native `FaceBlendShape` targets, per-target
+Close/Open indices, original blendshape channels and skin bones, with code/asset
+hashes. Sideloader GUID remapping and current runtime asset identity are explicitly
+outside this static vanilla resolution, not silently assumed.
+
+The selected head2 prefab's MonoScript points to **IL.dll**, not either
+Assembly-CSharp assembly. Actual `FaceBlendShape` calls `MouthCtrl.CalcBlend`
+in the UniRx late-update path. `FBSCtrlMouth` calls `FBSBase.CalculateBlendShape`:
+original OpenMin/OpenMax/corrected/fixed rate, integer0..100 opening weights,
+pattern transitions, then each target's own Close/Open indices. Teeth and tongue
+are separately skinned meshes, both using `cf_J_MouthCavity`; their opening is
+also driven by their distinct blendshape sets, not a standalone lower-jaw skin
+bone. The controller also includes a tear target. Same pattern indices cannot
+be copied across these meshes; same names do not establish a FLAME correspondence.
+
+Original FLAME output contains the original head/eyeballs and mouth boundary, not
+separate authored teeth/tongue geometry. Its jaw is a three-value axis-angle
+rotation with full LBS and pose correctives. A native mouth rate is a different
+control mechanism. No gain fit, index copy, rigid graft or automatic native inner
+mouth retargeting has been implemented or declared compatible.
+
+Executed decompilation and audit commands:
+
+```powershell
+# From HS2Mod; outputs are ignored local source material.
+ilspycmd -t FaceBlendShape E:/HoneySelect2_ArcticFox/HoneySelect2_Data/Managed/IL.dll |
+  Set-Content tools/parameter_audit/source_model_bridge_20261007/FaceBlendShape.cs -Encoding utf8
+ilspycmd -t FBSBase E:/HoneySelect2_ArcticFox/HoneySelect2_Data/Managed/IL.dll |
+  Set-Content tools/parameter_audit/source_model_bridge_20261007/FBSBase.cs -Encoding utf8
+ilspycmd -t FBSTargetInfo E:/HoneySelect2_ArcticFox/HoneySelect2_Data/Managed/IL.dll |
+  Set-Content tools/parameter_audit/source_model_bridge_20261007/FBSTargetInfo.cs -Encoding utf8
+ilspycmd -t FBSCtrlMouth E:/HoneySelect2_ArcticFox/HoneySelect2_Data/Managed/IL.dll |
+  Set-Content tools/parameter_audit/source_model_bridge_20261007/FBSCtrlMouth.cs -Encoding utf8
+ilspycmd -t AIChara.CmpFace E:/HoneySelect2_ArcticFox/HoneySelect2_Data/Managed/Assembly-CSharp.dll |
+  Set-Content tools/parameter_audit/source_model_bridge_20261007/CmpFace.cs -Encoding utf8
+
+# From Face2Parameter, using the existing ChaControl decompilation as well.
+.venv/Scripts/python.exe -m tools.model_bridge.oral_audit `
+  --card C:/Users/13666/Workspace/HS2Mod/artifacts/model_bridge_20261007/before_components_0319.png `
+  --source-manifest outputs/model_bridge_20261007/smirk_raw_v1/manifest.json `
+  --game-root E:/HoneySelect2_ArcticFox `
+  --decompiled-dir C:/Users/13666/Workspace/HS2Mod/tools/parameter_audit/source_model_bridge_20261007 `
+  --out outputs/model_bridge_20261007/oral_asset_audit_v2.json
+```
+
+Installed IL.dll SHA256
+`2034ec89ec868feb44c161d71f06cac67b276853a71ba5dc0d0b8b1964c9f680`;
+report `oral_asset_audit_v2.json`
+`64789d376a8e1282e7ce2ccc3d67ba084cf9e48a2ddd03433a0fba8635d5ddc1`.
+v1 is retained; v2 adds auditor hash and explicit vanilla-resolution scope.
+No game mutation, screenshot, new numerical dataset or DLL change this milestone.
+
+The next executable gap is also explicit: `attachment_runtime.package` permits
+an alternate source only when every original vertex and triangle equals the old
+attachment design's input. That protects rig/UV packaging, but does not attach
+another photo's genuinely different identity to the body. A broader original
+FLAME identity needs a new descriptor derived from verified shared topology and
+actual placement/body state. Do not remove the old equality gate or relabel the
+old single-face collar as a generic photo importer. Oral grafting additionally
+needs authored source-space parts or a justified oral placement/driver relation.

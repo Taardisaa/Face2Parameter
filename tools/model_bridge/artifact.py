@@ -42,6 +42,9 @@ class ModelArtifact:
             raise ValueError("Raw output preservation is required")
         if type(image_index) is not int or image_index < 0:
             raise ValueError("Explicit nonnegative image index required")
+        if image_index >= len(self.manifest["images"]):
+            raise ValueError("Selected image index is outside the original manifest")
+        self.image_index = image_index
         self.image = self.manifest["images"][image_index]
         self.state = self._read(self.manifest["flame_state"])
         self.arrays = self._read(self.image)
@@ -67,6 +70,40 @@ class ModelArtifact:
                 raise ValueError("MICA raw outputs and bridge aliases differ")
             if not np.array_equal(self.arrays["head_local__vertices"], self.arrays["geometry__vertices"]):
                 raise ValueError("Canonical MICA geometry was changed for head-local export")
+
+    @classmethod
+    def from_game_source(cls, source):
+        """Resolve the actual selected raw model output, including legacy exports.
+
+        Never replay manifest row zero merely because the game artifact omits an
+        index. Older records must identify one unique original image/NPZ tuple.
+        """
+        path = host_path(source["manifest"])
+        if sha(path) != source["manifest_sha256"]:
+            raise ValueError("Game source manifest changed")
+        manifest = json.loads(path.read_text(encoding="utf-8"))
+        rows = manifest["images"]
+        if "image_index" in source:
+            index = source["image_index"]
+            if type(index) is not int or not 0 <= index < len(rows):
+                raise ValueError("Invalid selected source image index")
+        else:
+            matches = [i for i, row in enumerate(rows) if
+                row["input_sha256"] == source["image_sha256"] and
+                row["sha256"] == source["artifact_sha256"]]
+            if len(matches) != 1:
+                raise ValueError("Legacy source image/NPZ correspondence is missing or ambiguous")
+            index = matches[0]
+        row = rows[index]
+        if row["input_sha256"] != source["image_sha256"] or row["sha256"] != source["artifact_sha256"]:
+            raise ValueError("Selected source index does not match the original image/NPZ digests")
+        for key, actual in [("model_format", manifest["format"]),
+                            ("model_revision", manifest["git_revision"]),
+                            ("checkpoint_sha256", manifest["checkpoint"]["sha256"]),
+                            ("decoder_sources", manifest["sources"])]:
+            if key in source and source[key] != actual:
+                raise ValueError("Game source provenance differs: " + key)
+        return cls(path, index)
 
     def _read(self, row):
         path = (self.path.parent / row["file"]).resolve()

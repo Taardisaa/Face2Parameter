@@ -14,7 +14,7 @@ from urllib.error import HTTPError
 
 import numpy as np
 
-from .artifact import ModelArtifact, host_path, sha
+from .artifact import ModelArtifact, sha
 from .attachment_acceptance import check as check_attachment, require
 from .game_import import request
 
@@ -159,9 +159,7 @@ def accept(base, mesh_path, descriptor_path, out, thumbnail):
         # One predeclared composite pose; original eye weights/correctives are kept.
         pose[10] += .05; pose[13] -= .06
         from .rig import replay_source_pose
-        manifest = host_path(artifact['source']['manifest'])
-        require(sha(manifest) == artifact['source']['manifest_sha256'], 'Original source manifest changed')
-        expected, expected_joints = replay_source_pose(ModelArtifact(manifest), pose)
+        expected, expected_joints = replay_source_pose(ModelArtifact.from_game_source(artifact['source']), pose)
     state = request(base, 'POST', {'pose': pose}, route='/maker/face/model/pose')
     report['posed'] = verify(state, artifact, out, 'posed')
     posed = np.asarray(state['canonical_vertices'], dtype=np.float32)
