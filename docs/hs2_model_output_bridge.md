@@ -354,3 +354,91 @@ surfaces on clear/reload, reject changed source topology, and then embed/reload 
 attachment record. Native clothing/body visibility, UV/material integration, other
 body scale/blendshape branches and selected asset provenance remain required work.
 The face-parameter conversion and neutral source-model accuracy requirements remain open.
+
+## Native body/collar runtime and card lifecycle (0.31.7)
+
+`HS2Mod/plugins/HS2_McpBridge/SourceHeadAttachment.cs` now consumes the constructed
+cut and collar. `attachment_runtime.py` packages exact native vertices/topology,
+skin/UV hashes, bone order and source placement. An optional original-rig artifact
+is accepted only when every decoded vertex and triangle equals the design source;
+the new artifact hash is recorded explicitly. No template positions replace the
+photo-model geometry. Source and native index spaces remain separate during
+boundary checks even if numeric vertex indices happen to coincide.
+
+The installed native body renderer remains the native skinning, material and
+plugin target. Display-only cut geometry reads its current BakeMesh, preserving
+all original vertices, normals, tangents, UVs and colors. New cut vertices are
+interpolated **after** native deformation. The other collar ring uses the current
+source vertices and exact source-to-body transform; original face vertices are
+not edited. The collar is a declared new untextured surface, not a recovered game
+deformation rule. Body shared material/property-block references follow the native
+renderer. GameObject visibility follows ChaControl's original objBody, and added
+renderers enter CmpBase's cached visibility list; release removes only those entries
+and restores original native renderer visibility. Source-head visibility enters
+the original face cache as well.
+
+Native HTTP `POST /maker/face/model/attachment` takes `path` and `sha256`;
+`DELETE` releases only the attachment. Existing source state includes attachment
+status and same-frame native/collar geometry. There are no new stdio MCP tools.
+Source card record and PluginData v2 embed attachment JSON/hash together with the
+unchanged source artifact, placement and active source pose. Old v1 cards still
+load. Pending/incompatible attachments cannot be saved. Uncensor's coroutine may
+replace sharedMesh after HS2API OnReload; the character retries against the actual
+body with a bounded pending window, and then only after mesh changes. Changed body
+identity is never coerced back to vanilla.
+
+The selected runtime BodyData is `bp.sac_innie_v2`, `[BP5] Innie 1`, with an empty
+explicit GUID/default selection. `selected_body_asset.py` resolves the supplied
+installed `[Female][HS2][BPV5]SAC_Innie.zipmod` manifest version6.1 and actual bundle
+`abdata/chara/oo_base_bpsacinnie_v2.unity3d`, then checks all body geometry/skin/UV
+hashes and bone order against the native descriptor. All match. Archive SHA256
+`d3b2e3f0e5f0fb3404779ada171ed6f302ea9e8436d0150fa38fb8ef1bad4d0a`,
+bundle SHA256 `4995d5a01cd375058c4e89c22db42f2ca1244c33eb25fd848dbcf035a6da824b`.
+No extracted bundle is tracked or redistributed. Native normals are intentionally
+outside the static identity hashes because original BustNormal changes them; the
+renderer uses the actual current posed normals instead.
+
+```powershell
+.venv/Scripts/python.exe -m tools.model_bridge.attachment_runtime `
+  --proposal outputs/model_bridge_20261007/neck_cut_posed_v4.json `
+  --native-state outputs/model_bridge_20261007/neck_body_state_v1/native_body.json `
+  --source-state outputs/model_bridge_20261007/neck_body_state_v1/source_head.json `
+  --source-artifact outputs/model_bridge_20261007/smirk_raw_v1/source_head_rig.json `
+  --out outputs/model_bridge_20261007/neck_attachment_rig_runtime_v1.json
+
+.venv/Scripts/python.exe -m tools.model_bridge.attachment_acceptance `
+  --attachment outputs/model_bridge_20261007/neck_attachment_rig_runtime_v1.json `
+  --source outputs/model_bridge_20261007/smirk_raw_v1/source_head_rig.json `
+  --backup-card C:/Users/13666/Workspace/HS2Mod/artifacts/model_bridge_20261007/before_attachment_0317.png `
+  --thumbnail C:/Users/13666/Workspace/HS2Mod/artifacts/model_bridge_20261007/source_head_front.png `
+  --out outputs/model_bridge_20261007/attachment_acceptance_0317_v2
+
+.venv/Scripts/python.exe -m tools.model_bridge.selected_body_asset `
+  --zipmod 'E:/HoneySelect2_ArcticFox/mods/PersonalMods - Exclusive HS2/Uncensor Selector/[Female][HS2][BPV5]SAC_Innie.zipmod' `
+  --acceptance-receipt outputs/model_bridge_20261007/attachment_acceptance_0317_v1/receipt.json `
+  --attachment outputs/model_bridge_20261007/neck_attachment_rig_runtime_v1.json `
+  --out outputs/model_bridge_20261007/selected_body_asset_0317_v1.json
+```
+
+These commands executed. Output paths above are preserved and require fresh paths
+to rerun. Installed DLL0.31.7 SHA256
+`3933159f877a0ec1b06729c63880c6a9ae1c5b55e04cdf485ff252491b5b4da5`.
+Final female Maker evidence `attachment_acceptance_0317_v2` passes literal source
+face, incompatible skin rejection, one source neck/jaw pose, one native height
+change, same-response endpoint geometry, posed attachment card reload/reset,
+detach/clear and exact backup restoration. v1 is retained; v2 additionally asserts
+that the declared source/body cases actually move their respective geometry. No
+additional cases or relaxed thresholds were introduced. Detailed arrays and cards
+remain ignored. This closes the runtime attachment gap, **not source accuracy**.
+
+Supported body scope is readable single-submesh, no blendshapes, unit orthogonal
+renderer frame and no cut across tangent handedness. Reference changes and basic
+branch conditions are checked every frame; full identity hashes are checked on
+bind, state read and save. An unknown plugin's in-place topology edits are not
+continuously full-hash monitored. Arbitrary body variants, Studio, self-intersection
+in extreme poses and shared-index watertight merging are not certified. Nonuniform
+head-parent transforms are refused at import; ongoing protection against later
+arbitrary ABMX head shear/nonuniform changes is still a gap. Source UV/material,
+eye/mouth appearance, clean HS2 parameter mapping and neutral source identity
+accuracy remain the next work. Existing paired-scan discrepancies cannot be
+dismissed as a makeup-only effect.
