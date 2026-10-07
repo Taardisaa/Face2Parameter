@@ -439,3 +439,8 @@ case/evaluator hashes match the committed implementations. Source training lists
 (SMIRK README and official MICA `configs/mica.yml`) do not list Multiface, but the
 released checkpoints' subject overlap is not independently established. Do not
 turn this small public case into a claimed controlled generalization benchmark.
+
+Paired neutral-evidence milestone commits: Face2Parameter
+`b04a322ee7395264ca50d4ae372acacfba2cef53`; HS2Mod
+`5230378dd4ff6bf5cf8a72f539f02deba6ee1ae6`. Both pushed normally to the
+configured origin branches. This paired record does not change inference or DLLs.
