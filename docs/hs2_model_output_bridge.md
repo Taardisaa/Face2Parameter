@@ -662,3 +662,8 @@ scope. Independent model accuracy remains governed by
 [source_model_quality.md](source_model_quality.md): one associated neutral tracked
 case does not certify arbitrary photos, and this geometry-preserving material
 integration does not alter or supersede its findings.
+
+Paired 0.31.9 implementation commits: HS2Mod
+`e4820991c4572d095c5a90e666ca39b446c41e09`; Face2Parameter
+`5d84250ba3f8fe6fd4b5ebe4cbee5d1ae3864eb3`. Paired notes do not change
+the verified installed DLL or the original-decoder/accuracy evidence above.
