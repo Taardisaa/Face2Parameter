@@ -143,6 +143,11 @@ InsightFace models are restricted to non-commercial research.
 
 #### Option B — 3DMM/FLAME neutralization (more geometrically explicit)
 
+**2026-10-07 scope correction:** the historical rejection below evaluates RGB
+render-back, not raw FLAME identity-geometry accuracy. Do not reuse it as proof
+that the source geometry is wrong or right. Raw posed/neutral geometry and actual
+paired-view diagnostics now have a [separate quality review](source_model_quality.md).
+
 > **Tried (SMIRK) and rejected — render-back loses identity.** Set up SMIRK (CVPR'24) in a WSL2
 > py3.10 env (torch2.0.1/cu118 + pytorch3d; Windows has no pytorch3d wheel). It *does* neutralize
 > expression at the geometry level (flattens the smiling cheeks LivePortrait can't), but the output
