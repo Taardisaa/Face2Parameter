@@ -1,0 +1,23 @@
+{
+  "format": "facescape_public_scan_diagnostic_v1",
+  "upstream_revision": "6a43878cdb61834472eb6cac7009d91f14a972d4",
+  "scan_sha256": "2ce2e235a22a6d786f61e7059bd305433f8e2f34544cb2f4dfcd92f7a6b50cb6",
+  "camera_sha256": "5416069c120e20779c4e602bb6f4bfea15c15071aa304c5b270e7b2ef88e07bb",
+  "mask_sha256": "ccefbe1ac0774ff78c68caf2c627b4abc067a6555ebeb0be5d5b0812366ab492",
+  "embedding_sha256": "8863363013fc6fe3752d4318ea02a1784970200616a54b785920cdd0568816fc",
+  "anchor_photo": "49",
+  "anchor_mediapipe_ids": [33, 133, 362, 263, 4, 61, 291],
+  "normalization_span_ids": [33, 263],
+  "source_region": "face",
+  "alignment": "One positive uniform similarity fitted to fixed corresponding anchors; no ICP or local deformation",
+  "metric": "Source face vertices to actual scan triangle surface; one direction, not Chamfer",
+  "physical_units": "Unknown raw scan units; additionally normalize by fixed outer eye corner span",
+  "display_saturation_normalized": 0.1,
+  "limitations": [
+    "Detector anchors on the front photo provide registration, not independent landmark annotations",
+    "The scan has an anger expression; neutral identity accuracy is not isolated",
+    "One subject and expression; no general model pass threshold or benchmark claim",
+    "Mask is the existing FLAME face region; metric does not assess scan coverage",
+    "Registration changes pose, translation and uniform scale only; all shape and expression coefficients are untouched"
+  ]
+}
