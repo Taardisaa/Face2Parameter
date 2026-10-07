@@ -4,6 +4,15 @@ This repository supports the HS2 head/parameter tooling in
 `C:\Users\13666\Workspace\HS2Mod`. Follow that repository's
 [source-first and Git synchronization rules](../HS2Mod/AGENTS.md).
 
+- The installed game and plugins are the implementation oracle. Recover their
+  computation through decompilation, IL inspection, shader disassembly, asset
+  extraction, and call-chain analysis. Use runtime inspection only for concrete
+  state or a specific source gap; do not brute-force screenshot comparisons or
+  parameter sweeps to discover recoverable logic.
+- The user dislikes repeated reminders to "take screenshots and compare/test."
+  Do not center plans or progress reports on that, or make it a prerequisite for
+  implementation. Directly implement and integrate already recovered logic;
+  small final acceptance checks are secondary, not an exploratory campaign.
 - Analyze the current game's and existing plugins' code and actual assets first.
   Trace the implemented call chain; do not guess deformation behavior.
 - Match the game's implementation, including interpolation, bone mappings,
