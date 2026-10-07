@@ -93,3 +93,57 @@ receive the same geometry metrics, but a small selected-bone experiment cannot
 certify every ABMX bone, channel, interaction or runtime history. Real-time
 expression behavior is intentionally outside this measurement task; fixed actual
 blendshape data is still included because omitting it corrupts skinning parity.
+## Unified explorer
+
+`tools/parameter_atlas/explore_live_response.py` exports one entry point for every
+native control at every recorded baseline and all paired ABMX channels in the
+collection. The final head2 package has 148 choices: 59 controls at each of two
+baselines, plus 30 paired ABMX channels at the card baseline. ABMX is not silently
+borrowed when selecting an unmeasured mixed baseline.
+
+```powershell
+.venv/Scripts/python.exe tools/parameter_atlas/explore_live_response.py C:/Users/13666/Workspace/HS2Mod/artifacts/parameter_response_20261006/head2_full_v2/manifest.json --head-report C:/Users/13666/Workspace/HS2Mod/artifacts/parameter_response_20261006/head2_full_v2/head_surface_review.json --full-report C:/Users/13666/Workspace/HS2Mod/artifacts/parameter_response_20261006/head2_full_v2/independent_review.json --out outputs/parameter_response_20261006/explorer_v1
+```
+
+Use a fresh output directory. Open its `index.html`; keep the `data/` directory
+beside it. It loads local JavaScript payloads without a server or game process.
+All original selected geometry receipts are reopened and SHA-checked. Native
+inputs, fixed expressions, public ABMX state, source identity, skinning and
+baseline repeats are recomputed. ABMX probes additionally require full-renderer
+interpretation and are independently reconstructed over all ten renderers.
+The displayed surface is explicitly `o_head` for both native and ABMX choices.
+An ABMX channel with little head movement can still move other captured meshes.
+
+Each parameter has fixed projection bounds and a common color scale across its
+samples. Point positions are measured; vector magnification affects lines only.
+Display coordinates are rounded to seven decimals and displacements to eight;
+the generator checks their combined maximum position error is below 1e-7 of the
+head diagonal. Statistics and gain calculations use the unrounded geometry.
+
+Requested maximum displacement is expressed as a percentage of the head diagonal.
+The suggested parameter step uses the matching positive or negative local secant,
+limits it to the measured local interval, and refuses targets below repeat noise
+or directions with no response. **These suggestions remain estimates pending
+independent held-out game sampling.** Endpoint measurements do not prove a whole
+range linear. The three preserved eyeL full-surface failures remain visible.
+
+`check_response_profile.py` compares a fresh native geometry export with the
+calibration's complete public state and source-asset identity. Changed head,
+coefficients, expression, blendshape weights, ABMX, coordinate or skin quality
+reject reuse. Matching public inputs alone do not verify future private runtime
+history, response or repeat stability.
+
+```powershell
+.venv/Scripts/python.exe tools/parameter_atlas/check_response_profile.py outputs/parameter_response_20261006/explorer_v1/catalog.json --snapshot path/to/current_geometry.json.gz --baseline card_input --out outputs/profile_check.json
+```
+
+Exit code 2 means incompatible state. The original card baseline passed this
+check; a fresh game snapshot was rejected for changed expression, even though
+its head ID and native coefficients matched. This prevents silent reuse.
+
+For actual browser QA, run `tools/parameter_atlas/check_explorer_browser.cjs`
+with Node and Playwright available (`PLAYWRIGHT_MODULE` may name the installed
+module path), passing `--index <absolute-index.html>` and `--out <fresh-directory>`.
+It operates a headless browser, verifies data file hashes and checks every choice,
+canvas, missing ABMX configuration and estimate/error states. It does not control
+the game or use Computer Use.
