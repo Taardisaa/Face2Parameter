@@ -32,7 +32,20 @@ Only loopback hosts and same-origin requests are accepted. Routes are allowliste
 to context/evaluation; `/api/guide` invokes evaluations only. New contexts replace
 previous ones. Changed characters/heads require another capture.
 
-Status: implementation and necessary mocked logic checks complete; new game
-acceptance is pending. No game samples were collected during this implementation.
-The page displays this limit explicitly; historical eye endpoint failures have
-not been relabelled as fixed.
+Status: bridge 0.31.3 passed the predeclared small final acceptance set: ten
+same-frame real-actor cases on head 2, all ten declared surfaces, including the
+three historical endpoint inputs, ear motion and selected ABMX combinations.
+Actor restoration passed. The actual browser/proxy guide and real stdio MCP
+tools also passed. No game samples were collected to infer formulas during
+implementation. Scope and retained failures are recorded in
+[HS2Mod final acceptance](../../../HS2Mod/docs/hs2_native_forward_acceptance.md).
+
+This does not recertify the older offline world-LBS formula. New candidates are
+computed on copies, not individually tested on the real actor. Active advanced
+accessory parenting, male rigs and future animation/physics frames remain explicit
+gaps; unsupported installed hooks/versions reject capture/evaluation.
+
+Browser acceptance can be reproduced with `live_forward_ui.cjs OUTPUT_DIRECTORY`.
+Expose an installed Playwright through NODE_PATH and optionally set
+FORWARD_CHROMIUM to an existing compatible Chromium executable. A third argument
+replays preserved context/evaluation/guidance receipts without new game calls.
