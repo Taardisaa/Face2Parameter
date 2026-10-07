@@ -62,6 +62,29 @@ baseline 中记录了 head ID 时，默认只运行该底模；显式 `--head-id
 投影使用该网格全部顶点，包括背面顶点；它是曲面响应的检查工具，不模拟游戏
 皮肤遮挡、灯光和纹理，也不把未经认证的顶点区域命名为眼角或颧骨。
 
+### 已验证的游戏曲面查看
+
+`view_live_response.py` 使用原生游戏实际导出的顶点，并复用相同固定轴投影方式：
+
+```powershell
+.venv/Scripts/python.exe tools/parameter_atlas/view_live_response.py <游戏sweep的manifest.json> --report <独立审核report.json> --baseline card_input --control 30 --out outputs/game_control_30.html
+```
+
+独立 report 必须以 `source_manifest_sha256` 绑定当前 manifest 的原始文件字节。
+工具要求 collection 完整、所选 renderer 的59控制 coverage 与重复漂移通过、
+所选 case 明确可信，且编号、baseline、采样角色和数值与审核一致。它重新读取
+baseline、该控制全部 case 和重复 baseline 的 geometry receipts，逐个核验 SHA、
+源拓扑／权重／bindposes／renderer身份，检查 native59、固定 ABMX／表情及祖先
+坐标稳定，再用 LBS 与 BakeMesh 一致的曲面重算位移和重复漂移。
+
+这张图包含所捕获的固定 ABMX／表情状态；它不自动宣称其他 renderer、底模或
+人物配置同样通过，也不将点云投影包装成游戏皮肤截图。HTML 中保存输入 manifest、
+report 与 geometry receipt 的来源及 SHA，用于追溯显示的实际样本。
+
+若独立报告明确标注 `analysis_mesh_scope=["o_head"]`，viewer 仅允许选择 `o_head`，
+重建时也使用该组件审核范围；仍保留原始完整 source、身份与表情检查。
+它不能用头部组件报告查看眼部，不能把未通过的完整网格报告默认转成“全部通过”。
+
 | 文件 | 内容 |
 | --- | --- |
 | `manifest.json` | 所有底模／配置 atlas 的索引 |
