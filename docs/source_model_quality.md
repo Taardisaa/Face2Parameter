@@ -288,3 +288,22 @@ This closes a source-to-game computation branch, **not** photo reconstruction
 accuracy. The paired anger scan discrepancies and missing associated neutral
 truth remain unchanged; a faithful import can faithfully preserve an inaccurate
 model output. Continue recording model accuracy separately from bridge fidelity.
+
+## Current decision after Bridge 0.31.8
+
+The UV/explicit-PNG/card/actual-render-binding milestone adds no model-accuracy
+evidence. Its texture is a diagnostic chart; the inspected source models do not
+predict identity albedo. Do not present missing cosmetics as the explanation for
+existing geometric discrepancies, or mistake faithful import for faithful inference.
+
+The next accuracy entry requires verified neutral photograph/scan association,
+including subject, expression and camera coordinates. Keep original checkpoint,
+crop and decoder conventions for each model; preserve raw predictions. A genuinely
+matched neutral scan permits identity-only evaluation. Associated expression scans
+can instead separate posed reconstruction from neutral identity constraints, but
+zeroing a predicted expression does not neutralize scan truth. If only withheld
+views exist, report silhouette/depth constraints with their limits rather than
+absolute 3D accuracy. Do not repurpose the existing neutral texture atlas as a
+photograph or assume it is the anger subject. Until that evidence exists, SMIRK and
+MICA remain unverified for neutral bone structure; this is an explicit open part
+of the goal, not a passed result.

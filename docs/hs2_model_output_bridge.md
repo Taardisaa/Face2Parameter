@@ -539,3 +539,8 @@ Next work remains independent matched neutral geometry evidence, explicit eye/mo
 appearance and correspondence, and clean native parameter mapping feasibility.
 The paired anger-scan discrepancies and missing neutral truth are unchanged; see
 [source model quality](source_model_quality.md). No full character fidelity claim.
+
+Paired 0.31.8 implementation commits: HS2Mod
+`21478b4a67186516eb933051bf8ff78fb402ccdc`; Face2Parameter
+`6352aeedfbd915fdcac64c1b5037804b49fe031d`. Both pushed normally to their
+configured origin branches. This note adds no geometry or accuracy claim.
