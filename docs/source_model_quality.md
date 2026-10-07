@@ -307,3 +307,135 @@ absolute 3D accuracy. Do not repurpose the existing neutral texture atlas as a
 photograph or assume it is the anger subject. Until that evidence exists, SMIRK and
 MICA remain unverified for neutral bone structure; this is an explicit open part
 of the goal, not a passed result.
+
+## Associated neutral Multiface case: executed
+
+The missing neutral association has now been partly closed using a different,
+publicly accessible source. The [official Multiface release](https://github.com/facebookresearch/multiface)
+provides synchronized photos, calibration, tracked geometry and rigid head poses.
+Its [asset description](https://github.com/facebookresearch/multiface/blob/db70c1abad90066e05db1cdcbcf5fbeb45a17fea/documentation/DATASET_ASSET.md)
+explicitly calls the geometry **tracked meshes**, with no interior eye/mouth
+vertices. This is associated measured/reconstructed neutral geometry, **not an
+unprocessed independent scan or zero-error ground truth**. FaceScape's current
+[full access page](https://nju-3dv.github.io/projects/FaceScape/) asks for an emailed
+agreement; [NoW downloads](https://now.is.tue.mpg.de/download.php) require login.
+No application, registration, email or submission was made on the user's behalf.
+
+Pinned source revision `db70c1abad90066e05db1cdcbcf5fbeb45a17fea`; original
+`dataset.py` SHA256 `b465d02b618111c3cbc3826b514c138aaa14e17e698a3ff4802747e06edfadde`.
+`multiface_case.py` executes the original `load_obj`/`load_krt` functions extracted
+from that pinned source, without importing unrelated CUDA training dependencies.
+Archive checksums match the official CHECKSUM. Metadata SHA256
+`995deae0aa2058c5df5848b1088f0862984a096fb24383217f8168fe585f58da`;
+neutral tracked TAR `fafc881628fa58f32fc149885260be527ea6bb169bfa716b988ab62feb75ef09`;
+image TAR `7dceefdabc2e079b703ac7c5e80c9967f34aae0b04f58f1685f89bebba76714b`.
+The image TAR is about 3.1 GB; only the two declared same-frame images are extracted.
+Original data remains ignored and is not redistributed. The official release is
+CC-BY-NC 4.0; only commands/source/provenance and findings are tracked here.
+
+Case fixed **before model inference** in `multiface_neutral_protocol.json`:
+subject6795937, capture `m--20180227--0000--6795937--GHS`, segment
+`E001_Neutral_Eyes_Open`, frame000141 (upper middle of its 26 provided mesh frames),
+color cameras400016 and400028. Cameras were selected from head-space calibration
+for near-front and oblique views, not by residuals or reconstructed similarity.
+The original files define the same subject/segment/frame association. Neutral is
+a capture instruction; subtle expression remains possible in that particular frame.
+
+The original BIN contains head-local geometry; OBJ contains capture-coordinate
+geometry. The official loader composes camera and headpose as
+`K @ [R_camera @ R_head | R_camera @ t_head + t_camera]`. Applying that same rigid
+headpose to BIN matches OBJ within its text export precision (maximum difference
+`7.11e-5` native units). No geometry warp fixes that difference. Directly treating
+OBJ and BIN as the same coordinates would instead produce a large false error.
+Actual calibrated photo size is1334×2048; it is read from each image, not assumed
+from a generic description. This case's distortion values are all zero; other
+distortion branches are explicitly unsupported by the case builder.
+
+Both original encoders ran on the **same unchanged photo bytes** with their existing
+checkpoint/crop/decoder paths. `neutral_pair_geometry.py` checks original-decoder
+replay and uses the source FLAME `vertices2landmarks` with the pinned semantic
+embedding. It exports raw posed SMIRK, a separate SMIRK identity-only diagnostic
+copy, and literal original canonical MICA. It does not neutralize saved model
+parameters, change game artifacts, fit shape, average outputs or render RGB.
+
+`multiface_accuracy.py` uses the previously validated exact triangle-surface query
+and positive uniform similarity machinery. The same fixed seven front-photo
+MediaPipe rays intersect actual tracked triangle surfaces; all rays hit. The
+outer-eye span from those fixed targets normalizes distances. Each prediction is
+placed with one global similarity, with no ICP, local warp or coefficient fit,
+then projected into both calibrated cameras without refitting the held-out view.
+Semantic registration is detector-derived, not independent landmark annotation.
+Its residual is comparable to the surface errors, so small differences between
+models must not be presented as a decisive ranking. Distances measure one-way
+source-face vertices to tracked triangles; they do not establish coverage.
+
+| Input camera | Geometry | Mean face surface / eye span | P95 | Mean anchor residual / eye span |
+|---|---|---:|---:|---:|
+| 400016 | SMIRK raw posed | 0.02270 | 0.07018 | 0.03412 |
+| 400016 | SMIRK identity diagnostic | 0.01781 | 0.04951 | 0.03556 |
+| 400016 | MICA original | 0.01683 | 0.04876 | 0.03410 |
+| 400028 | SMIRK raw posed | 0.02291 | 0.06774 | 0.03075 |
+| 400028 | SMIRK identity diagnostic | 0.01768 | 0.04874 | 0.03568 |
+| 400028 | MICA original | 0.01683 | 0.04664 | 0.03356 |
+
+Calibrated boards show larger forehead/lower-jaw discrepancies in raw SMIRK.
+Neutralizing its expression/jaw/eyelids/root rotation in the diagnostic copy reduces
+this case's surface discrepancy while keeping identity coefficients fixed. These
+changes are evaluated together; the result does not isolate one responsible
+expression coefficient or prove perfect identity/expression disentanglement.
+Original MICA and neutral SMIRK are close in this diagnostic; no general accuracy
+winner or arbitrary pass threshold is declared. Neither the diagnostic's agreement
+nor its source import can certify the unseen anatomy of a reference portrait.
+The earlier anger-scan discrepancy remains valid evidence for its different case.
+
+```powershell
+.venv/Scripts/python.exe -m tools.model_bridge.multiface_case `
+  --cache C:/Users/13666/Workspace/HS2Mod/tools/external_face_assets/multiface_neutral_6795937 `
+  --download --out outputs/model_quality_20261007/multiface_neutral_case_v1
+
+wsl -d Ubuntu -- /home/taardis/envs/smirk/bin/python /mnt/c/Users/13666/Workspace/Face2Parameter/scripts/smirk_export_geometry.py `
+  --smirk-dir /mnt/c/Users/13666/Workspace/smirk `
+  --in /mnt/c/Users/13666/Workspace/Face2Parameter/outputs/model_quality_20261007/multiface_neutral_case_v1/model_inputs `
+  --out /mnt/c/Users/13666/Workspace/Face2Parameter/outputs/model_quality_20261007/multiface_smirk_raw_v1 --device cuda
+
+wsl -d Ubuntu -- /home/taardis/envs/smirk/bin/python /mnt/c/Users/13666/Workspace/Face2Parameter/scripts/mica_export_geometry.py `
+  --mica-dir /mnt/c/Users/13666/Workspace/HS2Mod/tools/parameter_audit/source_mica_20261007 `
+  --assets /mnt/c/Users/13666/Workspace/Face2Parameter/outputs/mica_assets_20261007 `
+  --flame-model /mnt/c/Users/13666/Workspace/smirk/assets/FLAME2020/generic_model.pkl `
+  --landmark-embedding /mnt/c/Users/13666/Workspace/smirk/assets/landmark_embedding.npy `
+  --in /mnt/c/Users/13666/Workspace/Face2Parameter/outputs/model_quality_20261007/multiface_neutral_case_v1/model_inputs `
+  --out /mnt/c/Users/13666/Workspace/Face2Parameter/outputs/model_quality_20261007/multiface_mica_raw_v1 --device cuda
+
+wsl -d Ubuntu -- /home/taardis/envs/smirk/bin/python /mnt/c/Users/13666/Workspace/Face2Parameter/scripts/neutral_pair_geometry.py `
+  --smirk-manifest /mnt/c/Users/13666/Workspace/Face2Parameter/outputs/model_quality_20261007/multiface_smirk_raw_v1/manifest.json `
+  --mica-manifest /mnt/c/Users/13666/Workspace/Face2Parameter/outputs/model_quality_20261007/multiface_mica_raw_v1/manifest.json `
+  --embedding /mnt/c/Users/13666/Workspace/smirk/assets/mediapipe_landmark_embedding/mediapipe_landmark_embedding.npz `
+  --out /mnt/c/Users/13666/Workspace/Face2Parameter/outputs/model_quality_20261007/multiface_neutral_geometry_v1
+
+.venv/Scripts/python.exe -m tools.model_bridge.multiface_case `
+  --cache C:/Users/13666/Workspace/HS2Mod/tools/external_face_assets/multiface_neutral_6795937 `
+  --out outputs/model_quality_20261007/multiface_neutral_case_v2
+
+.venv/Scripts/python.exe -m tools.model_bridge.multiface_accuracy `
+  --case outputs/model_quality_20261007/multiface_neutral_case_v2/case.json `
+  --geometry-manifest outputs/model_quality_20261007/multiface_neutral_geometry_v1/manifest.json `
+  --mask C:/Users/13666/Workspace/smirk/assets/FLAME_masks/FLAME_masks.pkl `
+  --out outputs/model_quality_20261007/multiface_neutral_accuracy_v2
+```
+
+Commands executed. Use fresh output paths and update dependent paths when repeating.
+v1 case/report are preserved; v2 only adds explicit finite/proper-rotation checks
+and final evaluator provenance, with identical images, geometry, protocol and
+metrics. No extra encoder inference, case selection or game sampling was performed.
+Seven existing focused distance/ray/similarity checks passed. The tracked report
+remains a single neutral associated-case diagnostic, not a full benchmark. The next
+bridge step is explicit identity/expression provenance and source eye/mouth
+correspondence; do not silently substitute a neutralized mesh for raw output.
+
+Final case SHA256 `cdb1465d6e1c03cc0d59152df975d1f31b912a7b2ad5a868e42d44e7c91b8718`;
+report SHA256 `41e47cb02db365016ccf5414987c4f4982fee9c3b998ee02d2a65c10b04b3fbe`.
+All six v1/v2 geometry evidence arrays and metrics are literally identical; final
+case/evaluator hashes match the committed implementations. Source training lists
+(SMIRK README and official MICA `configs/mica.yml`) do not list Multiface, but the
+released checkpoints' subject overlap is not independently established. Do not
+turn this small public case into a claimed controlled generalization benchmark.

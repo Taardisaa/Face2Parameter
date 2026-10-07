@@ -1,0 +1,27 @@
+{
+  "format": "multiface_neutral_case_v1",
+  "upstream_revision": "db70c1abad90066e05db1cdcbcf5fbeb45a17fea",
+  "subject": "6795937",
+  "capture": "m--20180227--0000--6795937--GHS",
+  "segment": "E001_Neutral_Eyes_Open",
+  "frame": "000141",
+  "frame_policy": "Upper midpoint of the 26 provided neutral mesh frames; fixed before model inference",
+  "cameras": ["400016", "400028"],
+  "camera_policy": "Color cameras near head-local +Z and an oblique side view, selected from calibration before model inference; no residual-based selection",
+  "anchor_camera": "400016",
+  "anchor_mediapipe_ids": [33, 133, 362, 263, 4, 61, 291],
+  "normalization_span_ids": [33, 263],
+  "source_region": "face",
+  "alignment": "One positive uniform similarity to fixed front-photo rays on tracked triangle surface; no ICP, local warp or coefficient fit",
+  "metric": "Source face vertices to tracked mesh triangle surface, one direction; not raw scan ground truth or bidirectional coverage",
+  "physical_units": "Use native tracked units and fixed outer-eye span; no unverified millimetre claim",
+  "display_saturation_normalized": 0.1,
+  "limitations": [
+    "Tracked geometry has reconstruction/tracking error; not an unprocessed independent scan",
+    "Neutral segment label is a capture instruction, not proof of perfect expression neutrality",
+    "One subject, one fixed frame and two cameras; no model-wide certificate",
+    "Detector-derived registration anchors are not independently annotated landmarks",
+    "Surface has eye/mouth holes; anchor ray misses must fail, not use nearest vertices",
+    "Reported identity evaluation neutralizes only a separate SMIRK diagnostic copy; original predictions remain unchanged"
+  ]
+}
