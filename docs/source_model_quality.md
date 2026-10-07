@@ -169,6 +169,35 @@ been established. For reference portraits without scans, calibrated or withheld
 views provide partial constraints, not absolute unseen-geometry truth. Keep source
 model quality separate from bridge errors when deciding which source to preserve.
 
+## MICA source audit: local availability and exact input path
+
+The existing code is SMIRK's **training teacher wrapper**, not an already configured
+standalone photo-to-neutral-mesh pipeline. Local
+`smirk/src/models/MICA/mica.py` strictly loads `assets/mica.tar`, runs ArcFace on a
+112-pixel crop after RGB-to-BGR and `(image-.5)/.5`, normalizes its identity vector,
+and returns the original mapping network's 300 `shape_params`. The trained MICA
+mapping network is part of the source model; it is not a new HS2 conversion model.
+The installed `smirk/assets/mica.tar` is absent, so no MICA result has been run or
+accepted in this milestone. The SMIRK checkpoint is present and was evaluated.
+
+The teacher's `datasets/base_dataset.py` uses its original FAN68 eye-midpoint,
+nose-index-32 and mouth-corner points for an ArcFace similarity crop. The saved
+SMIRK export contains MediaPipe observations, **not those FAN68 observations**.
+They must not silently substitute for the teacher's input correspondence. This
+would change the model input convention and contaminate a model comparison.
+
+The [official MICA demo](https://github.com/Zielon/MICA/blob/master/demo.py) instead
+uses its RetinaFace detector, original five-point ArcFace alignment and explicit
+checkpoint to output canonical FLAME vertices and identity code. Its mesh export
+multiplies by 1,000; raw FLAME coordinates and exported millimetres must not be mixed.
+Its [model](https://github.com/Zielon/MICA/blob/master/micalib/models/mica.py) decodes
+the identity embedding through its own FLAME generator. A runnable comparison must
+bind the real official checkpoint, detector, crop and FLAME assets, preserve its
+raw outputs, and use neutral ground truth for an identity-only accuracy claim.
+The anger scan remains valid posed-shape evidence; zeroing a prediction's expression
+does not turn the anger scan into neutral truth. Obtaining those missing dependencies
+and genuinely associated neutral evidence remains work, not an accuracy certificate.
+
 All photos, raw model data, scans and generated review boards remain ignored. The
 FaceScape sample readme says not to distribute it; only source, commands and findings
 are committed. No game screenshots or Computer Use were needed in this work.
