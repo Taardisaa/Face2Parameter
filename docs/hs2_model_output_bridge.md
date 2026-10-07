@@ -198,3 +198,68 @@ separate eyeball/mouth appearance, UV/material integration, native expressions,
 runtime nonuniform body deformation and Studio/multi-character acceptance remain
 open. It does not establish neutral photo-to-shape accuracy or a clean HS2 slider
 mapping. Full offline renderer work remains deferred.
+
+## Attachment asset findings after 0.31.6
+
+The current imported full FLAME head is **not yet a replacement for every native
+head surface**. Installed `ChaControl.LoadAsync` loads the real female render body
+from `chara/oo_base.unity3d` using `ChaABDefine.BodyAsset(1)` (`p_cf_body_00`). Its
+`o_body_cf` contains surface weighted to `cf_J_Head_s`, including vertices wholly
+weighted to that bone. The existing preview hides native face/eye renderers but
+does not remove that body surface. Thus old native posterior head geometry can
+remain alongside the source full head. Original source-array preservation and
+posed-card acceptance did not inspect or certify the composite head/body surface.
+Do not call the present result a complete visible head replacement.
+
+The actual `CmpBoneBody.targetEtc.trfHeadParent` pointer in `p_cf_anim` selects
+`cf_J_Head_s`. This agrees with `LoadAsync` attaching `objHeadBone` under that
+pointer. It is recovered from component data, not selected by bone-name similarity.
+Positive head-bone weights alone are **not** an anatomical neck cutting mask.
+The native render body's many indexed boundaries include UV/material seams, so
+selecting the largest loop or deleting every head-influenced vertex is unjustified.
+The next body replacement must establish the authored head/body seam and preserve
+the remaining native body, then add an explicit connector without moving source
+face vertices. No body deletion or vertex fitting has been implemented here.
+
+Original FLAME topology has three connected surfaces: the head/neck and two
+closed eyeballs. The head surface has two simple open loops, at the mouth interior
+and neck. Source eyeballs already exist and must not silently be replaced by old
+native eye geometry. Labels follow the source geometry/joint context; the stored
+audit preserves the index sets and bounds instead of inventing native correspondence.
+
+SMIRK's `Renderer.__init__` loads `assets/head_template.obj` UVs per face corner.
+Its triangle order and vertex indices match the recorded FLAME faces exactly.
+Its **template positions are different data and must not replace predicted vertices**.
+The source UV layout needs 95 seam duplicates: Unity's one-UV-per-render-vertex
+layout would gather 5,118 render vertices from the original 5,023 positions.
+An exact corner gather can preserve every triangle's geometry while keeping all
+UVs; choosing one UV per original vertex loses the seam. Pose evaluation must
+remain on canonical source vertices, with positions/normals gathered afterward.
+Actual textured rendering and this gather have not yet been integrated.
+
+```powershell
+.venv/Scripts/python.exe -m tools.model_bridge.attachment_audit `
+  --manifest outputs/model_bridge_20261007/smirk_raw_v1/manifest.json `
+  --source-obj C:/Users/13666/Workspace/smirk/assets/head_template.obj `
+  --game-root E:/HoneySelect2_ArcticFox `
+  --cha-control-source C:/Users/13666/Workspace/HS2Mod/tools/parameter_audit/source_model_bridge_20261007/ChaControl.cs `
+  --cha-ab-source C:/Users/13666/Workspace/HS2Mod/tools/parameter_audit/source_model_bridge_20261007/ChaABDefine.cs `
+  --out outputs/model_bridge_20261007/attachment_audit_v2
+```
+
+The command executed using source/model hashes and the exact render prefab;
+collision/silhouette objects are excluded. Original index topology is retained,
+with no tolerance welding, shape fitting, parameter changes or game sampling.
+`report.json` contains component indices, boundary loops/degrees, bone weights,
+actual head-parent pointer and source UV requirements. `native_body.npz` contains
+the installed body mesh data; both stay ignored. Game assembly SHA256 remains
+`d7e7e0d51403a0a3a71935a14487f063c6bf6f93f004b98b8f4b8b89047af770`;
+body bundle SHA256 is
+`9fc9f9cdea1067005fbbbb81a9b2a920c834f5721b1d267eea3f0c3c4a6e56c0`;
+source UV OBJ SHA256 is
+`dd5bfbce75adb99b1963f43bca7ec3557bd4a7321f8fc515f4100599e80d99f2`.
+
+No new installed DLL or runtime geometry changes were made during this asset
+audit. It changes the implementation order: native posterior head/body integration
+must accompany the neck connector. A connector alone would leave old geometry
+in the composite result. Source-model neutral accuracy remains a separate open item.
