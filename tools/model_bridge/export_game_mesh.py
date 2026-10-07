@@ -8,7 +8,7 @@ from pathlib import Path
 from .artifact import ModelArtifact, sha
 
 
-def export(artifact, output, *, head_local):
+def export(artifact, output, *, head_local, with_rig=False):
     vertices, faces = artifact.mesh(head_local=head_local)
     if vertices.ndim != 2 or vertices.shape[1] != 3 or faces.ndim != 2 or faces.shape[1] != 3:
         raise ValueError("Triangle mesh required")
@@ -28,6 +28,13 @@ def export(artifact, output, *, head_local):
         "shape_policy": "Direct source-model vertices and topology; no vertex fitting, remeshing or slider conversion",
         "game_support": "Source mesh interchange only; native head/rig/material/expression integration is separate",
     }
+    if with_rig:
+        if not head_local:
+            raise ValueError("Audited source rig requires explicit head-local geometry")
+        from .rig import export_rig
+        payload["format"] = "hs2_source_head_mesh_v2"
+        payload["rig"] = export_rig(artifact)
+        payload["game_support"] = "Original source LBS rig; fixed shape/expression, source pose controls; native facial retargeting and neck join separate"
     output = Path(output)
     output.parent.mkdir(parents=True, exist_ok=True)
     with output.open("x", encoding="utf-8") as stream:
@@ -43,9 +50,10 @@ def main():
     parser.add_argument("--image-index", type=int, default=0)
     parser.add_argument("--out", type=Path, required=True)
     parser.add_argument("--head-local", action="store_true")
+    parser.add_argument("--with-rig", action="store_true", help="Carry complete original FLAME LBS and pose-corrective state")
     args = parser.parse_args()
     artifact = ModelArtifact(args.manifest, args.image_index)
-    print(json.dumps(export(artifact, args.out, head_local=args.head_local)))
+    print(json.dumps(export(artifact, args.out, head_local=args.head_local, with_rig=args.with_rig)))
 
 
 if __name__ == "__main__":

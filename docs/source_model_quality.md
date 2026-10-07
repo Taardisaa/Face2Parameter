@@ -279,3 +279,12 @@ neutral inputs or certify their association with `4_anger`.
 All photos, raw model data, scans and generated review boards remain ignored. The
 FaceScape sample readme says not to distribute it; only source, commands and findings
 are committed. No game screenshots or Computer Use were needed in this work.
+
+The subsequent Bridge 0.31.6 milestone independently imported the unchanged MICA
+and SMIRK geometry plus original rigs into female Maker. Original-decoder pose
+evaluation and embedded posed-card preservation passed their declared checks
+([commands and scope](hs2_model_output_bridge.md#original-source-rig-bridge-0316)).
+This closes a source-to-game computation branch, **not** photo reconstruction
+accuracy. The paired anger scan discrepancies and missing associated neutral
+truth remain unchanged; a faithful import can faithfully preserve an inaccurate
+model output. Continue recording model accuracy separately from bridge fidelity.

@@ -13,8 +13,9 @@ parameters. Original MICA decoder replay uses its complete saved FLAME state and
 own LBS, not SMIRK's decoder. The new interchange embeds model/checkpoint/source
 hashes as provenance, which the existing card record retains with its raw JSON.
 Actual source, commands and the limited paired-view quality findings are recorded
-in [source model quality](source_model_quality.md). No claim of MICA game acceptance
-or accurate neutral identity is made from export/replay alone.
+in [source model quality](source_model_quality.md). Export/replay alone does not
+establish game acceptance or accurate neutral identity. The separate 0.31.6 live
+source-rig acceptance below now includes MICA, within its declared scope.
 
 ## Export using the existing environment
 
@@ -123,3 +124,77 @@ especially during initial Maker loading. Vertex, triangle and placement equality
 checks still apply to the final state; readiness waiting does not weaken them.
 Final installed binary reload is recorded in `final_load_0315.json` in the same
 ignored output directory.
+
+## Original source rig (Bridge 0.31.6)
+
+`--with-rig` emits `hs2_source_head_mesh_v2`. The unchanged decoded vertices,
+triangles, parameters and provenance remain present. The additional bounded
+`flame_lbs_rig_v1` data carries identity/expression-shaped vertices, original joint
+centres, all five skin-weight columns, all 36 pose-corrective basis rows and
+post-skin eyelid offsets. Buffers use explicit little-endian float32 base64;
+parents must match the audited `[-1,0,1,1,1]` source hierarchy. No weight truncation
+or normalization is performed. Both MICA and SMIRK use their own verified source
+LBS to prepare these buffers, rather than a fitted deformation substitute.
+
+The C# port follows original Rodrigues sampling (including `norm(vector+1e-8)`),
+non-root rotation features, pose corrections, hierarchical joint transforms,
+rest-joint subtraction with homogeneous w=0, weighted transforms and then SMIRK
+eyelid offsets. Geometry is evaluated by this original CPU computation; the five
+visible/debug transforms are not a substitute quaternion skinning implementation.
+At import the port must reproduce the decoded source output within `1e-6` raw
+units. Original-pose display and reset use the literal stored vertex array.
+
+`POST /maker/face/model/pose` accepts only `{"pose":[15 axis-angle radians]}` or
+`{"reset":true}`. Joint order is root, neck, jaw, left eye, right eye. Identity,
+expression coefficients and eyelid coefficients remain fixed source outputs.
+Active source pose is separate card state; raw model parameters are never rewritten.
+The existing version-1 card record adds optional `active_pose`, preserving old
+static cards. A rigged posed card reloads from its embedded payload without
+accessing any source model file. This is source pose control, not HS2 expression
+or native bone retargeting. Native sliders still do not deform this source mesh.
+
+```powershell
+.venv/Scripts/python.exe -m tools.model_bridge.export_game_mesh `
+  --manifest outputs/model_bridge_20261007/smirk_raw_v1/manifest.json `
+  --head-local --with-rig --out outputs/model_bridge_20261007/smirk_raw_v1/source_head_rig.json
+
+.venv/Scripts/python.exe -m tools.model_bridge.export_game_mesh `
+  --manifest outputs/model_quality_20261007/mica_pair_raw_v2/manifest.json `
+  --head-local --with-rig --out outputs/model_quality_20261007/mica_pair_raw_v2/source_head_rig.json
+
+.venv/Scripts/python.exe -m tools.model_bridge.rig_acceptance `
+  --smirk-manifest outputs/model_bridge_20261007/smirk_raw_v1/manifest.json `
+  --smirk-mesh outputs/model_bridge_20261007/smirk_raw_v1/source_head_rig.json `
+  --mica-manifest outputs/model_quality_20261007/mica_pair_raw_v2/manifest.json `
+  --mica-mesh outputs/model_quality_20261007/mica_pair_raw_v2/source_head_rig.json `
+  --backup-card C:/Users/13666/Workspace/HS2Mod/artifacts/model_bridge_20261007/before_rig_0316.png `
+  --thumbnail C:/Users/13666/Workspace/HS2Mod/artifacts/model_bridge_20261007/source_head_front.png `
+  --out outputs/model_bridge_20261007/rig_acceptance_0316_v2
+```
+
+The declared composite pose exercises all five joints. Expected geometry comes
+directly from the original decoder with saved raw coefficients/model buffers,
+not the exported rig or the C# implementation. Actual Unity vertices and posed
+joints passed the fixed raw tolerance for both models; posed card save/clear/load
+preserved geometry, source pose and placement. Reset recovered literal original
+arrays. The supplied old static backup card was restored unchanged afterward.
+No camera capture or geometry fitting was involved. Full numerical receipts and
+NPZ geometry are ignored under the output path above.
+
+The first acceptance helper run compared flattened interchange triangle indices
+with the decoder's two-dimensional faces array and stopped before importing a
+rig. Its failure/character-restoration receipt is retained under
+`rig_acceptance_0316_v1`; the helper now compares the same declared array layout.
+No game computation or tolerance was changed to make acceptance pass.
+
+Installed 0.31.6 DLL SHA256:
+`27b98fe39dc6a2ed940d61235fb7e30fea54b9da69e39fe9f416eb33c8d77ad7`.
+Original LBS source SHA256: SMIRK
+`e495f37fb0e5f1bb73ae958d2f75dfbeae0c9e757a3936686af7984c4ce4fbc7`;
+MICA `8d7737eed5a22bae5b31c31cba1839d0c673de15684247357bc614256f1195c9`.
+
+This resolves original source skin/pose computation in female Maker. Neck joining,
+separate eyeball/mouth appearance, UV/material integration, native expressions,
+runtime nonuniform body deformation and Studio/multi-character acceptance remain
+open. It does not establish neutral photo-to-shape accuracy or a clean HS2 slider
+mapping. Full offline renderer work remains deferred.

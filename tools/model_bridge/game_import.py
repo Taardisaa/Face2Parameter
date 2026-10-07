@@ -39,7 +39,7 @@ def main():
         raise FileExistsError("Use a new receipt path")
     path = args.mesh.resolve()
     source = json.loads(path.read_text(encoding="utf-8"))
-    if source.get("format") != "hs2_source_head_mesh_v1" or source.get("geometry_mode") != "head_local":
+    if source.get("format") not in {"hs2_source_head_mesh_v1", "hs2_source_head_mesh_v2"} or source.get("geometry_mode") != "head_local":
         raise ValueError("Explicit head-local source-model interchange required")
     vertices = np.asarray(source["vertices"], dtype=np.float32)
     triangles = np.asarray(source["triangles"], dtype=np.int32)
