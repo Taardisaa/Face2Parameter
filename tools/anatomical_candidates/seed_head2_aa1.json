@@ -1,0 +1,67 @@
+{
+  "schema_version": 1,
+  "seed_kind": "agent_visual_hypotheses_from_original_front_png",
+  "seed_author": "geometry_validation_agent",
+  "capture_sha256": "52ed5db82ea2258276014d3df3497c7f866cdc7e13634d05ef00a91cd6e6e4a8",
+  "geometry_sha256": "faa0297e31ada81068d0635512d6fd2f07605f741a64770facdcbfbe14b82c81",
+  "view_index": 3,
+  "raw_png_sha256": "92647478a5f597bfa0c33011d3ff1921f4bbfef330993afd66b99da8f8a10c59",
+  "coordinate_convention": "top_left_pixel_centers_integer",
+  "semantic_validated": false,
+  "points": [
+    {
+      "id": "N",
+      "hypothesis": "nose_skin_apex",
+      "xy": [
+        254.0,
+        351.0
+      ],
+      "definition": "Central convex skin dome of the nose; exclude nostril opening and subnasale. Front pixel alone cannot establish its anterior maximum."
+    },
+    {
+      "id": "AL",
+      "hypothesis": "alar_margin_front_image_left",
+      "xy": [
+        233.0,
+        355.0
+      ],
+      "definition": "Outer skin margin of the nasal ala on front-image left; exclude inner nostril rim/shadow. Image side does not assert an anatomical left/right convention."
+    },
+    {
+      "id": "AR",
+      "hypothesis": "alar_margin_front_image_right",
+      "xy": [
+        276.0,
+        355.0
+      ],
+      "definition": "Outer skin margin of the nasal ala on front-image right; exclude inner nostril rim/shadow."
+    },
+    {
+      "id": "ML",
+      "hypothesis": "lip_commissure_front_image_left",
+      "xy": [
+        218.0,
+        401.0
+      ],
+      "definition": "Junction of upper and lower lip at the front-image left commissure; distinguish actual skin/mucosa meeting point from makeup extension."
+    },
+    {
+      "id": "MR",
+      "hypothesis": "lip_commissure_front_image_right",
+      "xy": [
+        289.0,
+        401.0
+      ],
+      "definition": "Junction of upper and lower lip at the front-image right commissure; distinguish actual skin/mucosa meeting point from makeup extension."
+    },
+    {
+      "id": "C",
+      "hypothesis": "midline_chin_skin_eminence",
+      "xy": [
+        254.0,
+        448.0
+      ],
+      "definition": "Anterior midline chin eminence on skin; not the lowest outline pixel (menton) or a view-dependent jaw contour. Requires profile/oblique semantic review."
+    }
+  ]
+}

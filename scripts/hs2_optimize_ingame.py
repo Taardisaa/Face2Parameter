@@ -38,6 +38,7 @@ import numpy as np
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
+from scripts.hs2_capture_gt import call, aligned_framing  # noqa: E402
 from src.hs2_ingame_eval import InGameEvaluator, N_SLIDERS, slider_names  # noqa: E402
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -80,6 +81,34 @@ def free_indices(ev, sensitivity_json, noise_sd):
     return free, excluded
 
 
+def make_before_after(ev, p0, p_best, args, tag):
+    """p0 vs the winner, both hair states, several yaws -- the thing a human judges.
+
+    No score is shown on it deliberately. The point of this image is to answer a question the
+    reward cannot: whether the character actually looks better. Printing the number next to it
+    invites agreeing with the number.
+    """
+    from PIL import Image
+    yaws = [-25.0, 0.0, 25.0]
+    rows = []
+    for hide in (1, 0):
+        for p, name in ((p0, "p0"), (p_best, "best")):
+            ev.set_shapes(p)
+            frame = aligned_framing(res=args.res)     # geometry changed; refit once per row
+            imgs = []
+            for j, y in enumerate(yaws):
+                path = os.path.join(ev.work_dir,
+                                    f"ba_{'bald' if hide else 'hair'}_{name}_{j}.png")
+                call(f"/maker/render?w={args.res}&h={args.res}&yaw={y}"
+                     f"&hide_hair={hide}&{frame}&out={path}", timeout=90)
+                imgs.append(np.asarray(Image.open(path).convert("RGB")))
+            rows.append(np.concatenate(imgs, axis=1))
+    sheet = np.concatenate(rows, axis=0)
+    out = os.path.join(args.out_dir, f"{tag}_before_after.png")
+    Image.fromarray(sheet).save(out)
+    print(f"  rows: bald p0 / bald best / haired p0 / haired best   -> {out}")
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--card", required=True)
@@ -90,6 +119,9 @@ def main():
     ap.add_argument("--sigma0", type=float, default=0.15)
     ap.add_argument("--popsize", type=int, default=None, help="default 4+3*ln(n)")
     ap.add_argument("--noise-n", type=int, default=8)
+    ap.add_argument("--cross-check", type=int, default=4,
+                    help="rounds to re-score p0 and the winner WITH hair (bald runs only); "
+                         "0 disables. Haired noise is sd ~0.048, so one round cannot resolve it.")
     ap.add_argument("--seed", type=int, default=7)
     ap.add_argument("--res", type=int, default=512)
     ap.add_argument("--sensitivity", default="",
@@ -226,6 +258,51 @@ def run(args, lam, stem, scorer, cma):
                       "     optimiser exploiting the reward, not of a better face. Do not ship\n"
                       "     this; tighten lambda / add views / shorten the run.")
 
+        # ---- does the bald gain survive in the state the user actually looks at?
+        # Optimising bald buys signal (S/N 4.0x vs 1.5x haired) but bald and haired rank
+        # characters at only rho 0.65 (0.71 disattenuated), so the transfer is not free and is
+        # not assumed here. Haired noise is sd ~0.048, so a single evaluation cannot resolve a
+        # plausible gain -- repeat whole rounds, which is the only thing that reduces this floor
+        # (adding views does not; the jitter is common within a round).
+        cross = None
+        if args.hair == "off" and args.cross_check > 0:
+            print(f"\n[cross-check] re-scoring p0 and the winner WITH hair, "
+                  f"{args.cross_check} rounds each")
+            evh = InGameEvaluator(res=args.res, hide_hair=False, scorer=scorer,
+                                  work_dir=os.path.join(os.environ.get("TEMP", "."),
+                                                        f"hs2_opt_{tag}_haired"))
+            # Same character, already loaded; reuse p0/frozen rather than reloading the card.
+            evh.p0, evh.frozen_oob = p0.copy(), list(ev.frozen_oob)
+            try:
+                def rounds(p, name):
+                    v = [evh.evaluate(p, sets=("a",), tag=f"x_{name}{i}")["S_a"]
+                         for i in range(args.cross_check)]
+                    return float(np.mean(v)), float(np.std(v, ddof=1)) if len(v) > 1 else 0.0
+
+                h0, h0sd = rounds(p0, "p0")
+                hb, hbsd = rounds(p_best, "best")
+                sem = np.sqrt(h0sd ** 2 + hbsd ** 2) / np.sqrt(args.cross_check)
+                cross = {"haired_p0": h0, "haired_best": hb, "delta": hb - h0,
+                         "sd_p0": h0sd, "sd_best": hbsd, "sem_delta": float(sem),
+                         "rounds": args.cross_check}
+                print(f"  haired  p0 {h0:.4f} (sd {h0sd:.4f})  ->  best {hb:.4f} "
+                      f"(sd {hbsd:.4f})   delta {hb - h0:+.4f} +/- {sem:.4f}")
+                print(f"  bald    p0 {base_S:.4f}  ->  best {best['S_a']:.4f}   "
+                      f"delta {best['S_a'] - base_S:+.4f}")
+                if hb - h0 < 2 * sem:
+                    print("\n  ** The bald gain did NOT transfer: the haired change is within "
+                          "noise.\n     Do not ship it as an improvement -- bald and haired rank "
+                          "at rho 0.65,\n     so a bald-only gain can be exactly the part that "
+                          "does not carry over.")
+            finally:
+                evh.restore()
+
+        # ---- the artifact a human actually judges
+        try:
+            make_before_after(ev, p0, p_best, args, tag)
+        except Exception as e:
+            print(f"  [warn] before/after image failed: {str(e)[:80]}")
+
         out = os.path.join(args.out_dir, f"{tag}.json")
         json.dump({"card": os.path.abspath(args.card), "lambda": lam, "hair": args.hair,
                    "noise_sd": noise_sd, "base_S_a": base_S,
@@ -233,7 +310,7 @@ def run(args, lam, stem, scorer, cma):
                    "p0": p0.tolist(), "p_best": p_best.tolist(),
                    "best": {k: (v.tolist() if isinstance(v, np.ndarray) else v)
                             for k, v in best.items()},
-                   "history": history, "n_eval": n_eval, "seconds": dt},
+                   "history": history, "n_eval": n_eval, "seconds": dt, "cross_check": cross},
                   open(out, "w", encoding="utf-8"), indent=2)
         print(f"\n  -> {out}\n  -> {log_path}")
     finally:

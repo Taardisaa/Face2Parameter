@@ -1,13 +1,16 @@
 """Offline HS2 face-mesh deform (pure numpy) — the reverse-engineered pipeline.
 
 Given the cached head rig (data/hs2_head/, from scripts/hs2_extract_head.py + hs2_parse_update.py) plus a
-card's shapeValueFace(54) + ABMX bones, reproduce the deformed o_head mesh exactly as the game does:
+card's complete shapeValueFace(59) + ABMX bones, reproduce the cached bone-driven o_head deformation:
 
   shapeValueFace[i] --(cf_customhead: bone+DOF)--> sample cf_anmShapeHead keyframes (rate=value)
      --> cf_s_ source-bone values --(ShapeHeadInfoFemale.Update equations)--> cf_J_ bone LOCAL transforms
      --> ABMX multiply (BoneModifier.cs) --> FK world matrices --> linear-blend-skin o_head.
 
-See docs/hs2-renderer-and-mesh.md. Expression blendshapes are left at 0 (neutral).
+This module does not evaluate expression blendshapes or external ancestor transforms.
+Zero blendshape weights are not guaranteed to represent the game's neutral expression.
+Live parity requires the actual frame deltas and recorded ancestor scale; see
+docs/hs2_unity_parity.md. ABMX parity also depends on runtime baseline and exclusions.
 """
 from __future__ import annotations
 
@@ -15,6 +18,8 @@ import json
 import os
 
 import numpy as np
+
+from .hs2_sampling import sample_keyframes, validate_sampling_profile
 
 _DATA = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "data", "hs2_head")
 
@@ -73,7 +78,8 @@ class HeadRig:
     """One head type's rig. `head_id` is the card's `headId` — it selects both the mesh and the
     shapeValueFace keyframe table, which differ per head (see scripts/hs2_extract_head.py)."""
 
-    def __init__(self, head_id: int, data_dir=_DATA):
+    def __init__(self, head_id: int, data_dir=_DATA, *, sampling_profile="vanilla"):
+        self.sampling_profile = validate_sampling_profile(sampling_profile)
         self.head_id = int(head_id)
         head_dir = self.data_dir = os.path.join(data_dir, f"head_{self.head_id}")
         self.root_dir = data_dir
@@ -120,31 +126,16 @@ class HeadRig:
         return order
 
 
-def _sample(frames, rate):
-    """AnimationKeyInfo.GetInfo: evenly-spaced keyframes over [0,1] -> (pos,rot,scl)."""
-    n = len(frames)
-    if rate <= 0:
-        f = frames[0]; return f["pos"], f["rot"], f["scl"]
-    if rate >= 1:
-        f = frames[-1]; return f["pos"], f["rot"], f["scl"]
-    x = (n - 1) * rate
-    i = int(np.floor(x)); t = x - i
-    a, b = frames[i], frames[i + 1]
-    pos = [a["pos"][k] * (1 - t) + b["pos"][k] * t for k in range(3)]
-    scl = [a["scl"][k] * (1 - t) + b["scl"][k] * t for k in range(3)]
-    # rot: LerpAngle per component
-    rot = []
-    for k in range(3):
-        da = a["rot"][k] % 360; db = b["rot"][k] % 360
-        diff = (db - da + 540) % 360 - 180
-        rot.append(da + diff * t)
-    return pos, rot, scl
+def _sample(frames, rate, *, sampling_profile="vanilla", bone_name="", sample_rotation=True):
+    """AnimationKeyInfo.GetInfo, optionally including the installed unlocker postfix."""
+    return sample_keyframes(frames, rate, profile=sampling_profile,
+                            bone_name=bone_name, sample_rotation=sample_rotation)
 
 
 def _fk_world(rig: HeadRig, shape_face=None, ab_data=None):
     """Deform stages 1-4 -> {pid: 4x4 world matrix} for every bone (no skinning).
 
-    shape_face: (54,) floats; ab_data: {cf_J_name: dict(scale[3],length,position[3],rotation[3])} or None.
+    shape_face: (59,) floats; ab_data: {cf_J_name: dict(scale[3],length,position[3],rotation[3])} or None.
     """
     src_names = rig.enums["src"]; dst_names = rig.enums["dst"]
     src_idx = {n: i for i, n in enumerate(src_names)}
@@ -153,6 +144,8 @@ def _fk_world(rig: HeadRig, shape_face=None, ab_data=None):
     src_pos = np.zeros((len(src_names), 3)); src_rot = np.zeros((len(src_names), 3))
     src_scl = np.ones((len(src_names), 3))
     if shape_face is not None:
+        if not np.isfinite(np.asarray(shape_face, dtype=float)).all():
+            raise ValueError("shape_face must contain only finite values")
         # A category the caller did not supply is NOT harmless. Stage 2 below overwrites a driven
         # bone's rest transform with its source bone's value, so a missing slider silently writes
         # the neutral default over the rest pose and deforms that bone — this is exactly how the
@@ -170,7 +163,9 @@ def _fk_world(rig: HeadRig, shape_face=None, ab_data=None):
             bone = row["bone"]; use = row["use"]
             if bone not in rig.anm or bone not in src_idx:
                 continue
-            p, r, s = _sample(rig.anm[bone], float(shape_face[cat]))
+            p, r, s = _sample(rig.anm[bone], float(shape_face[cat]),
+                              sampling_profile=rig.sampling_profile, bone_name=bone,
+                              sample_rotation=any(use[3:6]))
             sid = src_idx[bone]
             for k in range(3):
                 if use[k]:     src_pos[sid][k] = p[k]
@@ -226,7 +221,7 @@ def _fk_world(rig: HeadRig, shape_face=None, ab_data=None):
 
 
 def build_mesh(rig: HeadRig, shape_face=None, ab_data=None):
-    """shape_face: (54,) floats; ab_data: {cf_J_name: dict(...)} or None. Returns (verts(V,3), faces)."""
+    """shape_face: (59,) floats; ab_data: {cf_J_name: dict(...)} or None. Returns (verts(V,3), faces)."""
     world = _fk_world(rig, shape_face, ab_data)
 
     # 5. LBS

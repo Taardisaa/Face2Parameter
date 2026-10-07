@@ -1,5 +1,14 @@
 # Driving HS2's renderer / getting the face mesh as a function call
 
+> Current evidence (2026-10-04): the notes below include historical assumptions.
+> Runtime face deformation uses **59** values; the ML label block has 54 and omits ears.
+> Native controls drive bones, not expression blendshape weights. The game's configured
+> neutral face can retain `head.e00_defo=100`, so all-zero blendshapes are not a neutral-state proof.
+> Independent live comparisons must include actual blendshape frames and ancestor scaling;
+> see [Unity parity](hs2_unity_parity.md), [sampling profiles](hs2_sampling_profiles.md), and
+> [parameter atlas](hs2_parameter_atlas.md). A zero gradient on one card does not establish
+> that controls 27/29/36/38 cannot move head skin; neutral probes measure their actual effects.
+
 ## Verified pipeline (reverse-engineered 2026-06-28 — all managed C# + data, no Ghidra)
 
 How HS2 builds a female face from a card, traced via UnityPy + ILSpy decompile of `Assembly-CSharp.dll`:

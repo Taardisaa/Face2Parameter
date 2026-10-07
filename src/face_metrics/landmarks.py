@@ -3,8 +3,10 @@
 A *canonical landmark* is an anatomical point (eye inner corner, nose tip, …) named once and resolved by
 either backend:
   - MESH (character side): the world position of a named rig bone after deform stages 1-4 — see
-    src/hs2_mesh_deform.bone_world. The rig's bones ARE the anthropometric landmarks, so no vertex
-    hand-labeling is needed, and the mesh is always expression-neutral.
+    src/hs2_mesh_deform.bone_world. These bone centers are rig-control PROXIES, not calibrated
+    anatomical points on the skin surface. Their correspondence to photo landmarks must be validated
+    per head; equality of canonical names does not establish measurement equivalence. The offline
+    deformation omits expression blendshapes.
   - DLIB68 (photo side, Phase 2): the matching iBUG/dlib 68-point index (or mean of indices).
 
 Both backends emit the SAME canonical dict {name: (x,y[,z])}, so ratios (ratios.py) are defined once.
@@ -15,7 +17,7 @@ from __future__ import annotations
 
 import numpy as np
 
-# canonical point -> mesh rig bone (its world translation = the landmark)
+# canonical point -> mesh rig bone (world translation used as an uncalibrated proxy)
 MESH_BONE = {
     "EYE_INNER_L": "cf_J_Eye01_s_L", "EYE_INNER_R": "cf_J_Eye01_s_R",
     "EYE_OUTER_L": "cf_J_Eye03_s_L", "EYE_OUTER_R": "cf_J_Eye03_s_R",
@@ -53,7 +55,7 @@ DLIB68 = {
 
 
 def mesh_landmarks(rig, shape_face=None, ab_data=None):
-    """{canonical: (x,y,z)} from named rig bones (deform stages 1-4, no skinning)."""
+    """{canonical: (x,y,z)} bone-center proxies (stages 1-4, not skin-surface landmarks)."""
     from ..hs2_mesh_deform import bone_world
     pos = bone_world(rig, shape_face, ab_data, list(set(MESH_BONE.values())))
     lm = {name: pos[bone].astype(float) for name, bone in MESH_BONE.items()}
@@ -65,11 +67,11 @@ def mesh_landmarks(rig, shape_face=None, ab_data=None):
 
 def card_landmarks(card_path):
     """{canonical: (x,y,z)} for the head described by a HS2 card."""
-    from ..hs2_mesh import _rig, fd_to_inputs
+    from ..hs2_mesh import _rig, card_head_id, fd_to_inputs
     from ..face_data_utils.utils import FaceData
     fd = FaceData(card_path)
     shape_face, ab_data = fd_to_inputs(fd)
-    return mesh_landmarks(_rig(), shape_face, ab_data)
+    return mesh_landmarks(_rig(card_head_id(card_path)), shape_face, ab_data)
 
 
 def _pt68(pts, spec):
@@ -107,8 +109,9 @@ def photo_landmarks(img_path):
 def render_landmarks(card_path, yaw=0.0):
     """Char-side landmarks by running the SAME 68-detector on a render of the card.
 
-    Most comparable to photo_landmarks (one detector both sides -> definitional bias cancels), unlike the
-    bone backend. Reuses the numpy rasterizer in scripts/hs2_render_mesh.
+    Uses the same landmark definitions as photo_landmarks, unlike the bone backend. Detector error
+    can still differ between a shaded game render and a photo; sharing a detector does not cancel
+    domain bias. Reuses the numpy rasterizer in scripts/hs2_render_mesh.
     """
     import cv2
     from ..hs2_mesh import card_to_mesh

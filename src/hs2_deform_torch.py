@@ -27,13 +27,12 @@ inherently sequential).
 Self-check (torch vs numpy, and autograd vs finite differences):
     .venv/Scripts/python.exe -m src.hs2_deform_torch --card tests/HS2ChaF_20240901192905747.png
 
-Two *expected* sources of zero gradient — both verified faithful to the game, so don't "fix" them:
-  * sliders whose Update() target bone isn't skinned to `o_head` (27/29 -> `cf_J_Eye03_*` drive the
-    eye submeshes, 36/38 -> `cf_J_NoseBridge_t` / `cf_J_megane`, the glasses mount). They start
-    mattering once the submeshes are skinned and rendered.
-  * sliders parked outside [0,1]. SliderUnlocker lets cards store e.g. -0.35, and the game's
-    keyframe table is constant beyond its ends, so the derivative there really is 0. On the test
-    card 5 of 59 sliders sit at or past a rail — an optimizer should keep params inside [0,1].
+Sliders parked outside [0,1] clamp under vanilla and may have zero gradient. This is NOT
+the behavior of an installed SliderUnlocker: select sampling_profile="slider_unlocker_18_2"
+explicitly for that runtime. A zero gradient at a particular card or rail is not evidence
+that a control never affects o_head. The neutral local atlas measures all 59 directions,
+including 27/29/36/38; descendant transforms matter even if a direct target is unskinned.
+See docs/hs2_parameter_atlas.md for the head/input-specific evidence and limits.
 """
 from __future__ import annotations
 
@@ -43,6 +42,9 @@ import numpy as np
 import torch
 
 from .hs2_mesh_deform import HeadRig, available_heads
+from .hs2_sampling import (
+    rotation_is_exempt, unlocker_rotation_delta, validate_keyframes, validate_sampling_profile,
+)
 
 # ABData.to_vector layout, per bone: scale(3) | length(1) | position(3) | rotation(3)
 AB_SCALE, AB_LENGTH, AB_POS, AB_ROT = slice(0, 3), 3, slice(4, 7), slice(7, 10)
@@ -96,8 +98,10 @@ def trs(pos: torch.Tensor, quat: torch.Tensor, scl: torch.Tensor) -> torch.Tenso
 class TorchHeadRig:
     """Precompiled, batched, differentiable version of `HeadRig` + `build_mesh`."""
 
-    def __init__(self, rig: HeadRig, device="cuda", dtype=torch.float32):
+    def __init__(self, rig: HeadRig, device="cuda", dtype=torch.float32, *, sampling_profile=None):
         self.rig, self.device, self.dtype = rig, torch.device(device), dtype
+        self.sampling_profile = validate_sampling_profile(
+            rig.sampling_profile if sampling_profile is None else sampling_profile)
         t = lambda a, dt=None: torch.as_tensor(np.asarray(a), dtype=dt or dtype, device=self.device)
         ti = lambda a: torch.as_tensor(np.asarray(a), dtype=torch.long, device=self.device)
 
@@ -120,6 +124,8 @@ class TorchHeadRig:
         # neutral defaults over their rest pose. See src/hs2_mesh.fd_to_inputs.
         rows = [r for r in rig.customhead
                 if r["bone"] in rig.anm and r["bone"] in src_idx]
+        for row in rows:
+            validate_keyframes(rig.anm[row["bone"]])
         self.n_slider = max(r["category"] for r in rig.customhead) + 1
         # kept so the self-check can guarantee it probes the ear knobs (categories 54-58)
         self.ear_cats = sorted({r["category"] for r in rows if "Ear" in r["bone"]})
@@ -127,13 +133,23 @@ class TorchHeadRig:
         if len(ks) != 1:
             raise ValueError(f"expected a uniform keyframe count, got {sorted(ks)}")
         self.n_key = ks.pop()
+        if self.n_key < 1:
+            raise ValueError("Animation needs at least one keyframe")
         self.row_cat = ti([r["category"] for r in rows])                      # (R,) slider index
+        self.rotation_exempt = torch.as_tensor(
+            [rotation_is_exempt(r["bone"]) or not any(r["use"][3:6]) for r in rows],
+            dtype=torch.bool, device=self.device)
+        self.extrap_first, self.extrap_last, self.extrap_delta = {}, {}, {}
 
         # Per row: base value at each keyframe + the delta to the next one, so sampling is
         # `a[i] + d[i]*t` (rotation deltas use Mathf.LerpAngle's shortest-arc rule, folded in here).
         a_all, d_all = {}, {}
         for f, key in (("pos", "pos"), ("rot", "rot"), ("scl", "scl")):
             a = np.array([[fr[key] for fr in rig.anm[r["bone"]]] for r in rows], np.float64)
+            self.extrap_first[f], self.extrap_last[f] = t(a[:, 0]), t(a[:, -1])
+            delta = (np.array([unlocker_rotation_delta(rig.anm[r["bone"]]) for r in rows])
+                     if f == "rot" and self.n_key > 1 else a[:, -1] - a[:, 0])
+            self.extrap_delta[f] = t(delta)
             if f == "rot":
                 a = a % 360.0
                 d = (np.diff(a, axis=1) + 540.0) % 360.0 - 180.0
@@ -221,23 +237,45 @@ class TorchHeadRig:
         of the piecewise-linear interpolant the game evaluates.
         """
         B = shape_face.shape[0]
+        if not torch.isfinite(shape_face).all():
+            raise ValueError("shape_face must contain only finite values")
         if shape_face.shape[1] < self.n_slider:
             raise ValueError(
                 f"shape_face has {shape_face.shape[1]} sliders, the rig drives {self.n_slider}. "
                 f"Categories 54..58 are the ear knobs and are NOT part of the 54-dim label vector; "
                 f"a short vector silently deforms the ears rather than leaving them at rest.")
-        rate = shape_face.index_select(1, self.row_cat).clamp(0, 1)            # (B,R)
+        raw_rate = shape_face.index_select(1, self.row_cat)
+        outside = (raw_rate < 0) | (raw_rate > 1)
+        unlocked = self.sampling_profile == "slider_unlocker_18_2"
+        if unlocked and self.n_key == 1 and (outside & ~self.rotation_exempt).any():
+            raise ValueError("SliderUnlocker rotation extrapolation requires at least two keyframes")
+        rate = raw_rate.clamp(0, 1)                                         # (B,R)
         x = rate * (self.n_key - 1)
-        i = x.floor().clamp(max=self.n_key - 2).detach().long()                # (B,R) segment
+        i = x.floor().clamp(max=max(self.n_key - 2, 0)).detach().long()        # (B,R) segment
         frac = (x - i).unsqueeze(-1)                                           # (B,R,1)
 
         out = []
         for field in _FIELDS:
             a, d = self.key_a[field], self.key_d[field]                        # (R,K,3),(R,K-1,3)
             gi = i.unsqueeze(-1).expand(-1, -1, 3)                             # (B,R,3)
-            av = a.unsqueeze(0).expand(B, -1, -1, -1).gather(2, gi.unsqueeze(2)).squeeze(2)
-            dv = d.unsqueeze(0).expand(B, -1, -1, -1).gather(2, gi.unsqueeze(2)).squeeze(2)
-            val = (av + dv * frac).reshape(B, -1)                              # (B,R*3)
+            if self.n_key == 1:
+                val = a[:, 0].unsqueeze(0).expand(B, -1, -1) + raw_rate.unsqueeze(-1) * 0
+            else:
+                av = a.unsqueeze(0).expand(B, -1, -1, -1).gather(2, gi.unsqueeze(2)).squeeze(2)
+                dv = d.unsqueeze(0).expand(B, -1, -1, -1).gather(2, gi.unsqueeze(2)).squeeze(2)
+                val = av + dv * frac
+            if unlocked:
+                first = self.extrap_first[field].unsqueeze(0)
+                last = self.extrap_last[field].unsqueeze(0)
+                delta = self.extrap_delta[field].unsqueeze(0)
+                raw = raw_rate.unsqueeze(-1)
+                extrap = first + delta * raw
+                if field == "rot":
+                    endpoint = torch.where(raw < 0, first, last)
+                    extrap = torch.where(raw < 0, extrap, last + delta * (raw - 1))
+                    extrap = torch.where(self.rotation_exempt[None, :, None], endpoint, extrap)
+                val = torch.where(outside.unsqueeze(-1), extrap, val)
+            val = val.reshape(B, -1)                                         # (B,R*3)
 
             dst, src = self.scatter[field]
             flat = torch.full((B, 3 * self.n_src), self.src_default[field],
