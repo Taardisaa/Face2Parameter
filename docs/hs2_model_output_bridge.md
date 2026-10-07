@@ -772,3 +772,7 @@ FLAME identity needs a new descriptor derived from verified shared topology and
 actual placement/body state. Do not remove the old equality gate or relabel the
 old single-face collar as a generic photo importer. Oral grafting additionally
 needs authored source-space parts or a justified oral placement/driver relation.
+
+Paired implementation commits for this source/provenance milestone: HS2Mod
+`507676f84fb08cb3f76252090305eb2442335187`; Face2Parameter
+`44c9930cba3388852f35a3b707a1cf8cc63467ef`. Installed DLL0.31.9 was unchanged.
