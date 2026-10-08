@@ -1,0 +1,77 @@
+{
+  "format": "head_placement_native_handoff_v1",
+  "date": "2026-10-08",
+  "guid": "codex.chenger.mica.nativehead",
+  "prefab": "p_cf_head_chenger_mica",
+  "installed_package_sha256": "a57f9ac9e850e3cc960ba1dffd684eaad8160df9c8e88bd3190d3032153c957b",
+  "source_sha256": "acc5c748abe39dd0fb9322f72a2bd7c8db83619c0c5860b64824124a5232e0a6",
+  "template_sha256": "66ba2ef7f95fa4d79ad87b3d1e11e90e8f1f78ed79e0dc7cb1e4e2969f100edf",
+  "similarity": [
+    [
+      0.94,
+      0.0,
+      0.0,
+      0.00028499416966049074
+    ],
+    [
+      0.0,
+      0.9387117626692993,
+      -0.0491957988683672,
+      0.04992961610472668
+    ],
+    [
+      0.0,
+      0.0491957988683672,
+      0.9387117626692993,
+      -0.021369997489157466
+    ],
+    [
+      0.0,
+      0.0,
+      0.0,
+      1.0
+    ]
+  ],
+  "acceptance": {
+    "format": "native_head_placement_game_acceptance_v1",
+    "candidate_geometry_sha256": "b9df7951b0a21fedf988baf3d052691bb8e9240ea47b2bfae909506029b74209",
+    "package_sha256": "a57f9ac9e850e3cc960ba1dffd684eaad8160df9c8e88bd3190d3032153c957b",
+    "game_geometry_sha256": "52cb9851d17e510a48c3002ec0553ae20ac03b04c278360004a9de354383fc0b",
+    "source_state_sha256": "7ea9e09fce03e085d1971ddb2c8a08092cd2b97d8f8b86cfbffe835a3e4f789c",
+    "screenshot": "C:\\Users\\13666\\Workspace\\HS2Mod\\artifacts\\chenger\\placement_native_20261008\\native_sheet.png",
+    "screenshot_sha256": "848c303759c892dc4f45853a8e2c8f430d9d7232068179d6f4abfce71d11b6eb",
+    "serialized_prefab": "p_cf_head_chenger_mica",
+    "actual_renderer_path": "/CharaCustom[0]/CustomControl[0]/chaF_001[20]/BodyTop[0]/p_cf_anim[0]/cf_J_Root[0]/cf_N_height[0]/cf_J_Hips[0]/cf_J_Spine01[1]/cf_J_Spine02[1]/cf_J_Spine03[1]/cf_J_Neck[1]/cf_J_Head[0]/cf_J_Head_s[0]/p_cf_head_bone[7]/ct_head[1]/n_head_cf2_c1[0]/o_head[4]",
+    "frame_count": 3649,
+    "actual_native_asset_matches": true,
+    "reviewed_head_positions_preserved": true,
+    "native_body_source_unchanged": true,
+    "source_overlay_active": false,
+    "raw_bake_lbs_max_errors": [
+      2.2572889726291123e-06,
+      4.608986693632744e-06
+    ],
+    "neutral_placement_max_error": 2.098717745369072e-06,
+    "actual_same_frame_seam_max_distance": 3.114677511342416e-06,
+    "pass_neutral_geometry": true,
+    "native_eye_geometry_authored": true,
+    "scope": "This placement, actual BP body and neutral card only; materials, eyes/gaze, expressions and arbitrary sliders remain unverified"
+  },
+  "final_card": "E:\\HoneySelect2_ArcticFox\\UserData\\chara\\female\\Codex\\程儿_缩小低头底模_游戏保存_20261008.png",
+  "final_card_sha256": "096621851d6cc863cce7c6e2e66977c9c5793dccb4a248af4ab337445a4444b8",
+  "final_card_native_reload_accepted": true,
+  "source_overlay_after_reload_active": false,
+  "game_restarts": 1,
+  "dll_changed": false,
+  "computer_use": false,
+  "remaining": [
+    "Texture/material seam and eye appearance",
+    "Expressions and arbitrary sliders/ABMX",
+    "Other bodies and end-to-end baseline regeneration"
+  ],
+  "drafts_excluded": [
+    "model_bridge attachment/runtime/trim drafts",
+    "native_head rim/test_rim/author_neck_surface/neck_surface drafts",
+    "HS2Mod C# attachment drafts"
+  ]
+}

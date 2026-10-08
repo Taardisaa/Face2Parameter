@@ -25,7 +25,6 @@ from scripts.hs2_extract_head import _chain, _read_transforms, _read_smr_mesh
 from src.hs2_mesh_deform import HeadRig, _fk_world, build_mesh
 from tools.model_bridge.scan_accuracy import TriangleSurface
 from tools.native_head.mesh import write_mesh,basis
-from tools.native_head.rim import conform,transition
 
 GUID = 'codex.chenger.mica.nativehead'
 MAIN_AB = 'chara/codex/chenger/head.unity3d'
@@ -118,7 +117,7 @@ def csv_bytes(category, row, name):
 def build(args):
     args.out.mkdir(parents=True,exist_ok=False)
     source_bytes = args.source.read_bytes(); source = json.loads(source_bytes)
-    if source.get('trim',{}).get('format')!='flame_authored_neck_trim_v1':
+    if args.authored_neck is None and source.get('trim',{}).get('format')!='flame_authored_neck_trim_v1':
         raise ValueError('Existing retained, explicitly trimmed target mesh required')
     if source['geometry_mode']!='head_local' or not np.isfinite([args.scale,*args.translation]).all() or args.scale<=0:
         raise ValueError('Head-local source and positive uniform placement required')
@@ -142,7 +141,35 @@ def build(args):
     native_neutral,_=build_mesh(rig,np.full(59,.5),None)
     canonical=np.asarray(source['vertices'],float)*args.scale+np.asarray(args.translation)
     original_placed=canonical.copy(); neck=None; neck_factors=np.zeros(len(canonical))
+    authored = None
+    if args.authored_neck is not None:
+        if args.native_neck is not None:
+            raise ValueError('Authored integrated geometry cannot use legacy neck deformation')
+        authored = dict(np.load(args.authored_neck, allow_pickle=False))
+        receipt_path = args.authored_neck.with_name('receipt.json')
+        design = json.loads(receipt_path.read_text(encoding='utf-8'))
+        validation = json.loads(args.authored_neck.with_name('validation.json').read_text())
+        if not validation['pass_static_geometry'] or validation['geometry_sha256'] != design['geometry_sha256']:
+            raise ValueError('Integrated placement has no passing final geometry acceptance')
+        if (design['geometry_sha256'] != sha(args.authored_neck.read_bytes())
+                or design['native_bundle_sha256'] != sha(bundle_bytes)
+                or design['raw_sha256'] != source['source']['artifact_sha256']
+                or design['source_image_sha256'] != source['source']['image_sha256']
+                or design['manifest_sha256'] != source['source']['manifest_sha256']
+                or design['scale'] != args.scale or design['translation'] != args.translation
+                or not np.array_equal(authored['original_vertices'], source['vertices'])
+                or not np.array_equal(authored['original_faces'], np.asarray(source['triangles']).reshape(-1,3))):
+            raise ValueError('Integrated geometry does not match exact source/template/placement provenance')
+        canonical = authored['vertices']
+        neck = dict(method=design['rules'],geometry_sha256=design['geometry_sha256'],
+                    authoring_receipt_sha256=sha(receipt_path.read_bytes()),
+                    body_capture_sha256=design['body_capture_sha256'],
+                    body_source_geometry_sha256=design['body_source_geometry_sha256'],
+                    body_mesh_edited=False, source_shape_preserved_up_to_similarity=True,
+                    similarity_matrix=design['similarity_matrix'],
+                    native_interface_error=design['native_interface_error'])
     if args.native_neck is not None:
+        from tools.native_head.rim import conform,transition
         if args.neck_descriptor is None:raise ValueError('Native neck requires its exact boundary descriptor')
         mask_info=source['surface']['components']['source_mask']
         mask_path=Path(mask_info['path']);mask_bytes=mask_path.read_bytes()
@@ -160,9 +187,16 @@ def build(args):
         np.savez(args.out/'source_placement.npz',original=original_placed,authored=canonical,falloff=neck_factors,
                  triangles=np.asarray(source['triangles']).reshape(-1,3))
     components=source['surface']['components']['components']
-    labels=np.full(len(canonical),-1,int)
-    for i,component in enumerate(components):labels[component['canonical_vertex_ids']]=i
-    faces=np.asarray(source['triangles'],int).reshape(-1,3)
+    original_labels=np.full(len(original_placed),-1,int)
+    for i,component in enumerate(components):original_labels[component['canonical_vertex_ids']]=i
+    if authored is None:
+        labels=original_labels
+        faces=np.asarray(source['triangles'],int).reshape(-1,3)
+    else:
+        faces=authored['faces']
+        from tools.native_head.asset_placement import prepare
+        labels,authored_normals,native_start,native_ids,collar_attrs,collar_policy = prepare(
+            authored,design,original_labels,native_neutral,native_arrays,correspondence)
     if (labels<0).any() or not np.all(labels[faces]==labels[faces[:,0,None]]):
         raise ValueError('Source connected components are inconsistent')
     # Each source eye becomes a real eye renderer, not part of o_head's skin.
@@ -193,8 +227,11 @@ def build(args):
                 native_center[2]=ref_vertices[:,2].min()
                 size=(target_vertices[:,0].max()-target_vertices[:,0].min())/(ref_vertices[:,0].max()-ref_vertices[:,0].min())
                 target_vertices=(ref_vertices-native_center)*size+source_center
+                if authored is not None:
+                    matrix=np.asarray(design['similarity_matrix'])[:3,:3]/design['relative_uniform_scale']
+                    target_vertices=(target_vertices-source_center)@matrix.T+source_center
                 target_faces=template['faces'];source_ids=np.full(len(target_vertices),-1,int)
-        attribute_points=original_placed[source_ids] if name=='o_head' else target_vertices
+        attribute_points=original_placed[source_ids] if name=='o_head' and authored is None else target_vertices
         indices,weights,attrs,policy=transfer(attribute_points,ref_vertices,template['faces'],template,len(bones))
         if name!='o_head' and args.native_eyes:
             indices=template['bone_idx'];weights=template['bone_w']
@@ -202,7 +239,22 @@ def build(args):
             policy=dict(method='native_eye_hemisphere_uniform_placement',source_eyeball_center_preserved=True,
                         original_native_uv_and_skin_weights_preserved=True)
         override_normals=None
-        if name=='o_head' and neck is not None:
+        if authored is not None:
+            if not (name!='o_head' and args.native_eyes):override_normals=authored_normals[source_ids]
+            if name=='o_head':
+                # The game's body row uses Head_s and the head rim uses the
+                # coincident FaceRoot_s. Keep the whole new connector on that
+                # audited head-side support; facial retargeting remains deferred.
+                seam_and_bridge = source_ids >= native_start
+                root_index=bones.index('cf_J_FaceRoot_s')
+                indices[seam_and_bridge]=root_index;weights[seam_and_bridge]=[1,0,0,0]
+                local=inverse[native_ids]
+                for key in attrs:
+                    attrs[key][local]=collar_attrs[key]
+                neck.update(native_interface_root='cf_J_FaceRoot_s',
+                            native_interface_normals_preserved=True,
+                            transition_inside_actual_o_head=True)
+        if name=='o_head' and neck is not None and authored is None:
             retained_count=len(source_ids);retained_faces=target_faces.copy()
             original_normals,_=basis(original_placed[source_ids],target_faces,attrs['uv'])
             retained_normals,_=basis(target_vertices,target_faces,attrs['uv'])
@@ -246,11 +298,16 @@ def build(args):
                           uv1=attrs['uv1'],colors=attrs['colors'],normals=override_normals)
         # Do not discard the just-appended serialized root when clearing weights.
         tree=obj.read_typetree();tree['m_BlendShapeWeights']=[]
-        if name=='o_head' and neck is not None:tree['m_Bones'].append(dict(m_FileID=0,m_PathID=root_id))
+        if name=='o_head' and neck is not None and authored is None:tree['m_Bones'].append(dict(m_FileID=0,m_PathID=root_id))
         obj.save_typetree(tree)
         # UnityPy readers retain original bytes until the bundle is serialized.
         # Readback therefore happens on the reopened serialized bundle below.
-        expected_meshes[name]=(target_vertices.astype('<f4'),target_faces,source_ids,indices,weights.astype('<f4'))
+        original_ids=source_ids.copy()
+        if authored is not None:
+            original_ids[:]=-1
+            retained=(source_ids>=0)&(source_ids<len(authored['crop_original_ids']))
+            original_ids[retained]=authored['crop_original_ids'][source_ids[retained]]
+        expected_meshes[name]=(target_vertices.astype('<f4'),target_faces,original_ids,indices,weights.astype('<f4'))
         mesh_reports.append(dict(name=name,**result,attribute_policy=policy,face_geometry_fit=False))
     for name,(obj,smr,_) in renderers.items():
         if name in names:continue
@@ -330,7 +387,8 @@ def build(args):
     receipt=dict(format='hs2_native_head_asset_build_v1',package=str(package.resolve()),package_sha256=sha(package.read_bytes()),
         guid=GUID,slot=SLOT,main_ab=MAIN_AB,prefab=PREFAB,source_sha256=sha(source_bytes),template_sha256=sha(bundle_bytes),
         source_parameters_preserved=True,outside_neck_band_positions_modified=False,neck_band_authored=neck is not None,
-        placement=dict(scale=args.scale,translation=args.translation),
+        placement=dict(scale=args.scale,translation=args.translation,
+                       similarity=None if authored is None else design['similarity_matrix']),
         native_reference_face_values=[.5]*59,mesh_assets=mesh_reports,source_overlay_required=False,
         expression_support=False,neck_geometry_authored=neck is not None,neck_visual_acceptance=False,appearance='Native UV/skin attribute transfer; no inferred albedo',
         deferred_parts=['o_eyelashes','o_eyeshadow','o_namida','o_tooth','o_tang'],game_loading_verified=False)
@@ -346,6 +404,7 @@ def main():
     parser.add_argument('--scale',type=float,required=True);parser.add_argument('--translation',type=float,nargs=3,required=True)
     parser.add_argument('--out',type=Path,required=True)
     parser.add_argument('--native-neck',type=Path);parser.add_argument('--neck-descriptor',type=Path)
+    parser.add_argument('--authored-neck',type=Path,help='Exact integrated author_neck_surface geometry.npz and adjacent receipt')
     parser.add_argument('--neck-bandwidth',type=float,default=.55)
     parser.add_argument('--plain-skin',action='store_true');parser.add_argument('--native-eyes',action='store_true')
     build(parser.parse_args())
