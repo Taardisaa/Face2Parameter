@@ -73,6 +73,37 @@ def sha(data):
     return hashlib.sha256(data).hexdigest()
 
 
+def neutral_head_region_mask(material, objects):
+    """Remove native-atlas regions from the imported chart, preserving skin shading.
+
+    Skin True Face samples _NailMask at UV0 even with microdetail disabled.
+    G=1 is the native skin region; R/B=0 disable nail gloss/metallic regions.
+    This is a plain skin policy, not an anatomical atlas transfer.
+    """
+    textures = dict(material.read_typetree()['m_SavedProperties']['m_TexEnvs'])
+    pointer = textures['_NailMask']['m_Texture']
+    if pointer['m_FileID'] != 0 or not pointer['m_PathID']:
+        raise ValueError('Expected the installed internal face region mask')
+    texture = next(o for o in objects if o.path_id == pointer['m_PathID'])
+    if texture.type.name != 'Texture2D':
+        raise ValueError('Face region mask does not reference a texture')
+    value = texture.read()
+    if value.m_Name != 'cf_head_00_mask':
+        raise ValueError('Unreviewed native face region mask: '+value.m_Name)
+    original_name = value.m_Name
+    original_pixels_sha256 = sha(np.asarray(value.image).tobytes())
+    rgba = (0, 255, 0, 255)
+    value.set_image(Image.new('RGBA', (16, 16), rgba), target_format=4)
+    value.m_Name = 'codex_imported_head_skin_region_mask'
+    value.save()
+    shader = Path(__file__).resolve().parents[2]/'data/hs2_head/shaders/AIT/Skin True Face.shader'
+    return dict(property='_NailMask', texture_name=value.m_Name,
+        original_texture_name=original_name, original_pixels_sha256=original_pixels_sha256,
+        rgba=list(rgba), shader_sha256=sha(shader.read_bytes()),
+        policy='Uniform native skin region on imported UV0; no original eye/lip/scalp regions',
+        source='Installed Skin True Face UV0 mask sampling and gloss/metallic/Fresnel branches')
+
+
 def correspondence(points, vertices, faces):
     closest, ids, _ = TriangleSurface(vertices[faces]).closest(points)
     triangles = vertices[faces[ids]]; a = triangles[:, 0]
@@ -330,6 +361,7 @@ def build(args):
         mesh_tree['m_Shapes']=dict(vertices=[],shapes=[],channels=[],fullWeights=[])
         mesh_reader.save_typetree(mesh_tree)
         tree=obj.read_typetree();tree['m_BlendShapeWeights']=[];obj.save_typetree(tree)
+    authored_skin_material = None
     for obj in objects:
         if args.authored_skin and obj.type.name=='Material' and obj.read().m_Name==native['row']['MatData']:
             tree=obj.read_typetree()
@@ -338,6 +370,7 @@ def build(args):
             tree['m_SavedProperties']['m_Floats']=[(k,0. if k in ('_DetailNormalMapScale','_Riality') else v)
                 for k,v in tree['m_SavedProperties']['m_Floats']]
             obj.save_typetree(tree)
+            authored_skin_material = obj
         if obj.type.name=='MonoBehaviour':
             value=obj.read()
             if value.m_GameObject.path_id==root.path_id and value.m_Script.read().m_ClassName=='FaceBlendShape':
@@ -365,6 +398,12 @@ def build(args):
             tree['m_Container']=[(key.replace('p_cf_head_02.prefab',PREFAB+'.prefab'),value)
                                  for key,value in tree['m_Container']]
             obj.save_typetree(tree)
+    if args.authored_skin:
+        if authored_skin_material is None:
+            raise ValueError('Missing private face drawing material')
+        # Apply last: this UnityPy version reads the original ObjectReader stream
+        # after save(), so a later URI rewrite would overwrite edited pixels.
+        authored_skin_policy['region_mask'] = neutral_head_region_mask(authored_skin_material, objects)
     env.file.files={k.replace(old_cab,new_cab):v for k,v in env.file.files.items()}
     for k,v in env.file.files.items():
         if hasattr(v,'name'):v.name=k
@@ -394,7 +433,7 @@ def build(args):
         if authored_skin_policy is not None:skin_policy['authored_surface']=authored_skin_policy
         skin['MainAB']='chara/codex/chenger/skin.unity3d'
     manifest=ET.Element('manifest',{'schema-ver':'1'})
-    for k,v in dict(guid=GUID,name='Chenger MICA native head',version='0.1.3' if args.authored_skin else '0.1.2' if args.native_skin else '0.1.1',author='Codex',
+    for k,v in dict(guid=GUID,name='Chenger MICA native head',version='0.1.4' if args.authored_skin else '0.1.2' if args.native_skin else '0.1.1',author='Codex',
                     description='Actual neutral head asset. Expressions deferred. Locally generated; requires installed HS2 assets.').items():
         ET.SubElement(manifest,k).text=v
     ET.SubElement(manifest,'faceSkinInfo',{'skinID':str(SLOT),'headID':str(SLOT),'headGUID':GUID})

@@ -1,0 +1,132 @@
+{
+  "format": "native_head_region_mask_fix_v1",
+  "date": "2026-10-08",
+  "package_version": "0.1.4",
+  "package_sha256": "6ae10fa83ac02fd3b7dc11c35e400ad2cf9b5c3a76d188f6f95140015d86128f",
+  "source_sha256": "acc5c748abe39dd0fb9322f72a2bd7c8db83619c0c5860b64824124a5232e0a6",
+  "template_sha256": "66ba2ef7f95fa4d79ad87b3d1e11e90e8f1f78ed79e0dc7cb1e4e2969f100edf",
+  "mask_policy": {
+    "property": "_NailMask",
+    "texture_name": "codex_imported_head_skin_region_mask",
+    "original_texture_name": "cf_head_00_mask",
+    "original_pixels_sha256": "a81720674a5a8613f184a14c3390f9f2515427f105af76987865fff0f97a7b28",
+    "rgba": [
+      0,
+      255,
+      0,
+      255
+    ],
+    "shader_sha256": "52f582223a78faa22da86e3e63812e47f4764feaca84162675be921b1ad9ed90",
+    "policy": "Uniform native skin region on imported UV0; no original eye/lip/scalp regions",
+    "source": "Installed Skin True Face UV0 mask sampling and gloss/metallic/Fresnel branches"
+  },
+  "static_checks": {
+    "o_head": {
+      "verts": true,
+      "faces": true,
+      "normals": true,
+      "bone_idx": true,
+      "bone_w": true,
+      "bindpose": true
+    },
+    "o_eyebase_L": {
+      "verts": true,
+      "faces": true,
+      "normals": true,
+      "bone_idx": true,
+      "bone_w": true,
+      "bindpose": true
+    },
+    "o_eyebase_R": {
+      "verts": true,
+      "faces": true,
+      "normals": true,
+      "bone_idx": true,
+      "bone_w": true,
+      "bindpose": true
+    },
+    "all_texture_archive_uris_relinked": true,
+    "streamed_textures_checked": 51,
+    "scope": "Static asset integrity and fixed geometry; runtime appearance is separate",
+    "private_face_region_mask_uniform_skin": true
+  },
+  "actual_game": {
+    "frame_count": 3718,
+    "geometry_path": "C:\\Users\\13666\\Workspace\\HS2Mod\\artifacts\\chenger\\appearance_native_20261008\\mask_fix\\geometry.json",
+    "geometry_sha256": "88c7d7e198cf2cf0716d0d42150fe8cb2456e168e6c6b4b4fbc22f052ca01263",
+    "head_source_geometry_sha256": "1dbd56d215b21c6e0abac9f76a356b0ef25336655082cf17cc017be68d9a651f",
+    "accepted_head_geometry_unchanged": true,
+    "mask_texture": {
+      "property": "_NailMask",
+      "is_null": false,
+      "scale": [
+        1.0,
+        1.0
+      ],
+      "offset": [
+        0.0,
+        0.0
+      ],
+      "instance_id": 502272,
+      "name": "codex_imported_head_skin_region_mask",
+      "type": "Texture2D",
+      "width": 16,
+      "height": 16,
+      "dimension": "Tex2D",
+      "wrap_mode": "Repeat",
+      "wrap_mode_u": "Repeat",
+      "wrap_mode_v": "Repeat",
+      "filter_mode": "Bilinear",
+      "anisotropic_level": 1,
+      "format": "RGBA32",
+      "is_readable": false,
+      "mipmap_count": 1,
+      "contents_read_back": true,
+      "readback": {
+        "exported": true,
+        "path": "C:\\Users\\13666\\Workspace\\HS2Mod\\artifacts\\chenger\\appearance_native_20261008\\mask_fix\\textures\\texture_502272.png",
+        "sha256": "2e5c77399e647ec20c2cc25db3d7c346fe14a6be5abde2c7f92b63b5b3051645",
+        "bytes": 91,
+        "source_texture_instance_id": 502272,
+        "width": 16,
+        "height": 16,
+        "pipeline": "Graphics.Blit(source, linear ARGB32), GL.sRGBWrite=false, ReadPixels to linear RGBA32, EncodeToPNG",
+        "rgb_encoding": "declared linear shader-sampled buffer, 8-bit; requires independent calibration",
+        "alpha_encoding": "8-bit copied sample; requires independent calibration",
+        "uv_v_to_png_row_validated": false,
+        "rgb_alpha_transfer_validated": false,
+        "texture_shader_clip_validated": false
+      }
+    },
+    "uniform_skin_mask_pixels_verified": true,
+    "bridge_version": "0.31.13",
+    "bridge_mvid": "61eb98fd-8967-4e69-aa8b-94e7b488b48b"
+  },
+  "card": {
+    "path": "E:/HoneySelect2_ArcticFox/UserData/chara/female/Codex/程儿_基础肤色眼唇_20261008.png",
+    "reloaded_after_asset_install": true,
+    "parameters_changed": false,
+    "source_overlay_required": false
+  },
+  "screenshot": {
+    "path": "C:\\Users\\13666\\Workspace\\HS2Mod\\artifacts\\chenger\\appearance_native_20261008\\mask_fix\\native_sheet.png",
+    "sha256": "5305e84f5c53e711136604571e8e028a3901e6097debd81fc5485c7796bdcce6",
+    "capture_response_path": "C:\\Users\\13666\\Workspace\\HS2Mod\\artifacts\\chenger\\appearance_native_20261008\\mask_fix\\capture.json",
+    "capture_response_sha256": "ce8434d61093da9d2248b2ed7ae7faba73149e63ca400f8ba5942fe190632270",
+    "visually_reviewed": true,
+    "scalp_circle_removed": true,
+    "misplaced_outer_eye_ovals_removed": true
+  },
+  "game_state": {
+    "inside_maker": true,
+    "process_id": 14956,
+    "dll_changed": false,
+    "asset_reload_restarts": 1
+  },
+  "preserved_failure": "outputs/appearance_20261008/authored_skin_v5: edited texture overwritten by subsequent original-stream URI rewrite; rejected before installation",
+  "remaining": [
+    "Rear faceted shading",
+    "Identity albedo and complete skin detail",
+    "Eyebrows/lashes/oral parts and dynamic compatibility"
+  ]
+}
