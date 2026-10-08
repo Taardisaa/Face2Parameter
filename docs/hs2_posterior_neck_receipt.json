@@ -1,0 +1,95 @@
+{
+  "format": "posterior_neck_review_receipt_v1",
+  "scope": "Neutral posterior geometry only; native installation and front join unfinished",
+  "game_mutations": false,
+  "cases": [
+    {
+      "name": "chenger",
+      "output": "outputs\\native_head_20261007\\posterior_bezier_review_v1\\chenger",
+      "source_manifest_sha256": "3d0ceff34d416b7e8af964794fb08b0eb59af91226655e37a21a03ead0480b2b",
+      "raw_sha256": "bac86e86ef1eb87b6376080bad66d394b8d35afd379438d56618823ae280fd06",
+      "image_sha256": "74014fe1504e971570654aad6f49acba59f4f85098ac064b07e644c336f1f240",
+      "baseline_geometry_sha256": "bcf66e27f932275ffcbc2642626cd2b5321b3311c48ce5e923e0b5c8320e4c64",
+      "masks_sha256": "ccefbe1ac0774ff78c68caf2c627b4abc067a6555ebeb0be5d5b0812366ab492",
+      "native_bundle_sha256": "66ba2ef7f95fa4d79ad87b3d1e11e90e8f1f78ed79e0dc7cb1e4e2969f100edf",
+      "body_capture_sha256": "c802119648513f68ba3e130cefb1f04fa533cf63a5f9b3d36b3d276c4d6c5714",
+      "body_source_geometry_sha256": "ef257989441dcc9d4f71907abc843c42bfdf352d103c0cae9d4163cf6faec81c",
+      "validation": {
+        "format": "posterior_neck_static_acceptance_v1",
+        "geometry_sha256": "3ead5e0c679d0912e0af875246ccbef44ac9cfbf1133d018dd7008d9d219c019",
+        "baseline_sha256": "bcf66e27f932275ffcbc2642626cd2b5321b3311c48ce5e923e0b5c8320e4c64",
+        "topology_unchanged": true,
+        "interface_positions_unchanged": true,
+        "front_positions_unchanged": true,
+        "outside_patch_positions_unchanged": true,
+        "minimum_double_area": 9.291352404053476e-10,
+        "boundary_sizes": [
+          32,
+          28
+        ],
+        "added_true_crossings": [],
+        "edited_region_crossings": [],
+        "baseline_existing_crossings": {
+          "proper_crossing": 478,
+          "coplanar_overlap": 0,
+          "edge_contact": 4,
+          "point_contact": 0,
+          "coplanar_contact": 0
+        },
+        "candidate_existing_crossings": {
+          "proper_crossing": 478,
+          "coplanar_overlap": 0,
+          "edge_contact": 4,
+          "point_contact": 0,
+          "coplanar_contact": 0
+        },
+        "pass_static_posterior": true,
+        "scope": "Posterior neutral mesh authoring only. Existing source-eye/mouth intersections retained; no whole-mesh-clean, material, rig or game acceptance claim."
+      }
+    },
+    {
+      "name": "af1_400016",
+      "output": "outputs\\native_head_20261007\\posterior_bezier_review_v1\\af1_400016",
+      "source_manifest_sha256": "c9c18c39dc2af406fbfc2ed2d60e47065fdb2b1ff4ba38a9fd85a4a9bd257a57",
+      "raw_sha256": "5ab4d899a1351f3fe98d58a03084064b949b406062524e282180882c8ca40946",
+      "image_sha256": "a6416b273e0154cde88a61ec33a67b7dac333dfe94078e6f5bd04b3af07d2657",
+      "baseline_geometry_sha256": "45357b69159f7cede617bcbf08b7d4e08d5047e0163b84ac2a7d590fadc0a588",
+      "masks_sha256": "ccefbe1ac0774ff78c68caf2c627b4abc067a6555ebeb0be5d5b0812366ab492",
+      "native_bundle_sha256": "66ba2ef7f95fa4d79ad87b3d1e11e90e8f1f78ed79e0dc7cb1e4e2969f100edf",
+      "body_capture_sha256": "c802119648513f68ba3e130cefb1f04fa533cf63a5f9b3d36b3d276c4d6c5714",
+      "body_source_geometry_sha256": "ef257989441dcc9d4f71907abc843c42bfdf352d103c0cae9d4163cf6faec81c",
+      "validation": {
+        "format": "posterior_neck_static_acceptance_v1",
+        "geometry_sha256": "f63f11e355de9a8792edf38630f17ed40a16ad7de4c52166964b019359536a36",
+        "baseline_sha256": "45357b69159f7cede617bcbf08b7d4e08d5047e0163b84ac2a7d590fadc0a588",
+        "topology_unchanged": true,
+        "interface_positions_unchanged": true,
+        "front_positions_unchanged": true,
+        "outside_patch_positions_unchanged": true,
+        "minimum_double_area": 9.291352404053476e-10,
+        "boundary_sizes": [
+          32,
+          28
+        ],
+        "added_true_crossings": [],
+        "edited_region_crossings": [],
+        "baseline_existing_crossings": {
+          "proper_crossing": 516,
+          "coplanar_overlap": 0,
+          "edge_contact": 3,
+          "point_contact": 1,
+          "coplanar_contact": 0
+        },
+        "candidate_existing_crossings": {
+          "proper_crossing": 516,
+          "coplanar_overlap": 0,
+          "edge_contact": 3,
+          "point_contact": 1,
+          "coplanar_contact": 0
+        },
+        "pass_static_posterior": true,
+        "scope": "Posterior neutral mesh authoring only. Existing source-eye/mouth intersections retained; no whole-mesh-clean, material, rig or game acceptance claim."
+      }
+    }
+  ]
+}
