@@ -841,3 +841,8 @@ This closes the different-photo descriptor gate, not source-model accuracy or
 native slider correspondence. Original FLAME still supplies no teeth/tongue or
 identity albedo; importing a face does not certify it resembles its photograph.
 Independent findings remain in [source_model_quality.md](source_model_quality.md).
+
+Paired implementation commits: Face2Parameter
+`a7781795ab943d15b677cf3177b8df4a16ba569e`; HS2Mod
+`97f480491d16f53b9c6bc594f65a8992f5da6e48`. Both pushed normally. Generated
+cards, native states, source model arrays and acceptance evidence remain ignored.
