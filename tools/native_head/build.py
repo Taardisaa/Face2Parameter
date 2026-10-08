@@ -32,29 +32,25 @@ PREFAB = 'p_cf_head_chenger_mica'
 SLOT = 1
 
 
-def neutral_skin(native, out):
-    """Native shader inputs with neutral authoring textures, no albedo claim.
-
-    UV transfer cannot make anatomical markings on the vanilla texture faithful
-    to another topology. Use a plain skin first instead of inventing lip/eye spots.
-    """
+def neutral_skin(native, out, *, original_textures=False, authored_albedo=None):
+    """Private skin bundle with an explicit generic/native texture policy."""
     row=native['compatible_skin_rows'][0];path=Path(native['bundle']).parents[2]/row['MainAB']
     if not path.exists():
         # bundle is abdata/chara/38/...; its third parent is installed abdata.
         raise FileNotFoundError(path)
     env=UnityPy.load(str(path));old_cab=next(k for k,v in env.file.files.items() if hasattr(v,'objects'))
-    new_cab='CAB-'+sha((GUID+'.skin.v1').encode())[:32]
+    new_cab='CAB-'+sha((GUID+('.skin.native.v1' if original_textures else '.skin.v1')).encode())[:32]
     for obj in list(env.objects):
         if obj.type.name=='Texture2D':
             value=obj.read();name=value.m_Name
-            if name==row['MainTex']:
+            if name==row['MainTex'] and not original_textures:
                 pixels=np.asarray(value.image)
                 color=tuple(map(int,np.median(pixels.reshape(-1,4),axis=0)))
-                value.set_image(Image.new('RGBA',(16,16),color),target_format=4)
+                value.set_image(authored_albedo if authored_albedo is not None else Image.new('RGBA',(16,16),color),target_format=4)
                 value.save()
-            elif name==row['OcclusionMapTex']:
+            elif name==row['OcclusionMapTex'] and not original_textures:
                 value.set_image(Image.new('RGBA',(16,16),(255,255,0,255)),target_format=4);value.save()
-            elif name==row['NormalMapTex']:
+            elif name==row['NormalMapTex'] and not original_textures:
                 # Installed texture uses DXT5nm: X in alpha, Y in green.
                 value.set_image(Image.new('RGBA',(16,16),(255,128,128,128)),target_format=4);value.save()
             else:
@@ -69,7 +65,8 @@ def neutral_skin(native, out):
         if hasattr(v,'name'):v.name=k
     data=env.file.save(packer='lz4')
     return data,dict(source_bundle=str(path),sha256=sha(path.read_bytes()),
-        policy='Plain authored native skin inputs; inherited skin color; no inferred albedo or native anatomical texture mapping claim')
+        policy=('Unchanged installed native head2 albedo/occlusion/normal textures with inherited game skin color; generic skin, not identity albedo'
+                if original_textures else 'Plain authored native skin inputs; inherited skin color; no inferred albedo or native anatomical texture mapping claim'))
 
 
 def sha(data):
@@ -115,6 +112,8 @@ def csv_bytes(category, row, name):
 
 
 def build(args):
+    if sum([args.plain_skin, args.native_skin, args.authored_skin]) > 1:
+        raise ValueError('Choose one skin texture policy')
     args.out.mkdir(parents=True,exist_ok=False)
     source_bytes = args.source.read_bytes(); source = json.loads(source_bytes)
     if args.authored_neck is None and source.get('trim',{}).get('format')!='flame_authored_neck_trim_v1':
@@ -201,6 +200,7 @@ def build(args):
         raise ValueError('Source connected components are inconsistent')
     # Each source eye becomes a real eye renderer, not part of o_head's skin.
     names=['o_head','o_eyebase_L','o_eyebase_R']; mesh_reports=[]; expected_meshes={}
+    authored_albedo = None; authored_skin_policy = None
     # Sign determines actual asset side; authored model left/right conventions differ.
     eye_components=sorted([1,2],key=lambda i:canonical[labels==i,0].mean())
     component_indices=[0,*eye_components]
@@ -293,6 +293,16 @@ def build(args):
                 protected_original_normals_preserved=True,retained_triangles_preserved=True,
                 transition_inside_actual_o_head=True)
             source_ids=np.r_[source_ids,np.full(len(target_vertices)-retained_count,-1,int)]
+        if name=='o_head' and args.authored_skin:
+            from tools.native_head.authored_skin import author
+            attrs['uv'],authored_albedo,authored_skin_policy=author(
+                target_vertices,args.out,source,
+                authored['placed_original_vertices'] if authored is not None else original_placed)
+            # Skin True Face adds UV1 nipple/brow height through (1-color.g/b).
+            # The brow height ignores the color alpha. Vanilla UV1 transferred
+            # to this topology therefore leaves bumps even with invisible brows.
+            attrs['colors'][:,1:3]=1.
+            authored_skin_policy['vanilla_uv1_nipple_and_brow_height_gates_disabled']=True
         mesh_reader=smr.m_Mesh.read().object_reader
         result=write_mesh(mesh_reader,target_vertices,target_faces,attrs['uv'],indices,weights,bindposes,
                           uv1=attrs['uv1'],colors=attrs['colors'],normals=override_normals)
@@ -321,6 +331,13 @@ def build(args):
         mesh_reader.save_typetree(mesh_tree)
         tree=obj.read_typetree();tree['m_BlendShapeWeights']=[];obj.save_typetree(tree)
     for obj in objects:
+        if args.authored_skin and obj.type.name=='Material' and obj.read().m_Name==native['row']['MatData']:
+            tree=obj.read_typetree()
+            # The vanilla atlas-gated microdetail field is incompatible with the
+            # imported chart. Keep geometric normals; don't add misplaced bumps.
+            tree['m_SavedProperties']['m_Floats']=[(k,0. if k in ('_DetailNormalMapScale','_Riality') else v)
+                for k,v in tree['m_SavedProperties']['m_Floats']]
+            obj.save_typetree(tree)
         if obj.type.name=='MonoBehaviour':
             value=obj.read()
             if value.m_GameObject.path_id==root.path_id and value.m_Script.read().m_ClassName=='FaceBlendShape':
@@ -338,7 +355,10 @@ def build(args):
         if obj.type.name in ['Texture2D','Mesh']:
             tree=obj.read_typetree();stream=tree.get('m_StreamData')
             if stream and old_res in stream.get('path',''):
-                stream['path']=stream['path'].replace(old_res,new_res);obj.save_typetree(tree)
+                # Unity resolves archive:/<CAB>/<CAB>.resS as a full URI. Updating
+                # only the file left the archive directory pointing at vanilla,
+                # so eye white/normal/AO textures read as black in the game.
+                stream['path']=stream['path'].replace(old_cab,new_cab);obj.save_typetree(tree)
         elif obj.type.name=='AssetBundle':
             tree=obj.read_typetree();tree['m_Name']=MAIN_AB
             tree['m_AssetBundleName']=MAIN_AB
@@ -369,11 +389,12 @@ def build(args):
     skin={k:v for k,v in native['compatible_skin_rows'][0].items() if not k.startswith('_')}
     skin.update(ID=str(SLOT),HeadID=str(SLOT),Name='程儿 原生皮肤')
     skin_bundle=None;skin_policy=None
-    if args.plain_skin:
-        skin_bundle,skin_policy=neutral_skin(native,args.out)
+    if args.plain_skin or args.native_skin or args.authored_skin:
+        skin_bundle,skin_policy=neutral_skin(native,args.out,original_textures=args.native_skin,authored_albedo=authored_albedo)
+        if authored_skin_policy is not None:skin_policy['authored_surface']=authored_skin_policy
         skin['MainAB']='chara/codex/chenger/skin.unity3d'
     manifest=ET.Element('manifest',{'schema-ver':'1'})
-    for k,v in dict(guid=GUID,name='Chenger MICA native head',version='0.1.1',author='Codex',
+    for k,v in dict(guid=GUID,name='Chenger MICA native head',version='0.1.3' if args.authored_skin else '0.1.2' if args.native_skin else '0.1.1',author='Codex',
                     description='Actual neutral head asset. Expressions deferred. Locally generated; requires installed HS2 assets.').items():
         ET.SubElement(manifest,k).text=v
     ET.SubElement(manifest,'faceSkinInfo',{'skinID':str(SLOT),'headID':str(SLOT),'headGUID':GUID})
@@ -407,6 +428,8 @@ def main():
     parser.add_argument('--authored-neck',type=Path,help='Exact integrated author_neck_surface geometry.npz and adjacent receipt')
     parser.add_argument('--neck-bandwidth',type=float,default=.55)
     parser.add_argument('--plain-skin',action='store_true');parser.add_argument('--native-eyes',action='store_true')
+    parser.add_argument('--native-skin',action='store_true',help='Preserve installed native albedo/occlusion/normal textures instead of the plain geometry-review skin')
+    parser.add_argument('--authored-skin',action='store_true',help='Basic imported-head UV skin and anatomical lip tint; not photo albedo')
     build(parser.parse_args())
 
 

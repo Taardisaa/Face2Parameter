@@ -1,0 +1,139 @@
+{
+  "format": "native_head_basic_appearance_handoff_v1",
+  "date": "2026-10-08",
+  "build": {
+    "package_sha256": "6a184bdc3ed2fd2e81bc156cf5fe489eb1605e8f7ea05465f6745eb8c0fa2c67",
+    "source_sha256": "acc5c748abe39dd0fb9322f72a2bd7c8db83619c0c5860b64824124a5232e0a6",
+    "template_sha256": "66ba2ef7f95fa4d79ad87b3d1e11e90e8f1f78ed79e0dc7cb1e4e2969f100edf",
+    "guid": "codex.chenger.mica.nativehead",
+    "prefab": "p_cf_head_chenger_mica",
+    "skin_policy": {
+      "source_bundle": "E:\\HoneySelect2_ArcticFox\\abdata\\chara\\30\\ft_skin_f_30.unity3d",
+      "sha256": "544fa16833467346dcdf513e625faefbc73f27738b2639b670a2a72bcd0bd026",
+      "policy": "Plain authored native skin inputs; inherited skin color; no inferred albedo or native anatomical texture mapping claim",
+      "authored_surface": {
+        "method": "front_cylindrical_chart_with_source_FLAME_outer_lip_landmarks",
+        "positions_modified": false,
+        "landmark_embedding_sha256": "8095348eeafce5a02f6bd8765146307f9567a3f03b316d788a2e47336d667954",
+        "lip_outline_indices": [
+          48,
+          49,
+          50,
+          51,
+          52,
+          53,
+          54,
+          55,
+          56,
+          57,
+          58,
+          59
+        ],
+        "identity_albedo": false,
+        "native_anatomical_atlas_reused": false,
+        "normal_map": "flat DXT5nm",
+        "occlusion_map": "neutral",
+        "limitation": "Basic skin/lips only; no photo albedo, pores, eye makeup or eyebrow reconstruction",
+        "vanilla_uv1_nipple_and_brow_height_gates_disabled": true
+      }
+    }
+  },
+  "static_assets": {
+    "o_head": {
+      "verts": true,
+      "faces": true,
+      "normals": true,
+      "bone_idx": true,
+      "bone_w": true,
+      "bindpose": true
+    },
+    "o_eyebase_L": {
+      "verts": true,
+      "faces": true,
+      "normals": true,
+      "bone_idx": true,
+      "bone_w": true,
+      "bindpose": true
+    },
+    "o_eyebase_R": {
+      "verts": true,
+      "faces": true,
+      "normals": true,
+      "bone_idx": true,
+      "bone_w": true,
+      "bindpose": true
+    },
+    "all_texture_archive_uris_relinked": true,
+    "streamed_textures_checked": 52,
+    "scope": "Static asset integrity and fixed geometry; runtime appearance is separate"
+  },
+  "actual_neutral_game_geometry": {
+    "format": "native_head_placement_game_acceptance_v1",
+    "candidate_geometry_sha256": "b9df7951b0a21fedf988baf3d052691bb8e9240ea47b2bfae909506029b74209",
+    "package_sha256": "6a184bdc3ed2fd2e81bc156cf5fe489eb1605e8f7ea05465f6745eb8c0fa2c67",
+    "game_geometry_sha256": "771b881c5d90904e8cdc62bdd5b6cbedc2ff444d1b98a31b1d79e4d5f848b83b",
+    "source_state_sha256": "9c2f9bb92fde4ac407d53a740e6afbf8b65fddc500dc473c0747db65e8a5b766",
+    "screenshot": "C:\\Users\\13666\\Workspace\\HS2Mod\\artifacts\\chenger\\appearance_native_20261008\\released\\native_sheet.png",
+    "screenshot_sha256": "dffd860098bbc6d1ed42b69a42a232570aacf9956fb8714f136a28f8fc0d8d94",
+    "serialized_prefab": "p_cf_head_chenger_mica",
+    "actual_renderer_path": "/CharaCustom[0]/CustomControl[0]/chaF_001[20]/BodyTop[0]/p_cf_anim[0]/cf_J_Root[0]/cf_N_height[0]/cf_J_Hips[0]/cf_J_Spine01[1]/cf_J_Spine02[1]/cf_J_Spine03[1]/cf_J_Neck[1]/cf_J_Head[0]/cf_J_Head_s[0]/p_cf_head_bone[7]/ct_head[1]/n_head_cf2_c1[0]/o_head[4]",
+    "frame_count": 5126,
+    "actual_native_asset_matches": true,
+    "reviewed_head_positions_preserved": true,
+    "native_body_source_unchanged": true,
+    "source_overlay_active": false,
+    "raw_bake_lbs_max_errors": [
+      3.3425508423334804e-06,
+      4.6277671001959675e-06
+    ],
+    "neutral_placement_max_error": 2.225645387099462e-06,
+    "actual_same_frame_seam_max_distance": 3.831252536801036e-06,
+    "pass_neutral_geometry": true,
+    "native_eye_geometry_authored": true,
+    "scope": "This placement, actual BP body and neutral card only; materials, eyes/gaze, expressions and arbitrary sliders remain unverified"
+  },
+  "profile_path": "tools/native_head/appearance_profile.json",
+  "profile_sha256": "5ad0c0bd1692b4909af1fbc2c80eb836066f44a17b7d05f3de7866523b71b627",
+  "card": {
+    "path": "E:\\HoneySelect2_ArcticFox\\UserData\\chara\\female\\Codex\\程儿_基础肤色眼唇_20261008.png",
+    "sha256": "1d17f1d91617c696d1d0440dc723dfe91e2af6fa3dc0ea91640ea6167d7e6d2b",
+    "native_save_reload_verified": true,
+    "source_overlay_embedded": false
+  },
+  "screenshot": {
+    "path": "C:\\Users\\13666\\Workspace\\HS2Mod\\artifacts\\chenger\\appearance_native_20261008\\released\\native_sheet.png",
+    "sha256": "dffd860098bbc6d1ed42b69a42a232570aacf9956fb8714f136a28f8fc0d8d94",
+    "capture_response_path": "C:\\Users\\13666\\Workspace\\HS2Mod\\artifacts\\chenger\\appearance_native_20261008\\released\\capture.json",
+    "capture_response_sha256": "786fff9c473b276994e3421fedb223aae7601adad4011e97b4d7f4efd2eda5ab",
+    "scope": "Native offscreen three views before save; saved card subsequently reloaded and native geometry checked"
+  },
+  "completed": [
+    "Streamed texture archive URI repair",
+    "Basic generic skin and source-embedded outer-lip outline",
+    "Eye white/iris/pupil display",
+    "Card color/gloss settings and native save/reload"
+  ],
+  "not_completed": [
+    "Photo identity albedo",
+    "Correct native anatomical atlas registration",
+    "Pores and full skin material transition",
+    "Eyebrow/lash/membrane and oral-part retargeting",
+    "Expressions/gaze/all sliders"
+  ],
+  "visible_limitations": [
+    "Top-of-head shading spot and rear faceted shading remain visible; cause unresolved",
+    "Appearance still simplified; no likeness certification"
+  ],
+  "game_state": {
+    "inside_maker": true,
+    "bridge_version": "0.31.13",
+    "dll_changed": false,
+    "source_overlay_active": false
+  },
+  "failed_versions_preserved": [
+    "native_skin_v1: misplaced native atlas",
+    "authored_skin_v2: broad lip mask",
+    "authored_skin_v3: old UV1 brow height"
+  ],
+  "scope": "This head placement and native BP body; generic interface goal remains active"
+}

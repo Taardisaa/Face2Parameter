@@ -1,0 +1,29 @@
+{
+  "format": "native_head_basic_appearance_v1",
+  "policy": "Authored generic appearance, not model-predicted identity albedo; mesh positions unchanged",
+  "operations": [
+    {
+      "tool": "hs2_set_face_eyes",
+      "arguments": {
+        "patch": {
+          "pupil_same_setting": true,
+          "pupil": {"w": 0.25, "h": 0.25, "color": [0.28, 0.2, 0.16, 1]},
+          "left": {"black_w": 0.35, "black_h": 0.35, "white_color": [0.94, 0.94, 0.93, 1]},
+          "right": {"black_w": 0.35, "black_h": 0.35, "white_color": [0.94, 0.94, 0.93, 1]},
+          "highlight": {"color": [1, 1, 1, 0.65]}
+        }
+      }
+    },
+    {
+      "tool": "hs2_set_body_base",
+      "arguments": {
+        "patch": {
+          "skin_color": [0.94, 0.845, 0.8, 1],
+          "skin_gloss_power": 0.22,
+          "skin_metallic_power": 0,
+          "sunburn": {"color": [1, 1, 1, 0]}
+        }
+      }
+    }
+  ]
+}
