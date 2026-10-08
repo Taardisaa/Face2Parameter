@@ -65,3 +65,47 @@ Fresh ignored output directories preserve all previous rejected attempts.
 
 The earlier unfinished native builder/rim changes and overlay prototype drafts
 remain separate working-tree changes; these diagnostic tools do not certify them.
+
+## Local neck fit, continuing from the bottom-only candidate
+
+`tools/native_head/neck_fit.py` now fits the retained lower neck locally. It
+never returns to the aggressive mask crop. Every bottom-only parent triangle is
+present, either unchanged or subdivided along the low boundary; no additional
+original face is deleted. Face/chin/ear/eye vertices, upper cranial vertices and
+their incident first ring are locked literally. Only the lower neck can move,
+including its height; there is no overall or per-axis head scaling.
+
+The body opening is recovered from exact bind-position/ordered-skin aliases and
+the installed head-support skin weights. The captured Unity body and source
+matrices convert its actual baked positions into the source frame. A constrained
+biharmonic displacement distributes neck compression below the locks. A short
+integrated annulus extends the actual body's adjacent one-ring surface upward.
+Every native seam corner is inserted, with edge correspondence preserved between
+the upper/lower rows; matching endpoint positions alone would leave polygon gaps.
+This is explicit new mesh authoring, not a replacement for known HS2 skinning.
+
+```powershell
+.venv/Scripts/python.exe -m tools.native_head.neck_fit --source outputs/native_head_20261007/bottom_only_v1/source_bottom_only.json --native outputs/native_head_20261007/neck_local_v1/native_body.json --state outputs/native_head_20261007/neck_local_v1/prior_state.json --out outputs/native_head_20261007/neck_local_v1/reproduce --show
+.venv/Scripts/python.exe -m unittest tools.native_head.test_neck_geometry
+```
+
+Current final candidate: `neck_local_v1/face_ring_locked/source_neck_fitted.json`.
+289 original lower-neck vertices move. The original 28-triangle bottom crop is
+unchanged. 86 seam/annulus vertices are added; the final mesh has 10,092 triangles.
+Original-face provenance, literal protected positions and deterministic replay
+are checked in `static_acceptance.json`; game import checks exact canonical arrays.
+The same running Maker received the update without restart. The preview card is
+`E:/HoneySelect2_ArcticFox/UserData/chara/female/Codex/程儿_局部脖子衔接候选_01.png`;
+its save receipt confirms the source mesh is embedded.
+
+The head still uses the Standard geometry-preview material, whereas the body
+uses AIT/Skin True. The visible color boundary is unresolved. Current-body neutral
+seam geometry is the scope: arbitrary poses/sliders/body configurations, normal
+continuity, visual seamlessness and native zipmod integration are not certified.
+FLAME parameters remain provenance; authored neck post-skin offsets and inserted
+vertex buffers are explicitly distinguished from untouched model output. The
+installed native zipmod is not updated by this preview tool.
+
+Early `fitted`/`tangent_fitted` outputs remain preserved. The latter exposed an
+edge-correspondence error when upper/lower azimuths differed; the final method
+uses the same polygon edge/fraction and rejects any missing native corner.
