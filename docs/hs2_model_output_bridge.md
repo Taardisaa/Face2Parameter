@@ -910,3 +910,7 @@ albedo or native-expression retarget. Existing supported female/body constraints
 remain. Cross-sex, nonstandard cards and partial UI loads are not newly certified;
 unknown plugin/transient animation restoration is not promised. Photo accuracy
 remains an independent unresolved requirement, with limited paired evidence.
+
+Paired implementation commits: Face2Parameter
+`2642bd13f35085cc6ed2844350ed94a3e94c54ea`; HS2Mod
+`473babf4024928104c83035e9fe2e7708bab4763`.
