@@ -950,3 +950,7 @@ still has visible facets, materials differ from native skin, and source albedo,
 hair/makeup/native facial retarget remain absent. No paired 3D truth exists for
 this target, so successful import does not certify prediction accuracy. The target
 preview remains in game by the user's request, with an ordinary character backup.
+
+Paired implementation commits: Face2Parameter
+`c3eb71cc286f1f28e5de17772c546af8f09e3570`; HS2Mod
+`b479e6573278788db0c8a45625244e651e9f15e7`.
