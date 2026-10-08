@@ -100,7 +100,8 @@ def fair_posterior(vertices, faces, target, fade):
 
 def author(arrays, receipt, masks, body):
     v,f=arrays['vertices'],arrays['faces']
-    original=arrays['original_vertices']*receipt['scale']+receipt['translation']
+    original=(arrays['placed_original_vertices'] if 'placed_original_vertices' in arrays
+              else arrays['original_vertices']*receipt['scale']+receipt['translation'])
     ear_ids=np.r_[masks['left_ear'],masks['right_ear']]
     ears=original[ear_ids]
     # Anatomical construction: just below upper ears by a tenth of ear height.

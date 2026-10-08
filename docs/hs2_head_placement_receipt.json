@@ -1,0 +1,307 @@
+{
+  "format": "head_placement_review_receipt_v1",
+  "date": "2026-10-07",
+  "policy": "Explicit authoring: scale .94; compare zero and +3 degree downward pitch; fixed native interface",
+  "game_mutations": false,
+  "native_asset_installed": false,
+  "cases": [
+    {
+      "identity": "chenger",
+      "variant": "size_only",
+      "directory": "outputs\\native_head_20261007\\placement_review_final_v1\\chenger\\size_only",
+      "provenance": {
+        "source_manifest": "C:\\Users\\13666\\Workspace\\Face2Parameter\\outputs\\chenger_mica_review_20261007\\raw\\manifest.json",
+        "image_index": 1,
+        "manifest_sha256": "3d0ceff34d416b7e8af964794fb08b0eb59af91226655e37a21a03ead0480b2b",
+        "raw_sha256": "bac86e86ef1eb87b6376080bad66d394b8d35afd379438d56618823ae280fd06",
+        "source_image_sha256": "74014fe1504e971570654aad6f49acba59f4f85098ac064b07e644c336f1f240",
+        "native_bundle": "E:\\HoneySelect2_ArcticFox\\abdata\\chara\\38\\fo_head_38.unity3d",
+        "native_bundle_sha256": "66ba2ef7f95fa4d79ad87b3d1e11e90e8f1f78ed79e0dc7cb1e4e2969f100edf",
+        "body_capture_sha256": "c802119648513f68ba3e130cefb1f04fa533cf63a5f9b3d36b3d276c4d6c5714",
+        "masks_sha256": "ccefbe1ac0774ff78c68caf2c627b4abc067a6555ebeb0be5d5b0812366ab492",
+        "source_baseline_geometry_sha256": "bcf66e27f932275ffcbc2642626cd2b5321b3311c48ce5e923e0b5c8320e4c64",
+        "previous_review_geometry_sha256": "3ead5e0c679d0912e0af875246ccbef44ac9cfbf1133d018dd7008d9d219c019",
+        "relative_uniform_scale": 0.94,
+        "clockwise_pitch_degrees": 0,
+        "similarity_matrix": [
+          [
+            0.94,
+            0.0,
+            0.0,
+            0.00028499416966049074
+          ],
+          [
+            0.0,
+            0.94,
+            -0.0,
+            0.03993940704374588
+          ],
+          [
+            0.0,
+            0.0,
+            0.94,
+            0.011138371998089175
+          ],
+          [
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ]
+        ],
+        "center_policy": "Source head semantic face/scalp/ears bounds excluding neck mask",
+        "geometry_sha256": "ba7d5d86752c864278518ea7f52a18047306e72b9a3124f1e0f1cfc507bf1939"
+      },
+      "validation": {
+        "format": "head_placement_static_acceptance_v1",
+        "geometry_sha256": "ba7d5d86752c864278518ea7f52a18047306e72b9a3124f1e0f1cfc507bf1939",
+        "protected_face_similarity_error": 0.0,
+        "native_interface_unchanged": true,
+        "uniform_similarity": true,
+        "topology_unchanged": true,
+        "boundary_sizes": [
+          32,
+          28
+        ],
+        "minimum_double_area": 9.291352404053476e-10,
+        "added_true_crossings": [],
+        "neck_region_true_crossings": [],
+        "existing_source_crossings": {
+          "proper_crossing": 478,
+          "coplanar_overlap": 0,
+          "edge_contact": 2,
+          "point_contact": 1,
+          "coplanar_contact": 0
+        },
+        "pass_static_geometry": true,
+        "scope": "Authored neutral similarity and rebuilt geometry only; native asset, render normals, materials, expressions and photo identity accuracy unverified"
+      },
+      "validation_sha256": "e82fe923c1de024c360b772c23fb560f3ef2a446fb0f9ed6010ed8fc02f56d5e"
+    },
+    {
+      "identity": "chenger",
+      "variant": "size_and_pitch",
+      "directory": "outputs\\native_head_20261007\\placement_review_final_v1\\chenger\\size_and_pitch",
+      "provenance": {
+        "source_manifest": "C:\\Users\\13666\\Workspace\\Face2Parameter\\outputs\\chenger_mica_review_20261007\\raw\\manifest.json",
+        "image_index": 1,
+        "manifest_sha256": "3d0ceff34d416b7e8af964794fb08b0eb59af91226655e37a21a03ead0480b2b",
+        "raw_sha256": "bac86e86ef1eb87b6376080bad66d394b8d35afd379438d56618823ae280fd06",
+        "source_image_sha256": "74014fe1504e971570654aad6f49acba59f4f85098ac064b07e644c336f1f240",
+        "native_bundle": "E:\\HoneySelect2_ArcticFox\\abdata\\chara\\38\\fo_head_38.unity3d",
+        "native_bundle_sha256": "66ba2ef7f95fa4d79ad87b3d1e11e90e8f1f78ed79e0dc7cb1e4e2969f100edf",
+        "body_capture_sha256": "c802119648513f68ba3e130cefb1f04fa533cf63a5f9b3d36b3d276c4d6c5714",
+        "masks_sha256": "ccefbe1ac0774ff78c68caf2c627b4abc067a6555ebeb0be5d5b0812366ab492",
+        "source_baseline_geometry_sha256": "bcf66e27f932275ffcbc2642626cd2b5321b3311c48ce5e923e0b5c8320e4c64",
+        "previous_review_geometry_sha256": "3ead5e0c679d0912e0af875246ccbef44ac9cfbf1133d018dd7008d9d219c019",
+        "relative_uniform_scale": 0.94,
+        "clockwise_pitch_degrees": 3.0,
+        "similarity_matrix": [
+          [
+            0.94,
+            0.0,
+            0.0,
+            0.00028499416966049074
+          ],
+          [
+            0.0,
+            0.9387117626692993,
+            -0.0491957988683672,
+            0.04992961610472668
+          ],
+          [
+            0.0,
+            0.0491957988683672,
+            0.9387117626692993,
+            -0.021369997489157466
+          ],
+          [
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ]
+        ],
+        "center_policy": "Source head semantic face/scalp/ears bounds excluding neck mask",
+        "geometry_sha256": "b9df7951b0a21fedf988baf3d052691bb8e9240ea47b2bfae909506029b74209"
+      },
+      "validation": {
+        "format": "head_placement_static_acceptance_v1",
+        "geometry_sha256": "b9df7951b0a21fedf988baf3d052691bb8e9240ea47b2bfae909506029b74209",
+        "protected_face_similarity_error": 0.0,
+        "native_interface_unchanged": true,
+        "uniform_similarity": true,
+        "topology_unchanged": true,
+        "boundary_sizes": [
+          32,
+          28
+        ],
+        "minimum_double_area": 9.291352404053476e-10,
+        "added_true_crossings": [],
+        "neck_region_true_crossings": [],
+        "existing_source_crossings": {
+          "proper_crossing": 478,
+          "coplanar_overlap": 0,
+          "edge_contact": 3,
+          "point_contact": 0,
+          "coplanar_contact": 0
+        },
+        "pass_static_geometry": true,
+        "scope": "Authored neutral similarity and rebuilt geometry only; native asset, render normals, materials, expressions and photo identity accuracy unverified"
+      },
+      "validation_sha256": "726b1d659c6f04f5e4c4bd19647c2cdc56be16212812bab4fc3f6b0b06872c87"
+    },
+    {
+      "identity": "af1_400016",
+      "variant": "size_only",
+      "directory": "outputs\\native_head_20261007\\placement_review_final_v1\\af1_400016\\size_only",
+      "provenance": {
+        "source_manifest": "C:\\Users\\13666\\Workspace\\Face2Parameter\\outputs\\model_quality_20261007\\multiface_mica_raw_v1\\manifest.json",
+        "image_index": 0,
+        "manifest_sha256": "c9c18c39dc2af406fbfc2ed2d60e47065fdb2b1ff4ba38a9fd85a4a9bd257a57",
+        "raw_sha256": "5ab4d899a1351f3fe98d58a03084064b949b406062524e282180882c8ca40946",
+        "source_image_sha256": "a6416b273e0154cde88a61ec33a67b7dac333dfe94078e6f5bd04b3af07d2657",
+        "native_bundle": "E:\\HoneySelect2_ArcticFox\\abdata\\chara\\38\\fo_head_38.unity3d",
+        "native_bundle_sha256": "66ba2ef7f95fa4d79ad87b3d1e11e90e8f1f78ed79e0dc7cb1e4e2969f100edf",
+        "body_capture_sha256": "c802119648513f68ba3e130cefb1f04fa533cf63a5f9b3d36b3d276c4d6c5714",
+        "masks_sha256": "ccefbe1ac0774ff78c68caf2c627b4abc067a6555ebeb0be5d5b0812366ab492",
+        "source_baseline_geometry_sha256": "45357b69159f7cede617bcbf08b7d4e08d5047e0163b84ac2a7d590fadc0a588",
+        "previous_review_geometry_sha256": "f63f11e355de9a8792edf38630f17ed40a16ad7de4c52166964b019359536a36",
+        "relative_uniform_scale": 0.94,
+        "clockwise_pitch_degrees": 0,
+        "similarity_matrix": [
+          [
+            0.94,
+            0.0,
+            0.0,
+            3.49419535507822e-05
+          ],
+          [
+            0.0,
+            0.94,
+            -0.0,
+            0.03761767982466624
+          ],
+          [
+            0.0,
+            0.0,
+            0.94,
+            0.014585817502549975
+          ],
+          [
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ]
+        ],
+        "center_policy": "Source head semantic face/scalp/ears bounds excluding neck mask",
+        "geometry_sha256": "b8d7b4fdd1a2e3a3c93dee351bfb904ae9d39e33a50444ae2edf58f8d5cf11da"
+      },
+      "validation": {
+        "format": "head_placement_static_acceptance_v1",
+        "geometry_sha256": "b8d7b4fdd1a2e3a3c93dee351bfb904ae9d39e33a50444ae2edf58f8d5cf11da",
+        "protected_face_similarity_error": 0.0,
+        "native_interface_unchanged": true,
+        "uniform_similarity": true,
+        "topology_unchanged": true,
+        "boundary_sizes": [
+          32,
+          28
+        ],
+        "minimum_double_area": 9.291352404053476e-10,
+        "added_true_crossings": [],
+        "neck_region_true_crossings": [],
+        "existing_source_crossings": {
+          "proper_crossing": 516,
+          "coplanar_overlap": 0,
+          "edge_contact": 5,
+          "point_contact": 0,
+          "coplanar_contact": 0
+        },
+        "pass_static_geometry": true,
+        "scope": "Authored neutral similarity and rebuilt geometry only; native asset, render normals, materials, expressions and photo identity accuracy unverified"
+      },
+      "validation_sha256": "22f969876a16afa062cf6592de6723ee8ff072c6d35408501ee4f2fde620eac6"
+    },
+    {
+      "identity": "af1_400016",
+      "variant": "size_and_pitch",
+      "directory": "outputs\\native_head_20261007\\placement_review_final_v1\\af1_400016\\size_and_pitch",
+      "provenance": {
+        "source_manifest": "C:\\Users\\13666\\Workspace\\Face2Parameter\\outputs\\model_quality_20261007\\multiface_mica_raw_v1\\manifest.json",
+        "image_index": 0,
+        "manifest_sha256": "c9c18c39dc2af406fbfc2ed2d60e47065fdb2b1ff4ba38a9fd85a4a9bd257a57",
+        "raw_sha256": "5ab4d899a1351f3fe98d58a03084064b949b406062524e282180882c8ca40946",
+        "source_image_sha256": "a6416b273e0154cde88a61ec33a67b7dac333dfe94078e6f5bd04b3af07d2657",
+        "native_bundle": "E:\\HoneySelect2_ArcticFox\\abdata\\chara\\38\\fo_head_38.unity3d",
+        "native_bundle_sha256": "66ba2ef7f95fa4d79ad87b3d1e11e90e8f1f78ed79e0dc7cb1e4e2969f100edf",
+        "body_capture_sha256": "c802119648513f68ba3e130cefb1f04fa533cf63a5f9b3d36b3d276c4d6c5714",
+        "masks_sha256": "ccefbe1ac0774ff78c68caf2c627b4abc067a6555ebeb0be5d5b0812366ab492",
+        "source_baseline_geometry_sha256": "45357b69159f7cede617bcbf08b7d4e08d5047e0163b84ac2a7d590fadc0a588",
+        "previous_review_geometry_sha256": "f63f11e355de9a8792edf38630f17ed40a16ad7de4c52166964b019359536a36",
+        "relative_uniform_scale": 0.94,
+        "clockwise_pitch_degrees": 3.0,
+        "similarity_matrix": [
+          [
+            0.94,
+            0.0,
+            0.0,
+            3.49419535507822e-05
+          ],
+          [
+            0.0,
+            0.9387117626692993,
+            -0.0491957988683672,
+            0.050384703885176796
+          ],
+          [
+            0.0,
+            0.0491957988683672,
+            0.9387117626692993,
+            -0.01594487942983902
+          ],
+          [
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ]
+        ],
+        "center_policy": "Source head semantic face/scalp/ears bounds excluding neck mask",
+        "geometry_sha256": "a0397e311bd20014cd23920863023b05eb72a3cd6adad636168939b6a1b117b6"
+      },
+      "validation": {
+        "format": "head_placement_static_acceptance_v1",
+        "geometry_sha256": "a0397e311bd20014cd23920863023b05eb72a3cd6adad636168939b6a1b117b6",
+        "protected_face_similarity_error": 0.0,
+        "native_interface_unchanged": true,
+        "uniform_similarity": true,
+        "topology_unchanged": true,
+        "boundary_sizes": [
+          32,
+          28
+        ],
+        "minimum_double_area": 9.291352404053476e-10,
+        "added_true_crossings": [],
+        "neck_region_true_crossings": [],
+        "existing_source_crossings": {
+          "proper_crossing": 516,
+          "coplanar_overlap": 0,
+          "edge_contact": 4,
+          "point_contact": 0,
+          "coplanar_contact": 0
+        },
+        "pass_static_geometry": true,
+        "scope": "Authored neutral similarity and rebuilt geometry only; native asset, render normals, materials, expressions and photo identity accuracy unverified"
+      },
+      "validation_sha256": "1bd44848166678cd95f890e4b73750fe09d10035752b3ff0ab05f2e6e4d04f66"
+    }
+  ],
+  "tool_sha256": {
+    "placement_review.py": "2d9d5c258d153f55b0c482518a5f5c49704fad4c1a20a19ee187187d2ba93aa5",
+    "validate_placement.py": "5a28ad927fa5c9555f375d1bf3e2321f949ff44bc92762bf2bdd2b4d663e20a4",
+    "posterior_neck.py": "389bcdf6af6ab45a2935607f5ec10f7c6338aa81e69363bed2490afcb0268bec"
+  },
+  "scope": "Neutral authored geometry only; pre-existing source crossings retained. Native prefab/skin/render normals/material/game and photo identity accuracy remain unresolved."
+}
