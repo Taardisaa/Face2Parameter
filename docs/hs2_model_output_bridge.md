@@ -914,3 +914,39 @@ remains an independent unresolved requirement, with limited paired evidence.
 Paired implementation commits: Face2Parameter
 `2642bd13f35085cc6ed2844350ed94a3e94c54ea`; HS2Mod
 `473babf4024928104c83035e9fe2e7708bab4763`.
+
+## Target-character preview and display correction (0.31.11)
+
+The prior visible preview used Multiface, not the user's target. Native capture
+metadata also showed native head/eyes/lashes re-enabled alongside the source.
+Literal geometry/card preservation remains supported; the earlier visible face
+was not an exclusive source-model result. Bridge now maintains the instance-owned
+native renderer exclusion each compatible late frame, restores original flags on
+fallback/release, and reports actual native renderer flags independently of the
+owned-set count. The exact third-party flag writer is not attributed. The import
+command now requires0.31.11+ and rejects overlap/disabled source before card save.
+
+The concrete target case uses the original `程儿/photos/img-001.jpg`, SHA256
+`d3f5ea8d09499fa76438d8bcd3baa5cf4a31f2895f1dd6441ec84dbd463de1c2`.
+Execute the existing official MICA exporter with this photo and fresh output
+`outputs/model_bridge_20261007/chenger_mica_raw_v1`. Use the integrated command
+above with that manifest, `--image-index 0`, fresh destination
+`outputs/model_bridge_20261007/chenger_import_03111_v1`, and `--keep-in-game`.
+No new inference method, parameter fitting or albedo prediction was added.
+Source SHA256 `7f7d17744f3e941f9e61a8d05fef9b6d6c1da866445530d612b406b8e534e1c5`.
+
+The actual target output imported, attached and saved. The character was named
+`程儿_MICA骨相测试` and additionally saved/reloaded from game
+`UserData/chara/female/Codex/程儿_MICA骨相测试_03111.png`. Original arrays remain
+literal after reload, actual native head flags are off. Three native views without
+an explicit native-mesh hide request confirm no overlapping native head. Receipt
+`chenger_import_03111_v1/user_preview_receipt.json`, SHA256
+`c25c39cf8ecd272130476c0a6973cf40ff5ec004eb98f74226f25351d0216138`.
+Seven transaction/overlap rejection checks pass; installed-source details and DLL
+hash are recorded in HS2Mod. Assets/photos/card/evidence remain local and ignored.
+
+This is the target's inferred pure geometry, not a completed likeness. The collar
+still has visible facets, materials differ from native skin, and source albedo,
+hair/makeup/native facial retarget remain absent. No paired 3D truth exists for
+this target, so successful import does not certify prediction accuracy. The target
+preview remains in game by the user's request, with an ordinary character backup.

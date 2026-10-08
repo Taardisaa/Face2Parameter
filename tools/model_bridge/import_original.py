@@ -70,11 +70,19 @@ def thumbnail(base, path, *, transport=request):
     return result
 
 
+def require_exclusive_display(state):
+    rows = state.get('native_head_display_renderers', [])
+    require(state.get('source_display_enabled') is True and
+        state.get('native_head_display_exclusive') is True and rows and
+        all(row.get('enabled') is False for row in rows),
+        'Source head display overlaps native renderers or is disabled')
+
+
 def apply_and_save(base, artifact, path, descriptor_inputs, descriptor_paths, out, *, keep_in_game=False, transport=request):
     """Recoverable native transaction. Export/provenance checks run beforehand."""
     health = transport(base, 'GET', route='/health')
     version = tuple(int(x) for x in health['version'].split('.'))
-    require(version >= (0, 31, 10), 'Install bridge0.31.10+ for ordinary native backup')
+    require(version >= (0, 31, 11), 'Install bridge0.31.11+ for exclusive source display and native backup')
     before = transport(base, 'GET')
     snapshot = transport(base, 'GET', route='/maker/snapshot')
     write(out/'before_native_snapshot.json', snapshot)
@@ -96,6 +104,7 @@ def apply_and_save(base, artifact, path, descriptor_inputs, descriptor_paths, ou
         mutated = True
         state = transport(base, 'POST', {'path': str(path.resolve()), 'sha256': sha(path), 'scale': scale, 'translation': translation})
         write(out/'actual_imported_state.json', state)
+        require_exclusive_display(state)
         report['source_original'] = verify(state, artifact, out, 'source_original', original=True)
         descriptor = rebase(descriptor_inputs['proposal'], descriptor_inputs['native_state'], descriptor_inputs['reference_state'],
             state, descriptor_paths['reference_artifact'], path)
@@ -104,9 +113,12 @@ def apply_and_save(base, artifact, path, descriptor_inputs, descriptor_paths, ou
         descriptor_path = out/'attachment.json'; write(descriptor_path, descriptor)
         require(descriptor_path.stat().st_size <= 4*1024*1024, 'Native attachment bound exceeded')
         state = transport(base, 'POST', {'path': str(descriptor_path.resolve()), 'sha256': sha(descriptor_path)}, route='/maker/face/model/attachment')
+        require_exclusive_display(state)
         report['attached_original_source'] = verify(state, artifact, out, 'attached_original_source', original=True)
         report['actual_attachment'] = check(state, descriptor, artifact['triangles'], out, 'actual_attachment')
         thumbnail(base, out/'source.png', transport=transport)
+        require_exclusive_display(transport(base, 'GET'))
+        report['native_head_display_exclusive'] = True
         card = out/'source_character.png'
         report['saved'] = transport(base, 'POST', {'path': str(card.resolve()), 'thumbnail': str((out/'source.png').resolve())}, route='/maker/card/save')
         require(report['saved']['source_head_embedded'] is True and card.is_file(), 'Source card missing')

@@ -11,7 +11,7 @@ import unittest
 from unittest.mock import patch
 from urllib.parse import parse_qs, urlparse
 
-from .import_original import apply_and_save, same_source
+from .import_original import apply_and_save, same_source, require_exclusive_display
 
 
 class ImportTransactionTests(unittest.TestCase):
@@ -28,7 +28,7 @@ class ImportTransactionTests(unittest.TestCase):
     def transport(self, base, method, body=None, route='/maker/face/model'):
         self.calls.append((method, route))
         if route == '/health':
-            return {'version': '0.31.10'}
+            return {'version': '0.31.11'}
         if route == '/maker/snapshot':
             return copy.deepcopy(self.snapshot)
         if route.startswith('/maker/render?'):
@@ -46,7 +46,10 @@ class ImportTransactionTests(unittest.TestCase):
                 raise RuntimeError('body_changed')
             return copy.deepcopy(self.current)
         if method == 'POST':
-            self.current = {'active': True}; return copy.deepcopy(self.current)
+            self.current = {'active': True, 'source_display_enabled': True,
+                'native_head_display_exclusive': True,
+                'native_head_display_renderers': [{'enabled': False}]}
+            return copy.deepcopy(self.current)
         return copy.deepcopy(self.current)
 
     def apply(self, keep=False):
@@ -93,6 +96,20 @@ class ImportTransactionTests(unittest.TestCase):
                            ('render_vertices', [[0., 0., 1.]]), ('attachment', {'status': 'active'})]:
             b = copy.deepcopy(a); b[key] = value
             self.assertFalse(same_source(a, b))
+
+    def test_display_guard_rejects_actual_native_overlap_even_with_claimed_exclusivity(self):
+        with self.assertRaisesRegex(RuntimeError, 'overlaps native'):
+            require_exclusive_display({'source_display_enabled': True,
+                'native_head_display_exclusive': True,
+                'native_head_display_renderers': [{'enabled': True}]})
+
+    def test_display_guard_rejects_disabled_source_or_missing_native_inventory(self):
+        for state in [
+            {'source_display_enabled': False, 'native_head_display_exclusive': True,
+             'native_head_display_renderers': [{'enabled': False}]},
+            {'source_display_enabled': True, 'native_head_display_exclusive': True}]:
+            with self.assertRaisesRegex(RuntimeError, 'overlaps native'):
+                require_exclusive_display(state)
 
 
 if __name__ == '__main__':
