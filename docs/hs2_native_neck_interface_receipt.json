@@ -1,0 +1,195 @@
+{
+  "date": "2026-10-07",
+  "command": ".venv/Scripts/python.exe -m tools.native_head.native_seam_audit --output outputs/native_seam_audit_20261007",
+  "body": {
+    "bundle": "E:\\HoneySelect2_ArcticFox\\abdata\\chara\\oo_base.unity3d",
+    "bundle_sha256": "9fc9f9cdea1067005fbbbb81a9b2a920c834f5721b1d267eea3f0c3c4a6e56c0",
+    "prefab": "p_cf_body_00",
+    "mesh": "o_body_cf"
+  },
+  "common_head_bone_root": {
+    "name": "p_cf_head_bone",
+    "parent": null,
+    "pos": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "rot": [
+      0.0,
+      0.0,
+      0.0,
+      1.0
+    ],
+    "scale": [
+      1.0,
+      1.0,
+      1.0
+    ]
+  },
+  "heads": [
+    {
+      "source": "E:\\HoneySelect2_ArcticFox\\abdata\\chara\\38\\fo_head_38.unity3d",
+      "prefab": "p_cf_head_00",
+      "bundle_sha256": "66ba2ef7f95fa4d79ad87b3d1e11e90e8f1f78ed79e0dc7cb1e4e2969f100edf",
+      "rings": [
+        {
+          "count": 28,
+          "head_binding": "cf_J_FaceRoot_s:1",
+          "body_matches_in_opening_ring": 0,
+          "max_distance_to_body_vertices": 0.00028595845727518376,
+          "min_distance_to_body_opening": 0.06106824887326926,
+          "max_distance_to_body_opening": 0.10393489750754024,
+          "max_normal_vector_difference": 2.0783650214297122e-07,
+          "matched_body_vertices_all_Head_s_weight_one": true,
+          "body_strip_between_opening_and_head_rim_triangle_count": 56,
+          "body_strip_all_Head_s_weight_one": true,
+          "adjacent_head_triangle_count": 61,
+          "adjacent_head_vertices_matching_body_within_1e-5": 25,
+          "adjacent_head_vertex_count": 63,
+          "comparison_tolerance_is_float_serialization_only": true
+        }
+      ]
+    },
+    {
+      "source": "E:\\HoneySelect2_ArcticFox\\abdata\\chara\\38\\fo_head_38.unity3d",
+      "prefab": "p_cf_head_01",
+      "bundle_sha256": "66ba2ef7f95fa4d79ad87b3d1e11e90e8f1f78ed79e0dc7cb1e4e2969f100edf",
+      "rings": [
+        {
+          "count": 28,
+          "head_binding": "cf_J_FaceRoot_s:1",
+          "body_matches_in_opening_ring": 0,
+          "max_distance_to_body_vertices": 3.904643371972466e-06,
+          "min_distance_to_body_opening": 0.061067704060609025,
+          "max_distance_to_body_opening": 0.10393413302353562,
+          "max_normal_vector_difference": 2.0783650214297122e-07,
+          "matched_body_vertices_all_Head_s_weight_one": true,
+          "body_strip_between_opening_and_head_rim_triangle_count": 56,
+          "body_strip_all_Head_s_weight_one": true,
+          "adjacent_head_triangle_count": 59,
+          "adjacent_head_vertices_matching_body_within_1e-5": 29,
+          "adjacent_head_vertex_count": 61,
+          "comparison_tolerance_is_float_serialization_only": true
+        }
+      ]
+    },
+    {
+      "source": "E:\\HoneySelect2_ArcticFox\\abdata\\chara\\38\\fo_head_38.unity3d",
+      "prefab": "p_cf_head_02",
+      "bundle_sha256": "66ba2ef7f95fa4d79ad87b3d1e11e90e8f1f78ed79e0dc7cb1e4e2969f100edf",
+      "rings": [
+        {
+          "count": 28,
+          "head_binding": "cf_J_FaceRoot_s:1",
+          "body_matches_in_opening_ring": 0,
+          "max_distance_to_body_vertices": 3.995881290888878e-06,
+          "min_distance_to_body_opening": 0.06106780604414022,
+          "max_distance_to_body_opening": 0.10393425287863858,
+          "max_normal_vector_difference": 2.0783650214297122e-07,
+          "matched_body_vertices_all_Head_s_weight_one": true,
+          "body_strip_between_opening_and_head_rim_triangle_count": 56,
+          "body_strip_all_Head_s_weight_one": true,
+          "adjacent_head_triangle_count": 59,
+          "adjacent_head_vertices_matching_body_within_1e-5": 29,
+          "adjacent_head_vertex_count": 61,
+          "comparison_tolerance_is_float_serialization_only": true
+        }
+      ]
+    },
+    {
+      "source": "E:\\HoneySelect2_ArcticFox\\abdata\\chara\\50\\fo_head_50.unity3d",
+      "prefab": "p_cf_head_03",
+      "bundle_sha256": "71a5fc9e6a0155f9d858e46207a05a8669911977108b41b1a34046bbfa5a977d",
+      "rings": [
+        {
+          "count": 28,
+          "head_binding": "cf_J_FaceRoot_s:1",
+          "body_matches_in_opening_ring": 0,
+          "max_distance_to_body_vertices": 4.543733602140328e-06,
+          "min_distance_to_body_opening": 0.06106731223455016,
+          "max_distance_to_body_opening": 0.10393425287863858,
+          "max_normal_vector_difference": 2.0783650214297122e-07,
+          "matched_body_vertices_all_Head_s_weight_one": true,
+          "body_strip_between_opening_and_head_rim_triangle_count": 56,
+          "body_strip_all_Head_s_weight_one": true,
+          "adjacent_head_triangle_count": 59,
+          "adjacent_head_vertices_matching_body_within_1e-5": 29,
+          "adjacent_head_vertex_count": 61,
+          "comparison_tolerance_is_float_serialization_only": true
+        }
+      ]
+    },
+    {
+      "source": "E:\\HoneySelect2_ArcticFox\\mods\\PersonalMods - Head Mod\\[Chw] WesternType2.zipmod::abdata/chara/chw/[chw]HS2_head_00.unity3d",
+      "prefab": "p_cf_head_01",
+      "bundle_sha256": "02abef7c67d2e79363d7acb1cd14f5c47e221c86587735944dd052a5a7b5e944",
+      "rings": [
+        {
+          "count": 28,
+          "head_binding": "cf_J_FaceRoot_s:1",
+          "body_matches_in_opening_ring": 0,
+          "max_distance_to_body_vertices": 3.957759525695104e-06,
+          "min_distance_to_body_opening": 0.061067738614525954,
+          "max_distance_to_body_opening": 0.1039341190045306,
+          "max_normal_vector_difference": 2.414250573197949e-05,
+          "matched_body_vertices_all_Head_s_weight_one": true,
+          "body_strip_between_opening_and_head_rim_triangle_count": 56,
+          "body_strip_all_Head_s_weight_one": true,
+          "adjacent_head_triangle_count": 59,
+          "adjacent_head_vertices_matching_body_within_1e-5": 29,
+          "adjacent_head_vertex_count": 61,
+          "comparison_tolerance_is_float_serialization_only": true
+        }
+      ]
+    },
+    {
+      "source": "E:\\HoneySelect2_ArcticFox\\mods\\PersonalMods - Head Mod\\Head - Exclusive HS2\\[XeyNiu][HS2] c008 Tifa {FF7R}.zipmod::abdata/chara/00/xeyniu_tifa/tifa_head.unity3d",
+      "prefab": "p_cf_head_00",
+      "bundle_sha256": "3110277b530c28d88b1624febb17a01c3d42eebffa690447136de743ed5f8b22",
+      "rings": [
+        {
+          "count": 28,
+          "head_binding": "cf_J_FaceRoot_s:1",
+          "body_matches_in_opening_ring": 0,
+          "max_distance_to_body_vertices": 2.9261006630148e-06,
+          "min_distance_to_body_opening": 0.061068937762672255,
+          "max_distance_to_body_opening": 0.1039351758414751,
+          "max_normal_vector_difference": 6.821750497384322e-05,
+          "matched_body_vertices_all_Head_s_weight_one": true,
+          "body_strip_between_opening_and_head_rim_triangle_count": 56,
+          "body_strip_all_Head_s_weight_one": true,
+          "adjacent_head_triangle_count": 57,
+          "adjacent_head_vertices_matching_body_within_1e-5": 33,
+          "adjacent_head_vertex_count": 77,
+          "comparison_tolerance_is_float_serialization_only": true
+        }
+      ]
+    },
+    {
+      "source": "E:\\HoneySelect2_ArcticFox\\mods\\PersonalMods - Head Mod\\RoomGirl Backport\\hooh_rg_head05.zipmod::abdata/chara/rg05/fo_head_00.unity3d",
+      "prefab": "p_cf_head_04",
+      "bundle_sha256": "57bb64a28091f2d1927f969c2664c24a74aacf183adcef6192f43b03c2ab50d2",
+      "rings": [
+        {
+          "count": 28,
+          "head_binding": "cf_J_FaceRoot_s:1",
+          "body_matches_in_opening_ring": 0,
+          "max_distance_to_body_vertices": 3.882165984302327e-06,
+          "min_distance_to_body_opening": 0.06106774154960462,
+          "max_distance_to_body_opening": 0.10393491248926139,
+          "max_normal_vector_difference": 0.12391748669648522,
+          "matched_body_vertices_all_Head_s_weight_one": true,
+          "body_strip_between_opening_and_head_rim_triangle_count": 56,
+          "body_strip_all_Head_s_weight_one": true,
+          "adjacent_head_triangle_count": 60,
+          "adjacent_head_vertices_matching_body_within_1e-5": 29,
+          "adjacent_head_vertex_count": 62,
+          "comparison_tolerance_is_float_serialization_only": true
+        }
+      ]
+    }
+  ],
+  "scope": "Authored bind geometry. No runtime sweeps, mutations, or shader continuity claim.",
+  "installed_assembly_sha256": "d7e7e0d51403a0a3a71935a14487f063c6bf6f93f004b98b8f4b8b89047af770"
+}
