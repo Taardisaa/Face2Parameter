@@ -53,6 +53,10 @@ Lerp，`CreateFaceTexture` 使用 body.skinColor 合成头部皮肤。
 新 UV 错配；修正及当前交付见 [区域遮罩修正](hs2_head_region_mask_fix.md)。
 后側分面问题仍独立开放。
 
+之后的原生底色迁移与可复用固定区域，见
+[原生皮肤适配](hs2_native_skin_retarget.md)。它保留原生底色像素，使用显式
+区域／UV 对应；本文件的均匀肤色方案保留为历史。
+
 ## 重现与证据
 
 ```powershell

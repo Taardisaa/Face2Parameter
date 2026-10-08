@@ -19,8 +19,16 @@ def main():
     checks = {}
     for name in ('o_head', 'o_eyebase_L', 'o_eyebase_R'):
         with np.load(args.previous/(name+'.npz')) as old, np.load(args.built/(name+'.npz')) as new:
-            checks[name] = {key: bool(np.array_equal(old[key], new[key])) for key in
-                           ('verts', 'faces', 'normals', 'bone_idx', 'bone_w', 'bindpose')}
+            if old['verts'].shape != new['verts'].shape:
+                # Texture seams duplicate literal vertices. Compare complete
+                # ordered triangle-corner geometry/skin, not vertex count.
+                checks[name] = {key: bool(np.array_equal(old[key][old['faces']], new[key][new['faces']]))
+                               for key in ('verts', 'normals', 'bone_idx', 'bone_w')}
+                checks[name]['bindpose'] = bool(np.array_equal(old['bindpose'],new['bindpose']))
+                checks[name]['triangle_count'] = len(old['faces']) == len(new['faces'])
+            else:
+                checks[name] = {key: bool(np.array_equal(old[key], new[key])) for key in
+                               ('verts', 'faces', 'normals', 'bone_idx', 'bone_w', 'bindpose')}
             if not all(checks[name].values()):
                 raise ValueError('Appearance changed accepted geometry: ' + name)
     streams = 0

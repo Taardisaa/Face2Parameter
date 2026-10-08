@@ -1,0 +1,193 @@
+{
+  "format": "native_head_atlas_retarget_v1",
+  "date": "2026-10-08",
+  "package_version": "0.1.5",
+  "package_sha256": "83850562b2f2e14ae04ad76ec5083d416bbcb7e72f901d116600c91c5ad18156",
+  "source_sha256": "acc5c748abe39dd0fb9322f72a2bd7c8db83619c0c5860b64824124a5232e0a6",
+  "template_sha256": "66ba2ef7f95fa4d79ad87b3d1e11e90e8f1f78ed79e0dc7cb1e4e2969f100edf",
+  "topology_sha256": "0e1dc70f945eb944daea3a3c23e5700f2b782e0ec302cd3cfb056c677345475f",
+  "uv_template_sha256": "dd5bfbce75adb99b1963f43bca7ec3557bd4a7321f8fc515f4100599e80d99f2",
+  "masks_sha256": "ccefbe1ac0774ff78c68caf2c627b4abc067a6555ebeb0be5d5b0812366ab492",
+  "embedding_sha256": "8095348eeafce5a02f6bd8765146307f9567a3f03b316d788a2e47336d667954",
+  "skin_policy": {
+    "source_bundle": "E:\\HoneySelect2_ArcticFox\\abdata\\chara\\30\\ft_skin_f_30.unity3d",
+    "sha256": "544fa16833467346dcdf513e625faefbc73f27738b2639b670a2a72bcd0bd026",
+    "policy": "Unchanged installed native head2 albedo; neutral normal/AO inputs; inherited game skin color; not identity albedo",
+    "authored_surface": {
+      "method": "topology_region_constrained_native_atlas_uv",
+      "profile_sha256": "54ca6f50dc33afb369abca7175e456a37d110c24be64872c4616a100b53c5774",
+      "topology_sha256": "0e1dc70f945eb944daea3a3c23e5700f2b782e0ec302cd3cfb056c677345475f",
+      "uv_template_sha256": "dd5bfbce75adb99b1963f43bca7ec3557bd4a7321f8fc515f4100599e80d99f2",
+      "region_receipt": "surface_regions.json",
+      "source_albedo_unchanged": true,
+      "normal_ao_policy": "Neutral inputs; native normal/AO migration is not certified by albedo registration",
+      "positions_modified": false,
+      "vanilla_uv1_nipple_and_brow_height_gates_disabled": true,
+      "limitation": "Authored native head2 UV profile; FLAME topology only, oral/eyelash rig and full expression compatibility deferred",
+      "region_mask": {
+        "property": "_NailMask",
+        "texture_name": "codex_imported_head_skin_region_mask",
+        "original_texture_name": "cf_head_00_mask",
+        "original_pixels_sha256": "a81720674a5a8613f184a14c3390f9f2515427f105af76987865fff0f97a7b28",
+        "rgba": [
+          0,
+          255,
+          0,
+          255
+        ],
+        "shader_sha256": "52f582223a78faa22da86e3e63812e47f4764feaca84162675be921b1ad9ed90",
+        "policy": "Uniform native skin region on imported UV0; no original eye/lip/scalp regions",
+        "source": "Installed Skin True Face UV0 mask sampling and gloss/metallic/Fresnel branches"
+      }
+    }
+  },
+  "static_checks": {
+    "o_head": {
+      "verts": true,
+      "normals": true,
+      "bone_idx": true,
+      "bone_w": true,
+      "bindpose": true,
+      "triangle_count": true
+    },
+    "o_eyebase_L": {
+      "verts": true,
+      "faces": true,
+      "normals": true,
+      "bone_idx": true,
+      "bone_w": true,
+      "bindpose": true
+    },
+    "o_eyebase_R": {
+      "verts": true,
+      "faces": true,
+      "normals": true,
+      "bone_idx": true,
+      "bone_w": true,
+      "bindpose": true
+    },
+    "all_texture_archive_uris_relinked": true,
+    "streamed_textures_checked": 52,
+    "scope": "Static asset integrity and fixed geometry; runtime appearance is separate",
+    "private_face_region_mask_uniform_skin": true
+  },
+  "atlas_checks": {
+    "cf_head_02_00_t": {
+      "original_pixels_unchanged": true,
+      "pixels_sha256": "bf5921d27b57058449cfdd9385a9d332832d90c83b3be85bee21ae0b245e29fe"
+    },
+    "cf_head_02_00_n": {
+      "neutral_input": true
+    },
+    "cf_head_02_00_o": {
+      "neutral_input": true
+    },
+    "anchor_chart": {
+      "folded_or_degenerate_cells": 0,
+      "interpretation": "Authored atlas mapping cells; no anatomical accuracy claim"
+    },
+    "regions": {
+      "eye_region": 1628,
+      "neck": 136,
+      "left_eyeball": 0,
+      "right_eyeball": 0,
+      "right_ear": 1195,
+      "right_eye_region": 636,
+      "forehead": 324,
+      "lips": 566,
+      "nose": 798,
+      "scalp": 855,
+      "boundary": 0,
+      "face": 3760,
+      "left_ear": 1195,
+      "left_eye_region": 636,
+      "lip_vermilion": 139,
+      "mouth_inner": 234,
+      "perioral_skin": 263,
+      "authored_neck_transition": 1509
+    },
+    "topology_sha256": "0e1dc70f945eb944daea3a3c23e5700f2b782e0ec302cd3cfb056c677345475f",
+    "geometry_scope": "UV authoring only; verify_appearance_assets checks literal triangle-corner geometry"
+  },
+  "region_identity_independent": true,
+  "region_boundary_policy": "Whole-face centroid labels; contour-crossing triangles remain boundaries, not exact subtriangle segmentation",
+  "region_report": {
+    "path": "C:\\Users\\13666\\Workspace\\Face2Parameter\\outputs\\appearance_20261008\\retarget_skin_v6\\surface_regions.json",
+    "sha256": "1c5646d00c6893672466b0315ae71c8c983ef98088aa58f88986d52723ca26b1"
+  },
+  "actual_game": {
+    "path": "C:\\Users\\13666\\Workspace\\HS2Mod\\artifacts\\chenger\\native_skin_retarget_20261008\\final_v6\\head_body.json",
+    "sha256": "4feb796d44fac07f24328e3af6e713967bc5098aeb2793a7f107b01421ed4196",
+    "head_source_geometry_sha256": "b8b6560bb6d92bf2d319122d1a1397bb140082ce500ee7d8c4ab43ae00b89420",
+    "body_source_geometry_sha256": "ef257989441dcc9d4f71907abc843c42bfdf352d103c0cae9d4163cf6faec81c",
+    "body_unchanged": true,
+    "head_serialized_channels_match": {
+      "verts": true,
+      "faces": true,
+      "normals": true,
+      "uv": true,
+      "bone_idx": true,
+      "bone_w": true,
+      "bindpose": true
+    },
+    "material": "cf_m_skin_head_02",
+    "shader": "AIT/Skin True Face",
+    "textures": [
+      {
+        "property": "_BumpMap",
+        "name": "cf_head_02_00_n",
+        "width": 16,
+        "height": 16
+      },
+      {
+        "property": "_MainTex",
+        "name": "",
+        "width": 2048,
+        "height": 2048
+      },
+      {
+        "property": "_NailMask",
+        "name": "codex_imported_head_skin_region_mask",
+        "width": 16,
+        "height": 16
+      },
+      {
+        "property": "_OcclusionMap",
+        "name": "cf_head_02_00_o",
+        "width": 16,
+        "height": 16
+      }
+    ],
+    "bridge_version": "0.31.13",
+    "frame": 7740
+  },
+  "captures": [
+    {
+      "path": "C:\\Users\\13666\\Workspace\\HS2Mod\\artifacts\\chenger\\native_skin_retarget_20261008\\final_v6\\capture.json",
+      "sha256": "6f0f47835c0ba2fba44adb4634bdb0049f44e80c30222fd6fb85d6463fd5736f"
+    },
+    {
+      "path": "C:\\Users\\13666\\Workspace\\HS2Mod\\artifacts\\chenger\\native_skin_retarget_20261008\\final_v6\\capture.native.json",
+      "sha256": "f77f7cad6a342f824d3e8cdabd177d861145482d3aee9bdda76caffc61bac82a"
+    },
+    {
+      "path": "C:\\Users\\13666\\Workspace\\HS2Mod\\artifacts\\chenger\\native_skin_retarget_20261008\\final_v6\\native_sheet.png",
+      "sha256": "68052365e69a1d916455f88a8d7a55364afcc852527d8c1fa5ef88296d494355"
+    }
+  ],
+  "card": {
+    "path": "E:\\HoneySelect2_ArcticFox\\UserData\\chara\\female\\Codex\\程儿_原生底色适配_20261008.png",
+    "sha256": "bea1bacebd14f26f5a771427baed91527b03cbaf486818fca41f0ec35105540a",
+    "saved": true,
+    "native_full_card_reloaded": true,
+    "external_source_mesh_required": false
+  },
+  "visible_review": {
+    "native_albedo_at_face_eyes_lips": true,
+    "posterior_false_lip_stripe_removed": true,
+    "existing_lateral_faceted_shadows_remain": true,
+    "photographic_identity_texture": false,
+    "full_material_acceptance": false
+  },
+  "scope": "Fixed FLAME topology regions and native head2 albedo authoring; no full expression, arbitrary topology, normal/AO retarget or head/body shading certification"
+}

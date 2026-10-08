@@ -1,0 +1,20 @@
+{
+  "format": "native_head2_uv_correspondence_v1",
+  "reference_head_id": 2,
+  "reference_skin_asset": "cf_head_02_00_t",
+  "uv_template": "C:/Users/13666/Workspace/smirk/assets/head_template.obj",
+  "policy": "Authored UV anchors for this native atlas; fixed decoder regions reuse across FLAME identities. These are texture-authoring correspondences, not rig bone centers or inferred game logic.",
+  "landmark_uv": {
+    "0": [0.26, 0.48], "8": [0.5, 0.245], "16": [0.74, 0.48],
+    "27": [0.5, 0.544], "28": [0.5, 0.495], "29": [0.5, 0.455],
+    "30": [0.5, 0.425], "31": [0.478, 0.423], "32": [0.488, 0.416],
+    "33": [0.5, 0.413], "34": [0.512, 0.416], "35": [0.522, 0.423]
+  },
+  "lip_pigment": {
+    "uv_box": [0.40, 0.27, 0.60, 0.39],
+    "red_minus_green_min": 55,
+    "x_fractions": [0, 0.25, 0.42, 0.5, 0.58, 0.75, 1, 0.75, 0.58, 0.5, 0.42, 0.25]
+  },
+  "scalp_max_v": 0.88,
+  "excluded_oral_uv_box": [0.40, 0.89, 0.60, 1.0]
+}

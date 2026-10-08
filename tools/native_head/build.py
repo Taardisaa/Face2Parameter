@@ -32,18 +32,19 @@ PREFAB = 'p_cf_head_chenger_mica'
 SLOT = 1
 
 
-def neutral_skin(native, out, *, original_textures=False, authored_albedo=None):
+def neutral_skin(native, out, *, original_textures=False, original_albedo_only=False, authored_albedo=None):
     """Private skin bundle with an explicit generic/native texture policy."""
     row=native['compatible_skin_rows'][0];path=Path(native['bundle']).parents[2]/row['MainAB']
     if not path.exists():
         # bundle is abdata/chara/38/...; its third parent is installed abdata.
         raise FileNotFoundError(path)
     env=UnityPy.load(str(path));old_cab=next(k for k,v in env.file.files.items() if hasattr(v,'objects'))
-    new_cab='CAB-'+sha((GUID+('.skin.native.v1' if original_textures else '.skin.v1')).encode())[:32]
+    suffix = '.skin.native.v1' if original_textures else '.skin.retarget.v1' if original_albedo_only else '.skin.v1'
+    new_cab='CAB-'+sha((GUID+suffix).encode())[:32]
     for obj in list(env.objects):
         if obj.type.name=='Texture2D':
             value=obj.read();name=value.m_Name
-            if name==row['MainTex'] and not original_textures:
+            if name==row['MainTex'] and not (original_textures or original_albedo_only):
                 pixels=np.asarray(value.image)
                 color=tuple(map(int,np.median(pixels.reshape(-1,4),axis=0)))
                 value.set_image(authored_albedo if authored_albedo is not None else Image.new('RGBA',(16,16),color),target_format=4)
@@ -66,7 +67,8 @@ def neutral_skin(native, out, *, original_textures=False, authored_albedo=None):
     data=env.file.save(packer='lz4')
     return data,dict(source_bundle=str(path),sha256=sha(path.read_bytes()),
         policy=('Unchanged installed native head2 albedo/occlusion/normal textures with inherited game skin color; generic skin, not identity albedo'
-                if original_textures else 'Plain authored native skin inputs; inherited skin color; no inferred albedo or native anatomical texture mapping claim'))
+                if original_textures else 'Unchanged installed native head2 albedo; neutral normal/AO inputs; inherited game skin color; not identity albedo'
+                if original_albedo_only else 'Plain authored native skin inputs; inherited skin color; no inferred albedo or native anatomical texture mapping claim'))
 
 
 def sha(data):
@@ -143,7 +145,7 @@ def csv_bytes(category, row, name):
 
 
 def build(args):
-    if sum([args.plain_skin, args.native_skin, args.authored_skin]) > 1:
+    if sum([args.plain_skin, args.native_skin, args.authored_skin, args.retarget_skin]) > 1:
         raise ValueError('Choose one skin texture policy')
     args.out.mkdir(parents=True,exist_ok=False)
     source_bytes = args.source.read_bytes(); source = json.loads(source_bytes)
@@ -334,6 +336,30 @@ def build(args):
             # to this topology therefore leaves bumps even with invisible brows.
             attrs['colors'][:,1:3]=1.
             authored_skin_policy['vanilla_uv1_nipple_and_brow_height_gates_disabled']=True
+        if name=='o_head' and args.retarget_skin:
+            if authored is None:
+                raise ValueError('Retargeting requires integrated topology lineage')
+            from tools.native_head.atlas_retarget import retarget
+            skin_row = native['compatible_skin_rows'][0]
+            skin_path = bundle_path.parents[2]/skin_row['MainAB']
+            skin_env = UnityPy.load(str(skin_path))
+            image = next(o.read().image for o in skin_env.objects if o.type.name=='Texture2D'
+                         and o.read().m_Name==skin_row['MainTex'])
+            gather, target_faces, new_uv, region_report = retarget(source, authored, design,
+                source_ids, keep, target_faces, attrs, rig, native_neutral, image, args.out)
+            target_vertices=target_vertices[gather];indices=indices[gather];weights=weights[gather]
+            source_ids=source_ids[gather]
+            attrs={k:v[gather] for k,v in attrs.items()};attrs['uv']=new_uv
+            attrs['colors'][:,1:3]=1.
+            if override_normals is not None:override_normals=override_normals[gather]
+            authored_skin_policy=dict(method='topology_region_constrained_native_atlas_uv',
+                profile_sha256=region_report['profile_sha256'],
+                topology_sha256=region_report['topology_sha256'],
+                uv_template_sha256=region_report['uv_template_sha256'],
+                region_receipt='surface_regions.json',source_albedo_unchanged=True,
+                normal_ao_policy='Neutral inputs; native normal/AO migration is not certified by albedo registration',
+                positions_modified=False,vanilla_uv1_nipple_and_brow_height_gates_disabled=True,
+                limitation='Authored native head2 UV profile; FLAME topology only, oral/eyelash rig and full expression compatibility deferred')
         mesh_reader=smr.m_Mesh.read().object_reader
         result=write_mesh(mesh_reader,target_vertices,target_faces,attrs['uv'],indices,weights,bindposes,
                           uv1=attrs['uv1'],colors=attrs['colors'],normals=override_normals)
@@ -363,7 +389,7 @@ def build(args):
         tree=obj.read_typetree();tree['m_BlendShapeWeights']=[];obj.save_typetree(tree)
     authored_skin_material = None
     for obj in objects:
-        if args.authored_skin and obj.type.name=='Material' and obj.read().m_Name==native['row']['MatData']:
+        if (args.authored_skin or args.retarget_skin) and obj.type.name=='Material' and obj.read().m_Name==native['row']['MatData']:
             tree=obj.read_typetree()
             # The vanilla atlas-gated microdetail field is incompatible with the
             # imported chart. Keep geometric normals; don't add misplaced bumps.
@@ -398,7 +424,7 @@ def build(args):
             tree['m_Container']=[(key.replace('p_cf_head_02.prefab',PREFAB+'.prefab'),value)
                                  for key,value in tree['m_Container']]
             obj.save_typetree(tree)
-    if args.authored_skin:
+    if args.authored_skin or args.retarget_skin:
         if authored_skin_material is None:
             raise ValueError('Missing private face drawing material')
         # Apply last: this UnityPy version reads the original ObjectReader stream
@@ -428,12 +454,13 @@ def build(args):
     skin={k:v for k,v in native['compatible_skin_rows'][0].items() if not k.startswith('_')}
     skin.update(ID=str(SLOT),HeadID=str(SLOT),Name='程儿 原生皮肤')
     skin_bundle=None;skin_policy=None
-    if args.plain_skin or args.native_skin or args.authored_skin:
-        skin_bundle,skin_policy=neutral_skin(native,args.out,original_textures=args.native_skin,authored_albedo=authored_albedo)
+    if args.plain_skin or args.native_skin or args.authored_skin or args.retarget_skin:
+        skin_bundle,skin_policy=neutral_skin(native,args.out,original_textures=args.native_skin,
+            original_albedo_only=args.retarget_skin,authored_albedo=authored_albedo)
         if authored_skin_policy is not None:skin_policy['authored_surface']=authored_skin_policy
         skin['MainAB']='chara/codex/chenger/skin.unity3d'
     manifest=ET.Element('manifest',{'schema-ver':'1'})
-    for k,v in dict(guid=GUID,name='Chenger MICA native head',version='0.1.4' if args.authored_skin else '0.1.2' if args.native_skin else '0.1.1',author='Codex',
+    for k,v in dict(guid=GUID,name='Chenger MICA native head',version='0.1.5' if args.retarget_skin else '0.1.4' if args.authored_skin else '0.1.2' if args.native_skin else '0.1.1',author='Codex',
                     description='Actual neutral head asset. Expressions deferred. Locally generated; requires installed HS2 assets.').items():
         ET.SubElement(manifest,k).text=v
     ET.SubElement(manifest,'faceSkinInfo',{'skinID':str(SLOT),'headID':str(SLOT),'headGUID':GUID})
@@ -469,6 +496,7 @@ def main():
     parser.add_argument('--plain-skin',action='store_true');parser.add_argument('--native-eyes',action='store_true')
     parser.add_argument('--native-skin',action='store_true',help='Preserve installed native albedo/occlusion/normal textures instead of the plain geometry-review skin')
     parser.add_argument('--authored-skin',action='store_true',help='Basic imported-head UV skin and anatomical lip tint; not photo albedo')
+    parser.add_argument('--retarget-skin',action='store_true',help='Original native head2 skin assets with topology/region-constrained UV authoring')
     build(parser.parse_args())
 
 
