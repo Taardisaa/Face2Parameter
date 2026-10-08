@@ -65,3 +65,7 @@ when serialized-template editing is insufficient, not an assumed prerequisite.
 This checkpoint establishes asset/loading design, not a working import package,
 pose adaptation, likeness or new real base. No game calls, screenshots, model
 parameter samples or DLL installs were made during this research.
+
+Paired research commits: HS2Mod `f66d6b453457e92e32e6746e5e892e71249367ef`;
+Face2Parameter `e82b7800385e2fbe11de445ab4a914b7e0156a71`. Previous uncommitted display/trim prototype
+changes remain separate and are not included in this native-base milestone.
