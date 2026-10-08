@@ -45,7 +45,8 @@ def canonical(state):
             np.asarray(state.get('canonical_triangles', state.get('render_triangles'))))
 
 
-def rebase(proposal, native, reference, current, reference_path, source_path):
+def validate_source_pair(proposal, native, reference, reference_path, source_path):
+    """Static preparation only; does not certify current game display/body state."""
     # Preserve the exact original design's validation and its immutable native
     # signatures, including complete skin weights/bindposes and authored UVs.
     result = package(proposal, native, reference)
@@ -64,6 +65,11 @@ def rebase(proposal, native, reference, current, reference_path, source_path):
         proof[key] = {'shape': list(a.shape), 'dtype': str(a.dtype), 'sha256': digest_array(a, a.dtype.str)}
     if new['triangles'] != old['triangles']:
         raise ValueError('Original face-corner topology/order differs')
+    return result, new, model, proof
+
+
+def rebase(proposal, native, reference, current, reference_path, source_path):
+    result, new, model, proof = validate_source_pair(proposal, native, reference, reference_path, source_path)
     if not current.get('active') or current.get('artifact_sha256') != sha(source_path) or any(
             current.get(key) is not True for key in ('source_vertices_unchanged', 'source_triangle_indices_unchanged',
                 'source_world_similarity_frame', 'source_render_mesh_bound', 'source_render_material_bound', 'source_display_enabled')):

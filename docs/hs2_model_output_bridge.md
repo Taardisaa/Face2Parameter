@@ -861,3 +861,52 @@ is now active, with no imported source head. A usable import command must suppor
 backing up this ordinary state too, not require a pre-existing diagnostic source.
 The previous artifact/decoder preservation claims do not become appearance or
 photograph-accuracy claims because their pre-run states were restored.
+
+## Integrated original-output command (Bridge 0.31.10)
+
+`tools.model_bridge.import_original` consumes an existing original model manifest,
+explicit photo index, pinned source assets and a hashed native attachment profile.
+It exports the unchanged original rig/UV/components, validates source correspondence,
+backs up an ordinary native or source character, imports and attaches against the
+actual body, saves an embedded card, and restores the pre-run card/native snapshot.
+Only explicit `--keep-in-game` on success leaves the imported character active.
+Failures attempt rollback and retain receipts. No extra deformation/network is fitted.
+
+```powershell
+.venv/Scripts/python.exe -m tools.model_bridge.attachment_profile `
+  --proposal outputs/model_bridge_20261007/neck_cut_posed_v4.json `
+  --native-state outputs/model_bridge_20261007/neck_body_state_v1/native_body.json `
+  --reference-state outputs/model_bridge_20261007/neck_body_state_v1/source_head.json `
+  --out outputs/model_bridge_20261007/import_profile_v1.json
+.venv/Scripts/python.exe -m tools.model_bridge.import_original `
+  --manifest outputs/model_quality_20261007/multiface_mica_raw_v1/manifest.json `
+  --image-index 1 `
+  --source-obj C:/Users/13666/Workspace/smirk/assets/head_template.obj `
+  --source-mask C:/Users/13666/Workspace/smirk/assets/FLAME_masks/FLAME_masks.pkl `
+  --attachment-profile outputs/model_bridge_20261007/import_profile_v1.json `
+  --out outputs/model_bridge_20261007/import_command_03110_mica_v2
+```
+
+Outputs must be fresh paths; source assets, profile, photos and generated cards stay
+local/ignored. One actual original MICA case passed on 0.31.10: unchanged source,
+card saved, ordinary native character restored, source inactive. Receipt SHA256
+`1722b89a979f3c18f5cfcadd2473245e8e2aef4913048ac48e4d1c59c7a92a0e`.
+17 source/transaction logic checks passed; they do not replace actual geometry
+acceptance. The integrated SMIRK command was not independently live-run this round.
+
+The first integrated run exposed a real restoration failure: native fields restored
+but prior source plugin data remained. Installed LoadFileLimited copies fields from
+a temporary card, without replacing the actual owner's ExtensibleSave dictionary;
+it also always returns false. Bridge now uses the full native LoadCharaFile reader.
+Separately, delayed HS2API reload can read MakerAPI.LastLoadedChaFile rather than
+the current owner. Explicit HTTP writes now record current-card authority and
+invalidate it when actual card/cache references change. Failed v1 and lifecycle
+evidence remain in `import_command_03110_mica_v1/` and `install_03110_v1/`.
+Installed-source call-chain/provenance is recorded in HS2Mod's bridge document.
+
+This is an original-output import command, not a new-photo encoder or native-slider
+conversion. Fixed source identity/expression/eyelids; no teeth/tongue, inferred
+albedo or native-expression retarget. Existing supported female/body constraints
+remain. Cross-sex, nonstandard cards and partial UI loads are not newly certified;
+unknown plugin/transient animation restoration is not promised. Photo accuracy
+remains an independent unresolved requirement, with limited paired evidence.
