@@ -846,3 +846,18 @@ Paired implementation commits: Face2Parameter
 `a7781795ab943d15b677cf3177b8df4a16ba569e`; HS2Mod
 `97f480491d16f53b9c6bc594f65a8992f5da6e48`. Both pushed normally. Generated
 cards, native states, source model arrays and acceptance evidence remain ignored.
+
+### Visible state correction
+
+The user-visible game still contained the old v1 SMIRK diagnostic head shell after
+the preceding runs. Their backup restoration proves literal pre-run **source**
+state restoration, not that an ordinary native character was left on screen.
+The old head had no rig, texture or collar; existing native hair overlapped it.
+Native capture and current state confirmed this distinction. The diagnostic was
+saved to `user_visible_cleanup_v1/old_test_state.png`, then cleared; native
+renderers were restored and a native screenshot confirms normal face/neck display.
+Original character parameters were not changed. The underlying native character
+is now active, with no imported source head. A usable import command must support
+backing up this ordinary state too, not require a pre-existing diagnostic source.
+The previous artifact/decoder preservation claims do not become appearance or
+photograph-accuracy claims because their pre-run states were restored.
