@@ -776,3 +776,68 @@ needs authored source-space parts or a justified oral placement/driver relation.
 Paired implementation commits for this source/provenance milestone: HS2Mod
 `507676f84fb08cb3f76252090305eb2442335187`; Face2Parameter
 `44c9930cba3388852f35a3b707a1cf8cc63467ef`. Installed DLL0.31.9 was unchanged.
+
+## Different photo identities: new attachment descriptor
+
+`tools.model_bridge.attachment_rebase` now provides a separate path for a genuinely
+different original FLAME face. The old `attachment_runtime.package` equality gate
+is unchanged. The new path first validates the old source/body cut design, then
+validates both artifacts against their selected original photo/NPZ/decoder state.
+It requires literal common template, complete face order, hierarchy, joint
+regressor, full skin weights and pose correctives. Shape/expression basis sizes
+need not be equal: SMIRK has350 coefficients and MICA400 in these saved states;
+each artifact's original parameters, generated geometry and rig remain intact.
+This is a shared topology/rig branch, not a claim that all model definitions match.
+
+The new descriptor retains the original native cut edge indices/T and collar
+connectivity, binding them to the new source hash and its **actual** positive
+uniform placement. Source neck boundary half-edges must still oppose the collar.
+It rejects changed topology/rig, posed or modified preparation geometry, unbound
+display, a second active attachment and incompatible frames. It never welds,
+fits or adjusts the new source face. At activation, the existing native runtime
+independently checks the actual body vertices/indices/UV/skin/bindposes/bone order;
+the saved body is not evidence for a different installed body.
+
+The installed0.31.9 cut body and collar already follow actual native BakeMesh
+and current source canonical endpoints. No DLL change was needed. This supports
+the validated body branch and common FLAME index definition, not arbitrary body
+meshes or collision-free collars for all identities/poses. Connector geometry is
+new authored construction; it is not recovered native facial deformation.
+
+Executed final acceptance, after implementation and12 preservation/rejection
+logic checks:
+
+```powershell
+.venv/Scripts/python.exe -m tools.model_bridge.rebase_acceptance `
+  --smirk outputs/model_bridge_20261007/selected_image_source_v1/smirk_second_components.json `
+  --mica outputs/model_bridge_20261007/selected_image_source_v1/mica_second_components.json `
+  --proposal outputs/model_bridge_20261007/neck_cut_posed_v4.json `
+  --native-state outputs/model_bridge_20261007/neck_body_state_v1/native_body.json `
+  --reference-state outputs/model_bridge_20261007/neck_body_state_v1/source_head.json `
+  --thumbnail C:/Users/13666/Workspace/HS2Mod/artifacts/model_bridge_20261007/source_head_front.png `
+  --out outputs/model_bridge_20261007/new_identity_attachment_acceptance_v2
+```
+
+Both cases select original image_index1, with different source vertices from the
+old reference. Actual canonical/render mesh and UV/material bindings, unchanged
+native body vertices, new collar endpoints/topology, one neck/jaw/eye composite
+pose per model versus the original decoder, card reload with both source and
+descriptor files absent, original reset, detach and backup restoration passed.
+The native body/ABMX algorithm is unchanged; no new body sweep or guard campaign.
+Final receipt SHA256
+`bb4430e5aa4b1eb7422ee51179846b718cd0f7bb3c68de4118b7db2b97b0f66e`.
+No new model inference, screenshots or empirical deformation fit.
+
+v1 is retained: its new check erroneously compared Python's full decimal spelling
+of a float32 placement with the native JSON spelling. Even the initial wire
+state differed in spelling while its float32 values were identical; posed and
+reloaded geometry were literally identical. The fix compares saved wire state
+literally and descriptor values as literal float32, with no tolerance increase,
+rounding or compensation. The geometry/decoder bounds remain unchanged. The
+existing surface checker also no longer overwrites its evidence filename with a
+component label; original/posed/reloaded/reset evidence stays separate.
+
+This closes the different-photo descriptor gate, not source-model accuracy or
+native slider correspondence. Original FLAME still supplies no teeth/tongue or
+identity albedo; importing a face does not certify it resembles its photograph.
+Independent findings remain in [source_model_quality.md](source_model_quality.md).

@@ -63,8 +63,8 @@ def verify(state, artifact, out, name, original=False):
             checks[f'run_{i}_original_indices'] = actual['render_indices'] == layout['render_triangles'][a:b]
             checks[f'run_{i}_partition'] = all(actual[key] == value for key, value in expected.items())
             checks[f'run_{i}_material_binding'] = actual['texture_matches_component']
-            name = components['components'][expected['component']]['name']
-            texture = components['textures'].get(name, layout.get('texture'))
+            component_name = components['components'][expected['component']]['name']
+            texture = components['textures'].get(component_name, layout.get('texture'))
             if texture is not None:
                 checks[f'run_{i}_png_hash'] = actual['texture']['texture_png_sha256'] == texture['sha256']
                 checks[f'run_{i}_pixel_hash'] = actual['texture']['decoded_rgba8_top_down_sha256'] == texture['rgba8_top_down_sha256']

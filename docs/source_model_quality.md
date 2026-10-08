@@ -444,3 +444,19 @@ Paired neutral-evidence milestone commits: Face2Parameter
 `b04a322ee7395264ca50d4ae372acacfba2cef53`; HS2Mod
 `5230378dd4ff6bf5cf8a72f539f02deba6ee1ae6`. Both pushed normally to the
 configured origin branches. This paired record does not change inference or DLLs.
+
+### Accuracy versus the different-photo game path
+
+The second-camera SMIRK/MICA outputs from this same fixed neutral case now also
+pass the different-identity native attachment path. The game displays the original
+selected output and preserves it through pose/card reload; it does not substitute
+the neutral diagnostic copy or another photo's identity. That preservation adds
+**no accuracy evidence**: the forehead/jaw discrepancies above remain properties
+of the source prediction and its uncertain registration.
+
+Current decision: neither encoder is a certified accurate portrait-to-bone-shape
+oracle. The neutral case makes identity/expression separation a concrete issue;
+it does not justify explaining every mismatch as missing makeup, silently
+neutralizing raw outputs, selecting MICA as a universal winner, or treating game
+import fidelity as photograph fidelity. Preserve original output and these
+limitations when choosing a downstream representation.
