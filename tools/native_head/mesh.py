@@ -48,6 +48,15 @@ def write_mesh(reader, vertices, faces, uv, indices, weights, bindposes, *, uv1=
         raise ValueError('Normalized nonnegative skin weights required')
     computed_normals, tangents = basis(vertices, faces, uv)
     normals = computed_normals if normals is None else np.asarray(normals, '<f4')
+    if normals.shape!=vertices.shape or not np.isfinite(normals).all() or not np.allclose(np.linalg.norm(normals,axis=1),1,atol=2e-6):
+        raise ValueError('Unit normals per vertex required')
+    # Authored seam/locked-face normals must also define the tangent plane.
+    tangent=tangents[:,:3].astype(float)
+    tangent-=normals*np.sum(normals*tangent,axis=1,keepdims=True)
+    invalid=np.linalg.norm(tangent,axis=1)<1e-12
+    tangent[invalid]=np.cross(np.eye(3)[np.argmin(np.abs(normals[invalid]),axis=1)],normals[invalid])
+    tangent/=np.maximum(np.linalg.norm(tangent,axis=1,keepdims=True),1e-20)
+    tangents=np.column_stack([tangent,tangents[:,3]]).astype('<f4')
     uv1 = uv if uv1 is None else np.asarray(uv1, '<f4')
     colors = np.ones((count, 4), '<f4') if colors is None else np.asarray(colors, '<f4')
     channels = [dict(stream=0, offset=0, format=0, dimension=0) for _ in range(14)]

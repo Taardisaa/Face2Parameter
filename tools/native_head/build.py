@@ -12,23 +12,65 @@ import csv
 import hashlib
 import io
 import json
+import pickle
 from pathlib import Path
 import xml.etree.ElementTree as ET
 import zipfile
 
 import numpy as np
 import UnityPy
+from PIL import Image
 
 from scripts.hs2_extract_head import _chain, _read_transforms, _read_smr_mesh
 from src.hs2_mesh_deform import HeadRig, _fk_world, build_mesh
 from tools.model_bridge.scan_accuracy import TriangleSurface
 from tools.native_head.mesh import write_mesh,basis
-from tools.native_head.rim import conform
+from tools.native_head.rim import conform,transition
 
 GUID = 'codex.chenger.mica.nativehead'
 MAIN_AB = 'chara/codex/chenger/head.unity3d'
 PREFAB = 'p_cf_head_chenger_mica'
 SLOT = 1
+
+
+def neutral_skin(native, out):
+    """Native shader inputs with neutral authoring textures, no albedo claim.
+
+    UV transfer cannot make anatomical markings on the vanilla texture faithful
+    to another topology. Use a plain skin first instead of inventing lip/eye spots.
+    """
+    row=native['compatible_skin_rows'][0];path=Path(native['bundle']).parents[2]/row['MainAB']
+    if not path.exists():
+        # bundle is abdata/chara/38/...; its third parent is installed abdata.
+        raise FileNotFoundError(path)
+    env=UnityPy.load(str(path));old_cab=next(k for k,v in env.file.files.items() if hasattr(v,'objects'))
+    new_cab='CAB-'+sha((GUID+'.skin.v1').encode())[:32]
+    for obj in list(env.objects):
+        if obj.type.name=='Texture2D':
+            value=obj.read();name=value.m_Name
+            if name==row['MainTex']:
+                pixels=np.asarray(value.image)
+                color=tuple(map(int,np.median(pixels.reshape(-1,4),axis=0)))
+                value.set_image(Image.new('RGBA',(16,16),color),target_format=4)
+                value.save()
+            elif name==row['OcclusionMapTex']:
+                value.set_image(Image.new('RGBA',(16,16),(255,255,0,255)),target_format=4);value.save()
+            elif name==row['NormalMapTex']:
+                # Installed texture uses DXT5nm: X in alpha, Y in green.
+                value.set_image(Image.new('RGBA',(16,16),(255,128,128,128)),target_format=4);value.save()
+            else:
+                tree=obj.read_typetree();stream=tree.get('m_StreamData')
+                if stream and old_cab in stream.get('path',''):
+                    stream['path']=stream['path'].replace(old_cab,new_cab);obj.save_typetree(tree)
+        elif obj.type.name=='AssetBundle':
+            tree=obj.read_typetree();tree['m_Name']='chara/codex/chenger/skin.unity3d'
+            tree['m_AssetBundleName']='chara/codex/chenger/skin.unity3d';obj.save_typetree(tree)
+    env.file.files={k.replace(old_cab,new_cab):v for k,v in env.file.files.items()}
+    for k,v in env.file.files.items():
+        if hasattr(v,'name'):v.name=k
+    data=env.file.save(packer='lz4')
+    return data,dict(source_bundle=str(path),sha256=sha(path.read_bytes()),
+        policy='Plain authored native skin inputs; inherited skin color; no inferred albedo or native anatomical texture mapping claim')
 
 
 def sha(data):
@@ -102,12 +144,19 @@ def build(args):
     original_placed=canonical.copy(); neck=None; neck_factors=np.zeros(len(canonical))
     if args.native_neck is not None:
         if args.neck_descriptor is None:raise ValueError('Native neck requires its exact boundary descriptor')
+        mask_info=source['surface']['components']['source_mask']
+        mask_path=Path(mask_info['path']);mask_bytes=mask_path.read_bytes()
+        if sha(mask_bytes)!=mask_info['sha256']:raise ValueError('Authored anatomical masks changed')
+        masks=pickle.loads(mask_bytes,encoding='latin1')
+        protected_ids=np.unique(np.concatenate([masks[k] for k in
+            ['face','left_ear','right_ear','eye_region','forehead','lips','nose']]))
+        protected=np.isin(source['trim']['original_vertex_ids'],protected_ids)
         canonical,neck_factors,neck=conform(canonical,np.asarray(source['triangles'],int).reshape(-1,3),
             source['trim']['neck_ring_indices'],json.loads(args.native_neck.read_text(encoding='utf-8')),
-            json.loads(args.neck_descriptor.read_text(encoding='utf-8')),args.neck_bandwidth)
+            json.loads(args.neck_descriptor.read_text(encoding='utf-8')),args.neck_bandwidth,protected)
+        neck['authored_mask_sha256']=sha(mask_bytes)
         neck['native_snapshot_sha256']=sha(args.native_neck.read_bytes())
         neck['boundary_descriptor_sha256']=sha(args.neck_descriptor.read_bytes())
-        (args.out/'neck_design.json').write_text(json.dumps(neck,indent=2)+'\n',encoding='utf-8')
         np.savez(args.out/'source_placement.npz',original=original_placed,authored=canonical,falloff=neck_factors,
                  triangles=np.asarray(source['triangles']).reshape(-1,3))
     components=source['surface']['components']['components']
@@ -136,23 +185,62 @@ def build(args):
             mats=matrices@template['bindpose']
             ref_vertices=sum(template['bone_w'][:,j,None]*(homogeneous[:,None,:]@mats[template['bone_idx'][:,j]].transpose(0,2,1))[:,0,:3] for j in range(4))
             ref_vertices += target_vertices.mean(0)-ref_vertices.mean(0)
-        indices,weights,attrs,policy=transfer(target_vertices,ref_vertices,template['faces'],template,len(bones))
+            if args.native_eyes:
+                # Keep the game's own eye UV/pupil domain. Its front hemisphere
+                # is centered on the source eyeball and uniformly sized to it.
+                source_center=(target_vertices.min(0)+target_vertices.max(0))/2
+                native_center=(ref_vertices.min(0)+ref_vertices.max(0))/2
+                native_center[2]=ref_vertices[:,2].min()
+                size=(target_vertices[:,0].max()-target_vertices[:,0].min())/(ref_vertices[:,0].max()-ref_vertices[:,0].min())
+                target_vertices=(ref_vertices-native_center)*size+source_center
+                target_faces=template['faces'];source_ids=np.full(len(target_vertices),-1,int)
+        attribute_points=original_placed[source_ids] if name=='o_head' else target_vertices
+        indices,weights,attrs,policy=transfer(attribute_points,ref_vertices,template['faces'],template,len(bones))
+        if name!='o_head' and args.native_eyes:
+            indices=template['bone_idx'];weights=template['bone_w']
+            attrs={k:template[k] for k in ['uv','uv1','colors']}
+            policy=dict(method='native_eye_hemisphere_uniform_placement',source_eyeball_center_preserved=True,
+                        original_native_uv_and_skin_weights_preserved=True)
         override_normals=None
         if name=='o_head' and neck is not None:
+            retained_count=len(source_ids);retained_faces=target_faces.copy()
+            original_normals,_=basis(original_placed[source_ids],target_faces,attrs['uv'])
+            retained_normals,_=basis(target_vertices,target_faces,attrs['uv'])
+            locked=np.isin(source_ids,neck['hard_lock_indices'])
+            retained_normals[locked]=original_normals[locked]
+            ring=inverse[np.asarray(neck['ring_indices'])]
+            target_vertices,target_faces,extra_normals,inner=transition(
+                target_vertices,target_faces,ring,neck['target_ring'],retained_normals[ring],neck['target_normals'])
+            if not np.array_equal(target_faces[:len(retained_faces)],retained_faces):
+                raise ValueError('Transition changed retained source topology')
+            if not np.array_equal(target_vertices[:retained_count][locked],original_placed[source_ids][locked]):
+                raise ValueError('Transition moved locked face/chin vertices')
+            added=target_faces[len(retained_faces):]
+            triangle_xyz=target_vertices[added]
+            if (np.linalg.norm(np.cross(triangle_xyz[:,1]-triangle_xyz[:,0],triangle_xyz[:,2]-triangle_xyz[:,0]),axis=1)<1e-12).any():
+                raise ValueError('Transition has degenerate faces')
+            edges=np.sort(np.concatenate([target_faces[:,[0,1]],target_faces[:,[1,2]],target_faces[:,[2,0]]]),axis=1)
+            _,edge_counts=np.unique(edges,axis=0,return_counts=True)
+            if (edge_counts>2).any():raise ValueError('Transition created nonmanifold edges')
+            _,_,extra_attrs,_=transfer(target_vertices[retained_count:],ref_vertices,template['faces'],template,len(bones))
+            attrs={k:np.concatenate([attrs[k],extra_attrs[k]]) for k in attrs}
+            override_normals=np.concatenate([retained_normals,extra_normals])
             # Native FaceRoot (before FaceRoot_s slider scaling) lives in the
             # common rig. Its unchanged parent frame matches body Head_s support.
             root_id=next(pid for pid,t in transforms.items() if pid in members and t['name']=='cf_J_FaceRoot')
             tree=obj.read_typetree();tree['m_Bones'].append(dict(m_FileID=0,m_PathID=root_id));obj.save_typetree(tree)
             bindposes=np.concatenate([bindposes,np.linalg.inv(world_by_name['cf_J_FaceRoot'])[None]],axis=0)
-            dense=np.zeros((len(source_ids),len(bindposes)))
-            for column in range(4):np.add.at(dense,(np.arange(len(source_ids)),indices[:,column]),weights[:,column])
-            fade=neck_factors[source_ids];dense*=1-fade[:,None];dense[:,-1]=fade
+            dense=np.zeros((len(target_vertices),len(bindposes)))
+            for column in range(4):np.add.at(dense,(np.arange(retained_count),indices[:,column]),weights[:,column])
+            fade=neck_factors[source_ids];dense[:retained_count]*=1-fade[:,None];dense[:retained_count,-1]=fade
+            dense[retained_count:,-1]=1.
             indices=np.argsort(-dense,axis=1,kind='stable')[:,:4];weights=np.take_along_axis(dense,indices,axis=1)
             weights/=weights.sum(1,keepdims=True)
-            override_normals,_=basis(target_vertices,target_faces,attrs['uv'])
-            remap=dict(zip(map(int,source_ids),range(len(source_ids))))
-            for original_id,normal in zip(neck['ring_indices'],neck['target_normals']):
-                override_normals[remap[original_id]]=normal
+            neck.update(transition_vertices_added=len(target_vertices)-retained_count,
+                transition_triangles_added=len(added),inner_boundary_head_indices=inner.tolist(),
+                protected_original_normals_preserved=True,retained_triangles_preserved=True,
+                transition_inside_actual_o_head=True)
+            source_ids=np.r_[source_ids,np.full(len(target_vertices)-retained_count,-1,int)]
         mesh_reader=smr.m_Mesh.read().object_reader
         result=write_mesh(mesh_reader,target_vertices,target_faces,attrs['uv'],indices,weights,bindposes,
                           uv1=attrs['uv1'],colors=attrs['colors'],normals=override_normals)
@@ -186,7 +274,8 @@ def build(args):
     # Avoid CAB collisions with the installed vanilla bundle, retaining every
     # path ID and real serialized component reference within the private bundle.
     old_cab=next(k for k,v in env.file.files.items() if hasattr(v,'objects'))
-    new_cab='CAB-'+sha((GUID+sha(source_bytes)).encode())[:32]
+    new_cab='CAB-'+sha((GUID+sha(source_bytes)+sha(Path(__file__).read_bytes())+
+        json.dumps(neck,sort_keys=True)).encode())[:32]
     old_res=old_cab+'.resS';new_res=new_cab+'.resS'
     for obj in objects:
         if obj.type.name in ['Texture2D','Mesh']:
@@ -222,8 +311,12 @@ def build(args):
     head.update(ID=str(SLOT),Name='程儿 MICA 原生底模（中性）',MainManifest='abdata',MainAB=MAIN_AB,MainData=PREFAB,Preset='')
     skin={k:v for k,v in native['compatible_skin_rows'][0].items() if not k.startswith('_')}
     skin.update(ID=str(SLOT),HeadID=str(SLOT),Name='程儿 原生皮肤')
+    skin_bundle=None;skin_policy=None
+    if args.plain_skin:
+        skin_bundle,skin_policy=neutral_skin(native,args.out)
+        skin['MainAB']='chara/codex/chenger/skin.unity3d'
     manifest=ET.Element('manifest',{'schema-ver':'1'})
-    for k,v in dict(guid=GUID,name='Chenger MICA native head',version='0.1.0',author='Codex',
+    for k,v in dict(guid=GUID,name='Chenger MICA native head',version='0.1.1',author='Codex',
                     description='Actual neutral head asset. Expressions deferred. Locally generated; requires installed HS2 assets.').items():
         ET.SubElement(manifest,k).text=v
     ET.SubElement(manifest,'faceSkinInfo',{'skinID':str(SLOT),'headID':str(SLOT),'headGUID':GUID})
@@ -231,6 +324,7 @@ def build(args):
     with zipfile.ZipFile(package,'w',compression=zipfile.ZIP_DEFLATED) as archive:
         archive.writestr('manifest.xml',ET.tostring(manifest,encoding='utf-8',xml_declaration=True))
         archive.writestr('abdata/'+MAIN_AB,output_bundle)
+        if skin_bundle is not None:archive.writestr('abdata/chara/codex/chenger/skin.unity3d',skin_bundle)
         archive.writestr('abdata/list/characustom/codex_chenger_fo_head_00.csv',csv_bytes(210,head,'codex_chenger_fo_head_00'))
         archive.writestr('abdata/list/characustom/codex_chenger_ft_skin_f_00.csv',csv_bytes(211,skin,'codex_chenger_ft_skin_f_00'))
     receipt=dict(format='hs2_native_head_asset_build_v1',package=str(package.resolve()),package_sha256=sha(package.read_bytes()),
@@ -238,8 +332,10 @@ def build(args):
         source_parameters_preserved=True,outside_neck_band_positions_modified=False,neck_band_authored=neck is not None,
         placement=dict(scale=args.scale,translation=args.translation),
         native_reference_face_values=[.5]*59,mesh_assets=mesh_reports,source_overlay_required=False,
-        expression_support=False,neck_fit_completed=neck is not None,appearance='Native UV/skin attribute transfer; no inferred albedo',
+        expression_support=False,neck_geometry_authored=neck is not None,neck_visual_acceptance=False,appearance='Native UV/skin attribute transfer; no inferred albedo',
         deferred_parts=['o_eyelashes','o_eyeshadow','o_namida','o_tooth','o_tang'],game_loading_verified=False)
+    receipt['skin_policy']=skin_policy;receipt['native_eye_geometry_authored']=args.native_eyes
+    if neck is not None:(args.out/'neck_design.json').write_text(json.dumps(neck,indent=2)+'\n',encoding='utf-8')
     (args.out/'receipt.json').write_text(json.dumps(receipt,ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
     print(json.dumps(dict(package=str(package.resolve()),guid=GUID,actual_head_mesh_authored=True,game_loading_verified=False)))
 
@@ -251,6 +347,7 @@ def main():
     parser.add_argument('--out',type=Path,required=True)
     parser.add_argument('--native-neck',type=Path);parser.add_argument('--neck-descriptor',type=Path)
     parser.add_argument('--neck-bandwidth',type=float,default=.55)
+    parser.add_argument('--plain-skin',action='store_true');parser.add_argument('--native-eyes',action='store_true')
     build(parser.parse_args())
 
 
