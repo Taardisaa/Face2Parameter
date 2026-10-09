@@ -4,6 +4,14 @@ This repository supports the HS2 head/parameter tooling in
 `C:\Users\13666\Workspace\HS2Mod`. Follow that repository's
 [source-first and Git synchronization rules](../HS2Mod/AGENTS.md).
 
+- The user's prohibition on shortcuts and simplification applies to ALL work,
+  not only the current goal or a particular subsystem. Do not omit required steps
+  or substitute constants, placeholders, disabled features, approximations,
+  reduced scope, or weakened acceptance to make the work easier. Diagnostic
+  substitutions must remain identified, isolated, and recoverable; they must not
+  become delivered assets or support claims of compatibility/completion. Preserve
+  the full requested end state and implement unresolved paths without silently
+  replacing it with a smaller outcome. Follow the full fidelity rule in HS2Mod.
 - The installed game and plugins are the implementation oracle. Recover their
   computation through decompilation, IL inspection, shader disassembly, asset
   extraction, and call-chain analysis. Use runtime inspection only for concrete
