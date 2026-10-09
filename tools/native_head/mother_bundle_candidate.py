@@ -87,7 +87,9 @@ def float32_values(value):
     return value
 
 
-def build(inputs, bindings, out):
+def build(inputs, bindings, out, asset_key='flame_mother_candidate'):
+    if not asset_key or any(c not in 'abcdefghijklmnopqrstuvwxyz0123456789_' for c in asset_key):
+        raise ValueError('Use a lowercase independent asset key')
     if out.exists():
         raise FileExistsError('Preserve previous bundle candidate; use fresh output')
     source = json.loads((inputs/'receipt.json').read_text())
@@ -146,12 +148,12 @@ def build(inputs, bindings, out):
         tree['m_LocalPosition'] = dict(zip('xyz', value['pos']))
         tree['m_LocalScale'] = dict(zip('xyz', value['scale']))
     root = objects[int(original_prefab['root_transform'])].read()
-    prefab_name = 'p_cf_flame_mother_candidate'
+    prefab_name = 'p_cf_'+asset_key
     edit(root.m_GameObject.path_id)['m_Name'] = prefab_name
     old_cab = next(k for k, v in env.file.files.items() if hasattr(v, 'objects'))
     new_cab = 'CAB-'+hashlib.sha256((donor['sha256']+sha(bindings/'receipt.json')+
                                     sha(Path(__file__))).encode()).hexdigest()[:32]
-    bundle_name = 'chara/codex/flame_mother_candidate/head.unity3d'
+    bundle_name = 'chara/codex/'+asset_key+'/head.unity3d'
     for pid, obj in objects.items():
         if obj.type.name in ('Texture2D', 'Mesh'):
             original_tree = obj.read_typetree()
@@ -215,6 +217,7 @@ def build(inputs, bindings, out):
     save_json(out/'receipt.json', dict(format='native_mother_bundle_candidate_v1',
         inputs=source_file(inputs/'receipt.json'), bindings=source_file(bindings/'receipt.json'),
         code=source_file(Path(__file__)), bundle=source_file(output), prefab=prefab_name,
+        asset_key=asset_key, main_ab=bundle_name,
         native_donor=donor, archive_identity=new_cab, original_resource_payload_hashes=resource_hashes,
         original_object_count=len(objects), changed_object_ids=list(trees), renderer_outputs=reports,
         original_controllers_materials_textures_and_skin_preserved=True,
@@ -232,5 +235,6 @@ if __name__ == '__main__':
     parser.add_argument('--inputs', type=Path, required=True)
     parser.add_argument('--bindings', type=Path, required=True)
     parser.add_argument('--out', type=Path, required=True)
+    parser.add_argument('--asset-key', default='flame_mother_candidate')
     args = parser.parse_args()
-    build(args.inputs.resolve(), args.bindings.resolve(), args.out.resolve())
+    build(args.inputs.resolve(), args.bindings.resolve(), args.out.resolve(), args.asset_key)

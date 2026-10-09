@@ -33,7 +33,12 @@ def eye_maps(inputs, candidate, placement):
                     for b in topology(v, f)['boundaries'])]
     if len(components) != 2:
         raise ValueError('Expected two closed source eye components')
-    joint = flame['J_regressor']@v
+    rotation = np.asarray(placement['rotation'])
+    # Identity candidates carry the actual decoded, placed FLAME reference.
+    # Recover canonical coordinates before using its unchanged joint regressor.
+    reference = ((candidate['reference_vertices']-placement['translation'])/
+                 placement['scale'])@rotation
+    joint = flame['J_regressor']@reference
     result = {}
     for side in ('L', 'R'):
         native = np.load(inputs/('o_eyebase_'+side+'.npz'), allow_pickle=False)
@@ -48,7 +53,6 @@ def eye_maps(inputs, candidate, placement):
         j = int(weights.argmax())
         if j not in (3, 4):
             raise ValueError('Source eyeball is not eye-joint supported')
-        rotation = np.asarray(placement['rotation'])
         target_pivot = joint[j]@rotation.T*placement['scale']+placement['translation']
         eye = candidate['reference_vertices'][comp['vertices']]
         scale = np.ptp(eye[:, 0])/np.ptp(native['verts'][:, 0])

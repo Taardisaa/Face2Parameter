@@ -1,0 +1,83 @@
+{
+  "format": "native_mother_game_trial_handoff_v1",
+  "date": "2026-10-08",
+  "complete_character_delivery": false,
+  "native_asset_path": true,
+  "runtime_source_overlay": false,
+  "game_restarts": 1,
+  "mica_image_index": 1,
+  "mica_image": "img-002.jpg",
+  "mother_guid": "codex.native.flame_native_mother_v16",
+  "chenger_guid": "codex.native.flame_native_chenger_v3",
+  "mother_runtime_head_id": 100007789,
+  "chenger_runtime_head_id": 100007787,
+  "mouth_preview_incomplete": true,
+  "full_identity_path_preserved": true,
+  "all_eight_runtime_components_match": true,
+  "original_chenger_016_preserved": true,
+  "visible_state": "Registered native-topology Chenger v3 trial, saved and reloaded",
+  "remaining": [
+    "Full nonaffine FLAME lip identity coupled to native closed-mouth expression",
+    "Posterior neck contour step",
+    "Actual BP interface appearance and native UV metrics",
+    "Full expression/gaze/slider/ABMX compatibility"
+  ],
+  "files": {
+    "mother_registration": {
+      "path": "C:\\Users\\13666\\Workspace\\Face2Parameter\\outputs\\native_mother_template_20261008\\package_mother_v16\\receipt.json",
+      "sha256": "e7d0595df5068379d5de3f13fc8556395810d0ed767f53872f516559236217ef"
+    },
+    "chenger_registration": {
+      "path": "C:\\Users\\13666\\Workspace\\Face2Parameter\\outputs\\native_mother_template_20261008\\package_chenger_v3\\receipt.json",
+      "sha256": "c4216cd287df7dec2259ffdf22188f9c0e0999e635c4f32dd2d8f8fa8f992a49"
+    },
+    "mother_game_acceptance": {
+      "path": "C:\\Users\\13666\\Workspace\\Face2Parameter\\outputs\\native_mother_template_20261008\\mother_game_acceptance.json",
+      "sha256": "1eb2506ee359dcf924cea627e39f0d11ff20e33043471531a5ec873bb7cae02d"
+    },
+    "chenger_game_acceptance": {
+      "path": "C:\\Users\\13666\\Workspace\\Face2Parameter\\outputs\\native_mother_template_20261008\\chenger_game_acceptance.json",
+      "sha256": "39a5f374d8e6650799fd6186cd826b1c49cb0c5e5d6d6c2ea47ea173374be437"
+    },
+    "identity_preview_replay": {
+      "path": "C:\\Users\\13666\\Workspace\\Face2Parameter\\outputs\\native_mother_template_20261008\\chenger_identity_v3_replay\\receipt.json",
+      "sha256": "6290217b24ee694bc7dc7a01939b129be7917a38f3991b96ca7ec702466e94ee"
+    },
+    "mother_static_quality": {
+      "path": "C:\\Users\\13666\\Workspace\\Face2Parameter\\outputs\\native_mother_template_20261008\\local_contacts_quality_v16\\receipt.json",
+      "sha256": "42f9158b4f32f6522baac37d53f222b4837e9e4b98bf063d7711cf264b95ada4"
+    },
+    "identity_full_failed": {
+      "path": "C:\\Users\\13666\\Workspace\\Face2Parameter\\outputs\\native_mother_template_20261008\\chenger_quality_v2\\receipt.json",
+      "sha256": "66b7841cafccf0c0151c66d8780b494f2cd840b01008b20362af1e614b768232"
+    },
+    "identity_preview_quality": {
+      "path": "C:\\Users\\13666\\Workspace\\Face2Parameter\\outputs\\native_mother_template_20261008\\chenger_quality_v3\\receipt.json",
+      "sha256": "3e72e89c5a017c479a22f46f1aef37417ec01fae3f73c253655648b45e8f1d6a"
+    },
+    "mother_sheet": {
+      "path": "C:\\Users\\13666\\Workspace\\HS2Mod\\artifacts\\native_mother_20261008\\mother_close_0_sheet.png",
+      "sha256": "1388eddf5d3f6921b861ce302e336aca5c657736d71aa038452bbd772043fa0d"
+    },
+    "chenger_sheet": {
+      "path": "C:\\Users\\13666\\Workspace\\HS2Mod\\artifacts\\native_mother_20261008\\chenger_close_0_sheet.png",
+      "sha256": "4eff01089e8d105e7f58b6c66ca9a29716bea3ada8ad64b81312a3420200a19a"
+    },
+    "sideloader_source": {
+      "path": "C:\\Users\\13666\\Workspace\\HS2Mod\\tools\\parameter_audit\\native_head_base_20261007\\Sideloader_current.cs",
+      "sha256": "d4ee0d90cf25e9740cfed4a923277617d7cb6e098ef6aae3afe1e4b6fa2a20ed"
+    },
+    "sideloader_assembly": {
+      "path": "E:\\HoneySelect2_ArcticFox\\BepInEx\\Plugins\\HS2_BepisPlugins\\HS2_Sideloader.dll",
+      "sha256": "9a9ece53cfe9ef2b6705653ef5a52dce46aa9018aa47a098165410a3522beb50"
+    },
+    "visible_game_card": {
+      "path": "E:\\HoneySelect2_ArcticFox\\UserData\\chara\\female\\Codex\\Chenger_native_topology_v3_game_01.png",
+      "sha256": "489dd594834ddad94bf32a9f7ca890f2a522aaf43ebd16e70a52f8dab4edb691"
+    },
+    "restore_card": {
+      "path": "E:\\HoneySelect2_ArcticFox\\UserData\\chara\\female\\Codex\\pre_native_mother_20261008_01.png",
+      "sha256": "d0419826252425e5c7fa198caf2cab7b522b532b14d9fe82a8e91a48b5a6fd23"
+    }
+  }
+}
