@@ -1,0 +1,35 @@
+{
+  "format": "native_iris_correction_v1",
+  "card": {
+    "path": "E:\\HoneySelect2_ArcticFox\\UserData\\chara\\female\\Codex\\程儿_虹膜调整_20261008.png",
+    "sha256": "e1035da9272caf4a4f5429a21e8c55b34a8e9a99ca4b8f7035adcb834250271d"
+  },
+  "native_full_card_reload_verified": true,
+  "external_mesh_required": false,
+  "head_package_version": "0.1.5",
+  "eye_readback": {
+    "path": "C:\\Users\\13666\\Workspace\\HS2Mod\\artifacts\\chenger\\eye_neck_audit_20261008\\eye_reload.json",
+    "sha256": "df4c8219f8777435ed2c0dc6230b2a265daa63c078612004ac0890840a698994"
+  },
+  "native_capture": {
+    "path": "C:\\Users\\13666\\Workspace\\HS2Mod\\artifacts\\chenger\\eye_neck_audit_20261008\\persist_capture.native.json",
+    "sha256": "5dcab6c8d2ed93bd20be3e1945ca550ce1454828e659fbf7cf3a37fc28285eef"
+  },
+  "image": {
+    "path": "C:\\Users\\13666\\Workspace\\HS2Mod\\artifacts\\chenger\\eye_neck_audit_20261008\\eyes_persisted.png",
+    "sha256": "6774cfe7237e92cf337569298739b3f303a7eca7a3e3ff783673181acfbddc98"
+  },
+  "saved_reply": {
+    "path": "C:\\Users\\13666\\Workspace\\HS2Mod\\artifacts\\chenger\\eye_neck_audit_20261008\\card_save.json",
+    "sha256": "efd2cc9c42660b21acac493db0419bb0eeb5038f4d3951141d2868ceb4be5567"
+  },
+  "iris_w_h": [
+    0.6,
+    0.6
+  ],
+  "black_w_h": [
+    0.35,
+    0.35
+  ],
+  "neck_material_changed": false
+}

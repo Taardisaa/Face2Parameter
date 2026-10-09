@@ -76,11 +76,13 @@ def sha(data):
 
 
 def neutral_head_region_mask(material, objects):
-    """Remove native-atlas regions from the imported chart, preserving skin shading.
+    """Legacy uniform policy removing misplaced native-atlas patterns.
 
     Skin True Face samples _NailMask at UV0 even with microdetail disabled.
-    G=1 is the native skin region; R/B=0 disable nail gloss/metallic regions.
-    This is a plain skin policy, not an anatomical atlas transfer.
+    R/B=0 disable nail gloss/metallic regions. The current plain policy sets
+    G/A=1 globally, but the native neck uses G=0, A=0.6: this is NOT a faithful
+    neck transfer. A also gates translucency in the installed compiled shader.
+    See audit_neck_shading.py; this legacy policy still needs a local neck fix.
     """
     textures = dict(material.read_typetree()['m_SavedProperties']['m_TexEnvs'])
     pointer = textures['_NailMask']['m_Texture']

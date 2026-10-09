@@ -7,7 +7,7 @@
       "arguments": {
         "patch": {
           "pupil_same_setting": true,
-          "pupil": {"w": 0.25, "h": 0.25, "color": [0.28, 0.2, 0.16, 1]},
+          "pupil": {"w": 0.6, "h": 0.6, "color": [0.28, 0.2, 0.16, 1]},
           "left": {"black_w": 0.35, "black_h": 0.35, "white_color": [0.94, 0.94, 0.93, 1]},
           "right": {"black_w": 0.35, "black_h": 0.35, "white_color": [0.94, 0.94, 0.93, 1]},
           "highlight": {"color": [1, 1, 1, 0.65]}

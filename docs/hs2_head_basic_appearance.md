@@ -74,3 +74,15 @@ positions／triangles／normals／骨权重／bindpose 与前版逐项一致；U
 
 游戏收尾、保存重载和当前状态见相邻 `hs2_head_basic_appearance_receipt.json`；
 游戏资产及生成图片保持本地 ignored，不上传许可资产。原生贴图失败版保留。
+
+## 虹膜大小后续修正
+
+用户指出眼白过多后，外观配置把两眼虹膜宽／高改为 0.6，黑瞳孔宽／高
+仍为 0.35。安装版 `ChangeEyesWH` 写入的 UV 缩放是
+`Mathf.Lerp(2f,0.5f,rate)`，因此这里是扩大虹膜，不能把 rate 直接当毫米。
+它没有改变眼球网格、眼白颜色或接受的头形。
+
+已保存 `程儿_虹膜调整_20261008.png`，按原生完整人物卡重载并读回确认。
+保存回复 `source_head_embedded=false`，仍使用 0.1.5 原生底模包。
+本次没有顺便修改颈部材质；颈部色差来源见
+[颈部受光审查](hs2_neck_shading_audit.md)。
