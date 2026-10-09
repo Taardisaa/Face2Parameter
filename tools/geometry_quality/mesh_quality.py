@@ -176,7 +176,7 @@ def triangle_intersection(a, b, epsilon):
     return {"kind": kind, "intersection_length": float(max(0, high - low))}
 
 
-def self_intersections(vertices, faces, triangles, valid, epsilon):
+def self_intersections(vertices, faces, triangles, valid, epsilon, *, exclude_shared_vertex=True):
     start_time = time.perf_counter()
     mins, maxs = triangles.min(axis=1), triangles.max(axis=1)
     axis = int(np.argmax(np.ptp(vertices, axis=0)))
@@ -194,8 +194,12 @@ def self_intersections(vertices, faces, triangles, valid, epsilon):
         if not len(remaining):
             continue
         shared = np.any(faces[remaining, :, None] == faces[first][None, None, :], axis=(1, 2))
-        adjacent += int(shared.sum())
-        for second in remaining[~shared]:
+        adjacent += int(shared.sum()) if exclude_shared_vertex else 0
+        # Mother-template authoring also checks adjacent triangles: sharing an
+        # edge/vertex normally gives a contact, but does not excuse a fold that
+        # overlaps a positive area or crosses beyond that shared boundary.
+        selected = remaining[~shared] if exclude_shared_vertex else remaining
+        for second in selected:
             tested += 1
             intersection = triangle_intersection(triangles[first], triangles[second], epsilon)
             if intersection is not None:
@@ -206,6 +210,7 @@ def self_intersections(vertices, faces, triangles, valid, epsilon):
         "algorithm": "AABB sweep broad phase; triangle-plane interval intersection and coplanar convex clipping narrow phase",
         "length_epsilon": float(epsilon), "sweep_axis": axis, "aabb_candidate_pairs": int(candidates),
         "excluded_shared_vertex_pairs": adjacent, "narrow_phase_pairs": tested,
+        "exclude_shared_vertex": bool(exclude_shared_vertex),
         "excluded_degenerate_triangles": int((~valid).sum()), "counts": counts,
         "true_crossing_or_area_overlap_count": counts["proper_crossing"] + counts["coplanar_overlap"],
         "contact_count": counts["edge_contact"] + counts["point_contact"] + counts["coplanar_contact"],

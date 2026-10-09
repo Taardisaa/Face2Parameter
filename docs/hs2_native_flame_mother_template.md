@@ -3,7 +3,8 @@
 2026-10-08。用户提出：先把完整原生头变形成接近 FLAME 基模的头，
 以后直接用 MICA 系数驱动，避免每个身份重复导入 FLAME 网格及适配资产。
 下文保留最初的源码／现有资产研究；最新开工进展见末尾。当前已生成
-临时头壳配准候选，尚无可交付母版或迁移形状基，游戏未改动。
+临时头壳配准候选，已将全部部件／表情帧及中性绑定写入独立开发 bundle。
+完整曲面检查不通过，尚无可交付母版或迁移形状基，游戏未改动。
 
 ## 结论
 
@@ -218,3 +219,81 @@ bind 网格或称全零表情为默认状态。
 法线增量的表情帧。它们核对制作工具的数学和来源合同，不代替完整
 母版验收。工具依赖的素材与产生的候选保持在 ignored 目录，未安装
 任何新资产、未覆盖程儿人物卡或原有包。
+
+## 全部部件、绑定及原资产写回：后续里程碑
+
+完成可重现的部件数据适配／原资产写回步骤，但 **shell_v5 的几何不通过**，
+不能安装为正常人物或宣称母版交付。新产物为独立开发候选，不覆盖程儿。
+
+`mother_surface_warp.py` 用源／目标三角形局部边框构造梯度，法向列长度
+由三角形面积确定；按真实最近三角形重心位置及法向偏移迁移配套部件。
+这是新资产的制作算法，不是对 HS2 驱动的近似替代；正局部行列式不证明
+体积映射全局一一对应。物理 UV 副本共享梯度，各自的原始着色属性保留。
+法线使用逆转置，切线投影到新法线平面，原始切线手性保留。
+
+`mother_component_adaptation.py` 适配全部八部件及全部稀疏表情行：
+眼球及其阴影层使用原生眼枢轴到真实 FLAME 眼关节的相似变换；牙齿和
+舌头仅查原生嘴内组件，睫毛／泪液查原头表面。保留顶点、连接、UV、
+颜色、权重、通道名、帧表和稀疏索引。先迁移原生默认帧，再从设计参考
+扣除这些默认增量制作 bind 数据；再次施加控制器默认权重还原到设计面，
+不把闭嘴帧烘焙两次。这一步不认证全表情轨迹、部件碰撞或滑杆范围。
+
+`mother_reference_bindings.py` 校验安装版源码／缓存来源、实际 ShapeAnime
+和 customhead 表，经恢复的实际 Update/FK 在 59 个面部值 0.5、无 ABMX、
+孤立头部祖先参考下重建 bindpose。原 HeadRig 缓存只有蒙皮骨骼与祖先，
+先核对这份子集，再接入原始 prefab 完整层级；renderer 和饰品节点不丢。
+只适配没有 ShapeHeadInfoFemale 位置写入的两个 `cf_J_look_L/R` 注视父节点，
+并按眼球尺度同步子级距离。原生表情控制器和驱动表保持。所有蒙皮矩阵
+在该参考下为单位，不能据此称全部面部枢轴、注视或 ABMX 已兼容。
+
+`mother_bundle_candidate.py` 从完整供体原字节包改造，未使用会清空表情／
+重新生成 UV 和蒙皮通道的旧 `write_mesh`。仅在原顶点流布局内改位置／
+法线／切线，保留其他所有顶点字节与索引；更新完整帧、bindpose 和包围盒。
+控制器／renderer 原字节、材质和纹理不改。CAB／资源 URI 与 prefab 使用
+独立名称；资源 payload 保持字节一致。序列化后重新读回所有数组／帧和
+所有改写字段，未触碰的对象原字节也逐一核对。该 bundle 尚未注册列表
+或皮肤项，**原 UV 分布 metric 尚未按新几何更新**，需按引擎路径处理。
+每个单帧包围盒不等于全部骨骼／组合表情的动态覆盖；原加载器仍有实际
+AssignedWeightsAndSetBounds 路径，需在最终集成核对。
+
+产物（均 ignored）：`components_v1/`、`bindings_v1/`、`bundle_v2/`。
+`bundle_v1/` 是加强逐字段序列化核对前的版本，仍保留。三维说明图在
+`component_review_v1/`：头壳加原生眼球共同比例；另将八部件全部线框展开，
+每项单独缩放且不隐藏背面。透明层没有用假材质装成完整游戏效果。
+
+完整头壳检查 `mother_surface_quality.py` 调用既有三角形几何谓词，新增
+显式模式检查共顶点的三角形，以免邻接关系掩盖正面积折叠。真实穿插、
+共面重叠与接触分开保存，保留源资产已有交叉和候选新增交叉；结果为
+`surface_quality_v5/receipt.json` 的 `no_new_crossings=false`。图中眼睑等
+折皱并非只有显示阴影；当前少量轮廓约束和区域最近点配准未防止曲面
+贴错侧／折叠。下一步先修这份几何对应，不能将原始交叉作为豁免理由，
+不能靠改法线、藏部件或禁用表情掩盖它。
+
+重现后续步骤（Face2Parameter 根目录，新输出名）：
+
+```powershell
+.venv/Scripts/python.exe -m tools.native_head.mother_component_adaptation `
+  --inputs outputs/native_mother_template_20261008/inputs_v2 `
+  --candidate outputs/native_mother_template_20261008/shell_v5 `
+  --out outputs/native_mother_template_20261008/components_fresh
+.venv/Scripts/python.exe -m tools.native_head.mother_reference_bindings `
+  --inputs outputs/native_mother_template_20261008/inputs_v2 `
+  --components outputs/native_mother_template_20261008/components_fresh `
+  --out outputs/native_mother_template_20261008/bindings_fresh
+.venv/Scripts/python.exe -m tools.native_head.mother_bundle_candidate `
+  --inputs outputs/native_mother_template_20261008/inputs_v2 `
+  --bindings outputs/native_mother_template_20261008/bindings_fresh `
+  --out outputs/native_mother_template_20261008/bundle_fresh
+.venv/Scripts/python.exe -m tools.native_head.mother_component_review `
+  --bindings outputs/native_mother_template_20261008/bindings_fresh `
+  --out outputs/native_mother_template_20261008/component_review_fresh
+.venv/Scripts/python.exe -m tools.native_head.mother_surface_quality `
+  --candidate outputs/native_mother_template_20261008/shell_v5 `
+  --out outputs/native_mother_template_20261008/surface_quality_fresh
+```
+
+八项母版数学／数据检查及十九项几何谓词检查通过；原包写回也通过。
+这些是工具和来源数据的逻辑核对，**几何母版本身未通过**。实际 BP
+接口受光、完整语义、UV metric、所有部件间相交、独立注册和有限原生
+验收仍在原目标内；完整表情／滑杆／ABMX 的范围认证另留后续里程碑。
+全部工作未调用游戏、Computer Use、参数扫描、训练或增加新依赖。

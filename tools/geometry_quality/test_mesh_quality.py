@@ -6,7 +6,7 @@ import unittest
 
 import numpy as np
 
-from mesh_quality import Thresholds, analyze_snapshot, triangle_intersection
+from mesh_quality import Thresholds, analyze_snapshot, triangle_intersection, self_intersections
 
 
 def snapshot(vertices, faces, *, normals=None, matrix=None, mesh_name="o_head", path="/head[0]", enabled=True):
@@ -73,6 +73,16 @@ class TriangleIntersectionTests(unittest.TestCase):
 
 
 class MeshQualityTests(unittest.TestCase):
+    def test_shared_edge_does_not_excuse_positive_area_fold(self):
+        vertices = np.array([[0., 0, 0], [1, 0, 0], [0, 1, 0], [.5, .5, 0]])
+        faces = np.array([[0, 1, 2], [1, 0, 3]])
+        excluded = self_intersections(vertices, faces, vertices[faces], np.ones(2, bool), 1e-9)
+        self.assertEqual(excluded['narrow_phase_pairs'], 0)
+        checked = self_intersections(vertices, faces, vertices[faces], np.ones(2, bool), 1e-9,
+                                     exclude_shared_vertex=False)
+        self.assertEqual(checked['counts']['coplanar_overlap'], 1)
+        self.assertEqual(checked['excluded_shared_vertex_pairs'], 0)
+
     def test_legal_shared_edge_excluded(self):
         vertices = [[0, 0, 0], [1, 0, 0], [0, 1, 0], [1, 1, 0]]
         report = first_report(snapshot(vertices, [[0, 1, 2], [1, 3, 2]]))
