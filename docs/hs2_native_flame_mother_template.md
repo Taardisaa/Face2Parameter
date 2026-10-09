@@ -2,7 +2,8 @@
 
 2026-10-08。用户提出：先把完整原生头变形成接近 FLAME 基模的头，
 以后直接用 MICA 系数驱动，避免每个身份重复导入 FLAME 网格及适配资产。
-本记录是源码／现有资产研究；尚未制作母版、迁移形状基或修改游戏。
+下文保留最初的源码／现有资产研究；最新开工进展见末尾。当前已生成
+临时头壳配准候选，尚无可交付母版或迁移形状基，游戏未改动。
 
 ## 结论
 
@@ -147,3 +148,73 @@ embedding；不用 OBJ 的模板位置，不使用程儿预测头作为零身份
 没有导出依赖闭包。重复运行必须使用新目录。收据、完整供体和模型数据均留在 ignored
 输出中。当前游戏未改动，母版配准、部件适配、实际 BP 接口匹配、身份
 基迁移尚未实现，完整目标保持 active。
+
+## 原生参考状态与头壳制作工具：2026-10-08 后续进展
+
+输入准备后已实现两个可复用步骤，当前母版目标仍 active。
+
+`mother_default_pose.py` 从原始 prefab 的三个控制器和全部稀疏表情帧
+恢复一份明确的静态参考：pattern 0、过渡结束、blink open rate 1、
+中性视线修正、voice 0。按照安装版 `FaceBlendShape.OnLateUpdate`
+的眉毛→眼睛→嘴顺序及 `FBSBase.CalculateBlendShape` 的字典写入求值；
+后控制器覆盖同一通道，不能将它们累加。浮点 Lerp、乘 100 和转 int
+保持 float32；否则供体的眼睛 OpenMax 会被错误截成 89 而不是 90。
+新补充的 Eyes/Eyebrow 控制类直接从同一安装版 IL.dll 反编译。
+
+所有八个部件都导出参考位置以及原有法线／切线与帧增量之和，另存
+`default_reference_v1/`；原始 bind 数组未改。当前供体通道均为单帧
+且权重 100，若这份真实资产合同变化则拒绝而不推测其他插值分支。
+这不是运行时蒙皮采集，不模拟眨眼／视线轨迹，也不把参考状态烘焙成
+bind 网格或称全零表情为默认状态。
+
+头壳制作工具 `mother_shell_candidate.py` 已支持：
+
+- 保持两份资产的 X 横向／Y 高度／Z 前后坐标方向；用眼角确定统一
+  大小与位置，不再用原生眼角的斜率把整个 FLAME 头旋转成低头姿态。
+- 只在逻辑图合并位置／蒙皮相同的 UV 副本，输出仍用原始顶点编号、
+  面连接和 UV；颈圈所有真实副本硬固定，逐一校验未移动。
+- 物理眼开口按原始闭环区分上下路径；鼻和外唇二维候选注记落在实际
+  原生三角形上，使用精确重心约束，不用最近顶点替代。
+- [ARAP 局部旋转／全局位置求解](https://libigl.github.io/tutorial/#as-rigid-as-possible)
+  保留局部结构，替代早期单纯位移平滑。这里是新资产制作算法；使用
+  明确的正逆边长权重，不冒充 libigl 默认余切权重或 HS2 游戏计算。
+  嘴内不吸附到外部皮肤；嘴部骨骼支持区由外唇约束和结构能量带动。
+- 原始 FLAME 耳朵 mask 与原生耳骨主导区域分别对应，按实际坐标侧
+  核对，避免耳朵贴到脸颊。该支持区不是已经认证的耳根解剖边界。
+
+`mother_candidate_review.py` 输出完整头壳正交图和全高度中央剖面，
+包括嘴内交线，保持共同尺度；没有隐藏面来美化结果。图片仅是实际
+网格的科学示意，不是游戏截图，也未包括已适配的完整部件。
+
+早期结果全部保留：`shell_v1` 的自由旋转配准错误；`shell_v2` 固定
+方向后仍使嘴内鼓起；`shell_v3/v4` 通过 ARAP 改善完整头形和嘴内，
+但唇、眼睑仍有可见折皱，尚不能作为交付。几何收据均明确
+`deliverable=false`、`installed=false`、`game_mutated=false`。
+`shell_v5` 加入完整原生闭嘴／睁眼参考，并让整个嘴部骨骼支持区由
+锚点及结构能量带动，唇部的明显折叠得到改善。完整图保存于
+`shell_review_v5/`；它仍是已变形的参考状态，不是可直接安装的 bind
+资产，不能重复烘焙再施加原生表情。眼睑、耳根与配套部件仍须处理。
+鼻唇注记、耳根／内唇语义、表面自交、完整部件和表情适配、最终法线／
+切线、实际 BP 接口仍有待完成；不降低母版的原定验收要求。
+
+重现（输出须用新目录）：
+
+```powershell
+.venv/Scripts/python.exe -m tools.native_head.mother_default_pose `
+  --inputs outputs/native_mother_template_20261008/inputs_v2 `
+  --out outputs/native_mother_template_20261008/default_reference_fresh
+.venv/Scripts/python.exe -m tools.native_head.mother_shell_candidate `
+  --inputs outputs/native_mother_template_20261008/inputs_v2 `
+  --default-reference outputs/native_mother_template_20261008/default_reference_fresh `
+  --out outputs/native_mother_template_20261008/shell_fresh
+.venv/Scripts/python.exe -m tools.native_head.mother_candidate_review `
+  --candidate outputs/native_mother_template_20261008/shell_fresh `
+  --out outputs/native_mother_template_20261008/shell_review_fresh
+.venv/Scripts/python.exe -m unittest tools.native_head.test_mother_authoring
+```
+
+五项解析检查已通过：刚体运动应是 ARAP 的驻点、UV 重心坐标及歧义
+拒绝、中央剖面不漏同平面边、原生 float32 权重和共享通道、保留仅有
+法线增量的表情帧。它们核对制作工具的数学和来源合同，不代替完整
+母版验收。工具依赖的素材与产生的候选保持在 ignored 目录，未安装
+任何新资产、未覆盖程儿人物卡或原有包。
