@@ -109,3 +109,40 @@ SHA256 `66ba2ef7f95fa4d79ad87b3d1e11e90e8f1f78ed79e0dc7cb1e4e2969f100edf`。
 没有调用游戏采集、Computer Use、参数扫描或训练。当前游戏包、人物卡
 和原有开放目标保持。本次对应的 HS2Mod 入口为
 [母版探索](../../HS2Mod/docs/hs2_native_flame_mother_template.md)。
+
+## 用户授权开工后的输入准备
+
+用户已要求开始，并设置第一份母版候选为当前原生目标，读回 active。
+旧头颈接口目标保存为暂停状态，未声称完成。
+
+已实现 `tools/native_head/mother_template_inputs.py`：校验安装程序集、
+反编译来源、供体 bundle 和原始 MICA decoder，复制完整供体 bundle，
+导出实际 prefab 下全部八个 renderer 的顶点／面／UV／颜色／法线／
+切线／权重／bindpose、完整稀疏表情帧及原始 renderer／controller 数据。
+保存后逐项读取数组核对；不重新生成或清空原生数据。bundle 中的外部
+依赖引用保持，但这一步不声称已导出全部外部材质／纹理依赖闭包。
+
+逻辑图只将 bind 位置和完整有序蒙皮字节一致的 UV 副本视为同一位置；
+原始顶点编号和网格不焊接、不删面。由闭合边界与骨骼支持确定原生
+FaceRoot 全权重颈圈及左右眼开口。由独立 index component 中的真实
+MouthCavity 完全权重点定位嘴内组件，保留整个组件而不是按权重切面。
+嘴内组件边界不自动等于可见唇缝；上下眼睑、内外唇缘、耳根的完整
+语义对应仍待制作。不能用这一输入步骤声称已经得到母版。
+
+参考头保存 decoder 实际 `v_template`，附完整状态和原始表面 landmark
+embedding；不用 OBJ 的模板位置，不使用程儿预测头作为零身份参考。
+原生 bind 网格仍未烘焙默认闭嘴帧，原始控制表及对应帧全部保存。
+
+重现命令（Face2Parameter 根目录）：
+
+```powershell
+.venv/Scripts/python.exe -m tools.native_head.mother_template_inputs `
+  --reference outputs/model_bridge_20261007/oral_asset_audit_v2.json `
+  --source-manifest outputs/chenger_mica_review_20261007/raw/manifest.json `
+  --out outputs/native_mother_template_20261008/inputs_fresh
+```
+
+首次输出 `outputs/native_mother_template_20261008/inputs_v1/` 已完成输入
+核对；重复运行必须使用新目录。收据、完整供体和模型数据均留在 ignored
+输出中。当前游戏未改动，母版配准、部件适配、实际 BP 接口匹配、身份
+基迁移尚未实现，完整目标保持 active。
