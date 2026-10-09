@@ -1,0 +1,190 @@
+{
+  "format": "native_neck_lighting_followup_receipt_v1",
+  "game_mutated": false,
+  "capture": {
+    "path": "C:\\Users\\13666\\Workspace\\HS2Mod\\artifacts\\chenger\\neck_mask_20261008\\head_body.json",
+    "sha256": "d6f45550d1f57bbebc5105f796ddc5ded9ceede82c3b3dd39ff9c62750295c64"
+  },
+  "package": {
+    "path": "C:\\Users\\13666\\Workspace\\Face2Parameter\\outputs\\appearance_20261008\\neck_mask_final\\Chenger.MICA.NativeHead.zipmod",
+    "sha256": "e96fe073f020780edb70c1636db4a5e2adb931958200bc0f762e5ea418539306"
+  },
+  "runtime_scalar_receipt": {
+    "path": "C:\\Users\\13666\\Workspace\\HS2Mod\\artifacts\\chenger\\neck_mask_20261008\\lighting_scalar_readback.json",
+    "sha256": "2a1a6a10d4c58bdf976e9a884b62edd8501b71f1e96e823f9e736dad67ebe196"
+  },
+  "runtime_scalars": [
+    {
+      "mesh": "o_head",
+      "property": "_OcclusionStrength",
+      "restored": false,
+      "materials": [
+        {
+          "material": "cf_m_skin_head_02 (Instance)",
+          "shader": "AIT/Skin True Face",
+          "float": 1
+        }
+      ]
+    },
+    {
+      "mesh": "o_head",
+      "property": "_BumpScale",
+      "restored": false,
+      "materials": [
+        {
+          "material": "cf_m_skin_head_02 (Instance)",
+          "shader": "AIT/Skin True Face",
+          "float": 1
+        }
+      ]
+    },
+    {
+      "mesh": "o_head",
+      "property": "_BumpScale2",
+      "restored": false,
+      "materials": [
+        {
+          "material": "cf_m_skin_head_02 (Instance)",
+          "shader": "AIT/Skin True Face",
+          "float": 0
+        }
+      ]
+    },
+    {
+      "mesh": "o_body_cf",
+      "property": "_OcclusionStrength",
+      "restored": false,
+      "materials": [
+        {
+          "material": "cf_m_skin_body_00 (Instance)",
+          "shader": "AIT/Skin True",
+          "float": 1
+        }
+      ]
+    },
+    {
+      "mesh": "o_body_cf",
+      "property": "_BumpScale",
+      "restored": false,
+      "materials": [
+        {
+          "material": "cf_m_skin_body_00 (Instance)",
+          "shader": "AIT/Skin True",
+          "float": 1
+        }
+      ]
+    },
+    {
+      "mesh": "o_body_cf",
+      "property": "_BumpScale2",
+      "restored": false,
+      "materials": [
+        {
+          "material": "cf_m_skin_body_00 (Instance)",
+          "shader": "AIT/Skin True",
+          "float": 0.495652169
+        }
+      ]
+    }
+  ],
+  "installed_bundles": [
+    {
+      "path": "E:\\HoneySelect2_ArcticFox\\abdata\\chara\\mm_base.unity3d",
+      "sha256": "492e705860fa30d6f4f332eceabefaadf69d28d3a2d831f83a897c2793bb6707"
+    },
+    {
+      "path": "E:\\HoneySelect2_ArcticFox\\abdata\\chara\\00\\ft_detail_b_00.unity3d",
+      "sha256": "2c160fec538df2b9a76f99026370c78c9e661797865e0d9ab36683a7ead071bb"
+    }
+  ],
+  "game": {
+    "product_name": "HoneySelect2",
+    "application_version": "1.0.0",
+    "unity_version": "2018.4.11f1",
+    "bridge_version": "0.31.13",
+    "game_assembly_version": "0.0.0.0",
+    "game_assembly_sha256": "d7e7e0d51403a0a3a71935a14487f063c6bf6f93f004b98b8f4b8b89047af770",
+    "skin_quality_setting": "FourBones"
+  },
+  "body_source_geometry_sha256": "ef257989441dcc9d4f71907abc843c42bfdf352d103c0cae9d4163cf6faec81c",
+  "skin_color_composition": {
+    "face_material": "create_skin_face",
+    "body_material": "create_skin_body",
+    "same_installed_shader_pointer": true,
+    "shader_name": "Create/skin color",
+    "scope": "Shared shader asset; not proof that every layer input is equal"
+  },
+  "limitations": [
+    "Static bind frames and level-0 raw asset texels; no GPU filtered color equality",
+    "Lighting variant not independently selected",
+    "Scalar readback is later than geometry capture and contains no overrides",
+    "Normal maps must be decoded, composed with actual strengths and re-expressed in destination TBN",
+    "No AO or normal continuity fix implemented by this read-only audit"
+  ],
+  "audit": {
+    "path": "C:\\Users\\13666\\Workspace\\Face2Parameter\\outputs\\neck_lighting_followup_20261008\\source_v4\\audit.json",
+    "sha256": "58c3ac68a91af31b5d2a2d58ded3477fd3d406265288a43870c71a81af0911d9"
+  },
+  "shader_fingerprints": {
+    "head": {
+      "name": "AIT/Skin True Face",
+      "dxbc_sha256": "06be1e322421ad5400e226a98f922457c6d725d9ebc9e1afaf68be6c370a69e5",
+      "blob_index": 16,
+      "live_variant_verified": false
+    },
+    "body": {
+      "name": "AIT/Skin True",
+      "dxbc_sha256": "c44af8b72bd86bfb570bea8994f8a56bbbeefa66a3e553e0502f3ec48caabf16",
+      "blob_index": 32,
+      "live_variant_verified": false
+    }
+  },
+  "source_fields": {
+    "head_ao": {
+      "asset": "cf_head_02_00_o",
+      "width": 16,
+      "height": 16,
+      "texture_format": 4,
+      "serialized_color_space": 0,
+      "pixels_sha256": "34cfd029fad3bcac2285a3c2c669ac33dbf553c72814ae52a98020fa58359645"
+    },
+    "head_normal": {
+      "asset": "cf_head_02_00_n",
+      "width": 16,
+      "height": 16,
+      "texture_format": 4,
+      "serialized_color_space": 0,
+      "pixels_sha256": "02857707d401e46b3ebd3b7222e5e365bd74d949ac951f72d6d50b3aecf9db5f"
+    },
+    "body_ao": {
+      "asset": "cf_body_00_o",
+      "width": 4096,
+      "height": 4096,
+      "texture_format": 10,
+      "serialized_color_space": 0,
+      "pixels_sha256": "e740be98f24c6fe1446aab389009b91e3e27ee562034df421e3b63ecd0a906a8"
+    },
+    "body_base_normal": {
+      "asset": "cf_body_base_n",
+      "width": 4096,
+      "height": 4096,
+      "texture_format": 12,
+      "serialized_color_space": 0,
+      "pixels_sha256": "b0a9fb4ee6019b2120ad94a66e5d73c93d3ff5623d1fd0e42c7782cc0f966303"
+    },
+    "body_detail_normal": {
+      "asset": "cf_body_00_n",
+      "width": 2048,
+      "height": 2048,
+      "texture_format": 12,
+      "serialized_color_space": 0,
+      "pixels_sha256": "f3a85fd9b7051cb4bb59f0873c518b796925b073d6d2415f0408ef2c906749d5"
+    }
+  },
+  "fixes_still_pending": [
+    "packed AO/gloss neck migration",
+    "actual BP interface geometric normals",
+    "tangent-space normal transfer"
+  ],
+  "package_source_arrays_match_capture": true
+}
