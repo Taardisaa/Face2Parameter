@@ -57,3 +57,24 @@
 [HS2Mod 说明](../../HS2Mod/docs/hs2_native_mother_neck_transition.md)。此步骤只处理颈部几何；
 不会宣称原来未完成的非仿射唇形、材质外观、全部表情／滑杆／ABMX已完成。
 提取／许可网格、候选和完整证据继续位于 ignored outputs 与 artifacts。
+
+## 后脑轮廓局部上移／前收
+
+用户随后要求后脑不要那么靠后，稍往上调整。新增
+`mother_occipital_adjustment`，从已接好的 `chenger_neck_v4` 出发，不重复
+整体上提。以当前原生耳骨主要支持区的高度确定局部位移尺度：最大向上
+为耳高的 0.18，向前为 0.15。这些是可配置的显式资产创作设置。
+
+后部深度、由颈到后脑的高度、向颅顶的高度各用五次 C2 衰减；脸和耳部
+保护区、下端两排接口顶点及颅顶保持原位，顶点 X 不变。不存在强制左右
+对称或整体旋转。新形状继续走完整八部件／全表情帧适配和原生打包链。
+完整头壳检查无新增穿插，数据见 ignored `chenger_occipital_v5` 和
+`chenger_occipital_quality_v5`。
+
+```powershell
+.venv/Scripts/python.exe -m tools.native_head.mother_occipital_adjustment --candidate outputs/native_mother_template_20261008/chenger_neck_v4 --out outputs/native_mother_template_20261008/chenger_occipital_v5
+```
+
+后续 component_adaptation、reference_bindings、bundle_candidate、registration
+沿用上方命令，将候选替换为 `chenger_occipital_v5`，输出／asset-key 使用
+独立 v5。原 v4 保留，可直接通过原人物卡恢复。
