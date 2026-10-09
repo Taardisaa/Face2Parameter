@@ -142,7 +142,8 @@ embedding；不用 OBJ 的模板位置，不使用程儿预测头作为零身份
   --out outputs/native_mother_template_20261008/inputs_fresh
 ```
 
-首次输出 `outputs/native_mother_template_20261008/inputs_v1/` 已完成输入
-核对；重复运行必须使用新目录。收据、完整供体和模型数据均留在 ignored
+输出 `outputs/native_mother_template_20261008/inputs_v2/` 已完成输入核对；
+早先 v1 的外部依赖字段措辞不准确，原结果保留，v2 明确仅保持引用、
+没有导出依赖闭包。重复运行必须使用新目录。收据、完整供体和模型数据均留在 ignored
 输出中。当前游戏未改动，母版配准、部件适配、实际 BP 接口匹配、身份
 基迁移尚未实现，完整目标保持 active。

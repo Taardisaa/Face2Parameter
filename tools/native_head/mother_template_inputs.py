@@ -212,7 +212,7 @@ def prepare(reference, source_manifest, out):
         native_rest_and_closed_state_distinguished=True,
         closed_reference_policy="Original controller patterns and all sparse frames exported; no closed frame baked into bind mesh",
         mother_candidate_generated=False, identity_basis_migrated=False,
-        semantics_complete=False, external_material_dependencies_preserved_in_original_bundle=True,
+        semantics_complete=False, external_dependency_references_preserved=True,
         external_dependency_closure_exported=False)
     save_json(out/"receipt.json", report)
     print(json.dumps(dict(output=str(out.resolve()), all_native_renderers_exported=True,
