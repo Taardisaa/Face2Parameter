@@ -13,7 +13,7 @@ import numpy as np
 from matplotlib.path import Path as PolygonPath
 
 from tools.model_bridge.artifact import sha
-from tools.model_bridge.scan_accuracy import TriangleSurface
+from tools.native_head.mother_oriented_surface import OrientedSurface
 from tools.native_head.mother_template_inputs import source_file
 
 
@@ -26,7 +26,7 @@ class RegionalTargets:
             raise ValueError("Official FLAME region mask differs from audited source")
         masks = pickle.loads(Path(mask_path).read_bytes(), encoding="latin1")
         self.labels = np.full(int(inverse.max())+1, "general", dtype="U16")
-        self.surfaces = {"general": TriangleSurface(target[target_faces])}
+        self.surfaces = {"general": OrientedSurface(target[target_faces])}
         self.receipt = dict(source_masks=source_file(mask_path), regions={},
             policy="Original source masks plus dominant native rig support; correspondence partitions, not anatomical cuts",
             anatomical_boundaries_certified=False)
@@ -45,10 +45,32 @@ class RegionalTargets:
             if not selected.any():
                 raise ValueError("No complete source ear triangles")
             self.labels[inverse[ids]] = side+"_ear"
-            self.surfaces[side+"_ear"] = TriangleSurface(target[target_faces[selected]])
+            self.surfaces[side+"_ear"] = OrientedSurface(target[target_faces[selected]])
             self.receipt["regions"][side+"_ear"] = dict(native_vertex_ids=ids.tolist(),
                 native_bone_names=[names[i] for i in bones], source_mask=key,
                 source_faces=target_faces[selected].tolist())
+        for side in ('L', 'R'):
+            bones = [i for i, name in enumerate(names) if name.startswith('cf_J_Eye') and name.endswith('_'+side)]
+            support = (native['bone_w']*np.isin(native['bone_idx'], bones)).sum(1)
+            ids = np.flatnonzero(support>.5)
+            if not len(ids):
+                raise ValueError('No native dominant eyelid rig support')
+            sign = np.sign(native['verts'][ids,0].mean())
+            keys = [key for key in ('left_eye_region','right_eye_region')
+                    if np.sign(target[np.asarray(masks[key],int),0].mean())==sign]
+            if len(keys)!=1:
+                raise ValueError('Cannot disambiguate actual source eyelid sides')
+            key = keys[0]
+            selected = np.isin(target_faces,masks[key]).all(1)
+            if not selected.any():
+                raise ValueError('No source eyelid-region triangles')
+            label = side+'_lid'
+            self.labels[inverse[ids]] = label
+            self.surfaces[label] = OrientedSurface(target[target_faces[selected]])
+            self.receipt['regions'][label] = dict(native_vertex_ids=ids.tolist(),
+                native_bone_names=[names[i] for i in bones],source_mask=key,
+                source_faces=target_faces[selected].tolist(),
+                policy='Dominant original lid-bone support; not a certified anatomical cut')
         # Original annotated donor pigment contour is a candidate vermilion
         # envelope. It is not reused as a model cut or an inner-mouth boundary.
         lip_uv = [a["uv"] for a in anchors["annotations"]
@@ -66,11 +88,12 @@ class RegionalTargets:
         self.receipt['native_mouth_rig_support_vertex_ids'] = mouth_ids.tolist()
         self.receipt['native_mouth_bone_names'] = [names[i] for i in mouth_bones]
         self.receipt["lip_policy"] = "No nearest-surface attraction in donor mouth rig support or pigment envelope; outer-lip anchors and ARAP, no removal"
+        self.receipt['oriented_surface_policy'] = 'Closest complete target triangle in same normal hemisphere, using ARAP-transported source surface normals'
 
-    def closest(self, positions):
+    def closest(self, positions, normals):
         result = np.empty_like(positions)
         for label, surface in self.surfaces.items():
             selected = np.flatnonzero(self.labels == label)
             if len(selected):
-                result[selected] = surface.closest(positions[selected])[0]
+                result[selected] = surface.closest_oriented(positions[selected], normals[selected])[0]
         return result

@@ -297,3 +297,60 @@ AssignedWeightsAndSetBounds 路径，需在最终集成核对。
 接口受光、完整语义、UV metric、所有部件间相交、独立注册和有限原生
 验收仍在原目标内；完整表情／滑杆／ABMX 的范围认证另留后续里程碑。
 全部工作未调用游戏、Computer Use、参数扫描、训练或增加新依赖。
+
+## 保留整体头形的局部修复（2026-10-08）
+
+用户明确要求：整体结构已经接近，只修小错误，不再整头重拟合。
+当前固定输入为 `shell_v6`；此前整头 RBF 的 `kernel_v1` 未通过几何／
+Jacobian 检查，源码只归档，未安装，不纳入后续路径。v6 的同侧法线
+最近点限制也未解决薄曲面的全部折叠，不能作为成功的对应证明。
+
+局部制作工具 `mother_local_repair.py` 从已记录的新增穿插面及两圈拓扑
+邻域建立修复区域，合并实际 UV 副本；区域外所有顶点、真实颈圈及两侧
+眼睛切口点精确固定。耳／眼等区域使用原生默认参考的局部细节和固定
+边界位移；上下唇使用共同的原生细节摆放，避免两片很近的曲面分别移动。
+这是新资产的制作算法，不是游戏形变逻辑的替代或完整解剖对应。
+
+`mother_local_contacts.py` 只在上述范围内解决剩余交叉。源三角形提供
+初始分离方向；每次移动后，受影响三角形与**整个头**重新分类，未变化
+的面沿用经校验的结果，不能漏掉新产生的邻接穿插。最后右内眼角的一小
+段折返使用固定周围点的正权重平滑；最终四个逻辑顶点的联立接触约束
+使用当前实际三角形平面。原生模型的全局半平面次序不能作为新曲面的
+解剖不变量，收据明确记录这两对的分离方向来源；没有改相交谓词或
+降低最终的 `no_new_crossings` 要求。
+
+较差的眼角前移、切口／可见边缘候选对应和整头位移场实验全部保留。
+最终选择 **`local_contacts_v16`**，没有采用这些会增加穿插的实验。
+独立完整检查 `local_contacts_quality_v16/receipt.json` 返回
+`no_new_crossings=true`。`locality_acceptance.json` 另核对：区域外、
+颈圈、全部眼切口、UV 副本保持；没有删面，全部其他原始数组保持，
+所有三角形有限且不塌陷。源资产原有交叉单独保留，并非宣布源资产
+绝对无相交。工具逻辑检查 14 项、既有几何谓词检查 19 项通过。
+
+同一比例的完整正面／斜侧／侧面修正前后，以及修改区域图在
+`outputs/native_mother_template_20261008/local_contacts_review_v16/before_after_regions.png`。
+这是无贴图网格示意，**不是游戏截图**。肤色、绑定、表情及所有配套
+部件还需随这个最终参考重新适配；本次完成的是头壳局部静态几何修复，
+不是整套可安装母版的交付。游戏、程儿资产及人物卡未改变。
+
+从冻结的前一局部候选重现最终步骤（模型／网格保持 ignored，输入收据
+及数组 SHA 校验是命令的前置合同）：
+
+```powershell
+.venv/Scripts/python.exe -m tools.native_head.mother_local_contacts `
+  --candidate outputs/native_mother_template_20261008/local_contacts_v7 `
+  --quality outputs/native_mother_template_20261008/local_contacts_quality_v7 `
+  --out outputs/native_mother_template_20261008/local_contacts_fresh `
+  --smooth-residual --joint
+.venv/Scripts/python.exe -m tools.native_head.mother_surface_quality `
+  --candidate outputs/native_mother_template_20261008/local_contacts_fresh `
+  --out outputs/native_mother_template_20261008/local_quality_fresh `
+  --source-quality outputs/native_mother_template_20261008/surface_quality_v6
+.venv/Scripts/python.exe -m tools.native_head.mother_local_review `
+  --base outputs/native_mother_template_20261008/shell_v6 `
+  --candidate outputs/native_mother_template_20261008/local_contacts_fresh `
+  --out outputs/native_mother_template_20261008/local_review_fresh
+```
+
+下一步仅将通过的参考带入已有部件／法线／表情适配步骤，继续保护
+整体轮廓；不重新开展整头配准、照片采样或新模型训练。

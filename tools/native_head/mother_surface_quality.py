@@ -20,7 +20,7 @@ def crossing_pairs(report):
             if r['kind'] in ('proper_crossing', 'coplanar_overlap')}
 
 
-def check(candidate, out):
+def check(candidate, out, source_quality=None):
     if out.exists():
         raise FileExistsError('Preserve prior quality evidence; use fresh directory')
     arrays = dict(np.load(candidate/'o_head_candidate.npz', allow_pickle=False))
@@ -32,8 +32,21 @@ def check(candidate, out):
         raise ValueError('Candidate geometry changed')
     faces = arrays['faces']
     reports = []
+    reused_source = None
+    if source_quality is not None:
+        previous = json.loads((source_quality/'receipt.json').read_text())
+        if sha(previous['arrays']['path']) != previous['arrays']['sha256']:
+            raise ValueError('Cached source geometry changed')
+        source_arrays = np.load(previous['arrays']['path'], allow_pickle=False)
+        for key in ('original_vertices', 'faces'):
+            if not np.array_equal(arrays[key], source_arrays[key]):
+                raise ValueError('Cached source uses different '+key)
+        before = {tuple(pair) for pair in previous['source_crossings']}
+        reused_source = source_file(source_quality/'receipt.json')
     out.mkdir(parents=True)
     for name, vertices in (('original_default', arrays['original_vertices']), ('candidate', arrays['verts'])):
+        if name == 'original_default' and reused_source:
+            continue
         tri = vertices[faces]
         area2 = np.linalg.norm(np.cross(tri[:,1]-tri[:,0], tri[:,2]-tri[:,0]), axis=1)
         if np.any(area2 == 0):
@@ -43,13 +56,18 @@ def check(candidate, out):
         save_json(out/(name+'_intersections.json'), report)
         reports.append(report)
         print(name+' triangle classification finished', flush=True)
-    before, after = map(crossing_pairs, reports)
+    if reused_source:
+        after = crossing_pairs(reports[0])
+    else:
+        before, after = map(crossing_pairs, reports)
     added = after-before
     save_json(out/'receipt.json', dict(format='native_mother_surface_quality_v1',
         candidate=source_file(candidate/'receipt.json'), arrays=source_file(candidate/'o_head_candidate.npz'),
         legacy_candidate_receipt_without_array_hash=recorded is None, code=source_file(Path(__file__)),
         narrow_phase_code=source_file(Path('tools/geometry_quality/mesh_quality.py')),
-        reports=[source_file(out/(n+'_intersections.json')) for n in ('original_default','candidate')],
+        reports=[source_file(out/(n+'_intersections.json')) for n in ('original_default','candidate')
+                 if (out/(n+'_intersections.json')).exists()],
+        reused_byte_equal_source_quality=reused_source,
         source_crossings=sorted(before), candidate_crossings=sorted(after), added_crossings=sorted(added),
         no_new_crossings=not added, shared_vertex_pairs_checked=True,
         installed=False, game_mutated=False, deliverable=False,
@@ -63,5 +81,7 @@ if __name__=='__main__':
     parser=argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--candidate',type=Path,required=True)
     parser.add_argument('--out',type=Path,required=True)
+    parser.add_argument('--source-quality',type=Path)
     args=parser.parse_args()
-    check(args.candidate.resolve(),args.out.resolve())
+    check(args.candidate.resolve(),args.out.resolve(),
+          args.source_quality.resolve() if args.source_quality else None)

@@ -21,6 +21,7 @@ from tools.native_head.mother_template_inputs import save_json, source_file
 from tools.native_head.mother_uv_anchors import constraints as uv_constraints
 from tools.native_head.mother_arap import SpokesARAP
 from tools.native_head.mother_surface_targets import RegionalTargets
+from tools.native_head.mother_oriented_surface import logical_normals
 
 
 def path_between(loop, start, end):
@@ -156,6 +157,7 @@ def candidate(inputs, out, native_profile, texture_manifest, source_masks, defau
     data_weight[oral] = 0  # Do not snap oral interiors onto external face skin.
     data_weight[surface.preserve_native_lips] = 0
     arap = SpokesARAP(v0, f)
+    source_normals = logical_normals(v0, f)
     x = v0.copy()
     history = []
     # Shape-preserving asset authoring. Orientation-guarded line search avoids
@@ -169,7 +171,8 @@ def candidate(inputs, out, native_profile, texture_manifest, source_masks, defau
                               [C_free, sparse.csc_matrix((C.shape[0], C.shape[0]))]], format="csc")
         factor = splu(system)
         for iteration in range(24):
-            q = surface.closest(x)
+            correspondence_normals = np.einsum('nij,nj->ni', arap.rotations(x), source_normals)
+            q = surface.closest(x, correspondence_normals)
             rhs = data_weight[:, None]*q+strength*arap.rhs(x)
             solved = factor.solve(np.vstack([rhs[free]-A_pin@pin_positions,
                                              anchor_positions-C_pin@pin_positions]))
@@ -216,6 +219,7 @@ def candidate(inputs, out, native_profile, texture_manifest, source_masks, defau
         uv_anchor_code=source_file(Path(__file__).with_name("mother_uv_anchors.py")),
         arap_code=source_file(Path(__file__).with_name("mother_arap.py")),
         regional_target_code=source_file(Path(__file__).with_name("mother_surface_targets.py")),
+        oriented_surface_code=source_file(Path(__file__).with_name('mother_oriented_surface.py')),
         regional_targets=surface.receipt,
         default_reference=source_file(default_reference/'receipt.json'),
         candidate_geometry_state='Fitted neutral closed-mouth/open-eye reference; not an authored bind mesh',

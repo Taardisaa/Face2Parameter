@@ -11,10 +11,23 @@ from tools.native_head.mother_default_pose import controller_weights, dense_fram
 from tools.native_head.mother_component_adaptation import adapt_frames
 from tools.native_head.mother_reference_bindings import complete_hierarchy
 from tools.native_head.mother_surface_warp import SurfaceWarp, direction_maps
+from tools.native_head.mother_oriented_surface import OrientedSurface
 from src.hs2_mesh_deform import HeadRig
 
 
 class MotherAuthoringTests(unittest.TestCase):
+    def test_near_wrong_side_cannot_hide_further_compatible_surface(self):
+        triangles=np.array([[[0.,0,0],[0,1,0],[1,0,0]],
+                            [[0,0,1],[1,0,1],[0,1,1]]])
+        surface=OrientedSurface(triangles)
+        point=np.array([[.2,.2,.1]])
+        self.assertEqual(surface.closest(point)[1][0],0)
+        closest, ids, _=surface.closest_oriented(point,[[0.,0,1]])
+        self.assertEqual(ids[0],1)
+        np.testing.assert_allclose(closest,[[.2,.2,1]])
+        with self.assertRaisesRegex(ValueError,'No target triangle'):
+            surface.closest_oriented(point,[[1.,0,0]])
+
     def test_rigid_motion_is_stationary(self):
         vertices = np.array([[0., 0, 0], [1, 0, 0], [0, 1, 0], [0, 0, 1]])
         faces = np.array([[0, 1, 2], [0, 3, 1], [0, 2, 3], [1, 3, 2]])
