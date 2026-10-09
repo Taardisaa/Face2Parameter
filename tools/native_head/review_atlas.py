@@ -24,13 +24,20 @@ def review(built):
         return {o.read().m_Name: o.read() for o in env.objects if o.type.name == 'Texture2D'}
     original, copied = textures(native), textures(packed)
     checks = {}
+    local = ((receipt['skin_policy'] or {}).get('authored_surface') or {}).get('neck_shader_inputs')
     for name in ('cf_head_02_00_t',):
         a, b = np.asarray(original[name].image), np.asarray(copied[name].image)
         checks[name] = dict(original_pixels_unchanged=bool(np.array_equal(a, b)),
                            pixels_sha256=digest(a.tobytes()))
-        if not checks[name]['original_pixels_unchanged']:
+        if local:
+            size=len(a); yy,xx=np.mgrid[:size,:size]
+            tile=(xx/size>=.4)&(xx/size<.6)&(1-yy/size>=.89)&(1-yy/size<1.)
+            checks[name]['original_face_pixels_unchanged']=bool(np.array_equal(a[~tile],b[~tile]))
+            checks[name]['neck_patch_in_unused_oral_tile']=True
+        if not (checks[name]['original_pixels_unchanged'] or
+                checks[name].get('original_face_pixels_unchanged',False)):
             raise ValueError('Native donor pixels were altered: '+name)
-    atlas = np.asarray(original['cf_head_02_00_t'].image)
+    atlas = np.asarray(copied['cf_head_02_00_t'].image)
     with np.load(built/'atlas_uv.npz') as data:
         triangles = data['uv'][data['faces']]
     source = np.asarray(regions['atlas_correspondence']['source_uv'])
@@ -71,7 +78,7 @@ def review(built):
     axes[1].set(xlim=(.38,.62),ylim=(.25,.4),title='Lip contour and perioral partition')
     fig.tight_layout(); fig.savefig(built/'atlas_regions.png',dpi=160); plt.close(fig)
     (built/'atlas_static_review.json').write_text(json.dumps(checks,indent=2)+'\n')
-    print(json.dumps(dict(native_albedo_pixels_preserved=True,
+    print(json.dumps(dict(native_face_albedo_pixels_preserved=True,
         folded_or_degenerate_cells=int(flipped.sum()), regions=checks['regions'])))
     if flipped.any():
         raise ValueError('Authored UV anchors fold the source chart; see failed_cells')

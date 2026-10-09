@@ -1,5 +1,6 @@
 """Check an appearance-only package keeps geometry and valid streamed URIs."""
 import argparse
+import hashlib
 import json
 from pathlib import Path
 import zipfile
@@ -38,6 +39,8 @@ def main():
     with zipfile.ZipFile(args.built/'Chenger.MICA.NativeHead.zipmod') as archive:
         for path in ('head', 'skin'):
             env = UnityPy.load(archive.read('abdata/chara/codex/chenger/'+path+'.unity3d'))
+            if path == 'skin':
+                packed_skin = env
             cab = next(k for k, v in env.file.files.items() if hasattr(v, 'objects'))
             if path == 'head' and region:
                 # Follow the actual drawing material's PPtr, not just a texture
@@ -50,7 +53,9 @@ def main():
                     raise ValueError('Imported face mask points outside its private bundle')
                 mask = next(o for o in env.objects if o.path_id == pointer['m_PathID']).read()
                 pixels = np.asarray(mask.image)
-                if mask.m_Name != region['texture_name'] or not np.all(pixels == region['rgba']):
+                expected_pixels = (np.all(pixels == region['rgba']) if 'rgba' in region else
+                    hashlib.sha256(pixels.tobytes()).hexdigest() == region['pixels_sha256'])
+                if mask.m_Name != region['texture_name'] or not expected_pixels:
                     raise ValueError('Serialized face mask retains old atlas regions')
                 floats = dict(props['m_Floats'])
                 if floats['_DetailNormalMapScale'] != 0 or floats['_Riality'] != 0:
@@ -75,7 +80,26 @@ def main():
     if region:
         if not region_checked:
             raise ValueError('No actual face region mask evidence')
-        checks['private_face_region_mask_uniform_skin'] = True
+        checks['private_face_region_mask_matches_declared_pixels'] = True
+    local = ((receipt.get('skin_policy') or {}).get('authored_surface') or {}).get('neck_shader_inputs')
+    if local:
+        parents = np.load(args.built/'atlas_uv.npz')['parent_face_ids']
+        with np.load(args.previous/'o_head.npz') as old, np.load(args.built/'o_head.npz') as new:
+            if not np.array_equal(old['uv'][old['faces']][parents >= 0],new['uv'][new['faces']][parents >= 0]):
+                raise ValueError('Neck UV authoring changed retained face UV corners')
+        with zipfile.ZipFile(args.previous/'Chenger.MICA.NativeHead.zipmod') as archive:
+            previous_skin=UnityPy.load(archive.read('abdata/chara/codex/chenger/skin.unity3d'))
+        def albedo(env):
+            return np.asarray(next(o.read().image for o in env.objects if o.type.name=='Texture2D'
+                                   and o.read().m_Name=='cf_head_02_00_t'))
+        old_image,new_image=albedo(previous_skin),albedo(packed_skin)
+        size=old_image.shape[0]; yy,xx=np.mgrid[:size,:size]
+        tile=(xx/size>=.4)&(xx/size<.6)&(1-yy/size>=.89)&(1-yy/size<1.)
+        if not np.array_equal(old_image[~tile],new_image[~tile]):
+            raise ValueError('Neck albedo bake altered original face/scalp texels')
+        checks.update(retained_face_uv_corners_unchanged=True,face_albedo_texels_unchanged=True,
+                      authored_neck_mask_pixel_hash_checked=True,
+                      neck_scope='Local mask continuity only; AO/normal continuity not certified')
     args.out.write_text(json.dumps(checks, indent=2)+'\n')
     print(json.dumps({'geometry_preserved': True, 'streamed_texture_uris_valid': True}))
 

@@ -13,6 +13,7 @@ torch==2.11.0
 torchvision==0.26.0
 numpy==2.4.3
 scipy==1.17.1  # Exact triangle-surface query acceleration for paired scan diagnostics.
+xatlas==0.0.11  # Native head neck-only UV authoring; never modifies geometry.
 opencv-python==4.13.0.92
 tensorboard==2.20.0
 tqdm==4.67.3

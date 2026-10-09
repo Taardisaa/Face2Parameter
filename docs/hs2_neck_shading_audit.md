@@ -60,7 +60,7 @@ G 通道控制微细节及高光分支；但当前头部 `_DetailNormalMapScale=
 ## 可重现依据
 
 ```powershell
-.venv/Scripts/python.exe -m tools.native_head.audit_neck_shading --capture ../HS2Mod/artifacts/chenger/native_skin_retarget_20261008/final_v6/head_body.json --inputs ../HS2Mod/artifacts/chenger/native_skin_retarget_20261008/manifest.json --package E:/HoneySelect2_ArcticFox/mods/Codex/Chenger.MICA.NativeHead.zipmod --out outputs/neck_shading_audit_20261008/fresh
+.venv/Scripts/python.exe -m tools.native_head.audit_neck_shading --capture ../HS2Mod/artifacts/chenger/native_skin_retarget_20261008/final_v6/head_body.json --inputs ../HS2Mod/artifacts/chenger/native_skin_retarget_20261008/manifest.json --package ../HS2Mod/artifacts/chenger/neck_mask_20261008/before_0.1.5.zipmod --out outputs/neck_shading_audit_20261008/fresh
 ```
 
 入口不调用游戏。输入为现有几何捕获、已提取且校验指纹的原生皮肤图、
@@ -75,3 +75,7 @@ G 通道控制微细节及高光分支；但当前头部 `_DetailNormalMapScale=
 点纹理读数是源 RGBA8 的 level-0 最近 texel，不等同过滤后的 GPU 采样。
 当前照明 variant 未独立确定；本次证明的是明确编译分支中的输入用途，
 不认证完整帧渲染或某项色差占比。
+
+以上审查对应修正前 0.1.5。0.1.6 已隔离颈部 UV 并修正遮罩，安装路径内容
+已改变；重现本次成因审查应使用上述保存的 0.1.5 包。新包的对应检查见
+[颈部遮罩修正](hs2_neck_mask_transition.md)，AO／接口法线仍未完成。

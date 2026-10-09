@@ -1,0 +1,173 @@
+{
+  "format": "native_neck_mask_transition_receipt_v1",
+  "date": "2026-10-08",
+  "package_version": "0.1.6",
+  "package": {
+    "path": "C:\\Users\\13666\\Workspace\\Face2Parameter\\outputs\\appearance_20261008\\neck_mask_final\\Chenger.MICA.NativeHead.zipmod",
+    "sha256": "e96fe073f020780edb70c1636db4a5e2adb931958200bc0f762e5ea418539306"
+  },
+  "source_policy": {
+    "format": "native_neck_shader_inputs_v1",
+    "source": {
+      "capture_sha256": "4feb796d44fac07f24328e3af6e713967bc5098aeb2793a7f107b01421ed4196",
+      "body_source_geometry_sha256": "ef257989441dcc9d4f71907abc843c42bfdf352d103c0cae9d4163cf6faec81c",
+      "bundle": "E:\\HoneySelect2_ArcticFox\\abdata\\chara\\mm_base.unity3d",
+      "bundle_sha256": "492e705860fa30d6f4f332eceabefaadf69d28d3a2d831f83a897c2793bb6707",
+      "texture": "cf_body_00_mask",
+      "source_pixels_sha256": "7876d7634835ec2d5a9297fbf228d6a0e5f6796112f6b69a858a8445adb407ff",
+      "body_neck_rgba": [
+        0,
+        0,
+        0,
+        153
+      ],
+      "interface_match_max": 3.5838633449120297e-06
+    },
+    "reserved_uv_box": [
+      0.402,
+      0.902,
+      0.598,
+      0.988
+    ],
+    "atlas_library": "xatlas==0.0.11",
+    "chart_count": 38,
+    "uv_solver_length_unit_scale": 10000,
+    "game_vertices_scaled": false,
+    "float32_collapsed_uv_faces_recharted": [
+      7446,
+      7708,
+      7927,
+      8144,
+      8145,
+      8362,
+      8363,
+      8580,
+      8581,
+      8798,
+      8799
+    ],
+    "mask_path": "C:\\Users\\13666\\Workspace\\Face2Parameter\\outputs\\appearance_20261008\\neck_mask_final\\neck_region_mask.png",
+    "mask_pixels_sha256": "8bf5eec72ecef8551732588e978df2b545635586d26f13a88d9d38282983973a",
+    "albedo_path": "C:\\Users\\13666\\Workspace\\Face2Parameter\\outputs\\appearance_20261008\\neck_mask_final\\neck_albedo_atlas.png",
+    "albedo_pixels_sha256": "4a661faed46109b4872d817a105008ba9b22efef7fca81e45ed3f3d245c15051",
+    "original_albedo_outside_unused_tile_unchanged": true,
+    "face_uv_corners_unchanged": true,
+    "geometry_modified": false,
+    "ao_and_geometric_normals_matched": false,
+    "mask_policy": "Actual body neck mask at collar; topology-row smoothstep to unchanged face policy",
+    "limitations": "Current authored five-row connector and compatible constant native neck mask; AO/normal continuity remains open",
+    "neck_face_count": 1509
+  },
+  "static_checks": {
+    "o_head": {
+      "verts": true,
+      "normals": true,
+      "bone_idx": true,
+      "bone_w": true,
+      "bindpose": true,
+      "triangle_count": true
+    },
+    "o_eyebase_L": {
+      "verts": true,
+      "faces": true,
+      "normals": true,
+      "bone_idx": true,
+      "bone_w": true,
+      "bindpose": true
+    },
+    "o_eyebase_R": {
+      "verts": true,
+      "faces": true,
+      "normals": true,
+      "bone_idx": true,
+      "bone_w": true,
+      "bindpose": true
+    },
+    "all_texture_archive_uris_relinked": true,
+    "streamed_textures_checked": 51,
+    "scope": "Static asset integrity and fixed geometry; runtime appearance is separate",
+    "private_face_region_mask_matches_declared_pixels": true,
+    "retained_face_uv_corners_unchanged": true,
+    "face_albedo_texels_unchanged": true,
+    "authored_neck_mask_pixel_hash_checked": true,
+    "neck_scope": "Local mask continuity only; AO/normal continuity not certified"
+  },
+  "source_rim_rgba_matches": [
+    0,
+    0,
+    0,
+    153
+  ],
+  "native_asset": {
+    "actual_head_matches_serialized_package": {
+      "verts": true,
+      "normals": true,
+      "uv": true,
+      "bone_idx": true,
+      "bone_w": true,
+      "triangles": true,
+      "bindpose": true,
+      "body_unchanged": true
+    },
+    "body_unchanged": true,
+    "mask_name": "codex_imported_head_skin_region_mask",
+    "mask_size": [
+      2048,
+      2048
+    ],
+    "actual_interface_readback_rgba": [
+      [
+        0,
+        0,
+        0,
+        153
+      ]
+    ],
+    "head_source_geometry_sha256": "2aab598141c88658e8bee0d7e82d73bba2e10ddb07ca35de9e6a2f04baca6cd8",
+    "scope": "Actual native asset binding, source channels and direct linear mask readback; no complete color/AO/normal acceptance"
+  },
+  "actual_geometry_capture": {
+    "path": "C:\\Users\\13666\\Workspace\\HS2Mod\\artifacts\\chenger\\neck_mask_20261008\\head_body.json",
+    "sha256": "d6f45550d1f57bbebc5105f796ddc5ded9ceede82c3b3dd39ff9c62750295c64"
+  },
+  "native_capture": {
+    "path": "C:\\Users\\13666\\Workspace\\HS2Mod\\artifacts\\chenger\\neck_mask_20261008\\capture.native.json",
+    "sha256": "bcf2e7f867ca8f618a17b8191cbd2d6f7fe86a8e81cc5a6b9b303ef002e29769"
+  },
+  "native_image": {
+    "path": "C:\\Users\\13666\\Workspace\\HS2Mod\\artifacts\\chenger\\neck_mask_20261008\\native_front.png",
+    "sha256": "b96e3602410f4e507a6fa911e65310f70fff96cf06cafa025c454e75d269e871"
+  },
+  "card": {
+    "path": "E:\\HoneySelect2_ArcticFox\\UserData\\chara\\female\\Codex\\程儿_颈部遮罩修正_20261008.png",
+    "sha256": "2b2e618864766a72fcca53a70f1bee27862e4888c61ad9a7c59d11966d22f95c"
+  },
+  "card_save": {
+    "path": "E:\\HoneySelect2_ArcticFox\\UserData\\chara\\female\\Codex\\程儿_颈部遮罩修正_20261008.png",
+    "source_head_embedded": false,
+    "source_geometry_sha256": null,
+    "external_mesh_required_for_reload": false
+  },
+  "native_full_card_reload_verified": true,
+  "dll_modified": false,
+  "game_restarts_this_milestone": 1,
+  "translucency_actual_readback": {
+    "path": "C:\\Users\\13666\\Workspace\\HS2Mod\\artifacts\\chenger\\neck_mask_20261008\\translucency_readback.json",
+    "sha256": "a0066bac4be1a8700f34bcc5116930edfb29ee0862deea4e51a85b98779add6b"
+  },
+  "visible_review": {
+    "face_and_scalp_appearance_retained": true,
+    "neck_color_difference_remains": true,
+    "complete_shading_accepted": false
+  },
+  "pending": [
+    "AO continuity",
+    "actual body/head interface normals",
+    "complete neutral geometry generality goal"
+  ],
+  "preexisting_unrelated_drafts_preserved": true,
+  "complete_source_policy": {
+    "path": "C:\\Users\\13666\\Workspace\\Face2Parameter\\outputs\\appearance_20261008\\neck_mask_final\\neck_shader_inputs.json",
+    "sha256": "bfa075bc1dc3edb6a6d69108aee68c37960db8d1e1fd9b78ce2951e1c9fb52a3"
+  }
+}
