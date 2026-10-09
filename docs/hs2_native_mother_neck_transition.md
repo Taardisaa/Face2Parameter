@@ -46,6 +46,14 @@
 平移、无位移时保持原网格，以及受保护特征与接口冲突时拒绝执行。
 打包重读核对全部八部件、全部原始表情帧和未修改纹理资源。
 
-原生游戏加载和最终画面结果见配套 HS2Mod 文档。此步骤只处理颈部几何；
+新版已原生加载，实际八部件来源数组／通道与完整打包结果一致，BP 身体
+来源几何未变，接口位置仍吻合。原生保存并重新加载的人物卡为
+`Chenger_native_neck_v4_game_01.png`。四角度截图显示耳后回折台阶明显
+缓解，下巴到前颈较顺，仍有明显受光分界；不宣称完全无缝。
+证据见 `chenger_game_acceptance_v4.json`、`chenger_neck_runtime_v4.json`
+以及 HS2Mod ignored `artifacts/native_mother_20261008/neck_v4_final*`。
+
+原生游戏加载和最终画面结果见
+[HS2Mod 说明](../../HS2Mod/docs/hs2_native_mother_neck_transition.md)。此步骤只处理颈部几何；
 不会宣称原来未完成的非仿射唇形、材质外观、全部表情／滑杆／ABMX已完成。
 提取／许可网格、候选和完整证据继续位于 ignored outputs 与 artifacts。
