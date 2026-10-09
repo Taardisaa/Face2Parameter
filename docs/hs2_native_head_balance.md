@@ -76,3 +76,7 @@ outputs 路径。独立GUID `codex.native.flame_native_chenger_v6`，旧版保�
 
 生成图 `occipital_balance_review_v6/occipital_reference_sections.png`，含完整
 中线、后部放大和离中线侧截面。该步骤只读取已有最终捕获。
+
+后续用户确认：颈部明暗分界已在可接受范围。此前“明显分界”的评价
+不再作为当前待修项目，停止调整该处。下一步转向
+[程儿真实照片与当前脸部差异](chenger_native_face_review.md)。
