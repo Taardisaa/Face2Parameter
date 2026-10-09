@@ -48,4 +48,31 @@ Frankfort平面也不重合。该结果不能为本模型推出一个通用“�
 outputs 路径。独立GUID `codex.native.flame_native_chenger_v6`，旧版保留。
 
 原来非仿射唇形细节、颈部着色分界以及全动态兼容的缺口没有因本次
-形状调整而完成。实际游戏结果另行记录，不把静态候选当成游戏验收。
+形状调整而完成。
+
+## 实际游戏收尾
+
+新版已通过原生人物卡加载，动态 head/skin ID为100007712/100007713。
+实际八部件来源数组和表情通道与候选匹配；BP身体来源几何保持不变，
+真实接口位置核对通过。原生保存的卡
+`Chenger_native_balance_v6_game_01.png` 再次正常加载，游戏留在这个新版。
+首次启动停在 Fatal error 窗口；结束该进程、等待完全退出后重新启动成功。
+这是启动故障记录，未将其当成资产或几何验收通过。
+
+实际四角度原生截图位于 HS2Mod ignored
+`artifacts/native_mother_20261008/balance_v6_final_0_sheet.png`。侧面及后斜面
+可见高位后凸收回、下部圆弧延续更低；颈部仍有原来的明显明暗分界。
+实际数组验收 `chenger_game_acceptance_v6.json`，身体与接口核对
+`chenger_balance_runtime_v6.json`，均在本目录对应 outputs 下。
+捕获几何默认只含头部；实际身体/接口来自随后单独的
+`balance_v6_interface.geometry.json`，不是与截图同帧的身体记录。
+
+共同骨架完整剖面对照蓝色为原生02、灰色为 v5、橙色为 v6；没有归一化
+大小或平移掩盖差异。不是要求程儿颅骨复制原生角色。
+
+```powershell
+.venv/Scripts/python.exe -m tools.native_head.occipital_reference_review --native ../HS2Mod/artifacts/native_mother_20261008/original_head2_comparison.geometry.json --before ../HS2Mod/artifacts/native_mother_20261008/occipital_v5_final.geometry.json --current ../HS2Mod/artifacts/native_mother_20261008/balance_v6_final.geometry.json --before-label 'Previous v5' --current-label 'Head balance v6' --out outputs/native_mother_template_20261008/occipital_balance_review_v6
+```
+
+生成图 `occipital_balance_review_v6/occipital_reference_sections.png`，含完整
+中线、后部放大和离中线侧截面。该步骤只读取已有最终捕获。

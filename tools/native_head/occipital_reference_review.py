@@ -34,7 +34,8 @@ def posed(path):
     return points,np.asarray(mesh['source']['triangles']).reshape(-1,3),data
 
 
-def review(native,before,current,out):
+def review(native,before,current,out,before_label='Before local occipital edit (v4)',
+           current_label='Current (v5)'):
     if out.exists():
         raise FileExistsError('Use a fresh output')
     import matplotlib
@@ -42,8 +43,8 @@ def review(native,before,current,out):
     import matplotlib.pyplot as plt
     from matplotlib.collections import LineCollection
     rows=[(native,'Original native head 02','#3276b8'),
-          (before,'Before local occipital edit (v4)','#aaaaaa'),
-          (current,'Current (v5)','#dc702b')]
+          (before,before_label,'#aaaaaa'),
+          (current,current_label,'#dc702b')]
     meshes=[(posed(path),label,color) for path,label,color in rows]
     out.mkdir(parents=True)
     fig,axes=plt.subplots(1,3,figsize=(15,7))
@@ -62,7 +63,8 @@ def review(native,before,current,out):
     axes[2].set_title('Side section: x = +0.35')
     fig.tight_layout();fig.savefig(out/'occipital_reference_sections.png',dpi=145);plt.close(fig)
     save_json(out/'receipt.json',dict(
-        inputs=[source_file(p) for p in (native,before,current)],code=source_file(Path(__file__)),
+        inputs=[source_file(p) for p in (native,before,current)],
+        labels=[label for _,label,_ in rows],code=source_file(Path(__file__)),
         skinning_code=source_file(Path('tools/native_head/accept_placement_asset.py')),
         source_single_frame_blendshapes_and_actual_bones=True,
         common_frame='cf_J_Head_s',head_scale_or_ear_alignment_applied=False,
@@ -74,5 +76,8 @@ if __name__=='__main__':
     p=argparse.ArgumentParser(description=__doc__)
     for name in ('native','before','current','out'):
         p.add_argument('--'+name,type=Path,required=True)
+    p.add_argument('--before-label',default='Before local occipital edit (v4)')
+    p.add_argument('--current-label',default='Current (v5)')
     a=p.parse_args()
-    review(a.native.resolve(),a.before.resolve(),a.current.resolve(),a.out.resolve())
+    review(a.native.resolve(),a.before.resolve(),a.current.resolve(),a.out.resolve(),
+           a.before_label,a.current_label)
