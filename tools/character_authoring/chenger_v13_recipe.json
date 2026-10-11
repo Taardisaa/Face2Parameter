@@ -1,0 +1,102 @@
+{
+  "base_card": "E:\\HoneySelect2_ArcticFox\\UserData\\chara\\female\\Codex\\Chenger_stylized_reconstruction_v10_HanmenSSS.png",
+  "base_card_sha256": "fdc7c4d3647a1694ec350be220fff68179347ee98305367fef1558c1b7dde0a1",
+  "output_card": "E:\\HoneySelect2_ArcticFox\\UserData\\chara\\female\\Codex\\Chenger_stylized_reconstruction_v13_alignment.png",
+  "output_card_sha256": "527ab528c0cb353307e5c455c7542b1c917276dde427fc64e7e5cd109d9c28f5",
+  "scope": "Authoring delta from full v10 card. Load base, apply native batch, then existing ABMX patches, eyes and makeup. Preserve every unmentioned field. SSS is global. No inference or fitted deformation formula.",
+  "native_batch": {
+    "indices": [
+      32,
+      35,
+      39,
+      47,
+      48
+    ],
+    "values": [
+      0.12,
+      0.5,
+      0.59,
+      0.36,
+      0.7
+    ]
+  },
+  "abmx_bones": [
+    {
+      "name": "cf_J_Chin_rs",
+      "length": 1.16
+    },
+    {
+      "name": "cf_J_ChinTip_s",
+      "position": [
+        0,
+        -0.16,
+        0.000739015639
+      ]
+    },
+    {
+      "name": "cf_J_ChinLow",
+      "position": [
+        0,
+        -0.08,
+        -0.00106364489
+      ]
+    },
+    {
+      "name": "cf_J_Mouth_L",
+      "position": [
+        0.015,
+        0.00046595186,
+        -0.02111438
+      ]
+    },
+    {
+      "name": "cf_J_Mouth_R",
+      "position": [
+        -0.015,
+        0.00046595186,
+        -0.02111438
+      ]
+    }
+  ],
+  "eyes_http_patch": {
+    "pupil_id": 0,
+    "pupil_color": [
+      0.42,
+      0.39,
+      0.37,
+      1
+    ],
+    "pupil_w": 0.61,
+    "pupil_h": 0.61,
+    "black_w_left": 0.28,
+    "black_h_left": 0.28,
+    "black_w_right": 0.28,
+    "black_h_right": 0.28,
+    "eyebrow_id": 7,
+    "eyebrow_color": [
+      0.075,
+      0.06,
+      0.055,
+      0.95
+    ],
+    "eyebrow_tilt": 0.64,
+    "eyebrow_layout": [
+      0.540000558,
+      0.263733774,
+      0.59,
+      0.6572149
+    ]
+  },
+  "makeup_http_patch": {
+    "lip_id": 3,
+    "lip_color": [
+      0.62,
+      0.28,
+      0.4,
+      0.74
+    ],
+    "lip_gloss": 0.45
+  },
+  "source_abmx_sha256": "9224876ce931eb3c40a347ba57abebcca515bde58af2a6b9802b367a5b3563af",
+  "effects_preserved": "Hanmen face/body, original material floats; SSS explicitly enabled in current runtime."
+}

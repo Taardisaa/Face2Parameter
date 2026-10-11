@@ -1,0 +1,13 @@
+{
+  "reason": "FAN landmark8 lies about37 pixels above the actual visible game chin contour. Reviewed both original portraits. Only chin8 is replaced; retain automatic nose/eye/mouth observations and the failed automatic estimates.",
+  "reference": {
+    "image_sha256": "086a01b02a96a356edf2d2c46f534bd7bd9cf1e299d71617357a37d526878e05",
+    "chin_pixels": [539, 1000],
+    "judgement_uncertainty_pixels": 5
+  },
+  "candidate": {
+    "image_sha256": "89488293d97048d9173243c50ce353a167941f7240c0626b168d722a302d9e3e",
+    "chin_pixels": [393, 831],
+    "judgement_uncertainty_pixels": 4
+  }
+}
