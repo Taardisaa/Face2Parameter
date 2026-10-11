@@ -1,0 +1,205 @@
+{
+  "scope": "v16 source-weight-guided chin-only candidate; original visible skin edge. Not accepted or locked. Residual pitch/yaw and manual edge uncertainty remain.",
+  "reference": {
+    "image_sha256": "086a01b02a96a356edf2d2c46f534bd7bd9cf1e299d71617357a37d526878e05",
+    "left_xy": [
+      [
+        334,
+        823
+      ],
+      [
+        344,
+        840
+      ],
+      [
+        358,
+        860
+      ],
+      [
+        375,
+        880
+      ],
+      [
+        390,
+        900
+      ],
+      [
+        409,
+        920
+      ],
+      [
+        432,
+        940
+      ],
+      [
+        463,
+        960
+      ],
+      [
+        501,
+        980
+      ],
+      [
+        528,
+        992
+      ],
+      [
+        539,
+        1000
+      ]
+    ],
+    "right_xy": [
+      [
+        769,
+        823
+      ],
+      [
+        760,
+        840
+      ],
+      [
+        750,
+        860
+      ],
+      [
+        735,
+        880
+      ],
+      [
+        714,
+        900
+      ],
+      [
+        692,
+        920
+      ],
+      [
+        668,
+        940
+      ],
+      [
+        640,
+        960
+      ],
+      [
+        604,
+        980
+      ],
+      [
+        575,
+        992
+      ],
+      [
+        539,
+        1000
+      ]
+    ],
+    "lower_lip_bottom_xy": [
+      536,
+      865
+    ],
+    "chin_xy": [
+      539,
+      1000
+    ],
+    "edge_judgement_uncertainty_pixels": 6,
+    "lip_boundary_judgement_uncertainty_pixels": 5
+  },
+  "candidate": {
+    "image_sha256": "9ecec5c7563bd696f0a19b46b874473368a64895fa941cbf432a883d347233d1",
+    "left_xy": [
+      [
+        242,
+        695
+      ],
+      [
+        250,
+        710
+      ],
+      [
+        263,
+        730
+      ],
+      [
+        287,
+        750
+      ],
+      [
+        313,
+        770
+      ],
+      [
+        338,
+        790
+      ],
+      [
+        352,
+        800
+      ],
+      [
+        365,
+        810
+      ],
+      [
+        385,
+        823
+      ],
+      [
+        392,
+        826
+      ]
+    ],
+    "right_xy": [
+      [
+        572,
+        695
+      ],
+      [
+        562,
+        710
+      ],
+      [
+        544,
+        730
+      ],
+      [
+        524,
+        750
+      ],
+      [
+        500,
+        770
+      ],
+      [
+        475,
+        790
+      ],
+      [
+        462,
+        800
+      ],
+      [
+        441,
+        815
+      ],
+      [
+        416,
+        824
+      ],
+      [
+        392,
+        826
+      ]
+    ],
+    "lower_lip_bottom_xy": [
+      388,
+      716
+    ],
+    "chin_xy": [
+      392,
+      826
+    ],
+    "edge_judgement_uncertainty_pixels": 5,
+    "lip_boundary_judgement_uncertainty_pixels": 4
+  }
+}

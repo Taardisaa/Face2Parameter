@@ -72,3 +72,55 @@ v15完整人工贴边图经可视检查保留；原图SHA绑定的新trace在
 通过时记录完整卡SHA、当前原生/ABMX字段与共享父骨依赖、材质和图证据；
 之后所有作者修改都核对锁定值及共享依赖。共享父骨被改会触发形状复核，
 不以子骨字段相同代替几何不变。
+
+## 恢复任务后的源支持核对与v16
+
+Codex内部goal已重新明确创建为active，当前仅下巴项。
+游戏未运行时启动一次并等到Maker ready，加载暂停卡SHA
+`343d5d550af3c096bbfa16679a39c61b2d4ea5bb4657690a0efac746f0936148`。
+安装ABMX DLL实际SHA仍与v14相同：
+`9224876ce931eb3c40a347ba57abebcca515bde58af2a6b9802b367a5b3563af`。
+全局SSS重新开启；实际Bridge0.31.13。原生普通头2，未加载诊断壳。
+
+新工具`tools/character_authoring/jaw_weight_audit.py`读取现有原生导出的
+完整source vertices、indices/weights、骨名，不运行游戏采样、不拟合形变。
+明确源空间底部区域Y<-.30/Z>.50；中央abs(X)<.08，侧部.15<=abs(X)<.35。
+保存全部选中顶点和实际混合权重，不能把这些诊断选择当解剖标签或最终算法。
+中央40点平均Tip约.286、rs约.242、Low约.194；侧部24点Tip约.153、
+rs约.388、Low约.196。可见Tip不是只作用末端，实际底部混合多个驱动。
+尤其源最低前端1184的Tip/FaceLow/rs/Low权重约.313/.250/.239/.198。
+因此只按Tip骨名收窄不具有局部圆度保证。源parent链及插件Apply支持
+分开作者修改中心与底部的offset；没有用平均权重计算或拟合参数增益。
+
+注意旧`src/hs2_mesh_deform.py`在ABMX阶段仍直接`pos*length+offset`，
+安装插件实际使用当前position方向及cached length，且position-only路径
+使用cached pos；前者不是本轮实际缓存状态的合格预测器。未修改该旧模块，
+不以其结果声称安装版本兼容。制作仍由实际游戏原生/安装插件执行。
+
+v16以暂停卡为基线：Tip X .88→1.10，Y offset -.09→-.13；
+Low X1.16→1.00，Y offset-.03→0；两者Length=1且原YZ/旋转保留。
+Chin_rs及全59原生参数保持，不联动眼鼻唇。配方为
+`chenger_v16_chin_recipe.json`，实际截图SHA绑定trace为
+`chenger_v16_chin_trace.json`，同协议最终观察只采本候选正面与侧面。
+
+完整贴边图v16依然未通过：10/25/50/75/90/95%宽度差约
+-5/-6/-11/-15/-2/+16%，唇下长度-1%，嘴线长度-4%。
+底部偏宽改善但仍平，75%区域仍窄；含人工误差，不能当精确改善幅度。
+保存、重载snapshot/ABMX/renderstyle全等，暂停→v16只两modifier的
+X/Y字段（及coordinate副本）和版本名变动。未锁定下巴。
+
+本轮还定位主相机捕获流程缺少PoseFreeze；固定眼距和去滚转不能排除
+残余yaw/pitch。这是验收证据不足，不应通过反复作者调值补偿。
+`MakerRenderService.cs`离屏流程已有PoseFreeze源实现，而实际SSS捕获
+`MakerRenderStyleService.Capture`没有使用。下一步合入固定姿态/恢复，
+再验收下巴；不能用普通离屏图冒充SSS主相机图，也不在该缺口下锁定。
+
+```powershell
+.venv/Scripts/python.exe tools/character_authoring/jaw_weight_audit.py --geometry outputs/chenger_stylized_arcface_20261011/v12_head_geometry.json --out outputs/chenger_stylized_arcface_20261011/resume_jaw_weight_audit_repeat.json
+```
+
+证据输出：`resume_pause_state.json`、`resume_jaw_weight_audit.json`、
+`v16_chin_saved_state.json`、`v16_chin_reloaded_state.json`、
+`v16_chin_state_acceptance.json`、`v16_chin_jaw_review/`。
+卡为 `E:/HoneySelect2_ArcticFox/UserData/chara/female/Codex/Chenger_stylized_reconstruction_v16_chin_candidate.png`。
+当前v16普通原生候选，暂停及v14/v15旧卡保留，目标仍active。

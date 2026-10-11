@@ -1,0 +1,36 @@
+{
+  "status": "candidate; not accepted/locked",
+  "base_card": "E:/HoneySelect2_ArcticFox/UserData/chara/female/Codex/Chenger_pause_20261011_032030.png",
+  "output_card": "E:/HoneySelect2_ArcticFox/UserData/chara/female/Codex/Chenger_stylized_reconstruction_v16_chin_candidate.png",
+  "abmx_bones": [
+    {
+      "name": "cf_J_ChinTip_s",
+      "position": [
+        0,
+        -0.13,
+        0.000739015639
+      ],
+      "scale": [
+        1.1,
+        0.989540756,
+        1.04659534
+      ]
+    },
+    {
+      "name": "cf_J_ChinLow",
+      "position": [
+        0,
+        0,
+        -0.00106364489
+      ],
+      "scale": [
+        1,
+        0.989446461,
+        1.01262188
+      ]
+    }
+  ],
+  "source_scope": "Actual exported source mesh direct weights and installed ABMX Apply/CollectBaseline; no empirical game deformation fitting. Preserve all omitted fields.",
+  "base_card_sha256": "343d5d550af3c096bbfa16679a39c61b2d4ea5bb4657690a0efac746f0936148",
+  "output_card_sha256": "8f538582004c447d4cdf44e9042ce9530875301e12bcb79c9e5aea6649ea1c0c"
+}
