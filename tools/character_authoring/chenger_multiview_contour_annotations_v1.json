@@ -1,0 +1,1541 @@
+{
+  "status": "REJECTED by user: displaced manual lines; missing posterior jaw-to-ear-root path; no pose-calibrated comparison. Retained only as failed diagnostic evidence, never an authoring target.",
+  "colors": {
+    "reference": "blue #00aaff",
+    "game": "red #ff423f",
+    "feature_anchors": "gold #ffc247"
+  },
+  "point_meanings": {
+    "M": "mouth seam",
+    "D": "labiomental concavity, profile only",
+    "P": "front chin projection, profile only",
+    "C": "lowest observed chin boundary; lighting uncertainty applies"
+  },
+  "limitations": [
+    "Generated sides are approved design references, but angle and shared 3D consistency remain uncalibrated.",
+    "Complete manual curve combines visible outer edge and chin/neck shadow transition; a dashed curve preserves this distinction from pure mesh silhouette.",
+    "A boundary trace cannot alone quantify cheek softness: actual surface/depth and normals must also be checked.",
+    "6px manual/lighting uncertainty is retained; terminal widths and curvature cannot be certified by a simple 6px position pass.",
+    "Source vertex IDs are persistent native identities, not an assertion that silhouette points are the same vertices in different views.",
+    "Historical source union envelope excluded shaders, neck occlusion and final visible boundary. It cannot be promoted to actual visible contour acceptance."
+  ],
+  "mesh_seed_points_on_front_xy": [
+    [
+      211,
+      684
+    ],
+    [
+      325,
+      813
+    ],
+    [
+      389,
+      830
+    ],
+    [
+      437,
+      819
+    ],
+    [
+      570,
+      687
+    ]
+  ],
+  "images": [
+    {
+      "name": "reference_front",
+      "display_title": "reference front",
+      "role": "reference",
+      "angle": "front",
+      "image_path": "C:\\Users\\13666\\Downloads\\ChatGPT 图像 2026年10月11日 01_21_04.png",
+      "image_sha256": "72dd1826642e8fbace4149048081b53f58c025386b4eb7aefae50953e9e0ce26",
+      "roi_xyxy": [
+        230,
+        600,
+        870,
+        1040
+      ],
+      "alignment_anchors_xy": [
+        [
+          403,
+          582
+        ],
+        [
+          656,
+          576
+        ]
+      ],
+      "alignment_scope": "Front: left/right visible eye-aperture centers. Other views: nearer eye center and lip seam for orientation/scale context only; no cross-view calibrated acceptance.",
+      "landmarks_xy": {
+        "M": [
+          536,
+          832
+        ],
+        "C": [
+          544,
+          999
+        ]
+      },
+      "curves": [
+        {
+          "kind": "mixed_outer_and_shadow",
+          "points_xy": [
+            [
+              270,
+              675
+            ],
+            [
+              277,
+              711
+            ],
+            [
+              289,
+              749
+            ],
+            [
+              308,
+              790
+            ],
+            [
+              334,
+              829
+            ],
+            [
+              339,
+              838
+            ],
+            [
+              344,
+              848
+            ],
+            [
+              349,
+              856
+            ],
+            [
+              354,
+              864
+            ],
+            [
+              358,
+              870
+            ],
+            [
+              359,
+              871
+            ],
+            [
+              364,
+              878
+            ],
+            [
+              369,
+              885
+            ],
+            [
+              374,
+              891
+            ],
+            [
+              375,
+              892
+            ],
+            [
+              379,
+              897
+            ],
+            [
+              384,
+              903
+            ],
+            [
+              389,
+              908
+            ],
+            [
+              390,
+              909
+            ],
+            [
+              394,
+              913
+            ],
+            [
+              399,
+              917
+            ],
+            [
+              404,
+              922
+            ],
+            [
+              409,
+              926
+            ],
+            [
+              414,
+              930
+            ],
+            [
+              419,
+              933
+            ],
+            [
+              424,
+              938
+            ],
+            [
+              429,
+              944
+            ],
+            [
+              432,
+              946
+            ],
+            [
+              434,
+              947
+            ],
+            [
+              439,
+              950
+            ],
+            [
+              444,
+              954
+            ],
+            [
+              449,
+              959
+            ],
+            [
+              454,
+              962
+            ],
+            [
+              459,
+              965
+            ],
+            [
+              463,
+              967
+            ],
+            [
+              464,
+              967
+            ],
+            [
+              469,
+              972
+            ],
+            [
+              474,
+              975
+            ],
+            [
+              479,
+              978
+            ],
+            [
+              484,
+              982
+            ],
+            [
+              489,
+              983
+            ],
+            [
+              494,
+              987
+            ],
+            [
+              499,
+              990
+            ],
+            [
+              501,
+              991
+            ],
+            [
+              504,
+              992
+            ],
+            [
+              509,
+              994
+            ],
+            [
+              514,
+              995
+            ],
+            [
+              519,
+              996
+            ],
+            [
+              524,
+              997
+            ],
+            [
+              528,
+              998
+            ],
+            [
+              529,
+              998
+            ],
+            [
+              534,
+              999
+            ],
+            [
+              539,
+              999
+            ],
+            [
+              544,
+              999
+            ],
+            [
+              549,
+              999
+            ],
+            [
+              554,
+              999
+            ],
+            [
+              559,
+              998
+            ],
+            [
+              564,
+              998
+            ],
+            [
+              569,
+              998
+            ],
+            [
+              574,
+              996
+            ],
+            [
+              575,
+              996
+            ],
+            [
+              579,
+              995
+            ],
+            [
+              584,
+              994
+            ],
+            [
+              589,
+              992
+            ],
+            [
+              594,
+              990
+            ],
+            [
+              599,
+              987
+            ],
+            [
+              604,
+              984
+            ],
+            [
+              609,
+              982
+            ],
+            [
+              614,
+              979
+            ],
+            [
+              619,
+              976
+            ],
+            [
+              624,
+              972
+            ],
+            [
+              629,
+              969
+            ],
+            [
+              634,
+              966
+            ],
+            [
+              639,
+              962
+            ],
+            [
+              640,
+              962
+            ],
+            [
+              644,
+              959
+            ],
+            [
+              649,
+              955
+            ],
+            [
+              654,
+              951
+            ],
+            [
+              659,
+              946
+            ],
+            [
+              664,
+              942
+            ],
+            [
+              668,
+              938
+            ],
+            [
+              669,
+              937
+            ],
+            [
+              674,
+              933
+            ],
+            [
+              679,
+              930
+            ],
+            [
+              684,
+              924
+            ],
+            [
+              689,
+              919
+            ],
+            [
+              692,
+              917
+            ],
+            [
+              694,
+              915
+            ],
+            [
+              699,
+              910
+            ],
+            [
+              704,
+              905
+            ],
+            [
+              709,
+              900
+            ],
+            [
+              714,
+              895
+            ],
+            [
+              719,
+              889
+            ],
+            [
+              724,
+              884
+            ],
+            [
+              729,
+              878
+            ],
+            [
+              734,
+              874
+            ],
+            [
+              735,
+              874
+            ],
+            [
+              739,
+              870
+            ],
+            [
+              744,
+              864
+            ],
+            [
+              749,
+              857
+            ],
+            [
+              750,
+              855
+            ],
+            [
+              754,
+              849
+            ],
+            [
+              759,
+              840
+            ],
+            [
+              760,
+              839
+            ],
+            [
+              764,
+              832
+            ],
+            [
+              769,
+              822
+            ],
+            [
+              794,
+              784
+            ],
+            [
+              814,
+              744
+            ],
+            [
+              828,
+              703
+            ]
+          ]
+        }
+      ],
+      "annotation_method": "Manual visible-boundary observation on original pixels; straight segments connect observations, not smoothing or character editing. Front art lower jaw reuses inspected derivative-refined reference trace.",
+      "edge_uncertainty_pixels": 6,
+      "visibility_notes": "Cheek-to-neck shadow transition is different from a head/background silhouette. Hair-hidden contour stops at occlusion; no inferred extension."
+    },
+    {
+      "name": "reference_left",
+      "display_title": "reference left",
+      "role": "reference",
+      "angle": "left",
+      "image_path": "C:\\Users\\13666\\Workspace\\Face2Parameter\\outputs\\chenger_stylized_arcface_20261011\\generated_side_references_v1\\profile_facing_left.png",
+      "image_sha256": "bae968371367b5d4b0cd5200a5800ede646c62665280cb1bd5b57e9a3ee6150d",
+      "roi_xyxy": [
+        130,
+        420,
+        710,
+        990
+      ],
+      "alignment_anchors_xy": [
+        [
+          294,
+          511
+        ],
+        [
+          245,
+          756
+        ]
+      ],
+      "alignment_scope": "Front: left/right visible eye-aperture centers. Other views: nearer eye center and lip seam for orientation/scale context only; no cross-view calibrated acceptance.",
+      "landmarks_xy": {
+        "M": [
+          245,
+          756
+        ],
+        "D": [
+          240,
+          812
+        ],
+        "P": [
+          236,
+          864
+        ],
+        "C": [
+          285,
+          913
+        ]
+      },
+      "curves": [
+        {
+          "kind": "visible_edge",
+          "points_xy": [
+            [
+              267,
+              791
+            ],
+            [
+              250,
+              800
+            ],
+            [
+              239,
+              812
+            ],
+            [
+              236,
+              837
+            ],
+            [
+              236,
+              864
+            ],
+            [
+              235,
+              881
+            ],
+            [
+              244,
+              898
+            ],
+            [
+              262,
+              908
+            ],
+            [
+              285,
+              913
+            ],
+            [
+              310,
+              912
+            ],
+            [
+              339,
+              904
+            ],
+            [
+              371,
+              896
+            ],
+            [
+              403,
+              885
+            ],
+            [
+              434,
+              871
+            ]
+          ]
+        }
+      ],
+      "annotation_method": "Manual visible-boundary observation on original pixels; straight segments connect observations, not smoothing or character editing. Front art lower jaw reuses inspected derivative-refined reference trace.",
+      "edge_uncertainty_pixels": 6,
+      "visibility_notes": "Cheek-to-neck shadow transition is different from a head/background silhouette. Hair-hidden contour stops at occlusion; no inferred extension."
+    },
+    {
+      "name": "reference_right",
+      "display_title": "reference right",
+      "role": "reference",
+      "angle": "right",
+      "image_path": "C:\\Users\\13666\\Workspace\\Face2Parameter\\outputs\\chenger_stylized_arcface_20261011\\generated_side_references_v1\\profile_facing_right.png",
+      "image_sha256": "1c20678556043d642ee63b62470cec61422a83d7504a846e01aae1c82112642a",
+      "roi_xyxy": [
+        420,
+        450,
+        970,
+        1020
+      ],
+      "alignment_anchors_xy": [
+        [
+          800,
+          550
+        ],
+        [
+          859,
+          798
+        ]
+      ],
+      "alignment_scope": "Front: left/right visible eye-aperture centers. Other views: nearer eye center and lip seam for orientation/scale context only; no cross-view calibrated acceptance.",
+      "landmarks_xy": {
+        "M": [
+          859,
+          798
+        ],
+        "D": [
+          823,
+          852
+        ],
+        "P": [
+          826,
+          902
+        ],
+        "C": [
+          767,
+          955
+        ]
+      },
+      "curves": [
+        {
+          "kind": "visible_edge",
+          "points_xy": [
+            [
+              850,
+              828
+            ],
+            [
+              830,
+              840
+            ],
+            [
+              823,
+              852
+            ],
+            [
+              827,
+              878
+            ],
+            [
+              826,
+              902
+            ],
+            [
+              819,
+              924
+            ],
+            [
+              804,
+              941
+            ],
+            [
+              787,
+              951
+            ],
+            [
+              767,
+              955
+            ],
+            [
+              742,
+              954
+            ],
+            [
+              714,
+              950
+            ],
+            [
+              686,
+              944
+            ],
+            [
+              657,
+              938
+            ],
+            [
+              634,
+              936
+            ]
+          ]
+        }
+      ],
+      "annotation_method": "Manual visible-boundary observation on original pixels; straight segments connect observations, not smoothing or character editing. Front art lower jaw reuses inspected derivative-refined reference trace.",
+      "edge_uncertainty_pixels": 6,
+      "visibility_notes": "Cheek-to-neck shadow transition is different from a head/background silhouette. Hair-hidden contour stops at occlusion; no inferred extension."
+    },
+    {
+      "name": "reference_quarter",
+      "display_title": "reference quarter",
+      "role": "reference",
+      "angle": "quarter",
+      "image_path": "C:\\Users\\13666\\Workspace\\Face2Parameter\\outputs\\chenger_stylized_arcface_20261011\\generated_side_references_v1\\three_quarter_facing_right.png",
+      "image_sha256": "6ee93e484a5fb5700ee4fa5fcb8d725f3560259781e247c9e3e9fd05f0f728f0",
+      "roi_xyxy": [
+        275,
+        575,
+        865,
+        1030
+      ],
+      "alignment_anchors_xy": [
+        [
+          582,
+          574
+        ],
+        [
+          710,
+          827
+        ]
+      ],
+      "alignment_scope": "Front: left/right visible eye-aperture centers. Other views: nearer eye center and lip seam for orientation/scale context only; no cross-view calibrated acceptance.",
+      "landmarks_xy": {
+        "M": [
+          710,
+          827
+        ],
+        "C": [
+          674,
+          982
+        ]
+      },
+      "curves": [
+        {
+          "kind": "mixed_outer_and_shadow",
+          "points_xy": [
+            [
+              319,
+              681
+            ],
+            [
+              332,
+              723
+            ],
+            [
+              350,
+              764
+            ],
+            [
+              377,
+              803
+            ],
+            [
+              413,
+              842
+            ],
+            [
+              450,
+              876
+            ],
+            [
+              489,
+              908
+            ],
+            [
+              531,
+              936
+            ],
+            [
+              574,
+              958
+            ],
+            [
+              611,
+              973
+            ],
+            [
+              644,
+              981
+            ],
+            [
+              674,
+              982
+            ],
+            [
+              698,
+              977
+            ],
+            [
+              721,
+              964
+            ],
+            [
+              742,
+              942
+            ],
+            [
+              759,
+              914
+            ],
+            [
+              774,
+              882
+            ],
+            [
+              793,
+              847
+            ],
+            [
+              824,
+              809
+            ]
+          ]
+        }
+      ],
+      "annotation_method": "Manual visible-boundary observation on original pixels; straight segments connect observations, not smoothing or character editing. Front art lower jaw reuses inspected derivative-refined reference trace.",
+      "edge_uncertainty_pixels": 6,
+      "visibility_notes": "Cheek-to-neck shadow transition is different from a head/background silhouette. Hair-hidden contour stops at occlusion; no inferred extension."
+    },
+    {
+      "name": "game_front",
+      "display_title": "game front",
+      "role": "game",
+      "angle": "front",
+      "image_path": "C:\\Users\\13666\\Workspace\\Face2Parameter\\outputs\\chenger_stylized_arcface_20261011\\contour_diagnosis_v1\\main_front.png",
+      "image_sha256": "55e847f0144986961bd69c161af5be9902debe7a5ba12d868d3bfa4421ce02b5",
+      "roi_xyxy": [
+        165,
+        530,
+        630,
+        860
+      ],
+      "alignment_anchors_xy": [
+        [
+          277,
+          484
+        ],
+        [
+          486,
+          483
+        ]
+      ],
+      "alignment_scope": "Front: left/right visible eye-aperture centers. Other views: nearer eye center and lip seam for orientation/scale context only; no cross-view calibrated acceptance.",
+      "landmarks_xy": {
+        "M": [
+          384,
+          689
+        ],
+        "C": [
+          389,
+          830
+        ]
+      },
+      "curves": [
+        {
+          "kind": "mixed_outer_and_shadow",
+          "points_xy": [
+            [
+              190,
+              548
+            ],
+            [
+              193,
+              582
+            ],
+            [
+              198,
+              616
+            ],
+            [
+              204,
+              650
+            ],
+            [
+              211,
+              684
+            ],
+            [
+              225,
+              714
+            ],
+            [
+              246,
+              744
+            ],
+            [
+              270,
+              770
+            ],
+            [
+              297,
+              793
+            ],
+            [
+              325,
+              813
+            ],
+            [
+              346,
+              825
+            ],
+            [
+              364,
+              829
+            ],
+            [
+              382,
+              830
+            ],
+            [
+              400,
+              830
+            ],
+            [
+              416,
+              827
+            ],
+            [
+              437,
+              819
+            ],
+            [
+              458,
+              808
+            ],
+            [
+              481,
+              791
+            ],
+            [
+              506,
+              769
+            ],
+            [
+              530,
+              744
+            ],
+            [
+              551,
+              718
+            ],
+            [
+              570,
+              687
+            ],
+            [
+              585,
+              651
+            ],
+            [
+              597,
+              615
+            ],
+            [
+              605,
+              580
+            ]
+          ]
+        }
+      ],
+      "annotation_method": "Manual visible-boundary observation on original pixels; straight segments connect observations, not smoothing or character editing. Front art lower jaw reuses inspected derivative-refined reference trace.",
+      "edge_uncertainty_pixels": 6,
+      "visibility_notes": "Cheek-to-neck shadow transition is different from a head/background silhouette. Hair-hidden contour stops at occlusion; no inferred extension.",
+      "capture_path": "C:\\Users\\13666\\Workspace\\Face2Parameter\\outputs\\chenger_stylized_arcface_20261011\\contour_diagnosis_v1\\main_front.json"
+    },
+    {
+      "name": "game_left",
+      "display_title": "game left",
+      "role": "game",
+      "angle": "left",
+      "image_path": "C:\\Users\\13666\\Workspace\\Face2Parameter\\outputs\\chenger_stylized_arcface_20261011\\contour_diagnosis_v1\\main_left.png",
+      "image_sha256": "c258291b7ae7df5396873fc849ba360b0dbf5ee7e6d9515e95b4512976df8528",
+      "roi_xyxy": [
+        80,
+        435,
+        420,
+        845
+      ],
+      "alignment_anchors_xy": [
+        [
+          164,
+          483
+        ],
+        [
+          154,
+          677
+        ]
+      ],
+      "alignment_scope": "Front: left/right visible eye-aperture centers. Other views: nearer eye center and lip seam for orientation/scale context only; no cross-view calibrated acceptance.",
+      "landmarks_xy": {
+        "M": [
+          154,
+          677
+        ],
+        "D": [
+          162,
+          721
+        ],
+        "P": [
+          159,
+          757
+        ],
+        "C": [
+          219,
+          810
+        ]
+      },
+      "curves": [
+        {
+          "kind": "visible_edge",
+          "points_xy": [
+            [
+              149,
+              701
+            ],
+            [
+              158,
+              710
+            ],
+            [
+              163,
+              721
+            ],
+            [
+              158,
+              737
+            ],
+            [
+              158,
+              757
+            ],
+            [
+              162,
+              775
+            ],
+            [
+              173,
+              792
+            ],
+            [
+              188,
+              803
+            ],
+            [
+              207,
+              809
+            ],
+            [
+              225,
+              810
+            ],
+            [
+              244,
+              807
+            ],
+            [
+              263,
+              801
+            ],
+            [
+              279,
+              793
+            ]
+          ]
+        }
+      ],
+      "annotation_method": "Manual visible-boundary observation on original pixels; straight segments connect observations, not smoothing or character editing. Front art lower jaw reuses inspected derivative-refined reference trace.",
+      "edge_uncertainty_pixels": 6,
+      "visibility_notes": "Cheek-to-neck shadow transition is different from a head/background silhouette. Hair-hidden contour stops at occlusion; no inferred extension.",
+      "capture_path": "C:\\Users\\13666\\Workspace\\Face2Parameter\\outputs\\chenger_stylized_arcface_20261011\\contour_diagnosis_v1\\main_left.json"
+    },
+    {
+      "name": "game_right",
+      "display_title": "game right",
+      "role": "game",
+      "angle": "right",
+      "image_path": "C:\\Users\\13666\\Workspace\\Face2Parameter\\outputs\\chenger_stylized_arcface_20261011\\contour_diagnosis_v1\\main_right.png",
+      "image_sha256": "951e19fa141e6d1a6cf746c7f547142358b28a005bb11babd12f3fb04727be40",
+      "roi_xyxy": [
+        430,
+        435,
+        700,
+        845
+      ],
+      "alignment_anchors_xy": [
+        [
+          606,
+          482
+        ],
+        [
+          613,
+          677
+        ]
+      ],
+      "alignment_scope": "Front: left/right visible eye-aperture centers. Other views: nearer eye center and lip seam for orientation/scale context only; no cross-view calibrated acceptance.",
+      "landmarks_xy": {
+        "M": [
+          613,
+          677
+        ],
+        "D": [
+          608,
+          721
+        ],
+        "P": [
+          609,
+          758
+        ],
+        "C": [
+          558,
+          807
+        ]
+      },
+      "curves": [
+        {
+          "kind": "visible_edge",
+          "points_xy": [
+            [
+              620,
+              700
+            ],
+            [
+              612,
+              709
+            ],
+            [
+              608,
+              721
+            ],
+            [
+              610,
+              738
+            ],
+            [
+              609,
+              758
+            ],
+            [
+              606,
+              776
+            ],
+            [
+              597,
+              792
+            ],
+            [
+              583,
+              802
+            ],
+            [
+              567,
+              807
+            ],
+            [
+              550,
+              807
+            ],
+            [
+              533,
+              804
+            ],
+            [
+              514,
+              799
+            ]
+          ]
+        }
+      ],
+      "annotation_method": "Manual visible-boundary observation on original pixels; straight segments connect observations, not smoothing or character editing. Front art lower jaw reuses inspected derivative-refined reference trace.",
+      "edge_uncertainty_pixels": 6,
+      "visibility_notes": "Cheek-to-neck shadow transition is different from a head/background silhouette. Hair-hidden contour stops at occlusion; no inferred extension.",
+      "capture_path": "C:\\Users\\13666\\Workspace\\Face2Parameter\\outputs\\chenger_stylized_arcface_20261011\\contour_diagnosis_v1\\main_right.json"
+    },
+    {
+      "name": "game_quarter",
+      "display_title": "game quarter",
+      "role": "game",
+      "angle": "quarter",
+      "image_path": "C:\\Users\\13666\\Workspace\\Face2Parameter\\outputs\\chenger_stylized_arcface_20261011\\contour_diagnosis_v1\\main_quarter.png",
+      "image_sha256": "8765d72ee4ba227c72e14bcbf0557b020a76ce0277df6ff41b663b70a85b5a96",
+      "roi_xyxy": [
+        220,
+        575,
+        650,
+        860
+      ],
+      "alignment_anchors_xy": [
+        [
+          479,
+          483
+        ],
+        [
+          558,
+          683
+        ]
+      ],
+      "alignment_scope": "Front: left/right visible eye-aperture centers. Other views: nearer eye center and lip seam for orientation/scale context only; no cross-view calibrated acceptance.",
+      "landmarks_xy": {
+        "M": [
+          558,
+          683
+        ],
+        "C": [
+          514,
+          825
+        ]
+      },
+      "curves": [
+        {
+          "kind": "mixed_outer_and_shadow",
+          "points_xy": [
+            [
+              247,
+              647
+            ],
+            [
+              257,
+              677
+            ],
+            [
+              277,
+              706
+            ],
+            [
+              305,
+              735
+            ],
+            [
+              338,
+              758
+            ],
+            [
+              374,
+              780
+            ],
+            [
+              411,
+              798
+            ],
+            [
+              450,
+              813
+            ],
+            [
+              478,
+              822
+            ],
+            [
+              506,
+              825
+            ],
+            [
+              529,
+              823
+            ],
+            [
+              547,
+              816
+            ],
+            [
+              560,
+              803
+            ],
+            [
+              571,
+              782
+            ],
+            [
+              579,
+              758
+            ],
+            [
+              585,
+              733
+            ],
+            [
+              603,
+              697
+            ]
+          ]
+        }
+      ],
+      "annotation_method": "Manual visible-boundary observation on original pixels; straight segments connect observations, not smoothing or character editing. Front art lower jaw reuses inspected derivative-refined reference trace.",
+      "edge_uncertainty_pixels": 6,
+      "visibility_notes": "Cheek-to-neck shadow transition is different from a head/background silhouette. Hair-hidden contour stops at occlusion; no inferred extension.",
+      "capture_path": "C:\\Users\\13666\\Workspace\\Face2Parameter\\outputs\\chenger_stylized_arcface_20261011\\contour_diagnosis_v1\\main_quarter.json"
+    },
+    {
+      "name": "photo_002",
+      "display_title": "photo 002",
+      "role": "photo",
+      "angle": "front",
+      "image_path": "C:\\Users\\13666\\Workspace\\NewWriting\\references\\raw\\characters\\程儿\\photos\\img-002.jpg",
+      "image_sha256": "74014fe1504e971570654aad6f49acba59f4f85098ac064b07e644c336f1f240",
+      "roi_xyxy": [
+        285,
+        235,
+        585,
+        465
+      ],
+      "alignment_anchors_xy": [
+        [
+          373,
+          252
+        ],
+        [
+          475,
+          245
+        ]
+      ],
+      "alignment_scope": "Front: left/right visible eye-aperture centers. Other views: nearer eye center and lip seam for orientation/scale context only; no cross-view calibrated acceptance.",
+      "landmarks_xy": {
+        "M": [
+          424,
+          356
+        ],
+        "C": [
+          433,
+          440
+        ]
+      },
+      "curves": [
+        {
+          "kind": "mixed_outer_and_shadow",
+          "points_xy": [
+            [
+              316,
+              285
+            ],
+            [
+              318,
+              314
+            ],
+            [
+              327,
+              348
+            ],
+            [
+              341,
+              382
+            ],
+            [
+              364,
+              411
+            ],
+            [
+              387,
+              428
+            ],
+            [
+              411,
+              437
+            ],
+            [
+              434,
+              440
+            ],
+            [
+              455,
+              435
+            ],
+            [
+              479,
+              424
+            ],
+            [
+              502,
+              407
+            ],
+            [
+              523,
+              384
+            ],
+            [
+              540,
+              357
+            ],
+            [
+              551,
+              325
+            ],
+            [
+              557,
+              292
+            ]
+          ]
+        }
+      ],
+      "annotation_method": "Manual visible-boundary observation on original pixels; straight segments connect observations, not smoothing or character editing. Front art lower jaw reuses inspected derivative-refined reference trace.",
+      "edge_uncertainty_pixels": 6,
+      "visibility_notes": "Cheek-to-neck shadow transition is different from a head/background silhouette. Hair-hidden contour stops at occlusion; no inferred extension."
+    },
+    {
+      "name": "photo_020",
+      "display_title": "photo 020",
+      "role": "photo",
+      "angle": "quarter",
+      "image_path": "C:\\Users\\13666\\Workspace\\NewWriting\\references\\raw\\characters\\程儿\\photos\\img-020.jpg",
+      "image_sha256": "c4b16141672afa469ccbaa6ac650b2397383224b3892a054d6a1efc726f33948",
+      "roi_xyxy": [
+        425,
+        360,
+        705,
+        600
+      ],
+      "alignment_anchors_xy": [
+        [
+          470,
+          390
+        ],
+        [
+          514,
+          494
+        ]
+      ],
+      "alignment_scope": "Front: left/right visible eye-aperture centers. Other views: nearer eye center and lip seam for orientation/scale context only; no cross-view calibrated acceptance.",
+      "landmarks_xy": {
+        "M": [
+          514,
+          494
+        ],
+        "C": [
+          534,
+          563
+        ]
+      },
+      "curves": [
+        {
+          "kind": "mixed_outer_and_shadow",
+          "points_xy": [
+            [
+              446,
+              426
+            ],
+            [
+              449,
+              454
+            ],
+            [
+              460,
+              485
+            ],
+            [
+              475,
+              521
+            ],
+            [
+              493,
+              548
+            ],
+            [
+              516,
+              561
+            ],
+            [
+              540,
+              563
+            ],
+            [
+              566,
+              556
+            ],
+            [
+              589,
+              543
+            ],
+            [
+              612,
+              525
+            ],
+            [
+              632,
+              505
+            ],
+            [
+              650,
+              481
+            ],
+            [
+              665,
+              451
+            ],
+            [
+              677,
+              426
+            ]
+          ]
+        }
+      ],
+      "annotation_method": "Manual visible-boundary observation on original pixels; straight segments connect observations, not smoothing or character editing. Front art lower jaw reuses inspected derivative-refined reference trace.",
+      "edge_uncertainty_pixels": 6,
+      "visibility_notes": "Cheek-to-neck shadow transition is different from a head/background silhouette. Hair-hidden contour stops at occlusion; no inferred extension."
+    }
+  ],
+  "user_rejection": "Use ImageGen to try full-jaw overlay instead of manual marking. Real photographs may support qualitative identity review; do not compare their raw 2D dimensions to unaligned game/generated views."
+}

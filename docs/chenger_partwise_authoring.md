@@ -460,3 +460,28 @@ outputs/chenger_stylized_arcface_20261011/generated_side_references_v1/。
 
 HS2主相机配对几何补丁仍为之前遗留的未提交/未部署任务修改；本次未安装、
 未重启游戏，未声称修好下巴。完整Codex goal active。
+
+### 手工轮廓比较被用户拒绝；ImageGen整条下颌线单图试验
+
+用户指出手工线明显偏移，且侧面只追到颏下/脖子接缝，遗漏下颌体、下颌角
+到耳根的后半段。真人照片与游戏/生成图的角度、透视亦未匹配，不能由这些
+二维线直接作尺寸比较。contour_diagnosis_v1/review_v1和review_v2均为被拒绝
+的诊断尝试；其中数值不可用于参数修改、部位验收或重新锁定。
+
+原手工标注以REJECTED状态保留；contour_multiview_review.py明确拒绝用该状态
+继续生成比较指标。原始未撤销状态的输入副本和失败图保留在忽略的outputs
+目录中，保持历史可追溯，不将其包装成有效工具交付。
+本次真实头网格4439顶点、8516三角；四张主相机渲染前的raw head BakeMesh
+hash均与冻结导出相同，这只绑定源身份，不挽救画错的线或未匹配的参照姿态。
+临时back0长发和NO_LOOK设置已恢复；snapshot、raw ABMX、hair、expression、
+renderstyle前后完全相等。未保存新人物卡，未改人物几何参数。
+
+按用户最新“先试试imageGen画，不要手工打标”的要求，内置image_gen以
+原生成向右侧图作为单一编辑目标，生成一张整条下颌蓝线试图。要求从颏尖沿
+下颌体/下颌角到耳根，不停在颈前，也不沿脖子向下画。输出已经展示在对话，
+仍是未获用户确认的视觉候选。原始图、视角和脸型需保留，但生成编辑没有
+逐像素保持认证，不能将蓝线当作精准几何或直接进行尺寸比较。
+
+[试图完整提示词与身份记录](../tools/character_authoring/chenger_imagegen_jawline_trial_v1.json)。
+输出：outputs/chenger_stylized_arcface_20261011/imagegen_jawline_trial_v1/right_profile_full_jawline.png。
+先验证这一张画线方法；其他角度整条线以及匹配姿态后的游戏对照仍未完成。

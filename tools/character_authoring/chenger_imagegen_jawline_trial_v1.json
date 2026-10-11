@@ -1,0 +1,17 @@
+{
+  "status": "ImageGen right-profile full-jaw tracing trial for user visual review; not accepted geometric annotation.",
+  "mode": "built-in image_gen",
+  "source_path": "C:/Users/13666/Workspace/Face2Parameter/outputs/chenger_stylized_arcface_20261011/generated_side_references_v1/profile_facing_right.png",
+  "source_sha256": "1c20678556043d642ee63b62470cec61422a83d7504a846e01aae1c82112642a",
+  "output_path": "C:/Users/13666/Workspace/Face2Parameter/outputs/chenger_stylized_arcface_20261011/imagegen_jawline_trial_v1/right_profile_full_jawline.png",
+  "generator_file": "exec-4157f019-ce23-4193-909d-43f4c7c71515.png",
+  "output_sha256": "703f31e7ab49992d9bd34bf31dadc590c001f319eb289a8bbc3e4f164941fbe7",
+  "prompt": "Edit the supplied image ONLY by adding an anatomical jawline annotation overlay. Keep the underlying portrait unchanged: same exact face, identity, proportions, head orientation, hairstyle, lighting, clothing, background, camera, crop and dimensions. Do not regenerate or beautify the woman and do not alter any jaw geometry.\nDraw ONE thin, bright cyan-blue line directly on the actual FULL mandibular border of the visible side: start at the front-most rounded chin, wrap around the rounded chin underside, then follow the entire lower jaw body BACKWARD beneath the cheek, through the mandibular angle at the rear jaw, and continue UP the short posterior ramus to the root of the visible ear just below the earlobe. The line must reach the ear attachment. Critically, the jaw continues behind the chin/neck junction: DO NOT STOP at the front of the neck, DO NOT follow the neck downward, and DO NOT draw only the chin silhouette. Trace the pictured jaw's own light/shadow/anatomical edge, including the portion of the jaw drawn INSIDE the portrait where the jaw overlaps the neck. Do not draw a straight diagonal shortcut from chin to ear across the middle of the cheek. Preserve the genuinely soft curvature of this existing image; don't invent a square angle or a generic anatomical jaw. If a tiny portion is genuinely hidden by hair, bridge only that hidden portion with the SAME BLUE dashed line rather than moving the hair or pretending it is visible.\nUse a crisp 3-pixel cyan line, not a thick glow. Add only three tiny cyan dots at the chin start, actual jaw angle, and ear-root endpoint. No letters, text, arrows, numbers, labels, grids, extra contour lines or inset images. The requested result is a tracing overlay on this original image for visual inspection, not a redesigned portrait.",
+  "scope": [
+    "Full mandibular path from chin through jaw body/angle to ear root, not only chin-neck silhouette.",
+    "User requested ImageGen rather than more manual landmarking; this first trial is deliberately a single profile.",
+    "Earlier manual lines and numerical comparisons are user-rejected: misaligned traces, incomplete rear jaw, and uncalibrated pose comparisons. Do not reuse their metrics for authoring.",
+    "Generative edit is not certified pixel-preserving or camera-calibrated. Do not use it as exact geometry or compare its pixels numerically to the source.",
+    "No game character parameter changes were made."
+  ]
+}
