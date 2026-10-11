@@ -1,0 +1,18 @@
+{
+  "status": "candidate; jaw not accepted or locked",
+  "base_card": "E:/HoneySelect2_ArcticFox/UserData/chara/female/Codex/Chenger_stylized_reconstruction_v14_jaw_corrected.png",
+  "base_card_sha256": "3ece34bc4cd6e05bddd6599378a306bb9dc2c235d5cb7a6f03c01f2ed9229d40",
+  "output_card": "E:/HoneySelect2_ArcticFox/UserData/chara/female/Codex/Chenger_stylized_reconstruction_v15_chin_candidate.png",
+  "abmx_bones": [
+    {
+      "name": "cf_J_ChinTip_s",
+      "scale": [
+        0.88,
+        0.989540756,
+        1.04659534
+      ]
+    }
+  ],
+  "preserved": "All native sliders, other ABMX fields and bones, eyes/nose/lips/brows/hair/clothes/materials; prior four-part runtime trial removed by full v14 reload.",
+  "output_card_sha256": "343d5d550af3c096bbfa16679a39c61b2d4ea5bb4657690a0efac746f0936148"
+}

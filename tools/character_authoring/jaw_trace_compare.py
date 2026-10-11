@@ -30,7 +30,9 @@ def main():
               hashlib.sha256(args.measurements.read_bytes()).hexdigest()}
     fig, axes = plt.subplots(1, 3, figsize=(14, 6), constrained_layout=True)
     overlay = axes[2]
-    fractions = [.25, .5, .75]
+    # The old three sections missed the broad/flat terminal chin seen in v14.
+    # Keep those sections and explicitly inspect the shoulder and tip as well.
+    fractions = [.1, .25, .5, .75, .9, .95]
     for i, name in enumerate(('reference', 'candidate')):
         row, label = observations[name], trace[name]
         path = Path(row['path'])
@@ -51,12 +53,15 @@ def main():
         levels = np.array(fractions) * chin[1]
         lx = np.interp(levels, left[:, 1], left[:, 0])
         rx = np.interp(levels, right[:, 1], right[:, 0])
-        vleft = np.array([lx[-1] - lx[0], levels[-1] - levels[0]])
-        vright = np.array([rx[-1] - rx[0], levels[-1] - levels[0]])
+        lo, hi = fractions.index(.25), fractions.index(.75)
+        vleft = np.array([lx[hi] - lx[lo], levels[hi] - levels[lo]])
+        vright = np.array([rx[hi] - rx[lo], levels[hi] - levels[lo]])
         angle = float(np.degrees(np.arccos(np.clip(np.dot(vleft, vright) /
                          np.linalg.norm(vleft) / np.linalg.norm(vright), -1, 1))))
         result[name] = {'image_sha256': sha,
                         'widths_per_eye_distance': dict(zip(map(str, fractions), (rx-lx).tolist())),
+                        'section_left_x_per_eye_distance': dict(zip(map(str, fractions), lx.tolist())),
+                        'section_right_x_per_eye_distance': dict(zip(map(str, fractions), rx.tolist())),
                         'lower_lip_to_chin_per_eye_distance': float(chin[1]-lip[1]),
                         'mouth_to_chin_per_eye_distance': float(chin[1]),
                         'mid_contour_secant_included_angle_degrees': angle,
