@@ -244,3 +244,49 @@ head Y中央约.285、侧部.152；Low中央.199、侧部.200。该值来自矩�
 ```powershell
 .venv/Scripts/python.exe tools/character_authoring/chin_position_audit.py --geometry outputs/chenger_stylized_arcface_20261011/v17_current_geometry.json --out outputs/chenger_stylized_arcface_20261011/v17_chin_position_audit_repeat.json
 ```
+
+## v18已拒绝，完整顶点与投影作用范围修正
+
+本轮只作者修改Tip Y-.18→-.215、Low Y.025→.125，保留所有宽度/旋转/长度、
+原生形状、妆、发、材质。原生Length1缓存分支负责实际应用。
+候选依据中央/侧部诊断区域平均选择上收同时保留中央圆度；这次作者选择失败。
+**区域平均不能替代投影轮廓。**不得把这一作者近似提升为交付的反演实现。
+
+源平移响应与实际完整4439个raw BakeMesh顶点变化，转actual head坐标比较：
+最大残差9.871869e-7、均值4.920167e-7游戏单位，完整残差保留而不自行设阈值。
+说明二骨位置应用机制在此对数据中吻合，但不能证明外观正确。
+新增可重现`chin_translation_check.py`只支持二骨Length1位置差，scale/rotation/
+length变化明确拒绝，源mesh不一致拒绝；其它driver/父链变化不扣除，保留于残差。
+并非全动画/所有分支兼容认证，也不是拟合游戏数据。
+
+源最低1184并非当前颏底投影点：1206实际投影Y836.12698→839.91334，
+向下约3.78636px；1184反而Y823.73635→820.49504。1206的Tip/Low真实
+权重.450688/.047155，1184则.312873/.198383。两点已在实际main camera
+原图上以几何诊断标出，末端长度变长，候选拒绝，不伪造改善百分数。
+头部source hash仍b2c3831da3e025b23a8dc6231a8cd73ed3540536f81b3aea1aa4b9459e360ece。
+
+新`chin_projected_audit.py`保留完整原vertex IDs、全部投影坐标、来源骨权重、
+几何/捕获/图像SHA及两极值，并可产生标注图。使用实际BakeMesh scale-free
+转换与head matrix回head坐标，再按记录的frozen head TRS/FOV/yaw/target做
+该主相机源透视诊断。当前导出head matrix与TRS表示最大分量差约6.1e-8；
+FOV23及768x1024是记录输入，旧capture响应未报告这两项；投影不认证CTAA
+jitter/shader visibility、任意shear或全场景遮挡。源Y<-.30/Z>.50只是明确
+诊断选择，不把选点自动宣称解剖/可见标签。原图辅助确认当前颏底位置。
+
+失败v18卡独立保存：
+`E:/HoneySelect2_ArcticFox/UserData/chara/female/Codex/Chenger_stylized_reconstruction_v18_chin_rejected.png`，
+SHA ca4be825a68bee935d42af285ea3c1ffa9e22c4a761bf11f799ca80dae3191d6，
+配方`chenger_v18_rejected_recipe.json`。不以失败卡保存当成功。
+已恢复原生v17及原TARGET1/blink=true，snapshot/style/expression与完整ABMX
+响应均与v18_before_state精确相等，证据v18_rejected_restoration.json。
+当前没有新锁定项；下一步依据实际投影完整末端来源顶点而非区域平均值选参数。
+
+```powershell
+.venv/Scripts/python.exe tools/character_authoring/chin_translation_check.py --before outputs/chenger_stylized_arcface_20261011/v17_current_geometry.json --after outputs/chenger_stylized_arcface_20261011/v18_current_geometry.json --out outputs/chenger_stylized_arcface_20261011/v18_position_prediction_check_repeat.json
+.venv/Scripts/python.exe tools/character_authoring/chin_projected_audit.py --geometry outputs/chenger_stylized_arcface_20261011/v18_current_geometry.json --capture outputs/chenger_stylized_arcface_20261011/v18_fixed_chin_capture/front.json --out outputs/chenger_stylized_arcface_20261011/v18_projected_vertex_audit_repeat.json --figure outputs/chenger_stylized_arcface_20261011/v18_projected_vertex_figure_repeat.png
+```
+
+证据还包括v18_source_translation_prediction.json、v18_fixed_chin_capture/、
+v18_current_geometry.json、v18_fixed_open_proportions/、v17_projected_vertex_audit.json。
+FAN自动颏点仍不作原图末端，未用检测点虚构完整轮廓通过。
+前里程碑已推送：HS2Mod36ee9d3 / Face2Parameter4e87387；本轮保持goal active。

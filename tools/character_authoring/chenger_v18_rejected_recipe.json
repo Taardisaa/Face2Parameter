@@ -1,0 +1,27 @@
+{
+  "status": "rejected; geometry response correct but visible chin length worsened; restored v17",
+  "base_card": "E:/HoneySelect2_ArcticFox/UserData/chara/female/Codex/Chenger_stylized_reconstruction_v17_chin_candidate.png",
+  "output_card": "E:\\HoneySelect2_ArcticFox\\UserData\\chara\\female\\Codex\\Chenger_stylized_reconstruction_v18_chin_rejected.png",
+  "output_card_sha256": "ca4be825a68bee935d42af285ea3c1ffa9e22c4a761bf11f799ca80dae3191d6",
+  "abmx_bones": [
+    {
+      "name": "cf_J_ChinTip_s",
+      "position": [
+        0,
+        -0.215,
+        0.000739015639
+      ]
+    },
+    {
+      "name": "cf_J_ChinLow",
+      "position": [
+        0,
+        0.125,
+        -0.00106364489
+      ]
+    }
+  ],
+  "preserve_omitted_fields": true,
+  "failure_mechanism": "Authoring based on regional averages missed projected terminal vertex1206: Tip weight .450688183 and Low .04715466, unlike source-min vertex1184. Terminal vertex moved down despite selected region mean moving up.",
+  "source_geometry_sha256": "b2c3831da3e025b23a8dc6231a8cd73ed3540536f81b3aea1aa4b9459e360ece"
+}
