@@ -1,0 +1,35 @@
+{
+  "status": "candidate; not accepted/locked",
+  "base_card": "E:\\HoneySelect2_ArcticFox\\UserData\\chara\\female\\Codex\\Chenger_stylized_reconstruction_v16_chin_candidate.png",
+  "base_card_sha256": "8f538582004c447d4cdf44e9042ce9530875301e12bcb79c9e5aea6649ea1c0c",
+  "output_card": "E:\\HoneySelect2_ArcticFox\\UserData\\chara\\female\\Codex\\Chenger_stylized_reconstruction_v17_chin_candidate.png",
+  "output_card_sha256": "4763faf9dd7d426932c6b3457e909eece96df6157091fbd0dc532bcbaca97ecd",
+  "abmx_bones": [
+    {
+      "name": "cf_J_ChinTip_s",
+      "position": [
+        0,
+        -0.18,
+        0.000739015639
+      ]
+    },
+    {
+      "name": "cf_J_ChinLow",
+      "position": [
+        0,
+        0.025,
+        -0.00106364489
+      ]
+    }
+  ],
+  "source_scope": "Installed ABMX length1 position-only cache path. Static actual source weights guide central-vs-lateral influence, not fitted screenshot gains. Preserve omitted fields.",
+  "measurement_expression": {
+    "eyes_look_pattern": 3,
+    "eyes_blink": false
+  },
+  "saved_expression": {
+    "eyes_look_pattern": 1,
+    "eyes_blink": true
+  },
+  "reload_scope": "Snapshot, material style, expression exactly equal. ABMX list 42->30 identity entries pruned; remaining30 exactly equal, detailed evidence retained."
+}

@@ -1,0 +1,205 @@
+{
+  "scope": "v16 actual main camera, phase zero, native NO_LOOK index3 and eyes_blink false after normal late update. Human visible jaw trace; manual edge uncertainty remains. Face surfaces repeat identically; V5 whole actor exact quaternion restoration failed and retained. Not accepted/locked.",
+  "reference": {
+    "image_sha256": "086a01b02a96a356edf2d2c46f534bd7bd9cf1e299d71617357a37d526878e05",
+    "left_xy": [
+      [
+        334,
+        823
+      ],
+      [
+        344,
+        840
+      ],
+      [
+        358,
+        860
+      ],
+      [
+        375,
+        880
+      ],
+      [
+        390,
+        900
+      ],
+      [
+        409,
+        920
+      ],
+      [
+        432,
+        940
+      ],
+      [
+        463,
+        960
+      ],
+      [
+        501,
+        980
+      ],
+      [
+        528,
+        992
+      ],
+      [
+        539,
+        1000
+      ]
+    ],
+    "right_xy": [
+      [
+        769,
+        823
+      ],
+      [
+        760,
+        840
+      ],
+      [
+        750,
+        860
+      ],
+      [
+        735,
+        880
+      ],
+      [
+        714,
+        900
+      ],
+      [
+        692,
+        920
+      ],
+      [
+        668,
+        940
+      ],
+      [
+        640,
+        960
+      ],
+      [
+        604,
+        980
+      ],
+      [
+        575,
+        992
+      ],
+      [
+        539,
+        1000
+      ]
+    ],
+    "lower_lip_bottom_xy": [
+      536,
+      865
+    ],
+    "chin_xy": [
+      539,
+      1000
+    ],
+    "edge_judgement_uncertainty_pixels": 6,
+    "lip_boundary_judgement_uncertainty_pixels": 5
+  },
+  "candidate": {
+    "image_sha256": "b6fa6c5b3121872697ef66729bd2cfd49d8eb3e1d2410b5cf81e6e1872864d33",
+    "left_xy": [
+      [
+        211,
+        690
+      ],
+      [
+        218,
+        710
+      ],
+      [
+        235,
+        730
+      ],
+      [
+        256,
+        750
+      ],
+      [
+        280,
+        770
+      ],
+      [
+        306,
+        790
+      ],
+      [
+        335,
+        810
+      ],
+      [
+        352,
+        820
+      ],
+      [
+        368,
+        826
+      ],
+      [
+        381,
+        828
+      ]
+    ],
+    "right_xy": [
+      [
+        583,
+        690
+      ],
+      [
+        564,
+        710
+      ],
+      [
+        544,
+        730
+      ],
+      [
+        520,
+        750
+      ],
+      [
+        496,
+        770
+      ],
+      [
+        471,
+        790
+      ],
+      [
+        444,
+        810
+      ],
+      [
+        427,
+        820
+      ],
+      [
+        401,
+        826
+      ],
+      [
+        381,
+        828
+      ]
+    ],
+    "lower_lip_bottom_xy": [
+      381,
+      720
+    ],
+    "chin_xy": [
+      381,
+      828
+    ],
+    "edge_judgement_uncertainty_pixels": 6,
+    "lip_boundary_judgement_uncertainty_pixels": 5
+  }
+}

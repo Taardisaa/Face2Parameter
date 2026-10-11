@@ -170,3 +170,38 @@ SSS像素仍不完全相等，未虚构阈值。原失败全部保留。
 新的v16固定姿态量测在`v16_fixed_pose_proportions/`，实际完整源状态在
 `v16_fixed_native_geometry.json`；导出用于恢复源映射，不是游戏参数扫掠。
 下巴仍在处理中，必须比较完整轮廓；最终卡/常态表现恢复原TARGET(index1)。
+
+## v17实际下巴候选与量测修正
+
+V4虽然原门槛通过，但实际闭眼；其FAN眼距对比不能作为作者改形依据。
+V5先原生eyes_blink=false并经过正常LateUpdate展开眼睑，再捕获相位零。
+八个表面相等；全actor精确旋转恢复门槛再次失败，原证据保留，未降阈值。
+固定睁眼画面人工全轮廓表明v16的25/50/75%宽差约+4/-1/+1%，
+90/95%末端差约+23/+60%，唇下长度-3%。旧姿态的中段偏窄判断撤回，
+不再据此扩大两侧。末端百分数分母很小，结合贴边图及6px人工误差解释，
+不作为精确宽度或改善幅度。FAN自动颏点明显偏高，必须保留人工皮肤边界。
+
+仅选择一套源支持候选，不进行游戏参数扫掠：Tip Y -.13→-.18，Low Y0→+.025。
+二骨Length=1使用安装ABMX `_posBaseline+PositionModifier`分支；其余所有
+scale/rotation/length、59原生参数、材质、眼鼻唇眉保持。静态实际混合权重
+用于区分中央与侧部支持，不以平均权重拟合参数增益或假装精确逆解。
+实际main camera正/侧捕获的head pose相同，两次即时全TRS恢复检查均通过。
+不是把V5失败改判通过，也不是私有状态普适认证。
+
+v17全轮廓25/50/75%宽差约+3/-4/-6%，90/95%约+16/+46%，
+唇下长度约+4%，嘴线至颏约+3%。底部圆度有改善但仍偏宽，长度略偏长，
+人工误差及参考2D残余姿态保留，**未通过、未锁定**。侧面头发遮挡颏轮廓，
+不能编造侧面3D目标或宣称验收；下一步需可恢复原生隐藏头发以检查实际轮廓。
+配方及哈希绑定全轮廓：`chenger_v17_chin_recipe.json`、`chenger_v17_chin_trace.json`。
+修正后的v16基线trace：`chenger_v16_fixed_chin_trace.json`。
+输出：v16_fixed_open_proportions、v16_fixed_chin_review、v17_fixed_open_proportions、
+v17_fixed_chin_capture、v17_fixed_chin_review。闭眼V4输出仍保留但不用于作者结论。
+
+保存前恢复TARGET1/blink=true。v17卡SHA
+4763faf9dd7d426932c6b3457e909eece96df6157091fbd0dc532bcbaca97ecd。
+保存重载snapshot/renderstyle/expression完全相同；ABMX列表42→30不是列表
+精确相等。逐项核对删除12个身体modifier及全部coordinate副本均identity，
+保留30个modifier无增加/无变更，细节在v17_abmx_reload_identity_pruning.json；
+原列表不等结果在v17_state_acceptance.json保留，不用规范化覆盖失败。
+当前可见是重载v17普通原生头2，Hanmen/SSS保持，旧卡均留存，目标active。
+诊断代码里程碑HS2Mod b6d170a / Face2Parameter 043f273均已推送。
