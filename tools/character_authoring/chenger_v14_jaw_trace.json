@@ -1,0 +1,21 @@
+{
+  "scope": "Human tracing of visible skin/jaw edges, same protocol as v13. Original PNG pixels and SHA-bound inputs. Eye-distance scaling and mouth alignment only; residual pose and manual edges remain uncertain.",
+  "reference": {
+    "image_sha256": "086a01b02a96a356edf2d2c46f534bd7bd9cf1e299d71617357a37d526878e05",
+    "left_xy": [[334,823],[344,840],[358,860],[375,880],[390,900],[409,920],[432,940],[463,960],[501,980],[528,992],[539,1000]],
+    "right_xy": [[769,823],[760,840],[750,860],[735,880],[714,900],[692,920],[668,940],[640,960],[604,980],[575,992],[539,1000]],
+    "lower_lip_bottom_xy": [536,865],
+    "chin_xy": [539,1000],
+    "edge_judgement_uncertainty_pixels": 6,
+    "lip_boundary_judgement_uncertainty_pixels": 5
+  },
+  "candidate": {
+    "image_sha256": "bafa0a457577f9ef8a3420f5b756cc7848f3ca11029d5c5c9ba8599f9664eee2",
+    "left_xy": [[267,654],[273,670],[282,690],[299,710],[315,730],[338,750],[352,760],[383,780],[402,790],[425,795]],
+    "right_xy": [[614,654],[607,670],[585,690],[559,710],[538,730],[516,750],[504,760],[472,780],[451,790],[425,795]],
+    "lower_lip_bottom_xy": [424,685],
+    "chin_xy": [425,795],
+    "edge_judgement_uncertainty_pixels": 4,
+    "lip_boundary_judgement_uncertainty_pixels": 4
+  }
+}

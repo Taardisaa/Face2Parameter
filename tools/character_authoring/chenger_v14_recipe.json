@@ -1,0 +1,57 @@
+{
+  "base_card": "E:/HoneySelect2_ArcticFox/UserData/chara/female/Codex/Chenger_stylized_reconstruction_v13_alignment.png",
+  "base_card_sha256": "527ab528c0cb353307e5c455c7542b1c917276dde427fc64e7e5cd109d9c28f5",
+  "output_card": "E:\\HoneySelect2_ArcticFox\\UserData\\chara\\female\\Codex\\Chenger_stylized_reconstruction_v14_jaw_corrected.png",
+  "output_card_sha256": "3ece34bc4cd6e05bddd6599378a306bb9dc2c235d5cb7a6f03c01f2ed9229d40",
+  "scope": "Native v13 authoring delta; full base card preserved. Native batch first, then installed ABMX patches. Global SSS separately enabled. No fitted game deformation model.",
+  "native_batch": {
+    "indices": [
+      4,
+      5
+    ],
+    "values": [
+      0.45,
+      0.78
+    ]
+  },
+  "abmx_bones": [
+    {
+      "name": "cf_J_Chin_rs",
+      "length": 1.11,
+      "scale": [
+        1.16,
+        0.976284444,
+        1.00938332
+      ]
+    },
+    {
+      "name": "cf_J_ChinTip_s",
+      "position": [
+        0,
+        -0.09,
+        0.000739015639
+      ],
+      "scale": [
+        1.1,
+        0.989540756,
+        1.04659534
+      ]
+    },
+    {
+      "name": "cf_J_ChinLow",
+      "position": [
+        0,
+        -0.03,
+        -0.00106364489
+      ],
+      "scale": [
+        1.16,
+        0.989446461,
+        1.01262188
+      ]
+    }
+  ],
+  "source_abmx_sha256": "9224876ce931eb3c40a347ba57abebcca515bde58af2a6b9802b367a5b3563af",
+  "native_head_id": 2,
+  "preserved": "All other ABMX fields/modifiers, all other native sliders, eyebrow/lip/iris, hair/clothes, skin/SSS."
+}
