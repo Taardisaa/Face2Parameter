@@ -101,6 +101,20 @@ v1 保留，当前卡为同一游戏目录 `Chenger_stylized_reconstruction_v2.p
 本轮实际输出为brow_source_v3_rgba与lip_source_v3_alpha。
 # v4 identity authoring continuation
 
+## v8 eye/brow/lip proportions
+
+Actual game card Chenger_stylized_reconstruction_v8.png in the Codex female folder.
+Native22=.62,23=.57,48=.65,51=.47; brow13; pupilcolor[.23,.15,.12,1];
+both blackW/H=.32; lip3 color[.46,.23,.28,.54], gloss.56. ABMX unchanged.
+Full before/after, ABMX, patch and successful snapshot/bone reload equality at
+`outputs/chenger_stylized_arcface_20261011/v8_native_state.json`.
+HS2Mod actual two-view captures `chenger_v8_final_0/1.png` retain full capture JSON.
+Installed ChaControl writes pupil and black controls into shader layout lerps;
+card values are not pixel radii and their quotient is not a pupil/iris size ratio.
+No complete eye-shader reconstruction is asserted. Reference-photo/style review
+motivated manual proportions. Identity goal remains active: hair dimensions,
+crisp upper eye-tail and profile nose/lip character remain unresolved.
+
 ## v7 lower face and outfit
 
 Actual card `E:/HoneySelect2_ArcticFox/UserData/chara/female/Codex/Chenger_stylized_reconstruction_v7.png`.
