@@ -56,6 +56,7 @@ def main():
                   public_state_equal=before == after,
                   same_call_pose_restored=all(s['pose_restoration']['local_trs_equal'] and
                       s['pose_restoration']['blink_flag_equal'] for s in shots),
+                  face_surfaces_equal=shots[0]['face_surfaces'] == shots[1]['face_surfaces'],
                   invalid_type_rejected=invalid_rejected,
                   invalid_request_state_equal=invalid_unchanged,
                   invalid_png_absent=not (a.out/'invalid_should_not_exist.png').exists(),
@@ -64,7 +65,7 @@ def main():
     for name, value in [('before', before), ('after', after), ('report', report)]:
         (a.out/f'{name}.json').write_text(json.dumps(value, indent=2), encoding='utf-8')
     print(json.dumps({k: v for k, v in report.items() if k != 'shots'}, indent=2))
-    checks = ['head_pose_equal_within_1e_6', 'public_state_equal', 'same_call_pose_restored',
+    checks = ['head_pose_equal_within_1e_6', 'public_state_equal', 'same_call_pose_restored', 'face_surfaces_equal',
               'invalid_type_rejected', 'invalid_request_state_equal', 'invalid_png_absent']
     if not all(report[k] for k in checks):
         raise SystemExit('Capture acceptance failed; preserve evidence and fix responsible source path.')

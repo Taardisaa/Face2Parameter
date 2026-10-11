@@ -150,3 +150,23 @@ V1固定head TRS重复差0、公开状态恢复通过，但全节点精确恢复
 
 V1/V2失败都保留在对应输出目录；实验后原生重载v16，未修改脸参数。
 当前SSS开启、普通原生头2、完整卡可恢复，无诊断壳；下巴不锁定，目标active。
+
+## V3诊断与V4量测条件
+
+`main_capture_acceptance.py`新增八个真实面部BakeMesh表面的严格相等检查。
+V3原失败保留：部分身体/手指的旋转逐分量差约1e-8；左右o_eyebase顶点hash
+不等而blendshape权重相等，o_head等其余表面相等。未放宽精确恢复门槛。
+安装EyeLookController→EyeLookCalc源码及实际eyeTypeStates明确TARGET有
+Time.deltaTime角度插值，index3的NO_LOOK则写缓存fixAngle。临时通过原生
+表达接口设置index3后，V4两次未改人物捕获的全部原门槛通过，包括八表面
+严格相等、head world TRS实差0、全部916节点与blink即时恢复、公开状态及
+非法请求拒绝。并非关闭控制器，不修改眼形/虹膜/妆容。
+
+证据`main_pose_capture_acceptance_v3/`与`main_pose_capture_acceptance_v4_native_no_look/`；
+当前部署DLL SHA为d8a3d6fcfec97a5dec0a96551167d9f61a6675bcb262e2b6bcb2a1d20ae13304，
+完整IL审计仍仅两个捕获类型改变，其余117类型保持。
+此通过只支撑本次记录条件下继续量测，既不认证所有私有缓存也不认证辨识度。
+SSS像素仍不完全相等，未虚构阈值。原失败全部保留。
+新的v16固定姿态量测在`v16_fixed_pose_proportions/`，实际完整源状态在
+`v16_fixed_native_geometry.json`；导出用于恢复源映射，不是游戏参数扫掠。
+下巴仍在处理中，必须比较完整轮廓；最终卡/常态表现恢复原TARGET(index1)。
