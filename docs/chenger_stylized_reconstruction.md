@@ -78,3 +78,24 @@ v1 保留，当前卡为同一游戏目录 `Chenger_stylized_reconstruction_v2.p
 `v2_native_state.json` 保存修正配方及回执；截图为 HS2Mod
 `artifacts/chenger_style_20261011/chenger_reconstruction_v2.png`。
 这一步改善发黑的瞳孔及唇形，但人物辨识度仍未完成。
+
+## v3：按部位继续人物制作
+
+逐项真人/美术图/v2差异与原生配方见
+[身份制作记录](../../HS2Mod/docs/chenger_identity_authoring.md)。当前人物卡
+为游戏Codex目录 `Chenger_stylized_reconstruction_v3_final.png`，v2和v3均保留。
+完整当前参数与ABMX在ignored输出 `v3_native_state.json`；初次选定候选的
+安装版副本计算顶点为 `v3_source_forward.json`。最终嘴部3项的修正另有记录，
+没有冒称它们也是最初forward的输入。人物仍未通过身份相似度完成判断。
+
+原生眉/唇纹理通过ChaList实际源行提取，不猜测ID：
+
+```powershell
+.venv/Scripts/python.exe -m tools.character_authoring.source_texture_sheet --category st_eyebrow --out outputs/chenger_brow_source_fresh
+.venv/Scripts/python.exe -m tools.character_authoring.source_texture_sheet --category st_lip --out outputs/chenger_lip_source_fresh
+```
+
+工具保存原始RGBA、原列表行、bundle/raw SHA，检查图按纹理实际通道显示alpha
+或RGB；不会把带全红RGB的透明唇彩错误显示为空白。无纹理ID显式保留。
+这是素材源检查，不模拟运行shader，不把裁剪检查图当作游戏渲染。
+本轮实际输出为brow_source_v3_rgba与lip_source_v3_alpha。
