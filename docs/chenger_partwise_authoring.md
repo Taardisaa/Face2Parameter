@@ -205,3 +205,42 @@ v17_fixed_chin_capture、v17_fixed_chin_review。闭眼V4输出仍保留但不�
 原列表不等结果在v17_state_acceptance.json保留，不用规范化覆盖失败。
 当前可见是重载v17普通原生头2，Hanmen/SSS保持，旧卡均留存，目标active。
 诊断代码里程碑HS2Mod b6d170a / Face2Parameter 043f273均已推送。
+
+## v17侧面与源平移作用范围
+
+本轮未再改下巴数值。最初原生离屏hide_hair正/侧输出有异常小身体投影叠影，
+保留`v17_native_unobstructed*`失败证据，不用于形状通过，也不冒充主相机SSS图。
+随后通过原生hair接口临时使用back0长直发（**不是无发**；front/side/option0为无），
+真实main camera的正/侧图清楚露出颏尖和唇下折线。诊断发型没有保存为人物输出。
+原普通v17全卡已重新载入，并显式恢复TARGET1/blink=true。
+不能假定load card必然恢复runtime gaze：本次重载后index3仍保留，已发现并修正。
+最终snapshot/renderstyle/expression相等；原30个modifier完全相同，正常运行又
+出现12个identity身体modifier，原始精确列表不等如实保留。
+
+前后主相机的head pose和o_head BakeMesh hash相等，六个其它面部表面相等；
+左右o_eyebase hash不同而blendshape权重相等。NO_LOOK采用各次加载的fixAngle，
+并不保证跨重载眼球缓存相同。不能泛称完整脸表面不变或把侧图当眼睛验收。
+当前侧图可读颏尖/唇下深度，后方下颌仍有头发；无合格真人/美术侧面目标时，
+不编造侧面3D误差或宣布通过。证据`v17_main_unobstructed/front.png`、`side.png`、
+`v17_side_diagnostic_final_restore.json`；该次即时全TRS精确恢复仍失败，未掩盖。
+
+新增`tools/character_authoring/chin_position_audit.py`读取本次实际几何、所有
+祖先矩阵、原始权重/bindpose、blendshape帧、安装ABMX私有缓存；只处理二骨
+Length1的位置分支。平移作用包含每个实际后代骨的权重，由parent世界线性
+矩阵转成head坐标；不是从游戏截图拟合gain，不以骨名假定只影响颏尖。
+非单100帧的活动blendshape、缺失baseline或非Length1明确拒绝，不静默近似。
+源顶点LBS与实际BakeMesh完整4439顶点比较：完整renderer矩阵转换最大误差
+.126896游戏单位，scale_free_trs候选最大4.119e-6、均值1.006e-6。保留二者，
+不以自行设置阈值宣称所有模型/蒙皮质量兼容；该实际数据支持当前坐标解释。
+两骨actual position与captured baseline+offset分量差最多1e-8。
+
+相同明确源区域（中央40点、侧部24点）真实解析平移响应：Tip local Y对应
+head Y中央约.285、侧部.152；Low中央.199、侧部.200。该值来自矩阵与权重，
+不是学习/拟合变形斜率，也不是解剖目标。逐点矩阵/完整缓存及误差保存于
+`v17_chin_position_audit.json`，摘要`v17_chin_translation_regions.json`。
+下一步可分开处理中央圆度和整体长度；不能把该模型审计当人物外观验收。
+配方、人物卡不变；当前可见是原发型v17，Hanmen/SSS保持，目标active。
+
+```powershell
+.venv/Scripts/python.exe tools/character_authoring/chin_position_audit.py --geometry outputs/chenger_stylized_arcface_20261011/v17_current_geometry.json --out outputs/chenger_stylized_arcface_20261011/v17_chin_position_audit_repeat.json
+```
