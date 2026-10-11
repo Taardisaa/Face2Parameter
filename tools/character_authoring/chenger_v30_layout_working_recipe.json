@@ -1,0 +1,86 @@
+{
+  "status": "Working native v30 layout candidate; not accepted/locked. Actual source parity and cached gaze held pass, visible eye-aperture correspondence and pose-paired capture need stronger evidence before layout lock.",
+  "card_path": "E:\\HoneySelect2_ArcticFox\\UserData\\chara\\female\\Codex\\Chenger_stylized_reconstruction_v30_layout_working.png",
+  "card_sha256": "427404a17b11a6afc485a0f23a20f8ebe4155c168380b5b07b259d93da9f359c",
+  "base_card_sha256": "c5a7b4c0e9971352f3a986b800296eb9e7e7f0efa92527e2f3a0871c26752cb1",
+  "patch": {
+    "bones": [
+      {
+        "name": "cf_J_Eye_s_L",
+        "position": [
+          -0.0019936108641013524,
+          -0.002104338063181656,
+          0.0
+        ],
+        "length": 1.0
+      },
+      {
+        "name": "cf_J_Eye_s_R",
+        "position": [
+          -0.018428732346424146,
+          0.013145297469030686,
+          0.0
+        ],
+        "length": 1.0
+      },
+      {
+        "name": "cf_J_NoseBase_trs",
+        "position": [
+          -0.01616728767070076,
+          0.018572555811129005,
+          0.0
+        ],
+        "length": 1.0
+      },
+      {
+        "name": "cf_J_MouthBase_tr",
+        "position": [
+          -0.007723074073237671,
+          -0.002416835882815149,
+          0.0
+        ],
+        "length": 1.0
+      }
+    ]
+  },
+  "gaze_contract": {
+    "actor_transform_id": -33642,
+    "bridge_mvid": "5322ccd0-4a36-44d1-b126-81da7a81afaa",
+    "game_mvid": "f4b3ed4e-0357-48ed-a610-b0642947f317",
+    "pattern": 3,
+    "resolved_type": {
+      "name": "NO_LOOK",
+      "value": 0
+    },
+    "fixed_angles_xyzw": [
+      [
+        -0.00263763522,
+        0.00164573058,
+        4.33623745e-06,
+        0.9999952
+      ],
+      [
+        -0.002636721,
+        -0.00350069883,
+        -9.220092e-06,
+        0.9999904
+      ]
+    ]
+  },
+  "geometry_validation_sha256": "75a453717e8b51fafd264153446151f5c3a544f7fc726d8594dfdfc78eca4780",
+  "reload_check": {
+    "snapshot_raw_equal": true,
+    "abmx_raw_equal": true,
+    "common_abmx_exact_equal": true,
+    "removed_abmx_records": {},
+    "style_raw_equal": true,
+    "expression_raw_equal": true,
+    "jaw5_records_exact_equal": true,
+    "native19_locked_exact_equal": true
+  },
+  "saved_expression": {
+    "eyes_look_pattern": 1,
+    "eyes_blink": true
+  },
+  "preserved_jaw_lock": "chenger_v28_jaw_lock.json"
+}

@@ -45,3 +45,59 @@ FaceUp_ty不是已锁定下颌骨的祖先，但自身蒙皮权重及后代会�
 下一步先核对现有图的眼轮廓与唇缝标点，再复用实际缓存/父链/权重模型
 计算局部上脸与鼻位置控制，检查v28 jaw lock和共享骨耦合后才进入游戏。
 布局尚未验收或锁定；鼻/唇/眼眉/发型/整体渲染仍排队。
+
+
+## 本轮实际制作：v30工作卡，布局仍未锁定
+
+图像像素网格复核并保存独立眼裂6点、鼻底和唇缝观察，分别保留3/4/2px
+标点不确定性。chenger_v28_layout_landmarks.json与local8_layout_marks.json
+绑定原图SHA；继续沿用v28下颌的固定v17尺度/滚转/嘴线注册，未逐候选
+重新检测、拉伸或选择更方便的FAN结果。复核图在v28_reviewed_layout_marks.png。
+
+扩展SourceForward为明确parameter_fields及mesh_name，读取实际完整source、
+weights、bindposes、active blendframe、全部父链矩阵和 installed ABMX cache。
+分别覆盖真实o_head4439点、o_eyebase_L/R各148点。未注册root不假定基线：
+核查安装HS2ABMX BoneController.AddModifier调用FillInTransforms+CollectBaseline，
+通过该原生流程注册identity Eye_s_L/R、NoseBase_trs、MouthBase_tr，再读取
+实际_hasBaseline、_posBaseline和length1/_lenModForceUpdate=false。临时identity
+不会当作已制作的结果；真正非零4项根节点位置保存在v30卡中。
+
+先制作v29上脸+鼻根候选，实际head源预测一致但眼网格误差约.00283游戏单位，
+保留该失败，不靠参数补偿。安装IL.dll EyeLookCalc.EyeUpdateCalc源码确认：
+NO_LOOK直接写fixAngle；TARGET等分支在每次更新结束重新写fixAngle。
+基线采集后恢复TARGET1再切回NO_LOOK，改变了源缓存！实际cf_J_look_L/R
+local quaternion及driver fixed_angles_xyzw确认该变化。v29已保存为未锁定候选，
+卡SHAfab1beebb3d3046c5d6b0da2a16125cb6dd5b4cb1aa8b1532a312d76bfaf2fb7。
+
+修正协议：从新源基线到实际候选验证持续保留当前角色NO_LOOK3/blink=false，
+不关闭全局EyeLook。新增gaze_contract绑定actor、bridge/game MVID、实际模式表
+与双眼fixAngle；物理写入前独立export读取确认相等，实际后再确认相等。
+正常TARGET1/blink在完成该窗口后恢复。该协议处理本次缓存生命周期问题，
+不认证全部私有gaze历史或所有渲染回调。
+
+v30使用layout_source_candidate.py的local8配置，独立求解左右Eye_s、NoseBase_trs、
+MouthBase_tr的XY位置，共8标量；原上脸FaceUp_ty恢复v28值。全部控制来自上述
+实际缓存长度1位置分支，完整后代/权重计算，无截图拟合形变gain。
+实际源4735点对预测：head max4.406261e-6、mean2.451966e-6游戏单位；
+left eyebase max2.397258e-6、right2.247064e-6。前/后fixAngle合同相等。
+下颌真实完整轮廓仍约上中段max3.1433px、颏底max1.9583px，源预测的完整下颌
+位移为0；5项锁定骨和native0–18重载后完全相同。
+
+实际已改善鼻底—唇缝间距、左右眼/鼻/唇的源点布局。保留真实front/quarter图。
+但**不将表面附件四点几乎零残差视为可见眼裂中心精确对应**。附件在眼网格上，
+眼裂还受头部/材质遮挡；新自动FAN也有漂移。可见眼裂6点须独立检查，不能
+因为眼网格点移动就声称整个可见眼裂已按同样像素移动。
+拓扑读取发现head有7组boundary：两眼各10点，其他为口/颈/UV边界；眼部边界
+投影和可见白眼轮廓不同，不把拓扑hole直接等同可见开口。
+
+另外，main capture face_surfaces的实际raw BakeMesh hash与后续geometry export
+raw hash三网格均不相同，保留为未建立严格配对的证据。Source数学对export
+通过不等于该export一定是冻结渲染当刻的完整几何；头矩阵/配置相同也不能替代。
+下一步恢复实际主相机冻结窗口内的几何与投影来源，再完成可见眼裂对应；
+不放宽现有门槛，也不反复采样去猜可恢复逻辑。布局保持进行中。
+
+已保存/重载工作卡：Chenger_stylized_reconstruction_v30_layout_working.png，SHA
+427404a17b11a6afc485a0f23a20f8ebe4155c168380b5b07b259d93da9f359c。
+正常可见原生v30、原bob、Hanmen/SSS、TARGET1/blink。snapshot、完整raw ABMX、
+style、expression全部重载相等，无缺失identity行；下颌锁定仍有效。
+配方chenger_v30_layout_working_recipe.json；代码、观察和失败都保留，完整goal active。

@@ -23,10 +23,11 @@ def read(path):
 
 
 class SourceForward:
-    def __init__(self, d, capture, width=768, height=1024, controls='chin8'):
-        meshes = [m for m in d['meshes'] if m['mesh_name'] == 'o_head']
+    def __init__(self, d, capture, width=768, height=1024, controls='chin8',
+                 parameter_fields=None, mesh_name='o_head'):
+        meshes = [m for m in d['meshes'] if m['mesh_name'] == mesh_name]
         if len(meshes) != 1:
-            raise ValueError('One native head required')
+            raise ValueError('One recorded native mesh required: '+mesh_name)
         self.m = m = meshes[0]
         self.t = t = {r['id']: r for r in d['transforms']}
         heads = [r for r in t.values() if r['name'] == 'cf_J_Head']
@@ -42,11 +43,16 @@ class SourceForward:
         names = ['cf_J_ChinTip_s', 'cf_J_ChinLow', 'cf_J_Chin_rs']
         if controls in ('jaw14', 'jaw18', 'jaw22'):
             names += ['cf_J_CheekLow_L', 'cf_J_CheekLow_R']
+        if parameter_fields is not None:
+            if not parameter_fields or any(field not in ('scale','position','rotation') or
+                    axis not in (0,1,2) for _,field,axis in parameter_fields):
+                raise ValueError('Explicit nonempty cached modifier fields required')
+            names = list(dict.fromkeys(n for n,_,_ in parameter_fields))
         for name in names:
             cache = self.mods[name]['runtime_baseline']
             if cache['missing_fields'] or not cache['fields']['_hasBaseline']:
                 raise ValueError('Actual baseline missing: '+name)
-        if any(self.mods[n]['length'] != 1 for n in ('cf_J_ChinTip_s', 'cf_J_ChinLow')):
+        if parameter_fields is None and any(self.mods[n]['length'] != 1 for n in ('cf_J_ChinTip_s', 'cf_J_ChinLow')):
             raise ValueError('Position patches require installed length-one branch')
         self.ids = {n: self.mods[n]['runtime_baseline']['bone_transform_id'] for n in names}
         v = np.asarray(m['source']['vertices'], float).copy()
@@ -87,6 +93,8 @@ class SourceForward:
             self.parameter_fields += [
                 ('cf_J_CheekLow_L','position',0), ('cf_J_CheekLow_L','position',1),
                 ('cf_J_CheekLow_R','position',0), ('cf_J_CheekLow_R','position',1)]
+        if parameter_fields is not None:
+            self.parameter_fields = list(parameter_fields)
         for name,field,_ in self.parameter_fields:
             if field == 'position' and (self.mods[name]['length'] != 1 or
                     self.mods[name]['runtime_baseline']['fields']['_lenModForceUpdate']):

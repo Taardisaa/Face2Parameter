@@ -1,0 +1,139 @@
+{
+  "scope": "Reviewed visible aperture and feature marks on the source images. Fixed v17 scale/roll/mouth registration retained for comparison with locked v28 jaw; no per-candidate re-detection or stretching. Lighting, contour point and pose ambiguities retained. Current native v28 local8 baseline retains reviewed aperture/seam coordinates; gaze cache bound separately and held NO_LOOK through actual candidate verification.",
+  "registration_measurements": "C:\\Users\\13666\\Workspace\\Face2Parameter\\outputs\\chenger_stylized_arcface_20261011\\v17_fixed_open_proportions\\measurements.json",
+  "reference": {
+    "path": "C:\\Users\\13666\\Workspace\\Face2Parameter\\outputs\\chenger_stylized_arcface_20261011\\accepted_style_target.png",
+    "image_sha256": "086a01b02a96a356edf2d2c46f534bd7bd9cf1e299d71617357a37d526878e05",
+    "eye_left_contour_xy": [
+      [
+        350,
+        578
+      ],
+      [
+        385,
+        561
+      ],
+      [
+        421,
+        565
+      ],
+      [
+        458,
+        594
+      ],
+      [
+        420,
+        599
+      ],
+      [
+        384,
+        594
+      ]
+    ],
+    "eye_right_contour_xy": [
+      [
+        600,
+        591
+      ],
+      [
+        636,
+        554
+      ],
+      [
+        675,
+        555
+      ],
+      [
+        712,
+        574
+      ],
+      [
+        675,
+        591
+      ],
+      [
+        636,
+        593
+      ]
+    ],
+    "nose_base_xy": [
+      535,
+      754
+    ],
+    "mouth_seam_xy": [
+      536,
+      825
+    ],
+    "eye_boundary_uncertainty_pixels": 3,
+    "nose_base_uncertainty_pixels": 4,
+    "mouth_seam_uncertainty_pixels": 2
+  },
+  "candidate": {
+    "path": "C:\\Users\\13666\\Workspace\\Face2Parameter\\outputs\\chenger_stylized_arcface_20261011\\v28_local8_native_baseline\\front.png",
+    "image_sha256": "926c424d0be5486dce1fc64682b39a5f4b427211213a4d1cf324d2a7a86e61c8",
+    "eye_left_contour_xy": [
+      [
+        230,
+        479
+      ],
+      [
+        260,
+        468
+      ],
+      [
+        290,
+        474
+      ],
+      [
+        321,
+        499
+      ],
+      [
+        290,
+        502
+      ],
+      [
+        260,
+        497
+      ]
+    ],
+    "eye_right_contour_xy": [
+      [
+        445,
+        492
+      ],
+      [
+        475,
+        466
+      ],
+      [
+        505,
+        467
+      ],
+      [
+        535,
+        480
+      ],
+      [
+        505,
+        497
+      ],
+      [
+        475,
+        499
+      ]
+    ],
+    "nose_base_xy": [
+      381,
+      635
+    ],
+    "mouth_seam_xy": [
+      383,
+      686
+    ],
+    "eye_boundary_uncertainty_pixels": 3,
+    "nose_base_uncertainty_pixels": 4,
+    "mouth_seam_uncertainty_pixels": 2
+  },
+  "limitations": "Eye points follow visible scleral aperture, nose mark the central lower columella transition, mouth the central lip seam. Manual 2D observations; not hidden 3D or exact shader semantics. Left outer eye partly hair-obscured. Full aperture/iris shape belongs to eye stage."
+}
