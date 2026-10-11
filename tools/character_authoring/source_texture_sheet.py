@@ -14,7 +14,8 @@ from src.hs2_assets import ChaList, CATEGORY
 
 def main():
     p = argparse.ArgumentParser(description=__doc__)
-    p.add_argument('--category', choices=['st_eyebrow', 'st_lip', 'st_eyelash', 'st_eyeshadow'], required=True)
+    p.add_argument('--category', choices=['st_eyebrow', 'st_lip', 'st_eyelash', 'st_eyeshadow',
+                                         'st_eye', 'st_eyeblack', 'st_eye_hl'], required=True)
     p.add_argument('--out', type=Path, required=True)
     args = p.parse_args()
     args.out.mkdir(parents=True, exist_ok=False)

@@ -214,3 +214,26 @@ are the final effects-chain captures. Blink was temporarily disabled for the
 profile and restored. No geometry change is claimed. The final state, native
 ABMX and acceptance metadata are in ignored `v10_native_state.json`.
 
+## User-directed proportion and makeup alignment (2026-10-11)
+
+`tools/character_authoring/portrait_compare.py` runs the installed eager CPU
+FAN68 on the accepted artwork and actual v10 SSS portrait, then removes roll
+and uniformly scales by the distance between eye-contour centroids. It does
+not fit game response, infer three-dimensional truth or stretch either image
+anisotropically. Reviewed overlays and source/weights hashes are retained in
+`outputs/chenger_stylized_arcface_20261011/v10_proportion_review_eager/`.
+The overlay supports these approximate 2D differences (candidate/reference):
+eye-to-chin -7.46%, eye-to-nose-base -9.45%, mouth-to-chin -13.19%, while
+nose-base-to-mouth +13.96%. Detector error, residual yaw/pitch and makeup
+boundaries remain limitations; the extra decimal places are computation output,
+not measurement precision. These observations argue against uniform face
+stretching and guide separate native nose/mouth/jaw authoring.
+
+The source RGBA inspector also supports native iris, pupil-black and highlight
+categories. `iris_source_v11/` and `black_source_v11/` bind actual source rows,
+bundles and hashes; channel previews are not game renders. Native eye23 has
+uneven fiber visibility; eye0 contains more complete radial fibers, and black0
+is a soft circular alpha mask. Native brow7 has an ascending outer body, while
+brow13's tail slopes down. Shader/layout semantics are read from the installed
+ChaControl.ChangeEyebrowLayout/Tilt and ChangeEyesWH/ChangeBlackEyesWH paths.
+
