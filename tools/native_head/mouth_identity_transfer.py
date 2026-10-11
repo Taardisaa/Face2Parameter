@@ -98,8 +98,18 @@ def deform_oral(reference,target,faces,oral_face_ids,boundary,interior,max_itera
 def apply_full_controls(reference,faces,target,controls,control_basis,beta,mapping):
     """Continuous source identity field, with all lip controls retained exactly."""
     basis,interpolation=full_control_field(reference,controls,control_basis)
-    desired=reference+basis@beta
-    result=target.copy();ids=mapping["lip_ids"];result[ids]=desired[ids]
+    result,report=apply_lip_basis(reference,faces,target,basis[mapping['lip_ids']],beta,mapping)
+    report['source_field']=interpolation
+    report['policy']='C2 full source lip identity field; '+report['policy']
+    return result,report
+
+def apply_lip_basis(reference,faces,target,lip_basis,beta,mapping):
+    """Consume complete, explicitly corresponding source shape columns."""
+    ids=mapping['lip_ids']
+    if lip_basis.shape!=(len(ids),3,len(beta)) or not np.isfinite(lip_basis).all():
+        raise ValueError('Complete source identity columns at all corresponding lip nodes required')
+    desired=reference[ids]+lip_basis@beta
+    result=target.copy();result[ids]=desired
     halo=mapping["halo_ids"]
     if len(halo):
         edges,_=edges_and_graph(faces,len(reference));a,b=edges.T
@@ -107,12 +117,12 @@ def apply_full_controls(reference,faces,target,controls,control_basis,beta,mappi
         if np.any(lengths==0):raise ValueError("Zero physical edge")
         w=sparse.coo_matrix((np.r_[1/lengths,1/lengths],(np.r_[a,b],np.r_[b,a])),shape=(len(reference),)*2).tocsr()
         L=sparse.diags(np.asarray(w.sum(1)).ravel())-w
-        correction=splu(L[halo][:,halo].tocsc()).solve(-L[halo][:,ids]@(desired[ids]-target[ids]))
+        correction=splu(L[halo][:,halo].tocsc()).solve(-L[halo][:,ids]@(desired-target[ids]))
         result[halo]=target[halo]+correction
     result,oral=deform_oral(reference,result,faces,mapping["oral_face_ids"],mapping["oral_boundary_ids"],mapping["oral_interior_ids"])
-    if not np.array_equal(result[ids],desired[ids]):raise ValueError("Full source lip controls changed")
-    return result,dict(policy="C2 full source lip identity field, exact at every original source lip control; hard skin lip targets, harmonic halo, source native oral ARAP at literal shared rim",
-        source_field=interpolation,lip_detail_filtered=False,source_coefficients_modified=False,
+    if not np.array_equal(result[ids],desired):raise ValueError("Full source lip controls changed")
+    return result,dict(policy="Hard skin lip targets, harmonic halo, source native oral ARAP at literal shared rim",
+        lip_detail_filtered=False,source_coefficients_modified=False,
         full_detail_lip_constraints_exact=True,oral=oral,
         changed_logical_ids=np.flatnonzero(np.any(result!=target,axis=1)).tolist(),
         semantic_partition="Provisional pigment support plus actual physical oral rim; requires anatomical review",

@@ -76,7 +76,7 @@ def map_eye(points, maps):
     return authored, jac
 
 
-def adapt_frames(arrays, shapes, default_weights, authored_reference, jacobian):
+def adapt_frames(arrays, shapes, default_weights, authored_reference, jacobian,close_action=None):
     count = len(arrays['verts'])
     frames = [dense_frame(shapes, i, count) for i in range(len(shapes['channels']))]
     source_reference = {key: arrays[field].astype(float).copy() for key, field in
@@ -91,23 +91,47 @@ def adapt_frames(arrays, shapes, default_weights, authored_reference, jacobian):
     maps = dict(vertex=jacobian, normal=nmap, tangent=tmap)
     transformed = [{key: np.einsum('nij,nj->ni', maps[key], frame[key])
                     for key in maps} for frame in frames]
-    target_ref = dict(vertex=authored_reference,
+    target_ref = dict(vertex=np.asarray(authored_reference,float).copy(),
         normal=np.einsum('nij,nj->ni', nmap, source_reference['normal']),
         tangent=np.einsum('nij,nj->ni', tmap, source_reference['tangent']))
+    identity_bind={key:value.copy() for key,value in target_ref.items()}
+    for i,weight in default_weights.items():
+        if int(i)!=-1 and weight:
+            for key in identity_bind:identity_bind[key]-=transformed[int(i)][key]*weight/100
+    if close_action is not None:
+        channel=int(close_action['channel'])
+        if float(default_weights.get(str(channel),default_weights.get(channel,0)))!=100:
+            raise ValueError('Close correction must use actual default 100-percent native endpoint')
+        for key in target_ref:
+            transformed[channel][key]+=close_action[key]
+            target_ref[key]+=close_action[key]
     bind = {key: value.copy() for key, value in target_ref.items()}
     for i, weight in default_weights.items():
         i = int(i)
         if i != -1 and weight:
             for key in bind:
                 bind[key] -= transformed[i][key]*weight/100
-    updated = copy.deepcopy(shapes)
+    if close_action is not None and max(np.max(abs(bind[k]-identity_bind[k])) for k in bind)>1e-12:
+        raise ValueError('Expression correction was baked into identity bind')
+    updated = copy.deepcopy(shapes);updated['vertices']=[]
+    if len({c['frameIndex'] for c in shapes['channels']})!=len(shapes['channels']):
+        raise ValueError('Shared native frame storage requires explicit authoring')
     for i, channel in enumerate(shapes['channels']):
         shape = shapes['shapes'][channel['frameIndex']]
         begin, end = shape['firstVertex'], shape['firstVertex']+shape['vertexCount']
-        for row in updated['vertices'][begin:end]:
-            index = row['index']
+        source_rows=shapes['vertices'][begin:end]
+        original_ids={row['index'] for row in source_rows}
+        extra=np.flatnonzero(np.any(np.column_stack([transformed[i][key] for key in maps])!=0,axis=1))
+        indices=[row['index'] for row in source_rows]+sorted(set(extra)-original_ids)
+        authored_shape=updated['shapes'][channel['frameIndex']]
+        authored_shape['firstVertex']=len(updated['vertices']);authored_shape['vertexCount']=len(indices)
+        for key,flag in [('normal','hasNormals'),('tangent','hasTangents')]:
+            authored_shape[flag]=bool(shape[flag] or np.any(transformed[i][key]!=0))
+        for index in indices:
+            row={'index':int(index)}
             for key in maps:
                 row[key] = dict(zip('xyz', map(float, transformed[i][key][index])))
+            updated['vertices'].append(row)
     output = {**arrays, 'verts': bind['vertex'], 'normals': bind['normal'],
               'tangents': np.column_stack([bind['tangent'], arrays['tangents'][:, 3]])}
     rebuilt = {key: value.copy() for key, value in bind.items()}
@@ -142,9 +166,21 @@ def adapt(inputs, candidate_dir, out):
         quality=verified_json(acceptance['quality'])
         if quality['added_crossings'] or quality['arrays']['sha256']!=acceptance['candidate_arrays_sha256']:
             raise ValueError('Generic mouth geometry acceptance does not match candidate')
-    field = SurfaceWarp(head['original_vertices'], head['verts'], head['faces'])
+    close_receipt=candidate_receipt.get('closed_pose_authoring')
+    identity_head=head['verts']
+    close_field=close_oral=None
+    if close_receipt is not None:
+        adjustment=np.load(close_receipt['adjustment']['path'],allow_pickle=False)
+        if sha(close_receipt['adjustment']['path'])!=close_receipt['adjustment']['sha256']:
+            raise ValueError('Closed-pose action changed')
+        identity_head=adjustment['full_identity_reference_vertices']
+        if not np.allclose(identity_head+adjustment['vertex_delta'],head['verts'],atol=1e-12,rtol=0):
+            raise ValueError('Close endpoint does not reconstruct from full identity')
+        close_field=SurfaceWarp(identity_head,head['verts'],head['faces'])
+    field = SurfaceWarp(head['original_vertices'], identity_head, head['faces'])
     oral_faces = head['faces'][regions['inner_mouth_component_face_ids']]
-    oral = SurfaceWarp(head['original_vertices'], head['verts'], oral_faces)
+    oral = SurfaceWarp(head['original_vertices'], identity_head, oral_faces)
+    if close_field is not None:close_oral=SurfaceWarp(identity_head,head['verts'],oral_faces)
     aliases = {int(k): int(v) for k, v in regions['graph_aliases'].items()}
     head_jac = field.vertex_gradients(aliases)
     eyes = eye_maps(inputs, head, candidate_receipt['placement'])
@@ -165,7 +201,7 @@ def adapt(inputs, candidate_dir, out):
         name, points = renderer['mesh'], reference['closed_reference_vertices']
         correspondence = None
         if name == 'o_head':
-            authored, jac = head['verts'], head_jac
+            authored, jac = identity_head, head_jac
             method = 'Exact authored native vertex positions; common incident-triangle gradient for physical UV copies'
         elif name.startswith('o_eyebase_') or name=='o_eyeshadow':
             authored, jac = map_eye(points, eyes)
@@ -177,7 +213,25 @@ def adapt(inputs, candidate_dir, out):
             authored, jac, correspondence = field.map(points)
             method = 'Original head surface-gradient transport with normal offsets; secondary skin attachment'
         shapes = verified_json(renderer['blendshape_export'])
-        adapted, shape_output, target_ref, errors = adapt_frames(arrays, shapes, ref_row['weights'], authored, jac)
+        close_action=None
+        if close_field is not None:
+            if name=='o_head':closed,close_jac=head['verts'],close_field.vertex_gradients(aliases)
+            elif name in ('o_tooth','o_tang'):closed,close_jac,_=close_oral.map(authored)
+            elif name.startswith('o_eyebase_') or name=='o_eyeshadow':closed,close_jac=authored,np.broadcast_to(np.eye(3),(len(authored),3,3))
+            else:closed,close_jac,_=close_field.map(authored)
+            _,_,identity_ref,_=adapt_frames(arrays,shapes,ref_row['weights'],authored,jac)
+            nmap,tmap=direction_maps(close_jac,identity_ref['normal'],identity_ref['tangent'])
+            delta=dict(vertex=closed-authored,
+                normal=np.einsum('nij,nj->ni',nmap,identity_ref['normal'])-identity_ref['normal'],
+                tangent=np.einsum('nij,nj->ni',tmap,identity_ref['tangent'])-identity_ref['tangent'])
+            ctrl=next(b['original_typetree'] for b in prefab['behaviours'] if b['class_name']=='FaceBlendShape')['MouthCtrl']
+            obj=renderer['original_renderer_typetree']['m_GameObject']['m_PathID']
+            target=next((t for t in ctrl['FBSTarget'] if t['ObjTarget']['m_PathID']==obj),None)
+            if target is not None:
+                close_action=dict(channel=target['PtnSet'][close_receipt['pattern']]['Close'],**delta)
+            elif max(np.max(abs(v),initial=0) for v in delta.values())>1e-12:
+                raise ValueError('Secondary component needs a mouth action but has no original MouthCtrl target: '+name)
+        adapted, shape_output, target_ref, errors = adapt_frames(arrays, shapes, ref_row['weights'], authored, jac,close_action)
         for key in arrays:
             if key not in ('verts', 'normals', 'tangents') and not np.array_equal(arrays[key], adapted[key]):
                 raise ValueError('Native component structure changed: '+key)
@@ -190,7 +244,9 @@ def adapt(inputs, candidate_dir, out):
         save_json(shape_path, shape_output)
         reports.append(dict(mesh=name, method=method, source=renderer['array_export'],
             original_frames=renderer['blendshape_export'], arrays=source_file(mesh_path), frames=source_file(shape_path),
-            channel_count=len(shapes['channels']), all_sparse_rows_retained=len(shapes['vertices'])==len(shape_output['vertices']),
+            channel_count=len(shapes['channels']), all_original_sparse_rows_retained=True,
+            extra_authored_sparse_rows=len(shape_output['vertices'])-len(shapes['vertices']),
+            close_action_channel=close_action['channel'] if close_action else None,
             source_reference_weights=ref_row['weights'], reference_reconstruction_error=errors,
             minimum_local_determinant=float(np.linalg.det(jac).min()), correspondence=correspondence))
     save_json(out/'receipt.json', dict(format='native_mother_component_adaptation_v1',

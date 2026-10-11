@@ -101,6 +101,22 @@ v1 保留，当前卡为同一游戏目录 `Chenger_stylized_reconstruction_v2.p
 本轮实际输出为brow_source_v3_rgba与lip_source_v3_alpha。
 # v4 identity authoring continuation
 
+## v5 continuation evidence
+
+Actual card `E:/HoneySelect2_ArcticFox/UserData/chara/female/Codex/Chenger_stylized_reconstruction_v5_final.png`.
+Changed native36=.50,45=.55,46=.36, eyebrow8; all ABMX retained.
+Hair back `mod/GMCC.hairpack01/300/5` runtime100020305, based on existing
+six-view native02 captures, not thumbnails. Full state and exact source binding:
+`outputs/chenger_stylized_arcface_20261011/v5_native_state.json`.
+v5 card reload matches all snapshot and ABMX bones. v5_final differs only in
+thumbnail from v5; v5 uses an overly tight diagnostic frame, final uses the
+HS2Mod `chenger_v5_portrait_0.png` complete-hair portrait.
+Recovered head2 Nose_rx, Nose_tip and NoseBridge animation keys underpin the
+control directions; selected values remain manual identity authoring choices.
+HS2Mod identity-authoring notes contain exact recipe, capture hashes and gaps.
+Goal remains active: open forehead improved, but hair is short/voluminous,
+wisps cross brow/eye, brow is too faint, eyeliner and overall likeness unresolved.
+
 Actual Maker card: `E:/HoneySelect2_ArcticFox/UserData/chara/female/Codex/Chenger_stylized_reconstruction_v4.png`.
 Preserved v3 and all existing ABMX modifiers. Native changes from v3:
 23=.46, 49=.60, 51=.52, 52=.68, 53=.64; lip3 RGBA [.46,.18,.23,.62],

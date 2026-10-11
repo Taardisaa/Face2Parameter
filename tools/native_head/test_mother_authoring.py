@@ -69,7 +69,7 @@ class MotherAuthoringTests(unittest.TestCase):
 
     def test_sparse_frame_keeps_normal_only_delta(self):
         shapes = dict(channels=[dict(frameIndex=0, frameCount=1)], fullWeights=[100.],
-            shapes=[dict(firstVertex=0, vertexCount=1)],
+            shapes=[dict(firstVertex=0, vertexCount=1,hasNormals=True,hasTangents=True)],
             vertices=[dict(index=1, vertex=dict(x=0, y=0, z=0),
                 normal=dict(x=.1, y=.2, z=.3), tangent=dict(x=.3, y=.2, z=.1))])
         frame = dense_frame(shapes, 0, 3)
@@ -99,7 +99,7 @@ class MotherAuthoringTests(unittest.TestCase):
             normals=np.tile([0., 0, 1], (2, 1)),
             tangents=np.tile([1., 0, 0, -1], (2, 1)))
         shapes = dict(channels=[dict(name='nativeClose', frameIndex=0, frameCount=1)], fullWeights=[100.],
-            shapes=[dict(firstVertex=0, vertexCount=1)],
+            shapes=[dict(firstVertex=0, vertexCount=1,hasNormals=True,hasTangents=True)],
             vertices=[dict(index=1, vertex=dict(x=.2, y=0, z=0),
                 normal=dict(x=.1, y=0, z=0), tangent=dict(x=0, y=.1, z=0))])
         target = np.array([[2., 3, 4], [4.4, 3, 4]])
