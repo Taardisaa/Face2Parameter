@@ -1,0 +1,40 @@
+{
+  "status": "rejected; terminal length aligned but actual 95% width still +67%; solver iteration limit retained. Not accepted/locked.",
+  "patch": {
+    "bones": [
+      {
+        "name": "cf_J_Chin_rs",
+        "scale": [
+          1.16,
+          0.8802196162749664,
+          1.00938332
+        ]
+      },
+      {
+        "name": "cf_J_ChinTip_s",
+        "scale": [
+          1.0721180369012775,
+          0.989540756,
+          1.04659534
+        ],
+        "position": [
+          0.0,
+          -0.1972306533617645,
+          0.000739015639
+        ]
+      },
+      {
+        "name": "cf_J_ChinLow",
+        "position": [
+          0.0,
+          0.036189085823999614,
+          -0.00106364489
+        ]
+      }
+    ]
+  },
+  "output_card": "E:\\HoneySelect2_ArcticFox\\UserData\\chara\\female\\Codex\\Chenger_stylized_reconstruction_v21_chin_rejected.png",
+  "output_card_sha256": "12225d94ea5cf826c950ab3bbdc0d51908557c6402b91da535c2347dbbc9ace4",
+  "source_candidate_sha256": "ffa2f961169141b974adfffba16cd04983f89813b2aea8d3041fa6c67ccb3e3a",
+  "solver_success": false
+}

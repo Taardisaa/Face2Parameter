@@ -290,3 +290,59 @@ SHA ca4be825a68bee935d42af285ea3c1ffa9e22c4a761bf11f799ca80dae3191d6，
 v18_current_geometry.json、v18_fixed_open_proportions/、v17_projected_vertex_audit.json。
 FAN自动颏点仍不作原图末端，未用检测点虚构完整轮廓通过。
 前里程碑已推送：HS2Mod36ee9d3 / Face2Parameter4e87387；本轮保持goal active。
+
+## 完整三角边界source author，v19/v21失败与v22未应用
+
+新`chin_source_candidate.py`不拟合游戏变形gain：使用captured完整source vertices、
+原生权重/bindpose/活动单100帧blendshape、实际父链local/world矩阵、安装ABMX
+baseline Scale乘modifier及Length1位置分支。只作者缩放/位置，保留原生59参数、
+Z/旋转/长度及其余modifier。Chin_rs原Length1.11仍保持，不冒用Length1位置分支。
+修改scale按actual local affine列的比例变化、位置按实际baseline+offset差；
+完整后代世界矩阵重算后按真实4权重LBS，非凸包/固定区域/经验斜率。
+source forward基线对4439实际BakeMesh最大残差2.557e-6游戏单位（保留观测，
+不自行设通过阈值）。实际两次作者后检查V19 max4.082e-6，V21 max5.368e-6。
+这仅证明此实际数据的forward，不能证明外观或所有引擎/动画分支兼容。
+
+原图hash绑定手工reference全trace、固定V17眼轮廓距离/嘴线对齐不重新检测，
+避免FAN随下巴形变漂移。真实triangle union与每个scanline相交取最外边界，
+不使用凸包或头骨origin代替皮肤轮廓。投影TRS/FOV/shear/CTAA/shader visibility
+限定沿用前投影诊断，不能将正面拟合声称3D侧面目标已证明。
+
+最初V19只做10–97%水平截面，虽然source与actual一致，但画面仍平底；
+遗漏终端3%违反此处完整颏底要求，版本拒绝，并保留source输出、实际图和失败卡。
+该作者目标已纠正：10–85%30个上中段双侧截面，加颏尖X±.30眼距的41个
+完整bottom Y-at-X剖面（含真正最低点），末端高度为明确几何等式约束，
+不能用多截面误差交换更短的平底。边界不存在直接失败，没有合成/补常数轮廓。
+V20为未强制等式的离线诊断解，从未放进游戏；完整输入/残差仍保留。
+
+V21四标量SLSQP达到200迭代上限，success=false与消息保留，不标收敛。
+feasible候选仍仅作一次实际候选核对：actual最低点height.698208眼距，reference
+.698202，长度接近；25/50/75%宽约-1/-5/-2%，90/95%却+26/+67%，
+99/99.9%也如实保留（百分数分母极小，不能作精确改善量）。**外观仍平底，拒绝。**
+height满足/模型吻合不作为外观通过。原主相机即时全TRS恢复也仍失败，记录保留。
+数据：v19_source_candidate.json、v19_fixed_chin_capture/、v19_forward_actual_check.json、
+v20_full_terminal_source_candidate.json、v21_full_terminal_constrained_source_candidate.json、
+v21_current_geometry.json、v21_actual_full_contour_check.json、v21_actual_terminal_widths.json。
+
+V19失败卡SHA08828a725f971535763145de55807fbef3839d94e0b04c6c761ad0823e893778；
+V21失败卡SHA12225d94ea5cf826c950ab3bbdc0d51908557c6402b91da535c2347dbbc9ace4。
+分别为`Chenger_stylized_reconstruction_v19_chin_rejected.png`和
+`Chenger_stylized_reconstruction_v21_chin_rejected.png`，配方保留在tracked tools。
+当前已恢复普通原生V17、原发型、TARGET1/blink=true；snapshot/style/expression
+与before相等；按骨名42个modifier全部相等，但完整ABMX响应不等原结果保留。
+无需重启游戏/换桥接DLL，无已锁定部位。
+
+为解决缺少颏底圆度控制，source forward扩成8标量：rs XY scale、Tip XY scale+
+Y position、Low XY scale+Y position。沿用真实源scale branch和位置Length1分支，
+不引入近似形变公式；复核既有V21 pair仍max5.368e-6，不采新游戏扫描。
+新scale通道尚无改变它们后的游戏验收，不能泛称八通道已全验收。
+V22离线解success=true但rsY/TipXY/LowY/Low位置等触及作者bounds，95%宽仍
+约+51%，99%约+212%；不足以通过，**没有应用游戏**。bounds只是作者搜索范围，
+不是原生引擎限制/接受阈值。继续覆盖剩余末端形状与参考视角/不对称残差，
+不得把当前支持子集当成已复现程儿或改小成功定义。
+
+```powershell
+.venv/Scripts/python.exe tools/character_authoring/chin_source_candidate.py --geometry outputs/chenger_stylized_arcface_20261011/v17_current_geometry.json --capture outputs/chenger_stylized_arcface_20261011/v17_fixed_chin_capture/front.json --measurements outputs/chenger_stylized_arcface_20261011/v17_fixed_open_proportions/measurements.json --trace tools/character_authoring/chenger_v17_chin_trace.json --out outputs/chenger_stylized_arcface_20261011/full_terminal_extended_source_candidate_repeat.json
+```
+
+前提交HS2Mod89d8517 / Face2Parameter9e6919d均已推送；完整目标仍active。

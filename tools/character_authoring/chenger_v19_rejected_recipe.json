@@ -1,0 +1,39 @@
+{
+  "status": "rejected; flat terminal remained, source objective omitted last3% of chin height. Not accepted or locked.",
+  "output_card": "E:\\HoneySelect2_ArcticFox\\UserData\\chara\\female\\Codex\\Chenger_stylized_reconstruction_v19_chin_rejected.png",
+  "output_card_sha256": "08828a725f971535763145de55807fbef3839d94e0b04c6c761ad0823e893778",
+  "patch": {
+    "bones": [
+      {
+        "name": "cf_J_Chin_rs",
+        "scale": [
+          1.16,
+          0.9318328091658346,
+          1.00938332
+        ]
+      },
+      {
+        "name": "cf_J_ChinTip_s",
+        "scale": [
+          1.2138669798440578,
+          0.989540756,
+          1.04659534
+        ],
+        "position": [
+          0.0,
+          -0.1499094070679636,
+          0.000739015639
+        ]
+      },
+      {
+        "name": "cf_J_ChinLow",
+        "position": [
+          0.0,
+          0.03849579117580933,
+          -0.00106364489
+        ]
+      }
+    ]
+  },
+  "source_candidate_sha256": "af6bbee6138f99fd6eec3a7b79f863e874b94bbac64cfe7b15b31c5822410d21"
+}
