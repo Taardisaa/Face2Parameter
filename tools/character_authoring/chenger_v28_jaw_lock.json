@@ -1,0 +1,2099 @@
+{
+  "status": "Accepted and locked jaw/chin authoring milestone v28; complete character identity remains active. Reopen explicitly if later shared dependencies alter the delivered jaw geometry or user reports an appearance defect.",
+  "card_path": "E:/HoneySelect2_ArcticFox/UserData/chara/female/Codex/Chenger_stylized_reconstruction_v28_jaw_candidate.png",
+  "card_sha256": "c5a7b4c0e9971352f3a986b800296eb9e7e7f0efa92527e2f3a0871c26752cb1",
+  "base_card_path": "E:/HoneySelect2_ArcticFox/UserData/chara/female/Codex/Chenger_stylized_reconstruction_v17_chin_candidate.png",
+  "reference_image_sha256": "086a01b02a96a356edf2d2c46f534bd7bd9cf1e299d71617357a37d526878e05",
+  "reference_trace_sha256": "012b545a120f8f00648a864c831350cdc79a61f7a93d0914d7acce8d825aeb8f",
+  "locked_abmx_bones": [
+    {
+      "scale": [
+        1.28752875,
+        1.29590809,
+        1.007954
+      ],
+      "length": 1.0,
+      "position": [
+        -0.15,
+        -0.15,
+        0.0
+      ],
+      "rotation": [
+        -0.284069061,
+        7.928932,
+        -8.09166
+      ],
+      "name": "cf_J_CheekLow_L",
+      "exists": true,
+      "coordinate_modifiers": [
+        {
+          "scale": [
+            1.28752875,
+            1.29590809,
+            1.007954
+          ],
+          "length": 1.0,
+          "position": [
+            -0.15,
+            -0.15,
+            0.0
+          ],
+          "rotation": [
+            -0.284069061,
+            7.928932,
+            -8.09166
+          ]
+        }
+      ]
+    },
+    {
+      "scale": [
+        0.6875287,
+        0.6959081,
+        1.007954
+      ],
+      "length": 1.0,
+      "position": [
+        -0.15,
+        0.15,
+        0.0
+      ],
+      "rotation": [
+        -0.284069061,
+        9.026161,
+        -11.90834
+      ],
+      "name": "cf_J_CheekLow_R",
+      "exists": true,
+      "coordinate_modifiers": [
+        {
+          "scale": [
+            0.6875287,
+            0.6959081,
+            1.007954
+          ],
+          "length": 1.0,
+          "position": [
+            -0.15,
+            0.15,
+            0.0
+          ],
+          "rotation": [
+            -0.284069061,
+            9.026161,
+            -11.90834
+          ]
+        }
+      ]
+    },
+    {
+      "scale": [
+        1.21050656,
+        1.28944647,
+        1.01262188
+      ],
+      "length": 1.0,
+      "position": [
+        -0.15,
+        -0.125,
+        -0.00106364489
+      ],
+      "rotation": [
+        -0.08257675,
+        0.0,
+        0.0
+      ],
+      "name": "cf_J_ChinLow",
+      "exists": true,
+      "coordinate_modifiers": [
+        {
+          "scale": [
+            1.21050656,
+            1.28944647,
+            1.01262188
+          ],
+          "length": 1.0,
+          "position": [
+            -0.15,
+            -0.125,
+            -0.00106364489
+          ],
+          "rotation": [
+            -0.08257675,
+            0.0,
+            0.0
+          ]
+        }
+      ]
+    },
+    {
+      "scale": [
+        0.8,
+        0.931435645,
+        1.04659534
+      ],
+      "length": 1.0,
+      "position": [
+        -0.0136874625,
+        -0.03,
+        0.000739015639
+      ],
+      "rotation": [
+        0.23740387,
+        0.0,
+        0.0
+      ],
+      "name": "cf_J_ChinTip_s",
+      "exists": true,
+      "coordinate_modifiers": [
+        {
+          "scale": [
+            0.8,
+            0.931435645,
+            1.04659534
+          ],
+          "length": 1.0,
+          "position": [
+            -0.0136874625,
+            -0.03,
+            0.000739015639
+          ],
+          "rotation": [
+            0.23740387,
+            0.0,
+            0.0
+          ]
+        }
+      ]
+    },
+    {
+      "scale": [
+        1.12932134,
+        1.21510911,
+        1.00938332
+      ],
+      "length": 1.11,
+      "position": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rotation": [
+        0.0169920921,
+        0.0,
+        0.0
+      ],
+      "name": "cf_J_Chin_rs",
+      "exists": true,
+      "coordinate_modifiers": [
+        {
+          "scale": [
+            1.12932134,
+            1.21510911,
+            1.00938332
+          ],
+          "length": 1.11,
+          "position": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "rotation": [
+            0.0169920921,
+            0.0,
+            0.0
+          ]
+        }
+      ]
+    }
+  ],
+  "replay_patch": {
+    "bones": [
+      {
+        "name": "cf_J_ChinTip_s",
+        "scale": [
+          0.8000000000000012,
+          0.9314356495652066,
+          1.04659534
+        ],
+        "position": [
+          -0.013687462775957181,
+          -0.03,
+          0.000739015639
+        ],
+        "length": 1.0
+      },
+      {
+        "name": "cf_J_ChinLow",
+        "scale": [
+          1.210506577844211,
+          1.2894464609999996,
+          1.01262188
+        ],
+        "position": [
+          -0.14999999999999977,
+          -0.125,
+          -0.00106364489
+        ],
+        "length": 1.0
+      },
+      {
+        "name": "cf_J_Chin_rs",
+        "scale": [
+          1.1293213799710418,
+          1.215109086345907,
+          1.00938332
+        ]
+      },
+      {
+        "name": "cf_J_CheekLow_L",
+        "scale": [
+          1.287528741,
+          1.295908141,
+          1.007954
+        ],
+        "rotation": [
+          -0.284069061,
+          7.9289321483393485,
+          -8.09165955
+        ],
+        "position": [
+          -0.15,
+          -0.15,
+          0.0
+        ],
+        "length": 1.0
+      },
+      {
+        "name": "cf_J_CheekLow_R",
+        "scale": [
+          0.6875287409999999,
+          0.6959081410000002,
+          1.007954
+        ],
+        "rotation": [
+          -0.284069061,
+          9.026161199998278,
+          -11.90834045
+        ],
+        "position": [
+          -0.14999999999999997,
+          0.14999999999994754,
+          0.0
+        ],
+        "length": 1.0
+      }
+    ]
+  },
+  "native_head_base": {
+    "head_id": 2,
+    "skin_id": 20,
+    "detail_id": 0,
+    "detail_power": 0.0
+  },
+  "locked_native_shape_indices": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12,
+    13,
+    14,
+    15,
+    16,
+    17,
+    18
+  ],
+  "native_all_shapes_context": {
+    "count": 59,
+    "items": [
+      {
+        "index": 0,
+        "name": "顔全体横幅",
+        "value": 0.3339957
+      },
+      {
+        "index": 1,
+        "name": "顔上部前後",
+        "value": 0.5177839
+      },
+      {
+        "index": 2,
+        "name": "顔上部上下",
+        "value": 0.404457927
+      },
+      {
+        "index": 3,
+        "name": "顔下部前後",
+        "value": 0.353435516
+      },
+      {
+        "index": 4,
+        "name": "顔下部横幅",
+        "value": 0.45
+      },
+      {
+        "index": 5,
+        "name": "顎横幅",
+        "value": 0.78
+      },
+      {
+        "index": 6,
+        "name": "顎上下",
+        "value": 0.68
+      },
+      {
+        "index": 7,
+        "name": "顎前後",
+        "value": 0.6455698
+      },
+      {
+        "index": 8,
+        "name": "顎角度",
+        "value": 0.3954314
+      },
+      {
+        "index": 9,
+        "name": "顎下部上下",
+        "value": 0.670318
+      },
+      {
+        "index": 10,
+        "name": "顎先幅",
+        "value": 0.44
+      },
+      {
+        "index": 11,
+        "name": "顎先上下",
+        "value": 0.49
+      },
+      {
+        "index": 12,
+        "name": "顎先前後",
+        "value": 0.574551344
+      },
+      {
+        "index": 13,
+        "name": "頬下部上下",
+        "value": 0.6484196
+      },
+      {
+        "index": 14,
+        "name": "頬下部前後",
+        "value": 0.478837967
+      },
+      {
+        "index": 15,
+        "name": "頬下部幅",
+        "value": 0.25
+      },
+      {
+        "index": 16,
+        "name": "頬上部上下",
+        "value": 0.34119153
+      },
+      {
+        "index": 17,
+        "name": "頬上部前後",
+        "value": 0.6806015
+      },
+      {
+        "index": 18,
+        "name": "頬上部幅",
+        "value": 0.134736657
+      },
+      {
+        "index": 19,
+        "name": "目上下",
+        "value": 0.47
+      },
+      {
+        "index": 20,
+        "name": "目横位置",
+        "value": 0.48
+      },
+      {
+        "index": 21,
+        "name": "目前後",
+        "value": 0.419861674
+      },
+      {
+        "index": 22,
+        "name": "目の横幅",
+        "value": 0.62
+      },
+      {
+        "index": 23,
+        "name": "目の縦幅",
+        "value": 0.57
+      },
+      {
+        "index": 24,
+        "name": "目の角度Z軸",
+        "value": 0.62
+      },
+      {
+        "index": 25,
+        "name": "目の角度Y軸",
+        "value": 0.47146225
+      },
+      {
+        "index": 26,
+        "name": "目頭左右位置",
+        "value": 0.539773464
+      },
+      {
+        "index": 27,
+        "name": "目尻左右位置",
+        "value": 0.45
+      },
+      {
+        "index": 28,
+        "name": "目頭上下位置",
+        "value": 0.6
+      },
+      {
+        "index": 29,
+        "name": "目尻上下位置",
+        "value": 0.56
+      },
+      {
+        "index": 30,
+        "name": "まぶた形状１",
+        "value": 0.416718
+      },
+      {
+        "index": 31,
+        "name": "まぶた形状２",
+        "value": 0.5080638
+      },
+      {
+        "index": 32,
+        "name": "鼻全体上下",
+        "value": 0.12
+      },
+      {
+        "index": 33,
+        "name": "鼻全体前後",
+        "value": 0.600721359
+      },
+      {
+        "index": 34,
+        "name": "鼻全体角度X軸",
+        "value": 0.5258653
+      },
+      {
+        "index": 35,
+        "name": "鼻全体横幅",
+        "value": 0.5
+      },
+      {
+        "index": 36,
+        "name": "鼻筋高さ",
+        "value": 0.5
+      },
+      {
+        "index": 37,
+        "name": "鼻筋横幅",
+        "value": 0.43682754
+      },
+      {
+        "index": 38,
+        "name": "鼻筋形状",
+        "value": 0.4905436
+      },
+      {
+        "index": 39,
+        "name": "小鼻横幅",
+        "value": 0.59
+      },
+      {
+        "index": 40,
+        "name": "小鼻上下",
+        "value": 0.5046654
+      },
+      {
+        "index": 41,
+        "name": "小鼻前後",
+        "value": 0.616921067
+      },
+      {
+        "index": 42,
+        "name": "小鼻角度X軸",
+        "value": 0.5544934
+      },
+      {
+        "index": 43,
+        "name": "小鼻角度Z軸",
+        "value": 0.4403504
+      },
+      {
+        "index": 44,
+        "name": "鼻先高さ",
+        "value": 0.5310503
+      },
+      {
+        "index": 45,
+        "name": "鼻先角度X軸",
+        "value": 0.55
+      },
+      {
+        "index": 46,
+        "name": "鼻先サイズ",
+        "value": 0.36
+      },
+      {
+        "index": 47,
+        "name": "口上下",
+        "value": 0.36
+      },
+      {
+        "index": 48,
+        "name": "口横幅",
+        "value": 0.7
+      },
+      {
+        "index": 49,
+        "name": "口縦幅",
+        "value": 0.6
+      },
+      {
+        "index": 50,
+        "name": "口前後位置",
+        "value": 0.539945245
+      },
+      {
+        "index": 51,
+        "name": "口形状上",
+        "value": 0.47
+      },
+      {
+        "index": 52,
+        "name": "口形状下",
+        "value": 0.68
+      },
+      {
+        "index": 53,
+        "name": "口形状口角",
+        "value": 0.64
+      },
+      {
+        "index": 54,
+        "name": "耳サイズ",
+        "value": 0.5
+      },
+      {
+        "index": 55,
+        "name": "耳角度Y軸",
+        "value": 0.5
+      },
+      {
+        "index": 56,
+        "name": "耳角度Z軸",
+        "value": 0.5
+      },
+      {
+        "index": 57,
+        "name": "耳上部形状",
+        "value": 0.5
+      },
+      {
+        "index": 58,
+        "name": "耳下部形状",
+        "value": 0.5
+      }
+    ],
+    "outliers": [
+      {
+        "section": "face_shapes",
+        "index": 32,
+        "name": "鼻全体上下",
+        "value": 0.12,
+        "deviation_from_neutral": 0.38
+      },
+      {
+        "section": "face_shapes",
+        "index": 18,
+        "name": "頬上部幅",
+        "value": 0.134736657,
+        "deviation_from_neutral": 0.365263343
+      },
+      {
+        "section": "face_shapes",
+        "index": 5,
+        "name": "顎横幅",
+        "value": 0.78,
+        "deviation_from_neutral": 0.279999971
+      },
+      {
+        "section": "face_shapes",
+        "index": 15,
+        "name": "頬下部幅",
+        "value": 0.25,
+        "deviation_from_neutral": 0.25
+      }
+    ]
+  },
+  "shared_ancestors_recorded": {
+    "cf_J_Chin_rs": {
+      "path": "/CharaCustom[0]/CustomControl[0]/chaF_001[20]/BodyTop[0]/p_cf_anim[0]/cf_J_Root[0]/cf_N_height[0]/cf_J_Hips[0]/cf_J_Spine01[1]/cf_J_Spine02[1]/cf_J_Spine03[1]/cf_J_Neck[1]/cf_J_Head[0]/cf_J_Head_s[0]/p_cf_head_bone[7]/cf_J_FaceRoot[0]/cf_J_FaceBase[0]/cf_J_FaceLowBase[0]/cf_J_FaceLow_s[0]/cf_J_Chin_rs[4]",
+      "local_position": [
+        1.82165022e-21,
+        -0.2963781,
+        0.311516672
+      ],
+      "local_rotation_xyzw": [
+        0.0147483246,
+        0.0,
+        0.0,
+        0.9998913
+      ],
+      "local_scale": [
+        1.17359066,
+        1.21510911,
+        1.00938332
+      ]
+    },
+    "cf_J_FaceLow_s": {
+      "path": "/CharaCustom[0]/CustomControl[0]/chaF_001[20]/BodyTop[0]/p_cf_anim[0]/cf_J_Root[0]/cf_N_height[0]/cf_J_Hips[0]/cf_J_Spine01[1]/cf_J_Spine02[1]/cf_J_Spine03[1]/cf_J_Neck[1]/cf_J_Head[0]/cf_J_Head_s[0]/p_cf_head_bone[7]/cf_J_FaceRoot[0]/cf_J_FaceBase[0]/cf_J_FaceLowBase[0]/cf_J_FaceLow_s[0]",
+      "local_position": [
+        2.9737143e-22,
+        -4.29227948e-05,
+        9.499863e-05
+      ],
+      "local_rotation_xyzw": [
+        -0.000562355563,
+        0.0,
+        0.0,
+        0.9999999
+      ],
+      "local_scale": [
+        0.995035946,
+        1.0041101,
+        0.9960653
+      ]
+    },
+    "cf_J_FaceLowBase": {
+      "path": "/CharaCustom[0]/CustomControl[0]/chaF_001[20]/BodyTop[0]/p_cf_anim[0]/cf_J_Root[0]/cf_N_height[0]/cf_J_Hips[0]/cf_J_Spine01[1]/cf_J_Spine02[1]/cf_J_Spine03[1]/cf_J_Neck[1]/cf_J_Head[0]/cf_J_Head_s[0]/p_cf_head_bone[7]/cf_J_FaceRoot[0]/cf_J_FaceBase[0]/cf_J_FaceLowBase[0]",
+      "local_position": [
+        1.7875373e-21,
+        -0.145,
+        0.3355398
+      ],
+      "local_rotation_xyzw": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ],
+      "local_scale": [
+        1.0,
+        1.0,
+        1.0
+      ]
+    },
+    "cf_J_FaceBase": {
+      "path": "/CharaCustom[0]/CustomControl[0]/chaF_001[20]/BodyTop[0]/p_cf_anim[0]/cf_J_Root[0]/cf_N_height[0]/cf_J_Hips[0]/cf_J_Spine01[1]/cf_J_Spine02[1]/cf_J_Spine03[1]/cf_J_Neck[1]/cf_J_Head[0]/cf_J_Head_s[0]/p_cf_head_bone[7]/cf_J_FaceRoot[0]/cf_J_FaceBase[0]",
+      "local_position": [
+        1.00585162e-21,
+        0.2,
+        0.06
+      ],
+      "local_rotation_xyzw": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ],
+      "local_scale": [
+        0.973439336,
+        1.0,
+        1.0
+      ]
+    },
+    "cf_J_FaceRoot": {
+      "path": "/CharaCustom[0]/CustomControl[0]/chaF_001[20]/BodyTop[0]/p_cf_anim[0]/cf_J_Root[0]/cf_N_height[0]/cf_J_Hips[0]/cf_J_Spine01[1]/cf_J_Spine02[1]/cf_J_Spine03[1]/cf_J_Neck[1]/cf_J_Head[0]/cf_J_Head_s[0]/p_cf_head_bone[7]/cf_J_FaceRoot[0]",
+      "local_position": [
+        1.05879118e-22,
+        -1.77635684e-15,
+        2.77555756e-17
+      ],
+      "local_rotation_xyzw": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ],
+      "local_scale": [
+        1.0,
+        1.0,
+        1.0
+      ]
+    },
+    "p_cf_head_bone": {
+      "path": "/CharaCustom[0]/CustomControl[0]/chaF_001[20]/BodyTop[0]/p_cf_anim[0]/cf_J_Root[0]/cf_N_height[0]/cf_J_Hips[0]/cf_J_Spine01[1]/cf_J_Spine02[1]/cf_J_Spine03[1]/cf_J_Neck[1]/cf_J_Head[0]/cf_J_Head_s[0]/p_cf_head_bone[7]",
+      "local_position": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "local_rotation_xyzw": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ],
+      "local_scale": [
+        1.0,
+        1.0,
+        1.0
+      ]
+    },
+    "cf_J_Head_s": {
+      "path": "/CharaCustom[0]/CustomControl[0]/chaF_001[20]/BodyTop[0]/p_cf_anim[0]/cf_J_Root[0]/cf_N_height[0]/cf_J_Hips[0]/cf_J_Spine01[1]/cf_J_Spine02[1]/cf_J_Spine03[1]/cf_J_Neck[1]/cf_J_Head[0]/cf_J_Head_s[0]",
+      "local_position": [
+        -4.85172835e-09,
+        -3.55271368e-15,
+        0.0
+      ],
+      "local_rotation_xyzw": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ],
+      "local_scale": [
+        1.0169462,
+        1.0169462,
+        1.0169462
+      ]
+    },
+    "cf_J_CheekLow_L": {
+      "path": "/CharaCustom[0]/CustomControl[0]/chaF_001[20]/BodyTop[0]/p_cf_anim[0]/cf_J_Root[0]/cf_N_height[0]/cf_J_Hips[0]/cf_J_Spine01[1]/cf_J_Spine02[1]/cf_J_Spine03[1]/cf_J_Neck[1]/cf_J_Head[0]/cf_J_Head_s[0]/p_cf_head_bone[7]/cf_J_FaceRoot[0]/cf_J_FaceBase[0]/cf_J_FaceLowBase[0]/cf_J_FaceLow_s[0]/cf_J_CheekLow_L[0]",
+      "local_position": [
+        -0.449375,
+        -0.109367847,
+        0.09365139
+      ],
+      "local_rotation_xyzw": [
+        -0.00734483171,
+        0.06879079,
+        -0.07021438,
+        0.995130062
+      ],
+      "local_scale": [
+        1.28752875,
+        1.29590809,
+        1.007954
+      ]
+    },
+    "cf_J_CheekLow_R": {
+      "path": "/CharaCustom[0]/CustomControl[0]/chaF_001[20]/BodyTop[0]/p_cf_anim[0]/cf_J_Root[0]/cf_N_height[0]/cf_J_Hips[0]/cf_J_Spine01[1]/cf_J_Spine02[1]/cf_J_Spine03[1]/cf_J_Neck[1]/cf_J_Head[0]/cf_J_Head_s[0]/p_cf_head_bone[7]/cf_J_FaceRoot[0]/cf_J_FaceBase[0]/cf_J_FaceLowBase[0]/cf_J_FaceLow_s[0]/cf_J_CheekLow_R[1]",
+      "local_position": [
+        0.149374992,
+        0.190632164,
+        0.09365139
+      ],
+      "local_rotation_xyzw": [
+        -0.0106203249,
+        0.0780056,
+        -0.103216968,
+        0.9915385
+      ],
+      "local_scale": [
+        0.6875287,
+        0.6959081,
+        1.007954
+      ]
+    },
+    "cf_J_ChinTip_s": {
+      "path": "/CharaCustom[0]/CustomControl[0]/chaF_001[20]/BodyTop[0]/p_cf_anim[0]/cf_J_Root[0]/cf_N_height[0]/cf_J_Hips[0]/cf_J_Spine01[1]/cf_J_Spine02[1]/cf_J_Spine03[1]/cf_J_Neck[1]/cf_J_Head[0]/cf_J_Head_s[0]/p_cf_head_bone[7]/cf_J_FaceRoot[0]/cf_J_FaceBase[0]/cf_J_FaceLowBase[0]/cf_J_FaceLow_s[0]/cf_J_Chin_rs[4]/cf_J_ChinTip_s[0]",
+      "local_position": [
+        -0.0136874625,
+        -0.128400013,
+        0.112667233
+      ],
+      "local_rotation_xyzw": [
+        0.00207173824,
+        0.0,
+        0.0,
+        0.999997854
+      ],
+      "local_scale": [
+        0.752000034,
+        0.8755495,
+        0.983799636
+      ]
+    },
+    "cf_J_ChinLow": {
+      "path": "/CharaCustom[0]/CustomControl[0]/chaF_001[20]/BodyTop[0]/p_cf_anim[0]/cf_J_Root[0]/cf_N_height[0]/cf_J_Hips[0]/cf_J_Spine01[1]/cf_J_Spine02[1]/cf_J_Spine03[1]/cf_J_Neck[1]/cf_J_Head[0]/cf_J_Head_s[0]/p_cf_head_bone[7]/cf_J_FaceRoot[0]/cf_J_FaceBase[0]/cf_J_FaceLowBase[0]/cf_J_FaceLow_s[0]/cf_J_ChinLow[5]",
+      "local_position": [
+        -0.15,
+        -0.3909364,
+        -0.00106364489
+      ],
+      "local_rotation_xyzw": [
+        -0.00072061806,
+        0.0,
+        0.0,
+        0.999999762
+      ],
+      "local_scale": [
+        1.21050656,
+        1.28944647,
+        1.01262188
+      ]
+    }
+  },
+  "shared_ancestor_scope": "Recorded author transform ancestry and source capture context, not a command to overwrite animated head/camera/pose transforms. Any future shared-native/ABMX ancestor deformation requires explicit jaw revalidation. Local eye/nose/lip edits also require checking skin-weight coupling to this jaw.",
+  "source_geometry_sha256": "b2c3831da3e025b23a8dc6231a8cd73ed3540536f81b3aea1aa4b9459e360ece",
+  "actual_geometry_artifact_sha256": "6f1644e79a676af48fcda27ee98d3498e80c226b25be35b97eb17800ec1a5e3c",
+  "actual_geometry_path": "C:\\Users\\13666\\Workspace\\Face2Parameter\\outputs\\chenger_stylized_arcface_20261011\\v28_actual_jaw\\geometry.json",
+  "actual_contour": {
+    "status": "Actual game geometric full-jaw observation with fixed eye/mouth alignment; reference boundary has retained 6px lighting/annotation uncertainty. Actual shader silhouette and hidden 3D are not numerically certified.",
+    "upper_mid_reference_pixels": {
+      "rms": 1.5468616420261734,
+      "max_abs": 3.1425669173207207,
+      "all_signed_errors": [
+        [
+          -3.1425669173207207,
+          0.12274616460672004
+        ],
+        [
+          -2.902454045148863,
+          -0.36915929266652575
+        ],
+        [
+          -2.662341172976977,
+          -0.4659775640701728
+        ],
+        [
+          -2.3648648752913726,
+          -1.073581701812849
+        ],
+        [
+          -1.6616465576933124,
+          -1.707963455144065
+        ],
+        [
+          -1.2335701363862506,
+          -1.9025457048327397
+        ],
+        [
+          -0.9539738183020118,
+          -2.3411050858959155
+        ],
+        [
+          -0.551103220302033,
+          -2.4618560229926447
+        ],
+        [
+          0.4305481258468313,
+          -2.0453956020056765
+        ],
+        [
+          1.1278721737097654,
+          -1.0404653024905515
+        ],
+        [
+          1.5550507077015745,
+          1.8326937168647872
+        ],
+        [
+          2.2356807761849207,
+          1.476001195044389
+        ],
+        [
+          2.628422769276563,
+          1.7327821755383617
+        ],
+        [
+          2.5496482013451,
+          1.0845704879357625
+        ],
+        [
+          2.235123509107643,
+          0.8014946950156736
+        ],
+        [
+          1.1707463478185258,
+          0.7672069786114322
+        ],
+        [
+          -0.06499657897364622,
+          -0.4601027875399363
+        ],
+        [
+          -1.083344417087303,
+          -0.47803543887690114
+        ],
+        [
+          -2.7777565352318714,
+          -0.5492270353411343
+        ],
+        [
+          -3.118612687287853,
+          0.18202873815298695
+        ],
+        [
+          -2.1936610812753696,
+          -0.4194843068738924
+        ],
+        [
+          -0.2172890245867571,
+          -1.2061466463811537
+        ],
+        [
+          1.3857703776971786,
+          0.6933268224684619
+        ],
+        [
+          0.23042859296418966,
+          0.6209679131817701
+        ],
+        [
+          0.7539412037346774,
+          0.8401347561424721
+        ],
+        [
+          2.4661816525115787,
+          -0.14189791277201957
+        ],
+        [
+          1.85327145768622,
+          -0.7446883454597587
+        ],
+        [
+          0.19706385142546332,
+          -1.0059115285668223
+        ],
+        [
+          0.6173602221577406,
+          -0.9256586689339259
+        ],
+        [
+          0.11285047694570324,
+          -0.48563173800737486
+        ]
+      ]
+    },
+    "terminal_reference_pixels": {
+      "rms": 0.656862631893217,
+      "max_abs": 1.9570885488046283,
+      "all_signed_errors": [
+        -0.038960015465699105,
+        -0.5706800002524235,
+        -0.11361987937505648,
+        0.34344024150231056,
+        0.13251317553118394,
+        1.1102824275542729,
+        1.9570885488046283,
+        0.7555436675538629,
+        0.35331730240470904,
+        0.37218589894747905,
+        0.7248324172891217,
+        0.34612424510777057,
+        0.6492572804311946,
+        0.9523903157546186,
+        1.0882208830127358,
+        0.5889240915532296,
+        0.11926429362959229,
+        -0.27817849049094834,
+        -0.37431681640716574,
+        -0.35482594052571587,
+        -0.33533506464426593,
+        -0.31584418876278786,
+        -0.33915857930928067,
+        -0.43473784563760814,
+        -0.09905995463716874,
+        -0.4794388021072158,
+        -0.8598176495772346,
+        -0.8108871301695235,
+        -0.10538317793540886,
+        0.03138426673860028,
+        0.17977717062220738,
+        0.060843163261417525,
+        0.20234105161214197,
+        0.3438389399628946,
+        1.059589605915557,
+        1.4276266534611053,
+        1.2756952874445153,
+        0.4612486829746073,
+        0.20471041181986316,
+        0.1009299640239463,
+        -0.20475737177153164
+      ]
+    },
+    "all_required_sections_intersect_actual_mesh": true,
+    "actual_boundaries_eye_distance": [
+      [
+        -0.743790640995622,
+        0.9261630131911422
+      ],
+      [
+        -0.7326183955299209,
+        0.9132561110493913
+      ],
+      [
+        -0.7214461500642197,
+        0.8998794193679583
+      ],
+      [
+        -0.7100479610527298,
+        0.8865027276865253
+      ],
+      [
+        -0.6967124255454802,
+        0.872734797621805
+      ],
+      [
+        -0.6833768900382304,
+        0.858878931270241
+      ],
+      [
+        -0.6700413545309807,
+        0.845023064918677
+      ],
+      [
+        -0.656705819023731,
+        0.8305493285370416
+      ],
+      [
+        -0.6410905770083729,
+        0.8160353280017622
+      ],
+      [
+        -0.62509930842808,
+        0.8015213274664827
+      ],
+      [
+        -0.6091080398477872,
+        0.7851282134828422
+      ],
+      [
+        -0.5932130401540112,
+        0.7674372229151224
+      ],
+      [
+        -0.5779046934799621,
+        0.7497462323474026
+      ],
+      [
+        -0.562596346805913,
+        0.7299208403813835
+      ],
+      [
+        -0.547288000131864,
+        0.7111331551006522
+      ],
+      [
+        -0.5333433343002751,
+        0.6914694423552404
+      ],
+      [
+        -0.5194678452517508,
+        0.6671066442656388
+      ],
+      [
+        -0.5055923562032265,
+        0.6475073509889009
+      ],
+      [
+        -0.49160896417203537,
+        0.6276982809284501
+      ],
+      [
+        -0.4690652292841832,
+        0.6069374916012574
+      ],
+      [
+        -0.44652149439633104,
+        0.5861767022740648
+      ],
+      [
+        -0.42397775950847894,
+        0.5654159129468722
+      ],
+      [
+        -0.40081039314991773,
+        0.5439205557873716
+      ],
+      [
+        -0.37728226773453755,
+        0.5223269374315023
+      ],
+      [
+        -0.35375414231915736,
+        0.5007333190756328
+      ],
+      [
+        -0.3302893146059236,
+        0.4761524293081158
+      ],
+      [
+        -0.3073366923396268,
+        0.450725519390112
+      ],
+      [
+        -0.28438407007333,
+        0.4251304927371941
+      ],
+      [
+        -0.2614314478070331,
+        0.3958540171360354
+      ],
+      [
+        -0.23834580603778438,
+        0.36793100295943304
+      ]
+    ],
+    "actual_terminal_y_eye_distance": [
+      0.5664145228633108,
+      0.578146833463856,
+      0.5898130267702406,
+      0.6014792200766252,
+      0.6131454133830099,
+      0.6248116066893946,
+      0.6342067605121184,
+      0.6425272448071523,
+      0.6508477291021862,
+      0.6591682133972201,
+      0.6666889753376037,
+      0.67153407795226,
+      0.6763791805669161,
+      0.6812242831815724,
+      0.6854104134193986,
+      0.6872675379315847,
+      0.6891246624437707,
+      0.6909817869559567,
+      0.6923645094537163,
+      0.6930621738416622,
+      0.6937598382296082,
+      0.6944575026175541,
+      0.6949865652599009,
+      0.6941092193980493,
+      0.6932318735361976,
+      0.692354527674346,
+      0.6914771818124945,
+      0.6897480275584125,
+      0.687806179134499,
+      0.6858643307105856,
+      0.6839224822866721,
+      0.6797715751904586,
+      0.6750374139580597,
+      0.6703032527256608,
+      0.6655690914932619,
+      0.6588426707189367,
+      0.6503432272295799,
+      0.6418437837402232,
+      0.6333443402508665,
+      0.6247595207336502,
+      0.6151721490844149
+    ],
+    "actual_chin_bottom_eye_distance": 0.6950804834066694,
+    "alignment_scope": "v17 fixed eye contour and mouth line; gaze3/open-eyes capture, canonical head pose. No pitch/yaw shape compensation."
+  },
+  "actual_source_error_max_game_units": 1.4537673816910545e-06,
+  "actual_source_error_mean_game_units": 6.153857722186604e-07,
+  "normal_sign_reversals": [],
+  "profile_evidence": [
+    "C:\\Users\\13666\\Workspace\\Face2Parameter\\outputs\\chenger_stylized_arcface_20261011\\v28_actual_jaw\\front.png",
+    "C:\\Users\\13666\\Workspace\\Face2Parameter\\outputs\\chenger_stylized_arcface_20261011\\v28_actual_jaw\\side_visible.png",
+    "C:\\Users\\13666\\Workspace\\Face2Parameter\\outputs\\chenger_stylized_arcface_20261011\\v28_actual_jaw\\quarter_visible.png"
+  ],
+  "profile_scope": "Actual main camera at90/45 with temporary vanilla back0 long hair; original card restored. No art side image available, no fabricated 3D target error.",
+  "reference_review_photos": [
+    "img-002.jpg",
+    "img-020.jpg"
+  ],
+  "reload_check": {
+    "snapshot_raw_equal": true,
+    "abmx_raw_equal": false,
+    "style_raw_equal": true,
+    "expression_raw_equal": true,
+    "common_bone_records_exact_equal": true,
+    "missing_bone_records": {
+      "cf_J_Mune00_t_R": {
+        "scale": [
+          1.0,
+          1.0,
+          1.0
+        ],
+        "length": 1.0,
+        "position": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "rotation": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "name": "cf_J_Mune00_t_R",
+        "exists": true,
+        "coordinate_modifiers": [
+          {
+            "scale": [
+              1.0,
+              1.0,
+              1.0
+            ],
+            "length": 1.0,
+            "position": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "rotation": [
+              0.0,
+              0.0,
+              0.0
+            ]
+          }
+        ]
+      },
+      "cf_J_Mune02_t_R": {
+        "scale": [
+          1.0,
+          1.0,
+          1.0
+        ],
+        "length": 1.0,
+        "position": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "rotation": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "name": "cf_J_Mune02_t_R",
+        "exists": true,
+        "coordinate_modifiers": [
+          {
+            "scale": [
+              1.0,
+              1.0,
+              1.0
+            ],
+            "length": 1.0,
+            "position": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "rotation": [
+              0.0,
+              0.0,
+              0.0
+            ]
+          }
+        ]
+      },
+      "cf_J_Mune02_t_L": {
+        "scale": [
+          1.0,
+          1.0,
+          1.0
+        ],
+        "length": 1.0,
+        "position": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "rotation": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "name": "cf_J_Mune02_t_L",
+        "exists": true,
+        "coordinate_modifiers": [
+          {
+            "scale": [
+              1.0,
+              1.0,
+              1.0
+            ],
+            "length": 1.0,
+            "position": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "rotation": [
+              0.0,
+              0.0,
+              0.0
+            ]
+          }
+        ]
+      },
+      "cf_J_Mune01_s_L": {
+        "scale": [
+          1.0,
+          1.0,
+          1.0
+        ],
+        "length": 1.0,
+        "position": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "rotation": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "name": "cf_J_Mune01_s_L",
+        "exists": true,
+        "coordinate_modifiers": [
+          {
+            "scale": [
+              1.0,
+              1.0,
+              1.0
+            ],
+            "length": 1.0,
+            "position": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "rotation": [
+              0.0,
+              0.0,
+              0.0
+            ]
+          }
+        ]
+      },
+      "cf_J_Mune01_s_R": {
+        "scale": [
+          1.0,
+          1.0,
+          1.0
+        ],
+        "length": 1.0,
+        "position": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "rotation": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "name": "cf_J_Mune01_s_R",
+        "exists": true,
+        "coordinate_modifiers": [
+          {
+            "scale": [
+              1.0,
+              1.0,
+              1.0
+            ],
+            "length": 1.0,
+            "position": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "rotation": [
+              0.0,
+              0.0,
+              0.0
+            ]
+          }
+        ]
+      },
+      "cf_J_Mune00_t_L": {
+        "scale": [
+          1.0,
+          1.0,
+          1.0
+        ],
+        "length": 1.0,
+        "position": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "rotation": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "name": "cf_J_Mune00_t_L",
+        "exists": true,
+        "coordinate_modifiers": [
+          {
+            "scale": [
+              1.0,
+              1.0,
+              1.0
+            ],
+            "length": 1.0,
+            "position": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "rotation": [
+              0.0,
+              0.0,
+              0.0
+            ]
+          }
+        ]
+      },
+      "cf_J_Mune01_t_R": {
+        "scale": [
+          1.0,
+          1.0,
+          1.0
+        ],
+        "length": 1.0,
+        "position": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "rotation": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "name": "cf_J_Mune01_t_R",
+        "exists": true,
+        "coordinate_modifiers": [
+          {
+            "scale": [
+              1.0,
+              1.0,
+              1.0
+            ],
+            "length": 1.0,
+            "position": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "rotation": [
+              0.0,
+              0.0,
+              0.0
+            ]
+          }
+        ]
+      },
+      "cf_J_Mune00_d_R": {
+        "scale": [
+          1.0,
+          1.0,
+          1.0
+        ],
+        "length": 1.0,
+        "position": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "rotation": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "name": "cf_J_Mune00_d_R",
+        "exists": true,
+        "coordinate_modifiers": [
+          {
+            "scale": [
+              1.0,
+              1.0,
+              1.0
+            ],
+            "length": 1.0,
+            "position": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "rotation": [
+              0.0,
+              0.0,
+              0.0
+            ]
+          }
+        ]
+      },
+      "cf_J_Mune00_d_L": {
+        "scale": [
+          1.0,
+          1.0,
+          1.0
+        ],
+        "length": 1.0,
+        "position": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "rotation": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "name": "cf_J_Mune00_d_L",
+        "exists": true,
+        "coordinate_modifiers": [
+          {
+            "scale": [
+              1.0,
+              1.0,
+              1.0
+            ],
+            "length": 1.0,
+            "position": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "rotation": [
+              0.0,
+              0.0,
+              0.0
+            ]
+          }
+        ]
+      },
+      "cf_J_Mune04_s_R": {
+        "scale": [
+          1.0,
+          1.0,
+          1.0
+        ],
+        "length": 1.0,
+        "position": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "rotation": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "name": "cf_J_Mune04_s_R",
+        "exists": true,
+        "coordinate_modifiers": [
+          {
+            "scale": [
+              1.0,
+              1.0,
+              1.0
+            ],
+            "length": 1.0,
+            "position": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "rotation": [
+              0.0,
+              0.0,
+              0.0
+            ]
+          }
+        ]
+      },
+      "cf_J_Mune01_t_L": {
+        "scale": [
+          1.0,
+          1.0,
+          1.0
+        ],
+        "length": 1.0,
+        "position": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "rotation": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "name": "cf_J_Mune01_t_L",
+        "exists": true,
+        "coordinate_modifiers": [
+          {
+            "scale": [
+              1.0,
+              1.0,
+              1.0
+            ],
+            "length": 1.0,
+            "position": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "rotation": [
+              0.0,
+              0.0,
+              0.0
+            ]
+          }
+        ]
+      },
+      "cf_J_Mune04_s_L": {
+        "scale": [
+          1.0,
+          1.0,
+          1.0
+        ],
+        "length": 1.0,
+        "position": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "rotation": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "name": "cf_J_Mune04_s_L",
+        "exists": true,
+        "coordinate_modifiers": [
+          {
+            "scale": [
+              1.0,
+              1.0,
+              1.0
+            ],
+            "length": 1.0,
+            "position": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "rotation": [
+              0.0,
+              0.0,
+              0.0
+            ]
+          }
+        ]
+      }
+    }
+  },
+  "global_render_style": {
+    "state": {
+      "sss_enabled": true,
+      "camera_effects": [
+        {
+          "type": "UnityEngine.Camera",
+          "enabled": true
+        },
+        {
+          "type": "CameraControl_Ver2",
+          "enabled": true
+        },
+        {
+          "type": "UnityEngine.Rendering.PostProcessing.PostProcessLayer",
+          "enabled": true
+        },
+        {
+          "type": "GameScreenShot",
+          "enabled": true
+        },
+        {
+          "type": "UnityEngine.EventSystems.PhysicsRaycaster",
+          "enabled": true
+        },
+        {
+          "type": "CharaCustom.CustomRender",
+          "enabled": true
+        },
+        {
+          "type": "CTAA_PC",
+          "enabled": true
+        },
+        {
+          "type": "UnityEngine.GUILayer",
+          "enabled": true
+        },
+        {
+          "type": "DHH.SSS",
+          "enabled": true
+        },
+        {
+          "type": "DHH.SSS_buffers_viewer",
+          "enabled": false
+        }
+      ],
+      "available_hanmen_shaders": [
+        "Hanmen/Next-Gen Body",
+        "Hanmen/Next-Gen Face",
+        "Hanmen/Next-Gen Tongue",
+        "Hanmen/Next-Gen Teeth",
+        "Hanmen/Clothes True Alpha",
+        "Hanmen/Clothes True Cutoff",
+        "Hanmen/Item Cutoff",
+        "Hanmen/Item Alpha",
+        "Hanmen/Clothes True Pantyhose"
+      ],
+      "materials": [
+        {
+          "renderer": "cf_O_hairback_05_02",
+          "slot": 0,
+          "material": "hair3 (Instance) (Instance)",
+          "shader": "Shader Forge/hair_07",
+          "gloss": null,
+          "bump_scale": null,
+          "veins_opacity": null,
+          "secondary_gloss": null
+        },
+        {
+          "renderer": "o_eyebase_L",
+          "slot": 0,
+          "material": "c_m_eye_02 (Instance) (Instance)",
+          "shader": "AIT/Eye Translucency",
+          "gloss": null,
+          "bump_scale": null,
+          "veins_opacity": null,
+          "secondary_gloss": null
+        },
+        {
+          "renderer": "o_eyebase_R",
+          "slot": 0,
+          "material": "c_m_eye_02 (Instance) (Instance)",
+          "shader": "AIT/Eye Translucency",
+          "gloss": null,
+          "bump_scale": null,
+          "veins_opacity": null,
+          "secondary_gloss": null
+        },
+        {
+          "renderer": "o_eyelashes",
+          "slot": 0,
+          "material": "c_m_eyelashes (Instance) (Instance)",
+          "shader": "AIT/eyelashes",
+          "gloss": null,
+          "bump_scale": null,
+          "veins_opacity": null,
+          "secondary_gloss": null
+        },
+        {
+          "renderer": "o_eyeshadow",
+          "slot": 0,
+          "material": "c_m_eyekage_cf2 (Instance) (Instance)",
+          "shader": "AIT/main eyeshadow lambert",
+          "gloss": null,
+          "bump_scale": null,
+          "veins_opacity": null,
+          "secondary_gloss": null
+        },
+        {
+          "renderer": "o_head",
+          "slot": 0,
+          "material": "cf_m_skin_head_02 (Instance)",
+          "shader": "Hanmen/Next-Gen Face",
+          "gloss": 0.34,
+          "bump_scale": 1.0,
+          "veins_opacity": 0.47,
+          "secondary_gloss": 0.25
+        },
+        {
+          "renderer": "o_namida",
+          "slot": 0,
+          "material": "c_m_eye_namida (Instance) (Instance)",
+          "shader": "AIT/main namida",
+          "gloss": null,
+          "bump_scale": null,
+          "veins_opacity": null,
+          "secondary_gloss": null
+        },
+        {
+          "renderer": "o_tang",
+          "slot": 0,
+          "material": "c_m_tang (Instance) (Instance)",
+          "shader": "AIT/Skin Translucency simple",
+          "gloss": 0.9,
+          "bump_scale": null,
+          "veins_opacity": null,
+          "secondary_gloss": null
+        },
+        {
+          "renderer": "o_tooth",
+          "slot": 0,
+          "material": "c_m_tooth (Instance) (Instance)",
+          "shader": "AIT/Skin Translucency simple",
+          "gloss": 1.0,
+          "bump_scale": null,
+          "veins_opacity": null,
+          "secondary_gloss": null
+        },
+        {
+          "renderer": "o_body_cf",
+          "slot": 0,
+          "material": "cf_m_skin_body_00 (Instance)",
+          "shader": "Hanmen/Next-Gen Body",
+          "gloss": 0.32,
+          "bump_scale": 1.0,
+          "veins_opacity": 0.12,
+          "secondary_gloss": 0.25
+        },
+        {
+          "renderer": "o_body_cf",
+          "slot": 1,
+          "material": "c_m_liquid_body (Instance) (Instance)",
+          "shader": "AIT/Liquid",
+          "gloss": null,
+          "bump_scale": null,
+          "veins_opacity": null,
+          "secondary_gloss": null
+        },
+        {
+          "renderer": "o_mnpa",
+          "slot": 0,
+          "material": "c_m_mnpb (Instance) (Instance) (Instance)",
+          "shader": "AIT/mnpb",
+          "gloss": null,
+          "bump_scale": null,
+          "veins_opacity": null,
+          "secondary_gloss": null
+        },
+        {
+          "renderer": "o_mnpb",
+          "slot": 0,
+          "material": "c_m_mnpb (Instance) (Instance) (Instance)",
+          "shader": "AIT/mnpb",
+          "gloss": null,
+          "bump_scale": null,
+          "veins_opacity": null,
+          "secondary_gloss": null
+        },
+        {
+          "renderer": "cm_o_dan00",
+          "slot": 0,
+          "material": "cm_m_skin_body_00 (Instance) (Instance)",
+          "shader": "AIT/Skin True",
+          "gloss": 0.2,
+          "bump_scale": 0.5,
+          "veins_opacity": null,
+          "secondary_gloss": null
+        },
+        {
+          "renderer": "o_tang",
+          "slot": 0,
+          "material": "c_m_tang (Instance) (Instance)",
+          "shader": "AIT/Skin Translucency simple",
+          "gloss": 0.9,
+          "bump_scale": null,
+          "veins_opacity": null,
+          "secondary_gloss": null
+        },
+        {
+          "renderer": "o_silhouette_cf",
+          "slot": 0,
+          "material": "cf_m_silhouette (Instance) (Instance)",
+          "shader": "Custom/Silhouette",
+          "gloss": null,
+          "bump_scale": null,
+          "veins_opacity": null,
+          "secondary_gloss": null
+        },
+        {
+          "renderer": "cm_o_dan00",
+          "slot": 0,
+          "material": "c_m_mnpb (Instance) (Instance)",
+          "shader": "AIT/mnpb",
+          "gloss": null,
+          "bump_scale": null,
+          "veins_opacity": null,
+          "secondary_gloss": null
+        },
+        {
+          "renderer": "cm_o_dan_f",
+          "slot": 0,
+          "material": "c_m_mnpb (Instance)",
+          "shader": "AIT/mnpb",
+          "gloss": null,
+          "bump_scale": null,
+          "veins_opacity": null,
+          "secondary_gloss": null
+        },
+        {
+          "renderer": "o_mnpa",
+          "slot": 0,
+          "material": "Default-Material (Instance)",
+          "shader": "Standard",
+          "gloss": null,
+          "bump_scale": 1.0,
+          "veins_opacity": null,
+          "secondary_gloss": null
+        },
+        {
+          "renderer": "o_mnpb",
+          "slot": 0,
+          "material": "Default-Material (Instance)",
+          "shader": "Standard",
+          "gloss": null,
+          "bump_scale": 1.0,
+          "veins_opacity": null,
+          "secondary_gloss": null
+        },
+        {
+          "renderer": "o_silhouette_cf_mnpb",
+          "slot": 0,
+          "material": "c_m_mnpb (Instance) (Instance)",
+          "shader": "AIT/mnpb",
+          "gloss": null,
+          "bump_scale": null,
+          "veins_opacity": null,
+          "secondary_gloss": null
+        },
+        {
+          "renderer": "o_tang",
+          "slot": 0,
+          "material": "cf_m_silhouette (Instance) (Instance)",
+          "shader": "Custom/Silhouette",
+          "gloss": null,
+          "bump_scale": null,
+          "veins_opacity": null,
+          "secondary_gloss": null
+        },
+        {
+          "renderer": "o_top_tsyatu1_a",
+          "slot": 0,
+          "material": "cf_m_top_tsyatu1 (Instance) (Instance)",
+          "shader": "AIT/Clothes True",
+          "gloss": null,
+          "bump_scale": null,
+          "veins_opacity": null,
+          "secondary_gloss": null
+        },
+        {
+          "renderer": "o_top_tsyatu1_b",
+          "slot": 0,
+          "material": "cf_m_top_tsyatu1 (Instance)",
+          "shader": "AIT/Clothes True",
+          "gloss": null,
+          "bump_scale": null,
+          "veins_opacity": null,
+          "secondary_gloss": null
+        },
+        {
+          "renderer": "o_bot_pantshot1_a",
+          "slot": 0,
+          "material": "cf_m_bot_pantshot1 (Instance) (Instance)",
+          "shader": "AIT/Clothes True",
+          "gloss": null,
+          "bump_scale": null,
+          "veins_opacity": null,
+          "secondary_gloss": null
+        },
+        {
+          "renderer": "o_bot_pantshot1_b",
+          "slot": 0,
+          "material": "cf_m_bot_pantshot1 (Instance)",
+          "shader": "AIT/Clothes True",
+          "gloss": null,
+          "bump_scale": null,
+          "veins_opacity": null,
+          "secondary_gloss": null
+        },
+        {
+          "renderer": "o_bra_a",
+          "slot": 0,
+          "material": "cf_m_bra_00 (Instance) (Instance)",
+          "shader": "AIT/Clothes True",
+          "gloss": null,
+          "bump_scale": null,
+          "veins_opacity": null,
+          "secondary_gloss": null
+        },
+        {
+          "renderer": "o_bra_b",
+          "slot": 0,
+          "material": "cf_m_bra_00 (Instance)",
+          "shader": "AIT/Clothes True",
+          "gloss": null,
+          "bump_scale": null,
+          "veins_opacity": null,
+          "secondary_gloss": null
+        },
+        {
+          "renderer": "o_shorts_a",
+          "slot": 0,
+          "material": "cf_m_shorts_00 (Instance) (Instance)",
+          "shader": "AIT/Clothes True",
+          "gloss": null,
+          "bump_scale": null,
+          "veins_opacity": null,
+          "secondary_gloss": null
+        },
+        {
+          "renderer": "o_shorts_b",
+          "slot": 0,
+          "material": "cf_m_shorts_00 (Instance)",
+          "shader": "AIT/Clothes True",
+          "gloss": null,
+          "bump_scale": null,
+          "veins_opacity": null,
+          "secondary_gloss": null
+        },
+        {
+          "renderer": "o_shoes_bones",
+          "slot": 0,
+          "material": "cf_m_shoes_bones (Instance) (Instance)",
+          "shader": "AIT/Clothes True",
+          "gloss": null,
+          "bump_scale": null,
+          "veins_opacity": null,
+          "secondary_gloss": null
+        },
+        {
+          "renderer": "Height bar indicator",
+          "slot": 0,
+          "material": "FlatColorTransparent (Instance) (Instance)",
+          "shader": "Shader Forge/FlatColorTransparent",
+          "gloss": null,
+          "bump_scale": null,
+          "veins_opacity": null,
+          "secondary_gloss": null
+        }
+      ]
+    }
+  },
+  "saved_expression": {
+    "eyes_ptn": 0,
+    "eyebrow_ptn": 0,
+    "mouth_ptn": 0,
+    "eyes_blink": true,
+    "eyes_open_max": 1.0,
+    "mouth_open_max": 1.0,
+    "mouth_open_min": 0.0,
+    "mouth_fixed": false,
+    "mouth_adjust_width": true,
+    "eyes_look_pattern": 1
+  },
+  "limits": "2D complete jaw contour and qualitative native side/quarter review; no invented art side geometry, no universal shader/depth/collision/animation certificate. Original bob and native head2 are the visible result; no source shell or substitute hairstyle delivered."
+}

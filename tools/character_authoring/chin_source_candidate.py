@@ -7,11 +7,14 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import sys
 from pathlib import Path
 import numpy as np
 from scipy.optimize import minimize
 from scipy.spatial.transform import Rotation
 from portrait_compare import measure
+sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
+from src.hs2_mesh_deform import euler_zxy_quat, _qmul, _quat_to_mat
 
 
 def read(path):
@@ -20,7 +23,7 @@ def read(path):
 
 
 class SourceForward:
-    def __init__(self, d, capture, width=768, height=1024):
+    def __init__(self, d, capture, width=768, height=1024, controls='chin8'):
         meshes = [m for m in d['meshes'] if m['mesh_name'] == 'o_head']
         if len(meshes) != 1:
             raise ValueError('One native head required')
@@ -34,14 +37,18 @@ class SourceForward:
         self.local = {i: np.linalg.inv(self.world[r['parent_id']]) @ self.world[i]
                       for i, r in t.items() if r['parent_id'] is not None}
         self.mods = {r['name']: r for r in d['abmx_runtime']['bones']}
-        for name in ('cf_J_ChinTip_s', 'cf_J_ChinLow', 'cf_J_Chin_rs'):
+        if controls not in ('chin8', 'jaw14', 'jaw18', 'jaw22'):
+            raise ValueError('Unknown author controls')
+        names = ['cf_J_ChinTip_s', 'cf_J_ChinLow', 'cf_J_Chin_rs']
+        if controls in ('jaw14', 'jaw18', 'jaw22'):
+            names += ['cf_J_CheekLow_L', 'cf_J_CheekLow_R']
+        for name in names:
             cache = self.mods[name]['runtime_baseline']
             if cache['missing_fields'] or not cache['fields']['_hasBaseline']:
                 raise ValueError('Actual baseline missing: '+name)
         if any(self.mods[n]['length'] != 1 for n in ('cf_J_ChinTip_s', 'cf_J_ChinLow')):
             raise ValueError('Position patches require installed length-one branch')
-        self.ids = {n: self.mods[n]['runtime_baseline']['bone_transform_id']
-                    for n in ('cf_J_ChinTip_s', 'cf_J_ChinLow', 'cf_J_Chin_rs')}
+        self.ids = {n: self.mods[n]['runtime_baseline']['bone_transform_id'] for n in names}
         v = np.asarray(m['source']['vertices'], float).copy()
         for s in m['blendshapes']:
             if not s['current_weight']:
@@ -65,6 +72,34 @@ class SourceForward:
             ('cf_J_ChinTip_s','scale',0), ('cf_J_ChinTip_s','scale',1),
             ('cf_J_ChinTip_s','position',1), ('cf_J_ChinLow','scale',0),
             ('cf_J_ChinLow','scale',1), ('cf_J_ChinLow','position',1)]
+        if controls in ('jaw14', 'jaw18', 'jaw22'):
+            # Actual cached-scale branch only for the cheeks: their non-unit
+            # length, rotation and position are retained, never approximated.
+            self.parameter_fields += [
+                ('cf_J_ChinTip_s','position',0), ('cf_J_ChinLow','position',0),
+                ('cf_J_CheekLow_L','scale',0), ('cf_J_CheekLow_L','scale',1),
+                ('cf_J_CheekLow_R','scale',0), ('cf_J_CheekLow_R','scale',1)]
+        if controls in ('jaw18', 'jaw22'):
+            self.parameter_fields += [
+                ('cf_J_CheekLow_L','rotation',1), ('cf_J_CheekLow_L','rotation',2),
+                ('cf_J_CheekLow_R','rotation',1), ('cf_J_CheekLow_R','rotation',2)]
+        if controls == 'jaw22':
+            self.parameter_fields += [
+                ('cf_J_CheekLow_L','position',0), ('cf_J_CheekLow_L','position',1),
+                ('cf_J_CheekLow_R','position',0), ('cf_J_CheekLow_R','position',1)]
+        for name,field,_ in self.parameter_fields:
+            if field == 'position' and (self.mods[name]['length'] != 1 or
+                    self.mods[name]['runtime_baseline']['fields']['_lenModForceUpdate']):
+                raise ValueError('Position authoring requires captured steady length-one branch: '+name)
+            if field == 'rotation' and (d['abmx_runtime'].get('rotation_excluded_bones') is None or
+                    name in d['abmx_runtime']['rotation_excluded_bones']):
+                raise ValueError('Rotation authoring requires recorded supported bone: '+name)
+        self.rotation_base = {}
+        for name,field,_ in self.parameter_fields:
+            if field != 'rotation' or name in self.rotation_base:
+                continue
+            q = self.mods[name]['runtime_baseline']['fields']['_rotBaseline']
+            self.rotation_base[name] = _quat_to_mat(_qmul(q, euler_zxy_quat(*self.mods[name]['rotation'])))
         self.base = np.array([self.mods[n][field][axis] for n,field,axis in self.parameter_fields])
 
     def head_vertices(self, x):
@@ -74,8 +109,27 @@ class SourceForward:
         for j,(name,field,axis) in enumerate(self.parameter_fields):
             if field == 'scale':
                 local[self.ids[name]][:3,axis] *= x[j]/self.base[j]
-            else:
-                local[self.ids[name]][axis,3] += x[j]-self.base[j]
+        position_names = {n for n,field,_ in self.parameter_fields if field == 'position'}
+        for name in position_names:
+            position = self.mods[name]['position'].copy()
+            for value,(n,field,axis) in zip(x,self.parameter_fields):
+                if n == name and field == 'position':
+                    position[axis] = value
+            cache = self.mods[name]['runtime_baseline']['fields']
+            # Installed HasPosition is an exact component comparison. An old
+            # length change can leave a different current position when there
+            # is no offset and _changedPosition is false. Preserve that branch;
+            # nonzero offsets use the actual cache, not current-position+delta.
+            if any(v != 0 for v in position) or cache['_changedPosition']:
+                local[self.ids[name]][:3,3] = np.asarray(cache['_posBaseline']) + position
+        for name, base_rotation in self.rotation_base.items():
+            euler = self.mods[name]['rotation'].copy()
+            for value,(n,field,axis) in zip(x,self.parameter_fields):
+                if n == name and field == 'rotation':
+                    euler[axis] = value
+            q = self.mods[name]['runtime_baseline']['fields']['_rotBaseline']
+            proposed_rotation = _quat_to_mat(_qmul(q, euler_zxy_quat(*euler)))
+            local[self.ids[name]][:3,:3] = proposed_rotation @ np.linalg.inv(base_rotation) @ local[self.ids[name]][:3,:3]
         changed, result = {}, {}
         def affected(i):
             if i not in changed:
@@ -140,11 +194,14 @@ def main():
     p.add_argument('--scale-min', type=float, default=.65)
     p.add_argument('--scale-max', type=float, default=1.50)
     p.add_argument('--max-iterations', type=int, default=200)
+    p.add_argument('--controls', choices=['chin8', 'jaw14', 'jaw18', 'jaw22'], default='chin8')
+    p.add_argument('--rotation-span', type=float, default=10)
     a = p.parse_args()
     if a.out.exists():
         raise FileExistsError('Fresh candidate output required')
     if not (0 < a.scale_span <= 5 and 0 < a.position_span <= 5 and
-            .001 <= a.scale_min < a.scale_max <= 20 and 1 <= a.max_iterations <= 2000):
+            .001 <= a.scale_min < a.scale_max <= 20 and 1 <= a.max_iterations <= 2000 and
+            0 < a.rotation_span <= 180):
         raise ValueError('Finite positive author bounds and 1..2000 iterations required')
     d, gs = read(a.geometry)
     c, cs = read(a.capture)
@@ -177,7 +234,7 @@ def main():
     terminal_y = np.where(terminal_x <= chin[0],
                           np.interp(terminal_x, left[:,0], left[:,1]),
                           np.interp(terminal_x, right[::-1,0], right[::-1,1]))
-    model = SourceForward(d, c['capture'])
+    model = SourceForward(d, c['capture'], controls=a.controls)
     def normalized(x):
         return (model.pixels(x)-mg) @ Rg.T/sg
     def objective(x):
@@ -189,9 +246,11 @@ def main():
         terminal = sections(pts[:,[1,0]], model.triangles, terminal_x)[:,1]-terminal_y
         return np.r_[residual.ravel(), terminal, top-chin[1]]
     # Explicit author bounds, not native engine limits or compatibility thresholds.
-    lower = [max(a.scale_min,v-a.scale_span) if field=='scale' else v-a.position_span
+    lower = [max(a.scale_min,v-a.scale_span) if field=='scale' else
+             v-(a.rotation_span if field=='rotation' else a.position_span)
              for v,(_,field,_) in zip(model.base,model.parameter_fields)]
-    upper = [min(a.scale_max,v+a.scale_span) if field=='scale' else v+a.position_span
+    upper = [min(a.scale_max,v+a.scale_span) if field=='scale' else
+             v+(a.rotation_span if field=='rotation' else a.position_span)
              for v,(_,field,_) in zip(model.base,model.parameter_fields)]
     def appearance_cost(x):
         errors = objective(x)[:-1]
@@ -215,6 +274,10 @@ def main():
     patches = {n:{'name':n} for n in model.ids}
     for v,(name,field,axis) in zip(x,model.parameter_fields):
         patches[name].setdefault(field,model.mods[name][field].copy())[axis] = float(v)
+        if field == 'position':
+            # Include the actual required author branch in the replayable patch;
+            # do not rely on a separate preparatory game mutation being remembered.
+            patches[name]['length'] = 1.0
     patch = {'bones':list(patches.values())}
     out = {'status':'source-model author candidate only; requires actual game/complete appearance review, not accepted or locked',
            'inputs': {'geometry_sha256':gs, 'capture_sha256':cs, 'measurements_sha256':ms, 'trace_sha256':ts},
@@ -222,7 +285,8 @@ def main():
            'scope': __doc__, 'projection_scope':'Reported frozen head TRS with recorded FOV23 and 768x1024; excludes CTAA jitter/shader depth, arbitrary shear and general pose compatibility.',
            'parameters': ['.'.join([n,field,str(axis)]) for n,field,axis in model.parameter_fields],
            'base':model.base.tolist(), 'candidate':x.tolist(), 'author_bounds':[lower,upper],
-           'author_bound_config': {'scale_span':a.scale_span,'position_span':a.position_span,'scale_min':a.scale_min,'scale_max':a.scale_max,'max_iterations':a.max_iterations},
+           'author_bound_config': {'scale_span':a.scale_span,'position_span':a.position_span,'scale_min':a.scale_min,'scale_max':a.scale_max,'rotation_span_degrees':a.rotation_span,'max_iterations':a.max_iterations},
+           'author_controls':a.controls,
            'reversed_triangle_normal_indices':reversed_ids.tolist(),
            'normal_check_scope':'Normals from actual source topology and proposed positions; a changed sign is a diagnostic, not a universal collision/visibility/animation certificate.',
            'optimizer_success':bool(result.success), 'optimizer_message':result.message,

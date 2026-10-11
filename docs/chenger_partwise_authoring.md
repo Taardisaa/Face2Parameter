@@ -387,3 +387,56 @@ original hair and explicit TARGET1/blink=true; snapshot, full raw ABMX response,
 style and expression all matched pre-candidate responses. No locked parts.
 Continue the complete jaw shape using actual source-supported controls; do not
 keep compressing three central bones to compensate for the whole jaw/pose.
+
+
+### v28 native jaw/chin authoring milestone: locked (2026-10-11)
+
+Recovered lower-cheek controls from actual head2: CheekLow L/R each has237
+weighted source vertices, max weight .396344. Expanded source author profiles
+chin8 -> jaw14 (tip/low X offsets and cheek XY scales) -> jaw18 (cheek Y/Z
+rotations) -> jaw22 (cheek XY offsets). Rotations use installed cache quaternion
+multiplied by Unity qY*qX*qZ Euler via the existing pure math helper, retaining
+actual affine columns and all descendants. Recorded local rotations agree with
+cached computation within 1.92e-8 matrix components in this baseline. Existing
+old full ABMX/deformation implementation is not used for its position/length path.
+Position channels require actual length1 and _lenModForceUpdate=false; excluded
+rotations or absent caches fail. Output includes required length1 in its replay
+patch. Installed BoneModifierData.HasPosition/HasLength are exact comparisons.
+
+Author baseline v17b explicitly changed only CheekLow lengths to1. Their actual
+positions still retained the earlier non-unit-length result with no offset and
+_changedPosition=false; deviations from _posBaseline ~.000377 X are preserved.
+New nonzero position uses _posBaseline+modifier, not currentPosition+delta. This
+source branch correction is implemented; v27 predates it and was never applied.
+V25/26 likewise remained offline. Baseline jaw22 versus actual BakeMesh max
+1.995411e-6 units; source mesh unchanged. No game sweep or fitted deformation gain.
+
+V28 source candidate converged, no source-topology normal-sign reversals.
+Actual game4439-point forward error max1.453767e-6, mean6.153858e-7 units.
+Using fixed eye/mouth alignment, **actual** upper/mid complete30 dual sections
+reference-pixel RMS1.546862, max3.142567; complete41 terminal Y-at-X values
+RMS.656863, max1.957089. Both are below retained6px reference boundary uncertainty.
+These are geometric observations against the inspected rounded portrait contour,
+not exact shader silhouettes. Figure v28_actual_jaw/actual_contour_review.png
+includes prior baseline, complete target and actual current mesh. Native front,
+90-degree profile and45-degree view were visually reviewed. Temporary vanilla
+back0 long hair exposes chin/lip relief; saved/reloaded card retains original bob.
+Real ordinary photos img-002/img-020 were revisited for rounded taper and angled
+jaw cues; no false same-camera side metric or hidden art3D geometry is claimed.
+
+**Jaw/chin v28 locked as a part milestone.** Not complete whole-character identity.
+Self-contained lock recipe is tools/character_authoring/chenger_v28_jaw_lock.json:
+full5 controlled modifiers, native head2/shape0..18 and all59 values as context,
+actual shared ancestry, card/reference/geometry hashes, actual contour residuals,
+profile evidence and globals. Skin20/HanmenSSS retained. Keep vertex geometry and
+shared deformation dependencies under review in subsequent layout/nose/lip/eye
+work; do not claim preserved jaw from unchanged5 parameters if parents or other
+weighted bones changed. Reopen explicitly on an actual dependency/appearance gap.
+
+Saved card SHA c5a7b4c0e9971352f3a986b800296eb9e7e7f0efa92527e2f3a0871c26752cb1.
+Reload snapshot/style/expression exactly equal. Raw ABMX list42->30 mismatch is
+retained:12 identity body modifiers were pruned; all30 remaining records exact,
+including the5 jaw bones. This is settings evidence, not full private eye-cache
+restoration certification. Normal visible result is native v28, original bob,
+TARGET1/blink=true. Next part: quantify layout from existing v28 image before
+choosing source-supported local controls; preserve/revalidate the jaw lock.
