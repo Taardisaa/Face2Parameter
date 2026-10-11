@@ -29,8 +29,25 @@ local slot 各1。不是 SourceHead 外壳或显示替换。现有v6、后期卡
 包文件已按 SHA 核对复制至：
 `E:/HoneySelect2_ArcticFox/mods/CodexNativeMother/flame_native_chenger_mouth_v7.zipmod`。
 **文件安装不代表运行中 loader 已注册或人物卡已完成。** 未修改可见 actor；
-只读观察为 head2/skin20。真实动态ID、新独立卡、native闭嘴/张嘴表现及
+只读观察为 head2/skin20。真实动态ID、native闭嘴/张嘴表现及
 口内部件互碰仍待收尾；其他 Closed pattern 接触重建尚未认证。
+
+已由 `mother_card` 从原 v6 后期卡生成独立候选：
+`E:/HoneySelect2_ArcticFox/UserData/chara/female/Codex/Chenger_native_mouth_v7_candidate_01.png`。
+GUID/原始 slot 保存读回通过；其余 native Custom 区域及 resolver 之外的
+plugin 数据逐项相等。此资产在原生0.5参考骨架下制作，所以候选把59项
+face shape 重置到0.5；源后期卡包含非0.5值，不能称其后期滑杆状态原样
+迁移。原卡不变，候选名称明确标为候选，游戏保存重载尚未验收。
+
+安装版 `Sideloader_current.cs:325` 的 Awake 调用私有
+`LoadModsFromDirectories`，读取包、表、resolver 和 faceSkinInfo；
+当前已审查的类未提供运行期包重扫描接口。另一项人物制作任务仍在写
+当前 Maker，故未重启或覆盖它。桥接既有进程端口覆盖可隔离HTTP，但
+独立 HoneySelect2 启动两次均立即退出，第二次退出码0；43129未建立
+监听。这只证明该启动方式未成功，不据此猜测是否单实例限制。
+启动记录保存于 HS2Mod `artifacts/mouth_v7_acceptance_20261011/`
+的 `process.json`、`process_retry.json`。未取得native闭嘴/Open结果，
+不能把卡文件生成或静态帧写入当成实际游戏验收。
 
 Ignored证据根：`outputs/generic_mouth_20261011/`，含 `lip_chart_v9`、
 `pipeline_v3`、`pipeline_other_identity_v2`、`chenger_v6_mouth_merge_v1`、
