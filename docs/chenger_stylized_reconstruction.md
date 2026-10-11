@@ -101,6 +101,20 @@ v1 保留，当前卡为同一游戏目录 `Chenger_stylized_reconstruction_v2.p
 本轮实际输出为brow_source_v3_rgba与lip_source_v3_alpha。
 # v4 identity authoring continuation
 
+## v7 lower face and outfit
+
+Actual card `E:/HoneySelect2_ArcticFox/UserData/chara/female/Codex/Chenger_stylized_reconstruction_v7.png`.
+Native4=.30,6=.68,11=.49; other native and ABMX inherited from v6.
+Head2 source keys confirm lower-face X scale, jaw Y and chin-tip Y directions.
+Top2 is actual native p_cf_top_tsyatu1, category240, chara/00/fo_top_00.unity3d.
+Color slots0/1 [.045,.24,.09,1], gloss.12, metallic0, pattern0 produce green crewneck.
+Full before/after snapshot, ABMX, clothing patch and reload equality receipt:
+`outputs/chenger_stylized_arcface_20261011/v7_native_state.json`.
+HS2Mod `chenger_v7_final_0/1.png` shows actual fixed-camera final portrait, including
+collar, with retained native capture metadata. All snapshot and ABMX reload equal;
+clothing colors explicitly retained separately because ordinary snapshot omits them.
+Identity goal remains active; precise eye-tail, hair dimensions and face likeness unresolved.
+
 ## v6 brow and eye-tail authoring
 
 Actual v6 card in the game Codex folder, full state evidence at
