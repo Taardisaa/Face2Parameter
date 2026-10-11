@@ -176,3 +176,41 @@ HS2Mod `docs/chenger_identity_authoring.md` records source mechanism, captures,
 and remaining visible gaps. Identity goal remains active: lip thickness improved,
 but nose, brow, open forehead, eyeliner and outfit still differ.
 
+## Profile and installed rendering follow-up (2026-10-11)
+
+The user reports that the frontal likeness is now close, but the iris differs
+from the accepted artwork and the profile lacks depth. Native front/90-degree
+captures, including temporarily hidden hair, are retained under HS2Mod
+`artifacts/chenger_style_20261011/chenger_depth_unoccluded_0/1.png`.
+The visible nose tip projects; orbital/cheek-to-mouth transitions remain shallow.
+This is a visual authoring observation, not recovered 3D truth from the frontal
+artwork. v8 native morphs and ABMX remain unchanged in this rendering milestone.
+
+Installed Hanmen 1.8.5 Face/Body shaders and DHH 1.15.30 SSS were applied through
+their actual persistence/configuration paths. HS2Mod's
+`plugins/HS2_McpBridge/MakerRenderStyleService.cs` exposes direct HTTP state,
+shader/float authoring and actual main-camera capture. Independent offscreen
+captures omit the main-camera DHH chain and cannot validate SSS. See HS2Mod
+`docs/chenger_identity_authoring.md` for DLL hashes, native callbacks, capture
+focus/temporal handling, failure evidence and saved-card acceptance.
+
+A full-card load defect was also corrected in MakerRenderService: native Reload
+consumes nowCoordinate, so ChangeNowCoordinate must precede it after reading the
+new file coordinate. Same-session clothing equality previously masked this;
+loading v8 from a fresh Maker now correctly selects green top2. v9 Hanmen card
+was switched away to v8 and reloaded, confirming saved Face/Body shaders while
+preserving the separate liquid material. DHH SSS remains a global setting, not
+part of the character card. Renderer changes do not claim profile geometry or
+iris matching complete.
+
+Final v10 card: `E:/HoneySelect2_ArcticFox/UserData/chara/female/Codex/Chenger_stylized_reconstruction_v10_HanmenSSS.png`.
+Face Gloss=.34/SecondaryGloss=.25; Body Gloss=.32/SecondaryGloss=.25 and
+VeinsOpacity=.12, through MaterialEditor persistent properties. Switching to v8
+and back verifies full snapshot equality and all 42 ABMX bone entries, saved
+shader/float values and the separate liquid shader. SSS is explicitly true in
+the final runtime readback. `chenger_v10_front.png` was a retained SSS-disabled
+diagnostic, while `chenger_v10_sss_front.png` and `chenger_v10_sss_side_open.png`
+are the final effects-chain captures. Blink was temporarily disabled for the
+profile and restored. No geometry change is claimed. The final state, native
+ABMX and acceptance metadata are in ignored `v10_native_state.json`.
+
