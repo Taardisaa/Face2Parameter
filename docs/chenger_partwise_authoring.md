@@ -124,3 +124,29 @@ X/Y字段（及coordinate副本）和版本名变动。未锁定下巴。
 `v16_chin_state_acceptance.json`、`v16_chin_jaw_review/`。
 卡为 `E:/HoneySelect2_ArcticFox/UserData/chara/female/Codex/Chenger_stylized_reconstruction_v16_chin_candidate.png`。
 当前v16普通原生候选，暂停及v14/v15旧卡保留，目标仍active。
+
+## 主相机固定姿态里程碑（未完整验收）
+
+HS2Mod新增真实main camera冻结相位与恢复报告，详细实现和版本保留见
+`../HS2Mod/docs/chenger_main_camera_pose.md`。本仓库新增
+`main_capture_acceptance.py`，只做两个未改人物的捕获/状态恢复/非法请求检查；
+任一声明门槛失败即退出，不据子集通过推进人物部位。
+`capture_bridge_il_audit.py`验证原安装0.31.13源基线及补丁，仅两个捕获类型
+改变；原119顶层类型的117个其它类型IL保持。四项独立guard测试通过。
+仅忽略PE placement标签/comment，不忽略opcode、属性或data bytes。
+
+V1固定head TRS重复差0、公开状态恢复通过，但全节点精确恢复失败。
+源修正版V2避免重复写入未改变的TRS，head重复差仍0，公开状态仍相等。
+首次916节点中只有cf_J_SiriDam_R和cf_J_Mune00恢复不等，第二次零个；
+完整脚本仍失败。没有降低门槛，也没有把两个身体节点直接略去宣布通过。
+原图像素最大差分别158/173，不虚构像素一致。head矩阵不等于实际脸表面相同，
+下一步诊断恢复分量并补蒙皮/表情的同次记录。这不是人物参数扫掠。
+
+运行实例：
+```powershell
+.venv/Scripts/python.exe -m unittest tools.character_authoring.test_capture_bridge_il_audit -v
+.venv/Scripts/python.exe tools/character_authoring/main_capture_acceptance.py --out outputs/chenger_stylized_arcface_20261011/main_pose_capture_acceptance_next
+```
+
+V1/V2失败都保留在对应输出目录；实验后原生重载v16，未修改脸参数。
+当前SSS开启、普通原生头2、完整卡可恢复，无诊断壳；下巴不锁定，目标active。
