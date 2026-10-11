@@ -68,3 +68,13 @@ DINOv2：`release/head_dinov2_vits14.pth` + 本地缓存的 ViT-S/14。
 当前不是完整身份复现。需要继续制作目标的眉眼、唇形、面部比例，以及准确
 发型轮廓/圆领衣服。模型输出只作为制作起点，不以运行成功收尾，不以新的
 模型评估项目替代这些具体人物差距。输入、许可模型、提取资产和输出均继续 ignored。
+
+## v2：继续制作眼部与唇形
+
+v1 保留，当前卡为同一游戏目录 `Chenger_stylized_reconstruction_v2.png`，
+名称 `程儿 美术风格复现 v2`。两侧 black_w/h 为 .42，虹膜颜色
+`[.16,.105,.085,1]`，睫毛6；native index23/48/51/53 为 `.45/.88/.50/.62`。
+其余使用上述 v1 配方。保存重载 all snapshot 和 ABMX modifier 等值，
+`v2_native_state.json` 保存修正配方及回执；截图为 HS2Mod
+`artifacts/chenger_style_20261011/chenger_reconstruction_v2.png`。
+这一步改善发黑的瞳孔及唇形，但人物辨识度仍未完成。
