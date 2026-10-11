@@ -346,3 +346,44 @@ V22离线解success=true但rsY/TipXY/LowY/Low位置等触及作者bounds，95%�
 ```
 
 前提交HS2Mod89d8517 / Face2Parameter9e6919d均已推送；完整目标仍active。
+
+
+### Reference boundary correction; v23/v24 remain rejected (2026-10-11)
+
+Full-size original-image review found a concrete annotation error: the old sparse
+left terminal trace passed (501,980)/(528,992), cutting inside the actual curved
+light/shadow boundary, and interpolation created a pointed end. The accepted
+portrait itself has a rounded terminal. Preserve previous traces, cards and
+failures; their extreme terminal-width percentages are observations against that
+old annotation, not reliable proof that the portrait demands a sharp chin.
+
+`reference_boundary_annotation.py` observes the actual Rec709 luminance gradient
+inside the previously reviewed +/-15px contour band (Gaussian sigma2), fails on
+band-edge picks and mismatched image hashes, and retains the existing 6px edge
+uncertainty. The corrected 102-point reference was inspected on the original
+image; bottom plateau is around (544,999). It does not recover hidden 3D or claim
+that a lighting boundary is exact geometry. Both original and corrected source
+image hashes remain bound. Reproduction matched the committed annotation exactly:
+
+```powershell
+.venv/Scripts/python.exe tools/character_authoring/reference_boundary_annotation.py --image outputs/chenger_stylized_arcface_20261011/accepted_style_target.png --prior tools/character_authoring/chenger_v17_chin_trace.json --out outputs/chenger_stylized_arcface_20261011/reference_boundary_reproduce_fresh.json
+```
+
+`chin_source_candidate.py` now records configurable author bounds and actual
+source-topology normal-sign diagnostics. Broader v23 (scale span .75, position
+span .30, scale range .20..2) converged but produced two reversed normal signs
+and extreme parameters; never applied. These diagnostics are not universal
+collision/animation certification. V24 used corrected reference and ordinary
+bounds, converged, no reversed normals. Terminal RMS .029256 -> .019298 eye
+distances; upper/mid .070059 -> .066377, so the complete jaw still differs.
+Actual 4439-point game BakeMesh versus source forward max 1.411716e-6, mean
+5.171829e-7 game units. Correct deformation does not establish likeness.
+
+V24 actual front/side/card are retained under outputs/.../v24_actual_chin;
+side remains hair-occluded, so it cannot certify depth. Rejected card SHA
+43dcb5ec1c41700f853f095e0f221f9ca89bd3585465b9132c21195e974dc180.
+Recipe is chenger_v24_rejected_recipe.json. Reloaded ordinary native v17 with
+original hair and explicit TARGET1/blink=true; snapshot, full raw ABMX response,
+style and expression all matched pre-candidate responses. No locked parts.
+Continue the complete jaw shape using actual source-supported controls; do not
+keep compressing three central bones to compensate for the whole jaw/pose.

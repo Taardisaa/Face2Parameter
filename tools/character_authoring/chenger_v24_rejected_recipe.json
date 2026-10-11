@@ -1,0 +1,46 @@
+{
+  "status": "Rejected/unlocked: full jaw contour still differs; corrected reference terminal gives smaller error, but not accepted as complete chin identity. Preserve ordinary native v17 as visible working state.",
+  "patch": {
+    "bones": [
+      {
+        "name": "cf_J_ChinTip_s",
+        "scale": [
+          1.0375513317220586,
+          0.6895407560000001,
+          1.04659534
+        ],
+        "position": [
+          0.0,
+          -0.0784196611930412,
+          0.000739015639
+        ]
+      },
+      {
+        "name": "cf_J_ChinLow",
+        "scale": [
+          1.0912951981027932,
+          0.6894464610000011,
+          1.01262188
+        ],
+        "position": [
+          0.0,
+          0.06986297568817477,
+          -0.00106364489
+        ]
+      },
+      {
+        "name": "cf_J_Chin_rs",
+        "scale": [
+          1.2270636275791944,
+          1.2762844402473321,
+          1.00938332
+        ]
+      }
+    ]
+  },
+  "output_card": "E:\\HoneySelect2_ArcticFox\\UserData\\chara\\female\\Codex\\Chenger_stylized_reconstruction_v24_chin_rejected.png",
+  "output_card_sha256": "43dcb5ec1c41700f853f095e0f221f9ca89bd3585465b9132c21195e974dc180",
+  "source_candidate_sha256": "4b05bb4a44603e1df7cbeb4e9036de51c998e9e8e1927dfa4fc0eb427ac5e1f2",
+  "actual_forward_max_game_units": 1.411716269171393e-06,
+  "actual_forward_mean_game_units": 5.171828819774597e-07
+}

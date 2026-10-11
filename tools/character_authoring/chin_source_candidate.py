@@ -135,9 +135,17 @@ def main():
     p.add_argument('--measurements', type=Path, required=True)
     p.add_argument('--trace', type=Path, required=True)
     p.add_argument('--out', type=Path, required=True)
+    p.add_argument('--scale-span', type=float, default=.30)
+    p.add_argument('--position-span', type=float, default=.15)
+    p.add_argument('--scale-min', type=float, default=.65)
+    p.add_argument('--scale-max', type=float, default=1.50)
+    p.add_argument('--max-iterations', type=int, default=200)
     a = p.parse_args()
     if a.out.exists():
         raise FileExistsError('Fresh candidate output required')
+    if not (0 < a.scale_span <= 5 and 0 < a.position_span <= 5 and
+            .001 <= a.scale_min < a.scale_max <= 20 and 1 <= a.max_iterations <= 2000):
+        raise ValueError('Finite positive author bounds and 1..2000 iterations required')
     d, gs = read(a.geometry)
     c, cs = read(a.capture)
     obs, ms = read(a.measurements)
@@ -181,9 +189,9 @@ def main():
         terminal = sections(pts[:,[1,0]], model.triangles, terminal_x)[:,1]-terminal_y
         return np.r_[residual.ravel(), terminal, top-chin[1]]
     # Explicit author bounds, not native engine limits or compatibility thresholds.
-    lower = [max(.65,v-.30) if field=='scale' else v-.15
+    lower = [max(a.scale_min,v-a.scale_span) if field=='scale' else v-a.position_span
              for v,(_,field,_) in zip(model.base,model.parameter_fields)]
-    upper = [min(1.50,v+.30) if field=='scale' else v+.15
+    upper = [min(a.scale_max,v+a.scale_span) if field=='scale' else v+a.position_span
              for v,(_,field,_) in zip(model.base,model.parameter_fields)]
     def appearance_cost(x):
         errors = objective(x)[:-1]
@@ -193,11 +201,17 @@ def main():
     result = minimize(appearance_cost, model.base, method='SLSQP',
                       bounds=list(zip(lower,upper)),
                       constraints=[{'type':'eq','fun':lambda x: objective(x)[-1]}],
-                      options={'maxiter':200,'ftol':1e-9,'eps':1e-5})
+                      options={'maxiter':a.max_iterations,'ftol':1e-9,'eps':1e-5})
     x = result.x
     baked = np.c_[model.m['baked']['vertices'], np.ones(model.m['vertex_count'])]
     observed_head = (baked @ np.asarray(model.m['baked']['world_candidates']['scale_free_trs']['matrix']).reshape(4,4).T @ model.head_inv.T)[:, :3]
     baseline_error = np.linalg.norm(model.head_vertices(model.base)-observed_head, axis=1)
+    def normals(v):
+        tri = v[model.triangles]
+        return np.cross(tri[:,1]-tri[:,0],tri[:,2]-tri[:,0])
+    original_normals = normals(model.head_vertices(model.base))
+    candidate_normals = normals(model.head_vertices(x))
+    reversed_ids = np.flatnonzero(np.einsum('ij,ij->i',original_normals,candidate_normals)<0)
     patches = {n:{'name':n} for n in model.ids}
     for v,(name,field,axis) in zip(x,model.parameter_fields):
         patches[name].setdefault(field,model.mods[name][field].copy())[axis] = float(v)
@@ -208,6 +222,9 @@ def main():
            'scope': __doc__, 'projection_scope':'Reported frozen head TRS with recorded FOV23 and 768x1024; excludes CTAA jitter/shader depth, arbitrary shear and general pose compatibility.',
            'parameters': ['.'.join([n,field,str(axis)]) for n,field,axis in model.parameter_fields],
            'base':model.base.tolist(), 'candidate':x.tolist(), 'author_bounds':[lower,upper],
+           'author_bound_config': {'scale_span':a.scale_span,'position_span':a.position_span,'scale_min':a.scale_min,'scale_max':a.scale_max,'max_iterations':a.max_iterations},
+           'reversed_triangle_normal_indices':reversed_ids.tolist(),
+           'normal_check_scope':'Normals from actual source topology and proposed positions; a changed sign is a diagnostic, not a universal collision/visibility/animation certificate.',
            'optimizer_success':bool(result.success), 'optimizer_message':result.message,
            'terminal_height_constraint_residual_per_eye_distance':float(objective(x)[-1]),
            'candidate_all_target_rows_intersect_mesh': bool(normalized(x)[:,1].max() > levels.max()),
