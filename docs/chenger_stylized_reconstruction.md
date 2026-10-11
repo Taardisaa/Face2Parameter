@@ -101,6 +101,22 @@ v1 保留，当前卡为同一游戏目录 `Chenger_stylized_reconstruction_v2.p
 本轮实际输出为brow_source_v3_rgba与lip_source_v3_alpha。
 # v4 identity authoring continuation
 
+## v6 brow and eye-tail authoring
+
+Actual v6 card in the game Codex folder, full state evidence at
+`outputs/chenger_stylized_arcface_20261011/v6_native_state.json`.
+Native59 and ABMX unchanged; brow5 RGBA [.025,.016,.014,1]; eyeshadow7
+RGBA [.012,.008,.009,.85], gloss0. Eyebrow8 was too faint. Eyeshadow17
+was rejected after native rendering showed thick lower outer eyelid shadow.
+Rejected and final captures are both retained in HS2Mod artifacts.
+Final outer eye-tail is darker but blurry; precise raised eyeliner remains unresolved.
+Full native snapshot and ABMX bones match after card reload; identity goal remains active.
+Source texture tool now accepts st_eyeshadow (native category316), exercised with
+`.venv/Scripts/python.exe -m tools.character_authoring.source_texture_sheet --category st_eyeshadow --out outputs/chenger_stylized_arcface_20261011/eyeshadow_source_v6`.
+This preserves source RGBA and hashes, not a shader/render appearance claim.
+Previous 4a0622c mixed contemporaneously staged mouth work into this task's commit;
+history/files preserved. Subsequent commits use explicit `--only` task paths.
+
 ## v5 continuation evidence
 
 Actual card `E:/HoneySelect2_ArcticFox/UserData/chara/female/Codex/Chenger_stylized_reconstruction_v5_final.png`.
