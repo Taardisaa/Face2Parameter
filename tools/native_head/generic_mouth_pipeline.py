@@ -20,22 +20,25 @@ def run(inputs,mother,manifest,image_index,source_quality,out,lip_chart=None,clo
     out.mkdir(parents=True)
     source=dict(inputs=source_file(inputs/"receipt.json"),mother=source_file(mother/"receipt.json"),
         manifest=source_file(manifest),image_index=image_index,source_quality=source_file(source_quality/"receipt.json"))
-    candidate=out/"identity_full";quality=out/"closed_quality"
+    candidate=out/"identity_full";quality=out/"closed_quality";stage='identity_decode'
     try:
         build(inputs,mother,manifest,image_index,candidate,generic_mouth=True)
         if lip_chart is None:
+            stage='donor_surface_correspondence'
             if uv_template is None:
                 profile=json.loads(Path(__file__).with_name('native_atlas_profile.json').read_text())
                 uv_template=Path(profile['uv_template'])
             lip_chart=out/'donor_lip_chart';build_chart(candidate,uv_template,lip_chart)
-        full=out/'surface_identity';author_chart(candidate,lip_chart,full);candidate=full
+        stage='full_surface_identity_and_oral';full=out/'surface_identity';author_chart(candidate,lip_chart,full);candidate=full
         original=json.loads((full/'receipt.json').read_text())
         oral=original['identity_transfer']['mouth_detail_preservation']['oral']
         if not oral["converged"]:
             raise ValueError("Native oral solve did not converge; preserve full source targets for continuation")
         if close_contract is None:
+            stage='source_close_contacts'
             close_contract=out/'donor_close_contacts';build_contacts(inputs,mother,close_contract)
-        closed=out/'closed_pose';author_close(full,close_contract,closed);candidate=closed
+        stage='native_close_action';closed=out/'closed_pose';author_close(full,close_contract,closed);candidate=closed
+        stage='closed_surface_geometry'
         check(candidate,quality,source_quality)
         q=json.loads((quality/'receipt.json').read_text())
         if q["added_crossings"]:
@@ -53,9 +56,21 @@ def run(inputs,mother,manifest,image_index,source_quality,out,lip_chart=None,clo
             candidate=source_file(accepted/"receipt.json"),quality=source_file(quality/"receipt.json"),
             game_mutated=False,full_character_delivered=False,next_step="Original native eight-component/frame/bind adaptation and limited native acceptance")
     except (ValueError,RuntimeError) as error:
+        candidate_record=json.loads((candidate/'receipt.json').read_text()) if (candidate/'receipt.json').exists() else {}
+        quality_record=json.loads((quality/'receipt.json').read_text()) if (quality/'receipt.json').exists() else {}
+        save_json(out/'repair_request.json',dict(format='generic_mouth_explicit_repair_request_v2',stage=stage,reason=str(error),source=source,
+            candidate=source_file(candidate/'receipt.json') if candidate_record else None,
+            candidate_arrays=candidate_record.get('candidate_arrays'),full_identity_transfer=candidate_record.get('identity_transfer'),
+            close_action=candidate_record.get('closed_pose_authoring'),native_crossing_face_pairs=quality_record.get('added_crossings'),
+            exact_failed_region_known=bool(quality_record.get('added_crossings')),
+            lip_chart=source_file(lip_chart/'receipt.json') if lip_chart and (lip_chart/'receipt.json').exists() else None,
+            close_contract=source_file(close_contract/'receipt.json') if close_contract and (close_contract/'receipt.json').exists() else None,
+            source_coefficients_and_geometry_must_be_preserved=True,affine_fallback_allowed=False,
+            continuation='Repair the corresponding source-bound chart/contact/action, then rerun --lip-chart/--close-contract into a fresh pipeline directory; intact source and failed geometry remain available'))
         result=dict(format="generic_mouth_pipeline_v1",status="requires_correspondence_repair",source=source,
             reason=str(error),candidate=source_file(candidate/"receipt.json") if (candidate/"receipt.json").exists() else None,
             quality=source_file(quality/"receipt.json") if (quality/"receipt.json").exists() else None,
+            repair_request=source_file(out/'repair_request.json'),
             lip_chart=source_file(lip_chart/'receipt.json') if lip_chart and (lip_chart/'receipt.json').exists() else None,
             close_contract=source_file(close_contract/'receipt.json') if close_contract and (close_contract/'receipt.json').exists() else None,
             source_control_filtering_allowed=False,affine_fallback_allowed=False,game_mutated=False,

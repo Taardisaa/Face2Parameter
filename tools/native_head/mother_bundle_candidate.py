@@ -86,6 +86,38 @@ def float32_values(value):
         return {k: float32_values(v) for k, v in value.items()}
     return value
 
+def validate_native_frames(original,authored,vertex_count):
+    """Allow necessary sparse additions; retain every original frame identity.
+
+    Channel tables/weights cannot change. Original rows remain a literal prefix
+    of each frame, with new indices only appended. Normal/tangent flags may be
+    enabled to encode newly authored data but never drop source attributes.
+    """
+    if authored['channels']!=original['channels'] or authored['fullWeights']!=original['fullWeights'] or len(authored['shapes'])!=len(original['shapes']):
+        raise ValueError('Native frame/channel/weight identity changed')
+    cursor=0;added=0
+    for before,after in zip(original['shapes'],authored['shapes']):
+        variable={'firstVertex','vertexCount','hasNormals','hasTangents'}
+        if {k:v for k,v in before.items() if k not in variable}!={k:v for k,v in after.items() if k not in variable}:
+            raise ValueError('Native frame metadata changed')
+        if after['firstVertex']!=cursor or after['vertexCount']<before['vertexCount']:
+            raise ValueError('Native sparse frame storage is incomplete')
+        old=original['vertices'][before['firstVertex']:before['firstVertex']+before['vertexCount']]
+        rows=authored['vertices'][cursor:cursor+after['vertexCount']]
+        old_ids=[r['index'] for r in old];ids=[r['index'] for r in rows]
+        if ids[:len(old_ids)]!=old_ids or len(ids)!=after['vertexCount'] or len(set(ids))!=len(ids) or any(i<0 or i>=vertex_count for i in ids):
+            raise ValueError('Original sparse rows removed/reordered or invalid additions')
+        for row in rows:
+            if set(row)!={'index','vertex','normal','tangent'} or not np.isfinite([row[key][axis] for key in ('vertex','normal','tangent') for axis in 'xyz']).all():
+                raise ValueError('Invalid authored sparse frame data')
+        for key,flag in [('normal','hasNormals'),('tangent','hasTangents')]:
+            if before[flag] and not after[flag]:raise ValueError('Native authored attributes discarded')
+            if any(any(r[key][a]!=0 for a in 'xyz') for r in rows) and not after[flag]:
+                raise ValueError('Authored frame attributes omitted by serialization flag')
+        added+=len(ids)-len(old_ids);cursor+=len(ids)
+    if cursor!=len(authored['vertices']):raise ValueError('Unbound authored frame rows')
+    return dict(all_original_sparse_rows_retained=True,extra_sparse_rows=added,original_channel_tables_and_weights_retained=True)
+
 
 def build(inputs, bindings, out, asset_key='flame_mother_candidate'):
     if not asset_key or any(c not in 'abcdefghijklmnopqrstuvwxyz0123456789_' for c in asset_key):
@@ -121,10 +153,7 @@ def build(inputs, bindings, out, asset_key='flame_mother_candidate'):
         for key in ('faces', 'uv', 'uv1', 'colors', 'bone_idx', 'bone_w', 'bone_names'):
             if not np.array_equal(arrays[key], original[key]):
                 raise ValueError('Native structure changed: '+key)
-        if frames['channels'] != original_frames['channels'] or frames['shapes'] != original_frames['shapes']:
-            raise ValueError('Native frame/channel layout changed')
-        if [r['index'] for r in frames['vertices']] != [r['index'] for r in original_frames['vertices']]:
-            raise ValueError('Native sparse expression indices changed')
+        frame_contract=validate_native_frames(original_frames,frames,len(arrays['verts']))
         tree = edit(row['mesh_path_id'])
         preserved_digest = patch_vertex_channels(objects[row['mesh_path_id']].read(), tree, arrays)
         tree['m_Shapes'] = frames
@@ -140,7 +169,7 @@ def build(inputs, bindings, out, asset_key='flame_mother_candidate'):
         reports.append(dict(mesh=row['mesh'], mesh_path_id=row['mesh_path_id'],
                             unrelated_vertex_bytes_sha256=preserved_digest,
                             bounds_policy='Bind plus default reference and every original individual frame',
-                            arrays=authored['arrays'], frames=authored['frames']))
+                            arrays=authored['arrays'], frames=authored['frames'],frame_contract=frame_contract))
     for changed in binding['edited_transforms']:
         pid = int(changed['transform'])
         tree = edit(pid)

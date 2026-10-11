@@ -1,5 +1,6 @@
 """Expression/identity separation and source-bound chart/closure contracts."""
 import unittest
+import copy
 import numpy as np
 from scipy import sparse
 from tools.native_head.mother_component_adaptation import adapt_frames
@@ -7,6 +8,7 @@ from tools.native_head.mother_default_pose import dense_frame
 from tools.native_head.mouth_chart_solver import oriented_chart,areas
 from tools.native_head.mouth_close_pose import close_adjustment
 from tools.native_head.mouth_contact_contract import segment_points,barycentric
+from tools.native_head.mother_bundle_candidate import validate_native_frames
 
 def shapes():
     def row(index,v):return dict(index=index,vertex=dict(zip('xyz',v)),normal=dict(x=0.,y=0.,z=0.),tangent=dict(x=0.,y=0.,z=0.))
@@ -29,6 +31,15 @@ class MouthSurfaceContracts(unittest.TestCase):
         np.testing.assert_allclose(after['verts']+dense_frame(frames,0,4)['vertex'],ref+d,atol=1e-12)
         np.testing.assert_allclose(after['verts']+dense_frame(frames,1,4)['vertex'],before['verts']+dense_frame(old_frames,1,4)['vertex'],atol=1e-12)
         self.assertLess(max(error.values()),1e-12)
+        contract=validate_native_frames(s,frames,4)
+        self.assertTrue(contract['all_original_sparse_rows_retained'])
+        self.assertEqual(contract['extra_sparse_rows'],1)
+        broken=copy.deepcopy(frames);broken['vertices'][0]['index']=2
+        with self.assertRaisesRegex(ValueError,'Original sparse rows'):
+            validate_native_frames(s,broken,4)
+        broken=copy.deepcopy(frames);broken['fullWeights'][0]=50
+        with self.assertRaisesRegex(ValueError,'weight identity'):
+            validate_native_frames(s,broken,4)
         with self.assertRaisesRegex(ValueError,'actual default'):
             adapt_frames(a,s,{'0':50},ref,jac,action)
 
