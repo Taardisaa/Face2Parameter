@@ -134,6 +134,14 @@ def adapt(inputs, candidate_dir, out):
     prefab = verified_json(inputs_receipt['native_prefab_export'])
     regions = verified_json(inputs_receipt['regions'])
     head = dict(np.load(candidate_dir/'o_head_candidate.npz', allow_pickle=False))
+    if candidate_receipt.get('identity_transfer',{}).get('nonlinear_per_identity_mouth_recomputation'):
+        acceptance=candidate_receipt.get('mouth_acceptance',{})
+        if (acceptance.get('status')!='accepted_static_head' or
+            acceptance.get('candidate_arrays_sha256')!=sha(candidate_dir/'o_head_candidate.npz')):
+            raise ValueError('Generic full-detail mouth requires accepted geometry before component/frame authoring')
+        quality=verified_json(acceptance['quality'])
+        if quality['added_crossings'] or quality['arrays']['sha256']!=acceptance['candidate_arrays_sha256']:
+            raise ValueError('Generic mouth geometry acceptance does not match candidate')
     field = SurfaceWarp(head['original_vertices'], head['verts'], head['faces'])
     oral_faces = head['faces'][regions['inner_mouth_component_face_ids']]
     oral = SurfaceWarp(head['original_vertices'], head['verts'], oral_faces)

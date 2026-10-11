@@ -1,12 +1,14 @@
 """Fixed FLAME identity-basis transfer onto an authored native mother reference.
 
 This is a new asset-authoring correspondence, not an HS2 slider approximation.
-Once built, 300 coefficient application is linear and deterministic. The native
-mother's surface offsets and oral structure remain; the actual body rim is pinned.
+The base 300 coefficient field is linear and deterministic. The explicit generic
+mouth candidate recomputes oral geometry per identity and requires independent
+acceptance/repair. The actual body rim remains pinned.
 """
 import argparse
 import copy
 import json
+import pickle
 from pathlib import Path
 
 import numpy as np
@@ -20,6 +22,7 @@ from tools.model_bridge.attachment_audit import topology
 from tools.model_bridge.scan_accuracy import TriangleSurface
 from tools.native_head.mother_oriented_surface import OrientedSurface, logical_normals
 from tools.native_head.mother_template_inputs import save_json, source_file
+from tools.native_head.mouth_identity_transfer import make_correspondence, apply_full_controls as apply_mouth
 
 
 def barycentric(points, triangles):
@@ -90,7 +93,9 @@ def coherent_mouth(vertices, faces, transferred, core, landmark_positions, landm
         exact_flame_lip_reconstruction=False)
 
 
-def build(inputs, mother_dir, manifest, image_index, out, mouth_detail_preview=False):
+def build(inputs, mother_dir, manifest, image_index, out, mouth_detail_preview=False, generic_mouth=False):
+    if mouth_detail_preview and generic_mouth:
+        raise ValueError('Generic complete mouth transfer cannot use affine detail filtering')
     if out.exists():
         raise FileExistsError('Preserve identity candidates; use a fresh output')
     mother_receipt=json.loads((mother_dir/'receipt.json').read_text())
@@ -214,6 +219,20 @@ def build(inputs, mother_dir, manifest, image_index, out, mouth_detail_preview=F
     delta=np.einsum('vck,k->vc',native_basis,beta)
     arrays={**mother,'verts':mother['verts']+delta,
             'reference_vertices':decoded@rotation.T*scale+place['translation']}
+    mouth_mapping=None
+    if generic_mouth:
+        mask_row=mother_receipt['regional_targets']['source_masks']
+        if sha(mask_row['path'])!=mask_row['sha256']:
+            raise ValueError('Source lip mask changed')
+        masks=pickle.loads(Path(mask_row['path']).read_bytes(),encoding='latin1')
+        lip_ids=np.unique(inverse[mother_receipt['regional_targets']['candidate_vermilion_vertex_ids']])
+        mouth_mapping=make_correspondence(vertices,faces,lip_ids,
+            regions['inner_mouth_component_face_ids'])
+        control_ids=np.unique(masks['lips'])
+        authored,mouth_report=apply_mouth(vertices,faces,arrays['verts'][unique],
+            target[control_ids],placed_basis[control_ids],beta,mouth_mapping)
+        arrays['verts']=authored[inverse]
+        delta=arrays['verts']-mother['verts']
     if not np.array_equal(arrays['verts'][regions['neck_boundary_all_render_copies']],mother['verts'][regions['neck_boundary_all_render_copies']]):
         raise ValueError('Native body rim moved')
     for group in regions['identical_bind_position_and_skin_groups']:
@@ -224,6 +243,9 @@ def build(inputs, mother_dir, manifest, image_index, out, mouth_detail_preview=F
         source_faces=chosen[inverse],barycentric=bary[inverse],shape_params=beta,
         source_identity_basis=placed_basis,tetrahedron_source_ids=tetra_ids[inverse],
         tetrahedron_weights=tetra_weights[inverse],interior_extension=cells[inverse]>=0)
+    if mouth_mapping is not None:
+        np.savez_compressed(out/'mouth_correspondence.npz',**mouth_mapping,
+            identity_authored_correction=arrays['verts']-(mother['verts']+native_basis@beta))
     np.savez_compressed(out/'o_head_candidate.npz',**arrays)
     receipt=copy.deepcopy(mother_receipt)
     receipt.update(format='native_mother_identity_candidate_v1',code=source_file(Path(__file__)),
@@ -239,13 +261,17 @@ def build(inputs, mother_dir, manifest, image_index, out, mouth_detail_preview=F
                 outside_hull_logical_vertices=int(np.sum(cells<0)),
                 source_scaffold='Delaunay tetrahedra of original FLAME head-shell sample positions; no source faces changed'),
             regions=reports,neck=neck_report,mouth_detail_preservation=mouth_report,
+            mouth_correspondence=source_file(out/'mouth_correspondence.npz') if mouth_mapping is not None else None,
+            identity_basis_alone_reconstructs_candidate=not generic_mouth,
+            nonlinear_per_identity_mouth_recomputation=generic_mouth,
             extra_trained_model=False,hs2_sliders_used=False,
             mouth_detail_preview=mouth_detail_preview,
             flame_lip_detail_filtered=mouth_detail_preview,
             exact_continuous_surface_equivalence=False,
             limitations=['Native mean differs from FLAME; this transfer does not claim identical topology or exact continuous-surface equivalence',
                 'Native oral interior receives lip-region displacement extension; no FLAME oral counterpart exists',
-                'Native closed lip/interior layers share a mouth-landmark affine component; non-affine FLAME lip details are not transferred exactly',
+                ('Explicit legacy diagnostic filters non-affine lip detail' if mouth_detail_preview else
+                 'Full lip fields and native oral solve require crossing/component/expression acceptance; native pigment support is provisional'),
                 'Static geometry and full native integration must be reviewed separately']),
         installed=False,game_mutated=False,deliverable=False)
     save_json(out/'receipt.json',receipt)
@@ -261,5 +287,7 @@ if __name__=='__main__':
     p.add_argument('--out',type=Path,required=True)
     p.add_argument('--mouth-detail-preview',action='store_true',
         help='Explicit incomplete diagnostic: common mouth affine component preserves closed native detail; not exact FLAME lip transfer')
+    p.add_argument('--generic-mouth',action='store_true',
+        help='In-progress full-control lip field and native oral recomputation; acceptance and explicit repair required')
     a=p.parse_args()
-    build(a.inputs.resolve(),a.mother.resolve(),a.manifest.resolve(),a.image_index,a.out.resolve(),a.mouth_detail_preview)
+    build(a.inputs.resolve(),a.mother.resolve(),a.manifest.resolve(),a.image_index,a.out.resolve(),a.mouth_detail_preview,a.generic_mouth)

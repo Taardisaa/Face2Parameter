@@ -1,0 +1,51 @@
+{
+  "date": "2026-10-11",
+  "status": "in_progress_not_delivered",
+  "platform_goal": "generic-native-lip-oral-identity-transfer",
+  "source_contract": {
+    "path": "C:\\Users\\13666\\Workspace\\Face2Parameter\\outputs\\generic_mouth_20261010\\source_contract_v2\\receipt.json",
+    "sha256": "226a52c7065065e1b51626b51c5f9632eceb0f75c37b182fbf5c60d2ba55fa03"
+  },
+  "pipeline": {
+    "path": "C:\\Users\\13666\\Workspace\\Face2Parameter\\outputs\\generic_mouth_20261010\\pipeline_v1\\pipeline.json",
+    "sha256": "916488d520a701c83cc011db5752134db7242e954cac773a39d8af0e429b4fa6"
+  },
+  "original_flame_contact_classification": {
+    "path": "C:\\Users\\13666\\Workspace\\Face2Parameter\\outputs\\generic_mouth_20261010\\flame_original_contact_v1\\receipt.json",
+    "sha256": "a0d05dd1b78b7e4e5938334f8e367ad31084a0f6a070f2e69e73f9385ac47bb3"
+  },
+  "complete_control_candidate": {
+    "path": "C:\\Users\\13666\\Workspace\\Face2Parameter\\outputs\\generic_mouth_20261010\\pipeline_v1\\identity_full\\receipt.json",
+    "sha256": "8ff3e03a98f55fff549f04a2541f62ab0f51d09c168940c19f6693509105c10a"
+  },
+  "geometry_rejection": {
+    "path": "C:\\Users\\13666\\Workspace\\Face2Parameter\\outputs\\generic_mouth_20261010\\pipeline_v1\\identity_quality\\receipt.json",
+    "sha256": "7a4c6181cc59865a83b34f5774b4faa324e1c2606213195c2c21d7bc5f7e7a8d"
+  },
+  "repair_request": {
+    "path": "C:\\Users\\13666\\Workspace\\Face2Parameter\\outputs\\generic_mouth_20261010\\pipeline_v1\\contact_repair\\repair_request.json",
+    "sha256": "9df16802153daf1c2a63ff9aaea8faa921496090b2b25f417c57c2f10236a49d"
+  },
+  "repair_rejection": {
+    "path": "C:\\Users\\13666\\Workspace\\Face2Parameter\\outputs\\generic_mouth_20261010\\pipeline_v1\\contact_repair_quality\\receipt.json",
+    "sha256": "491fb09155b31b5bf56e01a198830dcb0f1b5760bbdb7205b7deb05cfeb50f29"
+  },
+  "contract_checks": {
+    "unittest_modules": [
+      "tools.native_head.test_mouth_identity_transfer",
+      "tools.native_head.test_mother_identity",
+      "tools.native_head.test_mother_authoring"
+    ],
+    "passed": 17,
+    "real_failed_candidate_component_gate": "rejected before creating component output directory"
+  },
+  "game_mutated": false,
+  "lip_detail_filtered": false,
+  "affine_fallback_used": false,
+  "remaining": [
+    "Reusable native outer/inner/upper-lower contact layer correspondence",
+    "Identity vs original nonzero closed-mouth frame adaptation",
+    "Successful intact geometry, complete components/frames and small native acceptance"
+  ],
+  "warning": "A normal Chenger input still fails. Do not describe this as only an extreme-face boundary or completed generic migration."
+}
