@@ -99,3 +99,20 @@ v1 保留，当前卡为同一游戏目录 `Chenger_stylized_reconstruction_v2.p
 或RGB；不会把带全红RGB的透明唇彩错误显示为空白。无纹理ID显式保留。
 这是素材源检查，不模拟运行shader，不把裁剪检查图当作游戏渲染。
 本轮实际输出为brow_source_v3_rgba与lip_source_v3_alpha。
+# v4 identity authoring continuation
+
+Actual Maker card: `E:/HoneySelect2_ArcticFox/UserData/chara/female/Codex/Chenger_stylized_reconstruction_v4.png`.
+Preserved v3 and all existing ABMX modifiers. Native changes from v3:
+23=.46, 49=.60, 51=.52, 52=.68, 53=.64; lip3 RGBA [.46,.18,.23,.62],
+gloss .56; eyelash7 RGBA [.008,.006,.006,1]; iris width/height .51.
+These are explicit visual authoring choices using recovered native control paths,
+not inferred photo ground truth or an evaluation success claim.
+Source lash assets inspected with
+`.venv/Scripts/python.exe -m tools.character_authoring.source_texture_sheet --category st_eyelash --out outputs/chenger_stylized_arcface_20261011/lash_source_v4`.
+Full before/after snapshot and ABMX, plus reload equality receipt, are retained in
+`outputs/chenger_stylized_arcface_20261011/v4_native_state.json`.
+Both full snapshot and ABMX bone arrays match after native card reload.
+HS2Mod `docs/chenger_identity_authoring.md` records source mechanism, captures,
+and remaining visible gaps. Identity goal remains active: lip thickness improved,
+but nose, brow, open forehead, eyeliner and outfit still differ.
+
