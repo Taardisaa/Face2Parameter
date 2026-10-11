@@ -75,3 +75,44 @@ v12只读几何导出保留，因与主相机非同帧，不用它认证图片�
 
 本轮测量工具里程碑：Face2Parameter b29373b、HS2Mod cf0f9fb，均已推送。
 后续交付提交见本次 Git 历史；两仓库无关的模型桥接/颈部改动不纳入本任务提交。
+
+## 用户指出下巴异常：v13 局部轮廓失败
+
+用户要求重新量化下巴。上一轮只以眼到下巴总长描述接近，未核对下颌完整
+收窄曲线；v13的局部下巴不能认作对齐成功。本次不改游戏，不新采参数样本，
+直接复核既有原始图片及原始像素坐标网格，沿可见皮肤/下颌边缘标完整双侧
+折线；不能用FAN内部下巴点去替代真实边缘，也不能只换单个端点评价形状。
+
+可复现的人工作业为 `tools/character_authoring/chenger_v13_jaw_trace.json`，
+每张原图绑定SHA。`jaw_trace_compare.py` 使用原FAN眼/嘴点消除roll，按眼距
+统一缩放，最后平移对齐嘴线；未单独横向/纵向拉伸。25/50/75%是嘴线到下巴
+高度的相对位置，各自在对应比例高度量宽。追踪折线插值只是图片标注测量，
+不是对游戏逻辑的拟合或近似实现。
+
+| 相对接受图的局部二维差异 | v13 |
+|---|---:|
+| 下颌宽度，嘴到下巴高度25% | 约窄20% |
+| 下颌宽度，高度50% | 约窄27% |
+| 下颌宽度，高度75% | 约窄30% |
+| 下唇可见下缘到下巴 | 约长12% |
+| 嘴线到下巴 | 约长6% |
+
+中段25%-75%轮廓割线夹角为参照约94度、游戏约84度，这只是二维曲线描述，
+不是解剖下颌角。唇下缘为参照[536,865]、游戏[391,708]；与嘴中线相比，
+这一测量更直接揭示薄唇下方被拉长。轮廓人工边界误差约参照±6px、游戏±4px，
+唇下缘约±5/4px；姿态/遮发/下颌与颈部阴影仍影响测量，不提供伪精确小数。
+原图贴边折线和嘴对齐叠图已查看，完整结果在
+`outputs/chenger_stylized_arcface_20261011/v13_jaw_shape_review/`。
+
+```powershell
+.venv/Scripts/python.exe tools/character_authoring/jaw_trace_compare.py --measurements outputs/chenger_stylized_arcface_20261011/v13_reloaded_proportion_review/measurements.json --trace tools/character_authoring/chenger_v13_jaw_trace.json --out outputs/chenger_stylized_arcface_20261011/v13_jaw_shape_review_repeat
+```
+
+造型原因：前轮把 ChinTip localY改为-.16，ChinLow改为-.08，Chin_rs长度1.16；
+未相应处理下颌两侧宽度。实际ABMX单位Length位置分支直接使用_posBaseline+
+PositionModifier；这类局部下拉不是全脸纵向延伸。现有源网格权重/父骨结构也
+需与局部修改一起理解，不能从一个直接权重计数宣称父骨影响范围。
+保留只读源权重复核 `source_weight_review.json`。整体眼到下巴约+1%仍成立，
+但它掩盖了局部窄长；应缩短唇下区、恢复两侧体积与圆钝过渡，而非继续下拉
+下巴尖。侧面可见前伸，但接受美术图没有侧面，未捏造其三维前突差值。
+本轮仅完成诊断和可复查比划图，当前卡仍v13，未声称本轮已修好下巴。

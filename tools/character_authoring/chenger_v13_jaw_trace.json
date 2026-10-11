@@ -1,0 +1,21 @@
+{
+  "scope": "Human tracing of visible skin/jaw edge on original PNG pixel grid; no game deformation inference. Jaw/neck shading and residual pose introduce uncertainty. No side-view reference exists for quantitative 3D projection comparison.",
+  "reference": {
+    "image_sha256": "086a01b02a96a356edf2d2c46f534bd7bd9cf1e299d71617357a37d526878e05",
+    "left_xy": [[334,823],[344,840],[358,860],[375,880],[390,900],[409,920],[432,940],[463,960],[501,980],[528,992],[539,1000]],
+    "right_xy": [[769,823],[760,840],[750,860],[735,880],[714,900],[692,920],[668,940],[640,960],[604,980],[575,992],[539,1000]],
+    "lower_lip_bottom_xy": [536,865],
+    "chin_xy": [539,1000],
+    "edge_judgement_uncertainty_pixels": 6,
+    "lip_boundary_judgement_uncertainty_pixels": 5
+  },
+  "candidate": {
+    "image_sha256": "89488293d97048d9173243c50ce353a167941f7240c0626b168d722a302d9e3e",
+    "left_xy": [[253,679],[264,700],[283,720],[299,740],[316,760],[335,780],[352,800],[369,815],[383,825],[393,831]],
+    "right_xy": [[553,679],[540,700],[524,720],[507,740],[485,760],[467,780],[449,800],[432,815],[416,825],[393,831]],
+    "lower_lip_bottom_xy": [391,708],
+    "chin_xy": [393,831],
+    "edge_judgement_uncertainty_pixels": 4,
+    "lip_boundary_judgement_uncertainty_pixels": 4
+  }
+}
