@@ -389,7 +389,7 @@ Continue the complete jaw shape using actual source-supported controls; do not
 keep compressing three central bones to compensate for the whole jaw/pose.
 
 
-### v28 native jaw/chin authoring milestone: locked (2026-10-11)
+### v28 native jaw/chin historical milestone: previous lock revoked by user feedback
 
 Recovered lower-cheek controls from actual head2: CheekLow L/R each has237
 weighted source vertices, max weight .396344. Expanded source author profiles
@@ -424,7 +424,7 @@ back0 long hair exposes chin/lip relief; saved/reloaded card retains original bo
 Real ordinary photos img-002/img-020 were revisited for rounded taper and angled
 jaw cues; no false same-camera side metric or hidden art3D geometry is claimed.
 
-**Jaw/chin v28 locked as a part milestone.** Not complete whole-character identity.
+**Historical lock claim revoked:** the user rejects the actual v28/v30 broad, flat, angular chin. Numerical projection evidence below remains historical; it is not acceptance of the visible jaw/chin. Not complete whole-character identity.
 Self-contained lock recipe is tools/character_authoring/chenger_v28_jaw_lock.json:
 full5 controlled modifiers, native head2/shape0..18 and all59 values as context,
 actual shared ancestry, card/reference/geometry hashes, actual contour residuals,
@@ -440,3 +440,23 @@ including the5 jaw bones. This is settings evidence, not full private eye-cache
 restoration certification. Normal visible result is native v28, original bob,
 TARGET1/blink=true. Next part: quantify layout from existing v28 image before
 choosing source-supported local controls; preserve/revalidate the jaw lock.
+
+### 用户反馈后重新打开下颌；生成侧面设计参照 v1
+
+用户提供实际游戏图和原美术图，指出下巴两侧折角及宽平底部越来越明显。
+撤销v28部位完成/锁定，保留旧卡、参数和数值证据。当前未修改游戏人物。
+旧轮廓图为源网格投影、并非实际图像可见轮廓；两者外观矛盾的具体原因仍需
+定位，不能把源形变正确或误差小继续当成外观通过。
+
+按用户建议，以其Downloads原美术图为唯一输入，通过内置image_gen分别生成
+向左侧面、向右侧面及向右四分之三侧面。三张已在对话显示，文件保存在
+outputs/chenger_stylized_arcface_20261011/generated_side_references_v1/。
+完整三个提示词、输入/输出SHA及原生成文件身份记录在
+[生成记录](../tools/character_authoring/chenger_generated_side_references_v1.json)。
+这些是候选设计参照，尚未获用户接受；左右颏尖突出程度与颏下曲线有差异，
+角度亦未经标定，不能冒充同一精确三维头或同时作为硬性几何真值。
+原正面仍为脸型基准。下一步先解决轮廓投影/实际外观矛盾，采用一致的侧面
+设计约束处理颏部体积，避免只逼近正面投影而造成局部畸变。
+
+HS2主相机配对几何补丁仍为之前遗留的未提交/未部署任务修改；本次未安装、
+未重启游戏，未声称修好下巴。完整Codex goal active。

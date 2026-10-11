@@ -1,0 +1,43 @@
+{
+  "mode": "built-in image_gen",
+  "reference_sha256": "72dd1826642e8fbace4149048081b53f58c025386b4eb7aefae50953e9e0ce26",
+  "reference_path": "C:/Users/13666/Downloads/ChatGPT 图像 2026年10月11日 01_21_04.png",
+  "prompts": [
+    {
+      "slug": "profile_facing_left",
+      "prompt": "Use case: identity-preserve.\nAsset type: a single alternate-angle portrait reference for reconstructing this exact character in Honey Select 2.\nInput image 1 is the sole identity, appearance, and rendering-style reference. It is the accepted original art portrait, not a game screenshot.\nCreate the SAME adult woman as if an unchanged 3D head and camera were rotated. Preserve her identity and facial proportions, not a new beautiful generic face: elongated but softly tapered lower face; small rounded chin with continuous cheek-to-jaw transitions; subtle lip-to-chin concavity and delicate mouth corners; compact softly rounded nose tip, almond eyes, gray-brown radial irises and small dark pupils, lifted outer eyebrow tails, rosy lips. Preserve the image's HS2-style softly shaded 3D game art, skin finish, makeup, dark side-part straight bob, green round-neck shirt, plain gray background and soft neutral studio illumination. Do not become photorealistic or cartoonish. Do not redesign, sharpen or square the chin; do not create protruding lateral chin corners or a broad flat terminal. Do not over-beautify, change age or enlarge eyes/lips. Preserve normal anatomical facial volume rather than a flat face.\nClosed mouth, calm neutral expression, relaxed head with NO upward/downward tilt. Camera at eye level, long portrait lens with low perspective distortion. Full head including hair crown and chin, neck and upper shoulders in frame, portrait format, generous margin. Jaw and lip/chin profile must be readable, with hair falling mainly behind the lower cheek contour while retaining the original hairstyle and side part. One person, one view only, no comparison grid, no labels, no text or watermark.\nCamera/view change only: Exact 90-degree side profile, nose pointing to the LEFT EDGE of the image. Only the nearer eye is visible. Show a true profile, not a three-quarter view, preserving the same plausible head anatomy implied by the front reference."
+    },
+    {
+      "slug": "profile_facing_right",
+      "prompt": "Use case: identity-preserve.\nAsset type: a single alternate-angle portrait reference for reconstructing this exact character in Honey Select 2.\nInput image 1 is the sole identity, appearance, and rendering-style reference. It is the accepted original art portrait, not a game screenshot.\nCreate the SAME adult woman as if an unchanged 3D head and camera were rotated. Preserve her identity and facial proportions, not a new beautiful generic face: elongated but softly tapered lower face; small rounded chin with continuous cheek-to-jaw transitions; subtle lip-to-chin concavity and delicate mouth corners; compact softly rounded nose tip, almond eyes, gray-brown radial irises and small dark pupils, lifted outer eyebrow tails, rosy lips. Preserve the image's HS2-style softly shaded 3D game art, skin finish, makeup, dark side-part straight bob, green round-neck shirt, plain gray background and soft neutral studio illumination. Do not become photorealistic or cartoonish. Do not redesign, sharpen or square the chin; do not create protruding lateral chin corners or a broad flat terminal. Do not over-beautify, change age or enlarge eyes/lips. Preserve normal anatomical facial volume rather than a flat face.\nClosed mouth, calm neutral expression, relaxed head with NO upward/downward tilt. Camera at eye level, long portrait lens with low perspective distortion. Full head including hair crown and chin, neck and upper shoulders in frame, portrait format, generous margin. Jaw and lip/chin profile must be readable, with hair falling mainly behind the lower cheek contour while retaining the original hairstyle and side part. One person, one view only, no comparison grid, no labels, no text or watermark.\nCamera/view change only: Exact 90-degree side profile, nose pointing to the RIGHT EDGE of the image. Only the nearer eye is visible. Show a true profile, not a three-quarter view. Keep the same head anatomy as the original reference and do not merely mirror its asymmetric hair part."
+    },
+    {
+      "slug": "three_quarter_facing_right",
+      "prompt": "Use case: identity-preserve.\nAsset type: a single alternate-angle portrait reference for reconstructing this exact character in Honey Select 2.\nInput image 1 is the sole identity, appearance, and rendering-style reference. It is the accepted original art portrait, not a game screenshot.\nCreate the SAME adult woman as if an unchanged 3D head and camera were rotated. Preserve her identity and facial proportions, not a new beautiful generic face: elongated but softly tapered lower face; small rounded chin with continuous cheek-to-jaw transitions; subtle lip-to-chin concavity and delicate mouth corners; compact softly rounded nose tip, almond eyes, gray-brown radial irises and small dark pupils, lifted outer eyebrow tails, rosy lips. Preserve the image's HS2-style softly shaded 3D game art, skin finish, makeup, dark side-part straight bob, green round-neck shirt, plain gray background and soft neutral studio illumination. Do not become photorealistic or cartoonish. Do not redesign, sharpen or square the chin; do not create protruding lateral chin corners or a broad flat terminal. Do not over-beautify, change age or enlarge eyes/lips. Preserve normal anatomical facial volume rather than a flat face.\nClosed mouth, calm neutral expression, relaxed head with NO upward/downward tilt. Camera at eye level, long portrait lens with low perspective distortion. Full head including hair crown and chin, neck and upper shoulders in frame, portrait format, generous margin. Jaw and lip/chin profile must be readable, with hair falling mainly behind the lower cheek contour while retaining the original hairstyle and side part. One person, one view only, no comparison grid, no labels, no text or watermark.\nCamera/view change only: 45-degree three-quarter portrait, nose pointing toward the RIGHT SIDE of the image, both eyes visible with correct foreshortening. Preserve original face length, round tapered chin, lip-to-chin relief, nose projection, and eyebrow shape."
+    }
+  ],
+  "status": "Generated alternate-angle design candidates; not user-accepted or certified views of one 3D model. Original front remains authoritative. Side-angle and cross-view identity/geometry consistency require review.",
+  "observations": [
+    "Front-reference game chin is still rejected by the user; previous v28 lock must be reopened.",
+    "Left-facing and right-facing generated profiles differ in chin projection and submental curve; do not fit them simultaneously as exact 3D geometry.",
+    "Camera/view angles are prompt requests, not measured/calibrated angles."
+  ],
+  "output_directory": "C:/Users/13666/Workspace/Face2Parameter/outputs/chenger_stylized_arcface_20261011/generated_side_references_v1",
+  "outputs": [
+    {
+      "slug": "profile_facing_left",
+      "sha256": "bae968371367b5d4b0cd5200a5800ede646c62665280cb1bd5b57e9a3ee6150d",
+      "generator_file": "exec-c1f9c25d-8f3d-4bb4-b775-ed21bad74493.png"
+    },
+    {
+      "slug": "profile_facing_right",
+      "sha256": "1c20678556043d642ee63b62470cec61422a83d7504a846e01aae1c82112642a",
+      "generator_file": "exec-de8464b3-9f42-4474-a05a-8f50159ab4e8.png"
+    },
+    {
+      "slug": "three_quarter_facing_right",
+      "sha256": "6ee93e484a5fb5700ee4fa5fcb8d725f3560259781e247c9e3e9fd05f0f728f0",
+      "generator_file": "exec-dc7c6cc8-398c-4fc2-a267-5015fe4900d7.png"
+    }
+  ]
+}

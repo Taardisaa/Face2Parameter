@@ -1,5 +1,6 @@
 {
-  "status": "Accepted and locked jaw/chin authoring milestone v28; complete character identity remains active. Reopen explicitly if later shared dependencies alter the delivered jaw geometry or user reports an appearance defect.",
+  "status": "REOPENED: user rejects visible v28/v30 jaw/chin as broad, flat and angular. Previous part acceptance and lock are revoked. All stored parameters and numerical evidence remain historical observations; they do not establish visible likeness.",
+  "reopened_reason": "User-supplied game/front-reference comparison contradicts prior contour acceptance. Resolve source projection versus actual visible silhouette and reconsider author constraints before another candidate; generated side references v1 are design hypotheses, not calibrated 3D truth.",
   "card_path": "E:/HoneySelect2_ArcticFox/UserData/chara/female/Codex/Chenger_stylized_reconstruction_v28_jaw_candidate.png",
   "card_sha256": "c5a7b4c0e9971352f3a986b800296eb9e7e7f0efa92527e2f3a0871c26752cb1",
   "base_card_path": "E:/HoneySelect2_ArcticFox/UserData/chara/female/Codex/Chenger_stylized_reconstruction_v17_chin_candidate.png",
