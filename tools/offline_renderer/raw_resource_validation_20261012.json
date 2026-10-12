@@ -1,0 +1,176 @@
+{
+  "schema_version": 1,
+  "scope": "Independent D3D11 WARP HDR16 cube6faces/4mips and Texture3D4mips fixture; two exports retain exact original bytes. Native Unity event scheduling/live resource binding not yet accepted.",
+  "subresources": [
+    {
+      "fixture": "cube",
+      "subresource": "subresource_0.bin",
+      "original_equals_export": true,
+      "source_unchanged": true
+    },
+    {
+      "fixture": "cube",
+      "subresource": "subresource_1.bin",
+      "original_equals_export": true,
+      "source_unchanged": true
+    },
+    {
+      "fixture": "cube",
+      "subresource": "subresource_10.bin",
+      "original_equals_export": true,
+      "source_unchanged": true
+    },
+    {
+      "fixture": "cube",
+      "subresource": "subresource_11.bin",
+      "original_equals_export": true,
+      "source_unchanged": true
+    },
+    {
+      "fixture": "cube",
+      "subresource": "subresource_12.bin",
+      "original_equals_export": true,
+      "source_unchanged": true
+    },
+    {
+      "fixture": "cube",
+      "subresource": "subresource_13.bin",
+      "original_equals_export": true,
+      "source_unchanged": true
+    },
+    {
+      "fixture": "cube",
+      "subresource": "subresource_14.bin",
+      "original_equals_export": true,
+      "source_unchanged": true
+    },
+    {
+      "fixture": "cube",
+      "subresource": "subresource_15.bin",
+      "original_equals_export": true,
+      "source_unchanged": true
+    },
+    {
+      "fixture": "cube",
+      "subresource": "subresource_16.bin",
+      "original_equals_export": true,
+      "source_unchanged": true
+    },
+    {
+      "fixture": "cube",
+      "subresource": "subresource_17.bin",
+      "original_equals_export": true,
+      "source_unchanged": true
+    },
+    {
+      "fixture": "cube",
+      "subresource": "subresource_18.bin",
+      "original_equals_export": true,
+      "source_unchanged": true
+    },
+    {
+      "fixture": "cube",
+      "subresource": "subresource_19.bin",
+      "original_equals_export": true,
+      "source_unchanged": true
+    },
+    {
+      "fixture": "cube",
+      "subresource": "subresource_2.bin",
+      "original_equals_export": true,
+      "source_unchanged": true
+    },
+    {
+      "fixture": "cube",
+      "subresource": "subresource_20.bin",
+      "original_equals_export": true,
+      "source_unchanged": true
+    },
+    {
+      "fixture": "cube",
+      "subresource": "subresource_21.bin",
+      "original_equals_export": true,
+      "source_unchanged": true
+    },
+    {
+      "fixture": "cube",
+      "subresource": "subresource_22.bin",
+      "original_equals_export": true,
+      "source_unchanged": true
+    },
+    {
+      "fixture": "cube",
+      "subresource": "subresource_23.bin",
+      "original_equals_export": true,
+      "source_unchanged": true
+    },
+    {
+      "fixture": "cube",
+      "subresource": "subresource_3.bin",
+      "original_equals_export": true,
+      "source_unchanged": true
+    },
+    {
+      "fixture": "cube",
+      "subresource": "subresource_4.bin",
+      "original_equals_export": true,
+      "source_unchanged": true
+    },
+    {
+      "fixture": "cube",
+      "subresource": "subresource_5.bin",
+      "original_equals_export": true,
+      "source_unchanged": true
+    },
+    {
+      "fixture": "cube",
+      "subresource": "subresource_6.bin",
+      "original_equals_export": true,
+      "source_unchanged": true
+    },
+    {
+      "fixture": "cube",
+      "subresource": "subresource_7.bin",
+      "original_equals_export": true,
+      "source_unchanged": true
+    },
+    {
+      "fixture": "cube",
+      "subresource": "subresource_8.bin",
+      "original_equals_export": true,
+      "source_unchanged": true
+    },
+    {
+      "fixture": "cube",
+      "subresource": "subresource_9.bin",
+      "original_equals_export": true,
+      "source_unchanged": true
+    },
+    {
+      "fixture": "volume",
+      "subresource": "subresource_0.bin",
+      "original_equals_export": true,
+      "source_unchanged": true
+    },
+    {
+      "fixture": "volume",
+      "subresource": "subresource_1.bin",
+      "original_equals_export": true,
+      "source_unchanged": true
+    },
+    {
+      "fixture": "volume",
+      "subresource": "subresource_2.bin",
+      "original_equals_export": true,
+      "source_unchanged": true
+    },
+    {
+      "fixture": "volume",
+      "subresource": "subresource_3.bin",
+      "original_equals_export": true,
+      "source_unchanged": true
+    }
+  ],
+  "all_bytes_equal": true,
+  "readback_dll_sha256": "b1cb390aa8f927e749730ec0c1f1133a944d0d5bd1f6138c32480fdc50245cb3"
+}

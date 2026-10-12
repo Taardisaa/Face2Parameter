@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Runtime.InteropServices;
+using System.Text;
 using Newtonsoft.Json.Linq;
 using UnityEngine;
 using UnityEngine.Rendering;
@@ -15,6 +17,54 @@ namespace HS2_RenderAudit
     public static class RenderAudit
     {
         static readonly BindingFlags AllFields=BindingFlags.Instance|BindingFlags.Public|BindingFlags.NonPublic;
+        static string rawOutput;
+        static bool queuedThisCapture;
+        static readonly Dictionary<int,Dictionary<string,object>> rawJobs=new Dictionary<int,Dictionary<string,object>>();
+        [DllImport("kernel32",CharSet=CharSet.Unicode,SetLastError=true)] static extern IntPtr LoadLibrary(string path);
+        [DllImport("HS2_RenderReadback.dll",CallingConvention=CallingConvention.Cdecl)] static extern IntPtr GetRenderEventFunc();
+        [DllImport("HS2_RenderReadback.dll",CallingConvention=CallingConvention.Cdecl,CharSet=CharSet.Unicode)] static extern int QueueTexture(IntPtr resource,string path);
+        [DllImport("HS2_RenderReadback.dll",CallingConvention=CallingConvention.Cdecl)] static extern int GetTextureStatus(int job,StringBuilder error,int capacity);
+        static void QueueRaw(Texture texture,Dictionary<string,object> info)
+        {
+            if(rawOutput==null)return;
+            int id=texture.GetInstanceID();
+            if(!rawJobs.TryGetValue(id,out var job))
+            {
+                string directory=System.IO.Path.Combine(rawOutput,"texture_"+id+"_frame_"+Time.frameCount);
+                job=new Dictionary<string,object>{{"texture_id",id},{"path",directory},{"submitted_frame",Time.frameCount},
+                    {"submitted_utc",DateTime.UtcNow.ToString("o")},{"scope","Render-thread native resource snapshot, not later synchronous Material/Shader descriptor frame equality."}};
+                try
+                {
+                    if(SystemInfo.graphicsDeviceType!=GraphicsDeviceType.Direct3D11)throw new NotSupportedException("Raw export requires D3D11");
+                    string native=System.IO.Path.Combine(System.IO.Path.GetDirectoryName(typeof(RenderAudit).Assembly.Location),"HS2_RenderReadback.dll");
+                    if(LoadLibrary(native)==IntPtr.Zero)throw new InvalidOperationException("LoadLibrary failed: "+Marshal.GetLastWin32Error());
+                    var pointer=texture.GetNativeTexturePtr();
+                    if(pointer==IntPtr.Zero)throw new InvalidOperationException("Texture has no native resource");
+                    int handle=QueueTexture(pointer,directory);
+                    if(handle<0)throw new InvalidOperationException("Native QueueTexture rejected resource");
+                    job["native_job"]=handle;job["status"]="pending";queuedThisCapture=true;
+                }
+                catch(Exception e){job["status"]="failed";job["error"]=e.GetType().Name+": "+e.Message;}
+                rawJobs[id]=job;
+            }
+            info["raw_export"]=job;
+        }
+        public static Dictionary<string,object> PollRawTextures()
+        {
+            foreach(var job in rawJobs.Values)
+                if(job.TryGetValue("native_job",out var handle))
+                {
+                    var error=new StringBuilder(4096);
+                    int status=GetTextureStatus((int)handle,error,error.Capacity);
+                    job["status"]=status==0?"pending":status==1?"complete":"failed";
+                    if(status<0||status==2)job["error"]=error.ToString();
+                    job["observed_status_frame"]=Time.frameCount;
+                }
+            return new Dictionary<string,object>{{"jobs",rawJobs.Values.ToArray()},
+                {"pending",rawJobs.Values.Count(j=>(string)j["status"]=="pending")},
+                {"complete",rawJobs.Values.Count(j=>(string)j["status"]=="complete")},
+                {"failed",rawJobs.Values.Count(j=>(string)j["status"]=="failed")}};
+        }
         static object Vec(Vector4 v)=>new[]{v.x,v.y,v.z,v.w};
         static object Vec(Vector3 v)=>new[]{v.x,v.y,v.z};
         static object ColorValue(Color c)=>new[]{c.r,c.g,c.b,c.a};
@@ -32,6 +82,12 @@ namespace HS2_RenderAudit
             if(t is Texture2D tex){row["format"]=tex.format.ToString();row["mipmap_count"]=tex.mipmapCount;row["is_readable"]=tex.isReadable;}
             if(t is Cubemap cube){row["format"]=cube.format.ToString();row["mipmap_count"]=cube.mipmapCount;}
             if(t is RenderTexture rt){row["format"]=rt.format.ToString();row["samples"]=rt.antiAliasing;row["depth"]=rt.depth;row["volume_depth"]=rt.volumeDepth;row["srgb"]=rt.sRGB;row["use_mipmap"]=rt.useMipMap;row["auto_generate_mips"]=rt.autoGenerateMips;}
+            foreach(string property in new[]{"graphicsFormat","isDataSRGB","activeTextureColorSpace"})
+            {
+                var p=t.GetType().GetProperty(property,BindingFlags.Public|BindingFlags.Instance);
+                if(p!=null)try{row[property]=p.GetValue(t,null)?.ToString();}catch(Exception e){row[property+"_error"]=e.Message;}
+            }
+            QueueRaw(t,row);
             return row;
         }
         static List<JObject> MergeSpecs(JArray manifests)
@@ -139,6 +195,9 @@ namespace HS2_RenderAudit
             // A sidecar config beside this DLL keeps data paths out of the bridge.
             string configPath=typeof(RenderAudit).Assembly.Location+".json";
             var config=JObject.Parse(File.ReadAllText(configPath));
+            rawOutput=(string)config["raw_texture_output_directory"];
+            if(rawOutput!=null)rawOutput=System.IO.Path.GetFullPath(rawOutput);
+            queuedThisCapture=false;
             var specs=MergeSpecs((JArray)config["shader_manifests"]);
             var camera=Camera.main;
             var rows=new List<object>();
@@ -178,7 +237,7 @@ namespace HS2_RenderAudit
                 {"intensity",p.intensity},{"blend_distance",p.blendDistance},{"box_projection",p.boxProjection},{"size",Vec(p.size)},
                 {"center",Vec(p.center)},{"bounds_center",Vec(p.bounds.center)},{"bounds_size",Vec(p.bounds.size)},
                 {"texture",TextureInfo(p.texture)},{"hdr_decode",Vec(p.textureHDRDecodeValues)}}).ToArray();
-            return new Dictionary<string,object>{{"schema_version",1},{"captured_utc",DateTime.UtcNow.ToString("o")},{"frame_count",Time.frameCount},
+            var result=new Dictionary<string,object>{{"schema_version",2},{"captured_utc",DateTime.UtcNow.ToString("o")},{"frame_count",Time.frameCount},
                 {"quality_color_space",QualitySettings.activeColorSpace.ToString()},{"pixel_light_count",QualitySettings.pixelLightCount},
                 {"ambient_mode",RenderSettings.ambientMode.ToString()},{"ambient_intensity",RenderSettings.ambientIntensity},
                 {"ambient_light",ColorValue(RenderSettings.ambientLight)},{"ambient_sky",ColorValue(RenderSettings.ambientSkyColor)},
@@ -186,12 +245,17 @@ namespace HS2_RenderAudit
                 {"ambient_probe_sh_3x9",SH(RenderSettings.ambientProbe)},{"reflection_intensity",RenderSettings.reflectionIntensity},
                 {"reflection_bounces",RenderSettings.reflectionBounces},{"default_reflection_mode",RenderSettings.defaultReflectionMode.ToString()},
                 {"custom_reflection",TextureInfo(RenderSettings.customReflection)},{"shader_global_vector_reads",globals},
+                {"default_reflection_texture",TextureInfo(ReflectionProbe.defaultTexture)},
+                {"default_reflection_hdr_decode",Vec(ReflectionProbe.defaultTextureHDRDecodeValues)},
                 {"shader_global_textures",textures},{"head_renderers",rows},{"active_character_count",chars.Length},
                 {"camera_effects",camera==null?null:camera.GetComponents<Behaviour>().Select((e,i)=>Effect(e,i,specs)).ToArray()},
                 {"auxiliary_effects",UnityEngine.Object.FindObjectsOfType<Behaviour>().Where(b=>b.GetType().FullName=="DHH.SSS_convolution").Select((e,i)=>Effect(e,i,specs)).ToArray()},
                 {"reflection_probes",reflection},{"config",configPath},{"config_sha256",Hash(configPath)},
                 {"frame_count_end",Time.frameCount},{"runtime_mutation",false},
-                {"scope","Main-thread read-only material/SH/effect field/probe descriptors. Built-in engine per-draw cbuffer values, property blocks, full mips/HDR/cube pixels, shadow maps and actual GPU active variants remain unverified."}};
+                {"scope","Main-thread read-only material/SH/effect field/probe descriptors. Optional native raw textures are queued on render thread; built-in engine per-draw cbuffer values/property blocks, shader-view gamma, shadow maps and actual GPU active variants remain unverified."}};
+            if(queuedThisCapture)GL.IssuePluginEvent(GetRenderEventFunc(),1);
+            result["raw_texture_export"]=PollRawTextures();
+            return result;
         }
         static string Hash(string path)
         {

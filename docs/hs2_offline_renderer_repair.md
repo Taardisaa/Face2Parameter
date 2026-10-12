@@ -227,3 +227,50 @@ Still required: effective property blocks, complete native texture mip/HDR/cube
 data, exact per-draw/global color/probe/light/shadow state, pass scheduling and
 shared depth, SSS lighting/profile/convolution integration, and final RGB native
 acceptance. One ABMX Apply agreement is not persistent card/steady-state acceptance.
+
+### Raw native texture transfer
+
+The helper now has an optional native readback module, with config field
+`raw_texture_output_directory` pointing at a fresh ignored directory.
+On D3D11, Unity 2018's `Texture.GetNativeTexturePtr` returns `ID3D11Resource`
+([Unity 2018 documentation](https://docs.unity3d.com/2018.4/Documentation/ScriptReference/Texture.GetNativeTexturePtr.html)).
+Each actual material/global/effect/probe texture is AddRef'ed and queued once;
+`GL.IssuePluginEvent` executes resource staging copies on Unity's render thread.
+Neither texture formats nor source pixels are replaced. There is no Blit, PNG,
+color-space conversion or reconstructed mip chain.
+
+`HS2_RenderReadback.dll` maps every native mip/array face/volume slice and writes
+tightly packed original-format bytes with a resource descriptor. HDR float/half,
+BC blocks, cubemap arrays and Texture3D dimensions are retained. Unhandled formats
+and MSAA depth/array resources remain failed jobs. Supported MSAA color resolve is
+explicitly marked in the descriptor; sample-level data is not claimed retained.
+Typeless/SRGB shader-view interpretation remains a separate native-state gap.
+
+`Capture()` returns `raw_texture_export` with jobs/pending/complete/failed counts;
+subsequent calls poll existing jobs instead of repeating exports. The standalone
+`RenderAudit.PollRawTextures()` provides the same summary. Submitted field-capture
+frame and render-thread timestamp stay distinct; completion does not certify
+all resources were read in the earlier managed snapshot frame.
+
+```powershell
+dotnet build tools/offline_renderer/native_audit/HS2_RenderAudit.csproj -c Release
+g++ -std=c++17 -O2 -shared -static `
+  tools/offline_renderer/native_audit/d3d11_readback.cpp `
+  -o tools/offline_renderer/native_audit/bin/Release/HS2_RenderReadback.dll `
+  -ld3d11 -ldxguid
+g++ -std=c++17 -O2 -static tools/offline_renderer/native_audit/test_readback.cpp `
+  -o outputs/offline_renderer_repair_20261012/fresh_readback_test.exe `
+  -ld3d11 -ldxguid
+outputs/offline_renderer_repair_20261012/fresh_readback_test.exe `
+  tools/offline_renderer/native_audit/bin/Release/HS2_RenderReadback.dll `
+  outputs/offline_renderer_repair_20261012/fresh_readback_fixture
+.venv/Scripts/python.exe tools/offline_renderer/validate_raw_resources.py `
+  --root ABSOLUTE/native_raw_output --out outputs/offline_renderer_repair_20261012/fresh_resource_receipt.json
+```
+
+The native module was independently checked with WARP-created HDR16 cube textures
+(six faces, four mips) and 3D textures (four mips). All **28 subresources** match
+their original bytes on two consecutive exports; the original resources remain
+unchanged. Receipt: `tools/offline_renderer/raw_resource_validation_20261012.json`.
+Actual Unity plugin-event execution/material resources still require the main
+task's one native capture; this is not yet full renderer or live-resource acceptance.
