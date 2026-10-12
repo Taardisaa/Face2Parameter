@@ -106,3 +106,33 @@ The vertex-position gate remains passing; the normal/shader claim remains open.
   --native-frame-export ../HS2Mod/artifacts/infrastructure_live_20261005/abmx_trace/four_heads/head_2_native_ABMX.json `
   --out outputs/offline_renderer_repair_20261012/fresh_normal_audit.json
 ```
+
+## Same-frame loaded normal repair — resumed 2026-10-12
+
+The new native read-only export at `HS2Mod/artifacts/chenger_reference_fit_20261012/
+native_resume_v1/live_full_frames_materials.json` contains actual loaded API
+normal/tangent frames and BakeMesh normals in the same native frame (13378).
+Four-weight **linear** direction skinning now agrees on all ten surfaces at the
+unchanged `1e-5` direction threshold; the largest error is `2.93e-7`. This resolves
+the earlier `0.00133` residual as a cross-pose comparison, without inverse-transpose
+substitution, a fitted correction, or changed lighting.
+
+`CapturedHeadForward.evaluate` and `hs2_render_cpu.py` now carry world normals,
+world tangents and original tangent handedness when loaded API frames are present.
+Position-only contexts remain usable for geometry, but explicitly lack RGB
+attributes. Asset sparse frames are not silently treated as equivalent to loaded
+API frames. The installed-bundle/API disagreement is retained, not threshold-pruned.
+Tangent deformation is implemented; a BakeMesh tangent witness is not yet in the
+bridge's saved evidence, so tangent equality is not claimed.
+
+```powershell
+.venv/Scripts/python.exe tools/offline_renderer/validate_loaded_attributes.py `
+  --geometry ../HS2Mod/artifacts/chenger_reference_fit_20261012/native_resume_v1/live_full_frames_materials.json `
+  --out outputs/offline_renderer_repair_20261012/fresh_loaded_normal_receipt.json
+```
+
+The compact same-frame receipt is committed at
+`tools/offline_renderer/loaded_normal_validation_20261012.json`.
+The current actual materials use six AIT shaders and `Custom/Silhouette`, not
+Hanmen. These observations do not complete the RGB renderer or certify another
+character's material pipeline.

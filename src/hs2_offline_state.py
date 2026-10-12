@@ -318,8 +318,14 @@ class CapturedHeadForward:
         surfaces=[]
         for mesh in self.meshes:
             verts,active=skin_world(mesh,transforms,influences=4)
-            surfaces.append({'renderer_path':mesh['renderer_path'],'mesh_name':mesh['mesh_name'],
+            surface={'renderer_path':mesh['renderer_path'],'mesh_name':mesh['mesh_name'],
                 'world_vertices':verts,'head_vertices':(np.c_[verts,np.ones(len(verts))] @ self.anchor_inverse.T)[:,:3],
-                'triangles':np.asarray(mesh['source']['triangles']).reshape(-1,3),'active_blendshapes':active})
+                'triangles':np.asarray(mesh['source']['triangles']).reshape(-1,3),'active_blendshapes':active}
+            if self.geometry.get('include_blendshape_frames'):
+                from src.render.skin_attributes import deform_attributes
+                surface.update(deform_attributes(mesh,transforms,loaded_api_frames=True))
+            else:
+                surface['attribute_scope']='Positions only: loaded API normal/tangent frames not captured; RGB shading unavailable.'
+            surfaces.append(surface)
         return {'surfaces':surfaces,'branches':branches,'effect_decisions':self.effect_decisions,
                 'modifiers':serialized(modifiers),'bone_world':world}

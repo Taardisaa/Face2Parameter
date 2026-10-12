@@ -1,0 +1,104 @@
+{
+  "schema_version": 1,
+  "geometry": "C:\\Users\\13666\\Workspace\\HS2Mod\\artifacts\\chenger_reference_fit_20261012\\native_resume_v1\\live_full_frames_materials.json",
+  "geometry_sha256": "a71faf9c7c1c67884199d22292ba95b23c559e759366483898885615f584e83d",
+  "captured_utc": "2026-10-12T23:06:00.3772671Z",
+  "frame_count": 13378,
+  "tolerance": 1e-05,
+  "surfaces": [
+    {
+      "renderer_path": "/CharaCustom[0]/CustomControl[0]/chaF_001[20]/BodyTop[0]/p_cf_anim[0]/cf_J_Root[0]/cf_N_height[0]/cf_J_Hips[0]/cf_J_Spine01[1]/cf_J_Spine02[1]/cf_J_Spine03[1]/cf_J_Neck[1]/cf_J_Head[0]/cf_J_Head_s[0]/p_cf_head_bone[7]/ct_head[1]/n_head_cf2_c1[0]/o_eyebase_L[0]",
+      "mesh_name": "o_eyebase_L",
+      "source_geometry_sha256": "b5ac7c89aae326ce4996f51052bb641274b918fe1034daa4cd318e97ee1a4061",
+      "normal_direction_max": 2.6252282117173277e-07,
+      "normal_direction_rms": 1.2525923693070014e-07,
+      "normal_gate_passed": true,
+      "tangent_gate_passed": null
+    },
+    {
+      "renderer_path": "/CharaCustom[0]/CustomControl[0]/chaF_001[20]/BodyTop[0]/p_cf_anim[0]/cf_J_Root[0]/cf_N_height[0]/cf_J_Hips[0]/cf_J_Spine01[1]/cf_J_Spine02[1]/cf_J_Spine03[1]/cf_J_Neck[1]/cf_J_Head[0]/cf_J_Head_s[0]/p_cf_head_bone[7]/ct_head[1]/n_head_cf2_c1[0]/o_eyebase_R[1]",
+      "mesh_name": "o_eyebase_R",
+      "source_geometry_sha256": "8b219c18c30c7881d16aafdf9af46362d9677f31f9abfca8a9bc58a3b571952c",
+      "normal_direction_max": 1.8993180162319076e-07,
+      "normal_direction_rms": 7.916891311542877e-08,
+      "normal_gate_passed": true,
+      "tangent_gate_passed": null
+    },
+    {
+      "renderer_path": "/CharaCustom[0]/CustomControl[0]/chaF_001[20]/BodyTop[0]/p_cf_anim[0]/cf_J_Root[0]/cf_N_height[0]/cf_J_Hips[0]/cf_J_Spine01[1]/cf_J_Spine02[1]/cf_J_Spine03[1]/cf_J_Neck[1]/cf_J_Head[0]/cf_J_Head_s[0]/p_cf_head_bone[7]/ct_head[1]/n_head_cf2_c1[0]/o_eyelashes[2]",
+      "mesh_name": "o_eyelashes",
+      "source_geometry_sha256": "e3f314bb7922bb46541eb2ef2686d931a6735ceea9735b8104b390c78dbe4c00",
+      "normal_direction_max": 2.927617495189756e-07,
+      "normal_direction_rms": 9.090117077056314e-08,
+      "normal_gate_passed": true,
+      "tangent_gate_passed": null
+    },
+    {
+      "renderer_path": "/CharaCustom[0]/CustomControl[0]/chaF_001[20]/BodyTop[0]/p_cf_anim[0]/cf_J_Root[0]/cf_N_height[0]/cf_J_Hips[0]/cf_J_Spine01[1]/cf_J_Spine02[1]/cf_J_Spine03[1]/cf_J_Neck[1]/cf_J_Head[0]/cf_J_Head_s[0]/p_cf_head_bone[7]/ct_head[1]/n_head_cf2_c1[0]/o_eyeshadow[3]",
+      "mesh_name": "o_eyeshadow",
+      "source_geometry_sha256": "bd586a2bc801a4c970e54408a119bdbef9988195985110c9e0360ba236ec47e8",
+      "normal_direction_max": 1.734500972831287e-07,
+      "normal_direction_rms": 7.030238335107413e-08,
+      "normal_gate_passed": true,
+      "tangent_gate_passed": null
+    },
+    {
+      "renderer_path": "/CharaCustom[0]/CustomControl[0]/chaF_001[20]/BodyTop[0]/p_cf_anim[0]/cf_J_Root[0]/cf_N_height[0]/cf_J_Hips[0]/cf_J_Spine01[1]/cf_J_Spine02[1]/cf_J_Spine03[1]/cf_J_Neck[1]/cf_J_Head[0]/cf_J_Head_s[0]/p_cf_head_bone[7]/ct_head[1]/n_head_cf2_c1[0]/o_head[4]",
+      "mesh_name": "o_head",
+      "source_geometry_sha256": "b2c3831da3e025b23a8dc6231a8cd73ed3540536f81b3aea1aa4b9459e360ece",
+      "normal_direction_max": 2.774271746554825e-07,
+      "normal_direction_rms": 7.711650727397519e-08,
+      "normal_gate_passed": true,
+      "tangent_gate_passed": null
+    },
+    {
+      "renderer_path": "/CharaCustom[0]/CustomControl[0]/chaF_001[20]/BodyTop[0]/p_cf_anim[0]/cf_J_Root[0]/cf_N_height[0]/cf_J_Hips[0]/cf_J_Spine01[1]/cf_J_Spine02[1]/cf_J_Spine03[1]/cf_J_Neck[1]/cf_J_Head[0]/cf_J_Head_s[0]/p_cf_head_bone[7]/ct_head[1]/n_head_cf2_c1[0]/o_namida[5]",
+      "mesh_name": "o_namida",
+      "source_geometry_sha256": "96d0e5357404a6c00e51100f0b28386348a1552845106aad639f794cab74f605",
+      "normal_direction_max": 2.649496060463209e-07,
+      "normal_direction_rms": 7.172787833441475e-08,
+      "normal_gate_passed": true,
+      "tangent_gate_passed": null
+    },
+    {
+      "renderer_path": "/CharaCustom[0]/CustomControl[0]/chaF_001[20]/BodyTop[0]/p_cf_anim[0]/cf_J_Root[0]/cf_N_height[0]/cf_J_Hips[0]/cf_J_Spine01[1]/cf_J_Spine02[1]/cf_J_Spine03[1]/cf_J_Neck[1]/cf_J_Head[0]/cf_J_Head_s[0]/p_cf_head_bone[7]/ct_head[1]/n_head_cf2_c1[0]/o_tang[6]",
+      "mesh_name": "o_tang",
+      "source_geometry_sha256": "f9079142fa2e126ab2722a54a70b7f38f81f9314d7d906d470ac7bd1cfb0d44a",
+      "normal_direction_max": 1.891276479938717e-07,
+      "normal_direction_rms": 5.931079830539163e-08,
+      "normal_gate_passed": true,
+      "tangent_gate_passed": null
+    },
+    {
+      "renderer_path": "/CharaCustom[0]/CustomControl[0]/chaF_001[20]/BodyTop[0]/p_cf_anim[0]/cf_J_Root[0]/cf_N_height[0]/cf_J_Hips[0]/cf_J_Spine01[1]/cf_J_Spine02[1]/cf_J_Spine03[1]/cf_J_Neck[1]/cf_J_Head[0]/cf_J_Head_s[0]/p_cf_head_bone[7]/ct_head[1]/n_head_cf2_c1[0]/o_tooth[7]",
+      "mesh_name": "o_tooth",
+      "source_geometry_sha256": "17da3f657a640306194761f741fba2cc27efd7b710f751e7cfe5f8f7ad46ad14",
+      "normal_direction_max": 1.4576076106080308e-07,
+      "normal_direction_rms": 6.083209870413142e-08,
+      "normal_gate_passed": true,
+      "tangent_gate_passed": null
+    },
+    {
+      "renderer_path": "/CharaCustom[0]/CustomControl[0]/chaF_001[20]/BodyTop[0]/p_cf_body_00[1]/n_o_root[0]/n_body_base[0]/N_mnpbset[1]/N_tang[1]/o_tang[0]",
+      "mesh_name": "o_tang",
+      "source_geometry_sha256": "506d49941bb312f8383373d65684342fade62e1f90c2b4651b937083cea9d003",
+      "normal_direction_max": 1.0918331649902347e-07,
+      "normal_direction_rms": 3.205650687413224e-08,
+      "normal_gate_passed": true,
+      "tangent_gate_passed": null
+    },
+    {
+      "renderer_path": "/CharaCustom[0]/CustomControl[0]/chaF_001[20]/BodyTop[0]/p_cf_body_silhouette[2]/n_o_root[0]/n_body_base[0]/o_silhouette_cf[0]/N_mnpbset[0]/N_tang[2]/o_tang[0]",
+      "mesh_name": "o_tang",
+      "source_geometry_sha256": "44141e20b403f7c0416c893a02e11d688c92ec2723a27b07dc51beaa52445efc",
+      "normal_direction_max": 1.2444103094363907e-07,
+      "normal_direction_rms": 3.143517518264905e-08,
+      "normal_gate_passed": true,
+      "tangent_gate_passed": null
+    }
+  ],
+  "all_normal_gates_passed": true,
+  "tangent_bakemesh_witness_available": false,
+  "rgb_renderer_complete": false,
+  "scope": "Exact captured native bone TRS and loaded API frames, no game/GPU calls, no fitted normal correction. Does not certify a changed ABMX transition or full shading."
+}

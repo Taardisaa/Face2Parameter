@@ -65,10 +65,12 @@ def main():
         pixels,depth=project(surface['world_vertices'],camera,width,height)
         np.savez_compressed(a.out/f'surface_{index:02d}.npz',
             world_vertices=surface['world_vertices'],head_vertices=surface['head_vertices'],
-            triangles=surface['triangles'],pixels=pixels,ndc_depth=depth)
+            triangles=surface['triangles'],pixels=pixels,ndc_depth=depth,
+            **{key:surface[key] for key in ('world_normals','world_tangents','tangent_handedness') if key in surface})
         row={'index':index,'renderer_path':surface['renderer_path'],'mesh_name':surface['mesh_name'],
              'source_geometry_sha256':mesh['source_geometry_sha256'],'vertex_count':len(pixels),
              'active_blendshapes':surface['active_blendshapes'],'rendered':mesh['enabled'] and mesh['active_in_hierarchy']}
+        row['attribute_scope']=surface['attribute_scope']
         if refs:
             key='candidate' if patches or native is not None else 'reference'
             error=vertex_errors(np.asarray(refs[surface['renderer_path']][key]),surface['head_vertices'])
