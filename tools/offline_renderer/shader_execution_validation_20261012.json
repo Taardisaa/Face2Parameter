@@ -1,0 +1,18 @@
+{
+  "schema_version": 1,
+  "device": "D3D11 WARP (CPU software driver)",
+  "bundle_sha256": "66ba2ef7f95fa4d79ad87b3d1e11e90e8f1f78ed79e0dc7cb1e4e2969f100edf",
+  "vertex_dxbc_sha256": "c6664888a741fe4cc3e0d4819ba9d2d960c3e47642a45da4c39d22e2692ea299",
+  "pixel_dxbc_sha256": "2e78cb22152ddc34298d45b93ee77bba77116bf8a608a1f09aee733454325a25",
+  "backend_sha256": "4de954cdca148e42a570bfd5b7b1ba23e97e0dbe02833821b1bc373b7066a973",
+  "shader": "AIT/main eyeshadow lambert",
+  "keywords": [
+    "DIRECTIONAL"
+  ],
+  "max_rgba_float_difference": 8.940696716308594e-08,
+  "tolerance": 1e-06,
+  "pass_gate": true,
+  "rgb_renderer_complete": false,
+  "scope": "Synthetic analytic texture/quad/color fixture; installed original DXBC and DstColor Zero blend executed. No native face or appearance acceptance.",
+  "stdout": "WARP original DXBC pass executed 32x32 samples=1\n"
+}

@@ -136,3 +136,94 @@ The compact same-frame receipt is committed at
 The current actual materials use six AIT shaders and `Custom/Silhouette`, not
 Hanmen. These observations do not complete the RGB renderer or certify another
 character's material pipeline.
+
+## Installed shader execution stage — 2026-10-12
+
+The remaining RGB stage now has an independent implementation path that executes
+the **installed D3D11 bytecode** instead of replacing AIT with the legacy fitted
+key/fill/ambient shader. `extract_shader_programs.py` preserves all compiled
+branches, constant layouts, resource bindings and parsed pass state. It also
+produces a typed native-read request including hidden `$Globals` outside the
+Shader Properties list. Keywords must be selected exactly; unused material
+keywords alone do not identify Unity's lighting/shadow variant.
+
+`src/render/dxbc.py` is a float32/uint32 CPU instruction executor, including
+masked branches, divergent loops, discard, Bayer integer operations and supplied
+texture operations. `shader_bindings.py` packs compiled byte offsets and preserves
+integer uniforms. Unknown instructions/resources/layouts fail; texture LOD and
+lighting are not guessed. Numeric VM results do not imply hardware bit equality.
+
+`d3d11_pass.cpp` independently runs original vertex/pixel DXBC through D3D11 WARP
+(a CPU software driver), including supplied 2D/cube mip chains and real D3D sampler
+filter/anisotropy, depth/cull/blend and MSAA primitives. The current single-pass
+packet runner is a **component**, not the full multi-pass face renderer: complete
+alpha state, depth sharing between passes, per-pass material overrides, 3D/compare
+resources and the SSS/GrabPass/postprocess scheduling still need integration.
+
+An installed `AIT/main eyeshadow lambert` program was actually executed with its
+`DstColor Zero` blend on a declared analytic quad/texture fixture. WARP versus CPU
+instruction output differs by at most `8.94e-8` (declared `1e-6` gate). This verifies
+the executable pass, not a native face or MediaPipe input. The compact receipt is
+`tools/offline_renderer/shader_execution_validation_20261012.json`; unsuccessful
+fixture setup directories remain under ignored outputs.
+
+Reproducible extraction and execution:
+
+```powershell
+.venv/Scripts/python.exe tools/offline_renderer/extract_shader_programs.py `
+  --bundle E:/HoneySelect2_ArcticFox/abdata/chara/38/fo_head_38.unity3d `
+  --out outputs/offline_renderer_repair_20261012/fresh_head_programs
+g++ -std=c++17 -O2 -static-libgcc -static-libstdc++ `
+  tools/offline_renderer/d3d11_pass.cpp `
+  -o outputs/offline_renderer_repair_20261012/fresh_d3d11_pass.exe `
+  -ld3d11 -ld3dcompiler -ldxguid
+.venv/Scripts/python.exe tools/offline_renderer/validate_shader_execution.py `
+  --programs outputs/offline_renderer_repair_20261012/fresh_head_programs `
+  --backend outputs/offline_renderer_repair_20261012/fresh_d3d11_pass.exe `
+  --out outputs/offline_renderer_repair_20261012/fresh_pass_validation
+```
+
+The installed DHH resource `DHH.Resources.sss` was recovered with read-only Cecil
+resource extraction. Its actual `Hidden/LightingPass`, `Hidden/SSS_Profile`, and
+`Hidden/SeparableSSS` programs are retained (including depth/normal/profile checks,
+sample-count integer, blue-noise/dither and loop branches). The resource SHA is
+`ad7c8f1a5140875b8314091d9583fcfaa095df6fe161c665546224bb7b926c8e`.
+The original `SSS_convolution.OnRenderImage` schedules vertical then horizontal
+blur passes for its actual iteration count, with radius scaled by initial/current
+FOV and viewport diagonal / `2202.9072`. Merely applying a Gaussian RGB blur is not
+that implementation and is not used here.
+
+`Custom/Silhouette` comes from `chara/oo_base.unity3d` path ID
+`6550598071349889345`, through the installed `ChaControl.LoadBody` simple-body
+asset path; it is not an unknown AIT material or silently removed tongue entry.
+
+### Independent read-only native audit helper
+
+`tools/offline_renderer/native_audit/HS2_RenderAudit.csproj` builds a net472 DLL
+with public API:
+
+```csharp
+Dictionary<string, object> HS2_RenderAudit.RenderAudit.Capture()
+```
+
+It reads config `HS2_RenderAudit.dll.json` beside the deployed DLL:
+
+```json
+{"shader_manifests":["ABSOLUTE/head/native_property_request.json",
+                     "ABSOLUTE/sss/native_property_request.json",
+                     "ABSOLUTE/silhouette/native_property_request.json"]}
+```
+
+The helper reads shared materials, requested typed uniforms (retaining unsuccessful
+reads), native ambient/renderer-interpolated SH 3x9, global SH reads, property-block
+presence, reflection-probe blend/texture/HDR descriptors, actual camera component
+order/enabled states, and effect instance fields including current SSS hidden
+state/convolution material. It invokes no setter, render/readback, material clone,
+ABMX Apply or effect property getter. Built-in `GetGlobalVector` values and linear
+color candidates are preserved without claiming they are final engine per-draw
+cbuffer contents. Main-thread deployment/capture belongs to the main task alone.
+
+Still required: effective property blocks, complete native texture mip/HDR/cube
+data, exact per-draw/global color/probe/light/shadow state, pass scheduling and
+shared depth, SSS lighting/profile/convolution integration, and final RGB native
+acceptance. One ABMX Apply agreement is not persistent card/steady-state acceptance.
