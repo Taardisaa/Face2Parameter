@@ -88,3 +88,21 @@ The old card-only gray/textured scripts retain their legacy behavior and are
 not installed-state compatibility entry points. The source-state CPU path can
 already supply real parameter-controlled geometry for **3D reference fitting**;
 the render → MediaPipe loop must wait for the remaining image pipeline repair.
+
+## Normal-frame disagreement retained
+
+An additional CPU audit found that source-mesh identity does not certify
+blendshape-frame identity. The installed bundle has normal-only sparse entries
+that an earlier native `GetBlendShapeFrameVertices` export does not retain.
+For neutral `head.e00_defo`, the bundle has 35 entries and the API export has
+five nonzero normal locations. No empirical pruning threshold was introduced.
+Using actual API frames reduces the skinned-normal direction discrepancy from
+about 0.186 to 0.00133, but neither input proves current normal compatibility.
+The vertex-position gate remains passing; the normal/shader claim remains open.
+
+```powershell
+.venv/Scripts/python.exe tools/offline_renderer/audit_normal_frames.py `
+  --baseline-dir ../HS2Mod/artifacts/chenger_reference_fit_20261012/source3d_v1 `
+  --native-frame-export ../HS2Mod/artifacts/infrastructure_live_20261005/abmx_trace/four_heads/head_2_native_ABMX.json `
+  --out outputs/offline_renderer_repair_20261012/fresh_normal_audit.json
+```

@@ -322,4 +322,4 @@ class CapturedHeadForward:
                 'world_vertices':verts,'head_vertices':(np.c_[verts,np.ones(len(verts))] @ self.anchor_inverse.T)[:,:3],
                 'triangles':np.asarray(mesh['source']['triangles']).reshape(-1,3),'active_blendshapes':active})
         return {'surfaces':surfaces,'branches':branches,'effect_decisions':self.effect_decisions,
-                'modifiers':serialized(modifiers)}
+                'modifiers':serialized(modifiers),'bone_world':world}
