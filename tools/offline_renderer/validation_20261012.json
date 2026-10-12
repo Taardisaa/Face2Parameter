@@ -1,0 +1,803 @@
+{
+  "schema_version": 1,
+  "normalized_gate": 1e-05,
+  "new_native_samples": 0,
+  "source_provenance": [
+    {
+      "path": "E:\\HoneySelect2_ArcticFox\\HoneySelect2_Data\\Managed\\Assembly-CSharp.dll",
+      "sha256": "d7e7e0d51403a0a3a71935a14487f063c6bf6f93f004b98b8f4b8b89047af770"
+    },
+    {
+      "path": "E:\\HoneySelect2_ArcticFox\\BepInEx\\Plugins\\HS2_BepisPlugins\\HS2_SliderUnlocker.dll",
+      "sha256": "fddeeab23f215330a8db239b4ff575d5e49b5e94bb75d50e31acb38ca8bde6f6"
+    },
+    {
+      "path": "E:\\HoneySelect2_ArcticFox\\BepInEx\\Plugins\\HS2ABMX.dll",
+      "sha256": "9224876ce931eb3c40a347ba57abebcca515bde58af2a6b9802b367a5b3563af"
+    },
+    {
+      "path": "E:\\HoneySelect2_ArcticFox\\BepInEx\\Plugins\\HS2_Plugins\\OrangeSpork\\HS2_AdditionalAccessoryControls.dll",
+      "sha256": "cf12fc479fa75a780ccef319447650f9cdca330c4cdb2c95b8a1d28a6807c015"
+    },
+    {
+      "path": "E:\\HoneySelect2_ArcticFox\\BepInEx\\Plugins\\HS2_Plugins\\Mikke\\PushUpHS2_2.1.4.dll",
+      "sha256": "56172b8f9130ebbf5ba7d13562d438dc76bc39e68b653eefb5f42824654b1d45"
+    },
+    {
+      "path": "E:\\HoneySelect2_ArcticFox\\BepInEx\\Plugins\\HS2_Plugins\\OrangeSpork\\HS2_AdvIKPlugin.dll",
+      "sha256": "a8684836c4256c8d515660fb921f7e6c6e8bf0d46fdc87190f88a1a63c28eb24"
+    }
+  ],
+  "asset_provenance": {
+    "bundle_path": "E:\\HoneySelect2_ArcticFox\\abdata\\chara\\38\\fo_head_38.unity3d",
+    "prefab": "p_cf_head_02",
+    "bundle_sha256": "66ba2ef7f95fa4d79ad87b3d1e11e90e8f1f78ed79e0dc7cb1e4e2969f100edf",
+    "recovered_meshes": [
+      {
+        "renderer_path": "/CharaCustom[0]/CustomControl[0]/chaF_001[20]/BodyTop[0]/p_cf_anim[0]/cf_J_Root[0]/cf_N_height[0]/cf_J_Hips[0]/cf_J_Spine01[1]/cf_J_Spine02[1]/cf_J_Spine03[1]/cf_J_Neck[1]/cf_J_Head[0]/cf_J_Head_s[0]/p_cf_head_bone[7]/ct_head[1]/n_head_cf2_c1[0]/o_eyelashes[2]",
+        "asset_path_id": -5877487127758475770,
+        "selection": "float32-exact source positions, triangles, bone indices, weights, bindposes"
+      },
+      {
+        "renderer_path": "/CharaCustom[0]/CustomControl[0]/chaF_001[20]/BodyTop[0]/p_cf_anim[0]/cf_J_Root[0]/cf_N_height[0]/cf_J_Hips[0]/cf_J_Spine01[1]/cf_J_Spine02[1]/cf_J_Spine03[1]/cf_J_Neck[1]/cf_J_Head[0]/cf_J_Head_s[0]/p_cf_head_bone[7]/ct_head[1]/n_head_cf2_c1[0]/o_head[4]",
+        "asset_path_id": 1210433472884616197,
+        "selection": "float32-exact source positions, triangles, bone indices, weights, bindposes"
+      },
+      {
+        "renderer_path": "/CharaCustom[0]/CustomControl[0]/chaF_001[20]/BodyTop[0]/p_cf_anim[0]/cf_J_Root[0]/cf_N_height[0]/cf_J_Hips[0]/cf_J_Spine01[1]/cf_J_Spine02[1]/cf_J_Spine03[1]/cf_J_Neck[1]/cf_J_Head[0]/cf_J_Head_s[0]/p_cf_head_bone[7]/ct_head[1]/n_head_cf2_c1[0]/o_namida[5]",
+        "asset_path_id": -4092391867061588781,
+        "selection": "float32-exact source positions, triangles, bone indices, weights, bindposes"
+      },
+      {
+        "renderer_path": "/CharaCustom[0]/CustomControl[0]/chaF_001[20]/BodyTop[0]/p_cf_anim[0]/cf_J_Root[0]/cf_N_height[0]/cf_J_Hips[0]/cf_J_Spine01[1]/cf_J_Spine02[1]/cf_J_Spine03[1]/cf_J_Neck[1]/cf_J_Head[0]/cf_J_Head_s[0]/p_cf_head_bone[7]/ct_head[1]/n_head_cf2_c1[0]/o_tang[6]",
+        "asset_path_id": 6512390401580986181,
+        "selection": "float32-exact source positions, triangles, bone indices, weights, bindposes"
+      },
+      {
+        "renderer_path": "/CharaCustom[0]/CustomControl[0]/chaF_001[20]/BodyTop[0]/p_cf_anim[0]/cf_J_Root[0]/cf_N_height[0]/cf_J_Hips[0]/cf_J_Spine01[1]/cf_J_Spine02[1]/cf_J_Spine03[1]/cf_J_Neck[1]/cf_J_Head[0]/cf_J_Head_s[0]/p_cf_head_bone[7]/ct_head[1]/n_head_cf2_c1[0]/o_tooth[7]",
+        "asset_path_id": -3688411053301717917,
+        "selection": "float32-exact source positions, triangles, bone indices, weights, bindposes"
+      }
+    ]
+  },
+  "baseline_source_cases": [
+    {
+      "name": "captured_modifiers",
+      "surfaces": [
+        {
+          "renderer_path": "/CharaCustom[0]/CustomControl[0]/chaF_001[20]/BodyTop[0]/p_cf_anim[0]/cf_J_Root[0]/cf_N_height[0]/cf_J_Hips[0]/cf_J_Spine01[1]/cf_J_Spine02[1]/cf_J_Spine03[1]/cf_J_Neck[1]/cf_J_Head[0]/cf_J_Head_s[0]/p_cf_head_bone[7]/ct_head[1]/n_head_cf2_c1[0]/o_eyebase_L[0]",
+          "mesh_name": "o_eyebase_L",
+          "error": {
+            "vertex_count": 148,
+            "max_l2": 2.5770549433889812e-06,
+            "rms_l2": 1.6871983275509046e-06,
+            "max_abs_component": 2.5698580496946732e-06,
+            "reference_bbox_diagonal": 0.4256406778006491,
+            "max_normalized": 6.054531622083257e-06,
+            "rms_normalized": 3.963902924572242e-06
+          }
+        },
+        {
+          "renderer_path": "/CharaCustom[0]/CustomControl[0]/chaF_001[20]/BodyTop[0]/p_cf_anim[0]/cf_J_Root[0]/cf_N_height[0]/cf_J_Hips[0]/cf_J_Spine01[1]/cf_J_Spine02[1]/cf_J_Spine03[1]/cf_J_Neck[1]/cf_J_Head[0]/cf_J_Head_s[0]/p_cf_head_bone[7]/ct_head[1]/n_head_cf2_c1[0]/o_eyebase_R[1]",
+          "mesh_name": "o_eyebase_R",
+          "error": {
+            "vertex_count": 148,
+            "max_l2": 3.1393152933956237e-06,
+            "rms_l2": 2.2726516619039753e-06,
+            "max_abs_component": 3.1368273250009793e-06,
+            "reference_bbox_diagonal": 0.4271046236955134,
+            "max_normalized": 7.350225493305989e-06,
+            "rms_normalized": 5.321065462227748e-06
+          }
+        },
+        {
+          "renderer_path": "/CharaCustom[0]/CustomControl[0]/chaF_001[20]/BodyTop[0]/p_cf_anim[0]/cf_J_Root[0]/cf_N_height[0]/cf_J_Hips[0]/cf_J_Spine01[1]/cf_J_Spine02[1]/cf_J_Spine03[1]/cf_J_Neck[1]/cf_J_Head[0]/cf_J_Head_s[0]/p_cf_head_bone[7]/ct_head[1]/n_head_cf2_c1[0]/o_eyelashes[2]",
+          "mesh_name": "o_eyelashes",
+          "error": {
+            "vertex_count": 398,
+            "max_l2": 3.7480765226567346e-06,
+            "rms_l2": 1.5494139268302022e-06,
+            "max_abs_component": 3.71960984768549e-06,
+            "reference_bbox_diagonal": 1.0225561445846127,
+            "max_normalized": 3.665399247274872e-06,
+            "rms_normalized": 1.515236043552026e-06
+          }
+        },
+        {
+          "renderer_path": "/CharaCustom[0]/CustomControl[0]/chaF_001[20]/BodyTop[0]/p_cf_anim[0]/cf_J_Root[0]/cf_N_height[0]/cf_J_Hips[0]/cf_J_Spine01[1]/cf_J_Spine02[1]/cf_J_Spine03[1]/cf_J_Neck[1]/cf_J_Head[0]/cf_J_Head_s[0]/p_cf_head_bone[7]/ct_head[1]/n_head_cf2_c1[0]/o_eyeshadow[3]",
+          "mesh_name": "o_eyeshadow",
+          "error": {
+            "vertex_count": 296,
+            "max_l2": 3.5827590407918707e-06,
+            "rms_l2": 1.6282061504410393e-06,
+            "max_abs_component": 3.5742289508644554e-06,
+            "reference_bbox_diagonal": 0.8956639113714034,
+            "max_normalized": 4.0001154398485235e-06,
+            "rms_normalized": 1.817876247741184e-06
+          }
+        },
+        {
+          "renderer_path": "/CharaCustom[0]/CustomControl[0]/chaF_001[20]/BodyTop[0]/p_cf_anim[0]/cf_J_Root[0]/cf_N_height[0]/cf_J_Hips[0]/cf_J_Spine01[1]/cf_J_Spine02[1]/cf_J_Spine03[1]/cf_J_Neck[1]/cf_J_Head[0]/cf_J_Head_s[0]/p_cf_head_bone[7]/ct_head[1]/n_head_cf2_c1[0]/o_head[4]",
+          "mesh_name": "o_head",
+          "error": {
+            "vertex_count": 4439,
+            "max_l2": 4.296353150340161e-06,
+            "rms_l2": 1.6241766867683705e-06,
+            "max_abs_component": 4.292132188166153e-06,
+            "reference_bbox_diagonal": 3.203810475735259,
+            "max_normalized": 1.3410135158991167e-06,
+            "rms_normalized": 5.069515500587249e-07
+          }
+        },
+        {
+          "renderer_path": "/CharaCustom[0]/CustomControl[0]/chaF_001[20]/BodyTop[0]/p_cf_anim[0]/cf_J_Root[0]/cf_N_height[0]/cf_J_Hips[0]/cf_J_Spine01[1]/cf_J_Spine02[1]/cf_J_Spine03[1]/cf_J_Neck[1]/cf_J_Head[0]/cf_J_Head_s[0]/p_cf_head_bone[7]/ct_head[1]/n_head_cf2_c1[0]/o_namida[5]",
+          "mesh_name": "o_namida",
+          "error": {
+            "vertex_count": 838,
+            "max_l2": 4.27954809595486e-06,
+            "rms_l2": 1.87374439551206e-06,
+            "max_abs_component": 4.2729858407697385e-06,
+            "reference_bbox_diagonal": 1.4901127937650573,
+            "max_normalized": 2.8719625211335556e-06,
+            "rms_normalized": 1.257451384453712e-06
+          }
+        },
+        {
+          "renderer_path": "/CharaCustom[0]/CustomControl[0]/chaF_001[20]/BodyTop[0]/p_cf_anim[0]/cf_J_Root[0]/cf_N_height[0]/cf_J_Hips[0]/cf_J_Spine01[1]/cf_J_Spine02[1]/cf_J_Spine03[1]/cf_J_Neck[1]/cf_J_Head[0]/cf_J_Head_s[0]/p_cf_head_bone[7]/ct_head[1]/n_head_cf2_c1[0]/o_tang[6]",
+          "mesh_name": "o_tang",
+          "error": {
+            "vertex_count": 653,
+            "max_l2": 2.159280314691024e-06,
+            "rms_l2": 2.121096275772676e-06,
+            "max_abs_component": 2.150459532418436e-06,
+            "reference_bbox_diagonal": 0.7698338898711711,
+            "max_normalized": 2.8048652353462533e-06,
+            "rms_normalized": 2.755264874254411e-06
+          }
+        },
+        {
+          "renderer_path": "/CharaCustom[0]/CustomControl[0]/chaF_001[20]/BodyTop[0]/p_cf_anim[0]/cf_J_Root[0]/cf_N_height[0]/cf_J_Hips[0]/cf_J_Spine01[1]/cf_J_Spine02[1]/cf_J_Spine03[1]/cf_J_Neck[1]/cf_J_Head[0]/cf_J_Head_s[0]/p_cf_head_bone[7]/ct_head[1]/n_head_cf2_c1[0]/o_tooth[7]",
+          "mesh_name": "o_tooth",
+          "error": {
+            "vertex_count": 564,
+            "max_l2": 2.1713891193202146e-06,
+            "rms_l2": 2.118298371414117e-06,
+            "max_abs_component": 2.161683133133918e-06,
+            "reference_bbox_diagonal": 0.5974349756192856,
+            "max_normalized": 3.634519584444163e-06,
+            "rms_normalized": 3.545655105341538e-06
+          }
+        },
+        {
+          "renderer_path": "/CharaCustom[0]/CustomControl[0]/chaF_001[20]/BodyTop[0]/p_cf_body_00[1]/n_o_root[0]/n_body_base[0]/N_mnpbset[1]/N_tang[1]/o_tang[0]",
+          "mesh_name": "o_tang",
+          "error": {
+            "vertex_count": 653,
+            "max_l2": 3.075551677130343e-06,
+            "rms_l2": 1.0117290370070865e-06,
+            "max_abs_component": 3.0740388436700794e-06,
+            "reference_bbox_diagonal": 0.7607618846886711,
+            "max_normalized": 4.042725771400811e-06,
+            "rms_normalized": 1.3298892299541523e-06
+          }
+        },
+        {
+          "renderer_path": "/CharaCustom[0]/CustomControl[0]/chaF_001[20]/BodyTop[0]/p_cf_body_silhouette[2]/n_o_root[0]/n_body_base[0]/o_silhouette_cf[0]/N_mnpbset[0]/N_tang[2]/o_tang[0]",
+          "mesh_name": "o_tang",
+          "error": {
+            "vertex_count": 653,
+            "max_l2": 3.428412790713525e-06,
+            "rms_l2": 1.3687499500568074e-06,
+            "max_abs_component": 3.4273305706926382e-06,
+            "reference_bbox_diagonal": 0.7607543071832126,
+            "max_normalized": 4.506596621723576e-06,
+            "rms_normalized": 1.7992010523407674e-06
+          }
+        }
+      ]
+    },
+    {
+      "name": "native59_refresh",
+      "surfaces": [
+        {
+          "renderer_path": "/CharaCustom[0]/CustomControl[0]/chaF_001[20]/BodyTop[0]/p_cf_anim[0]/cf_J_Root[0]/cf_N_height[0]/cf_J_Hips[0]/cf_J_Spine01[1]/cf_J_Spine02[1]/cf_J_Spine03[1]/cf_J_Neck[1]/cf_J_Head[0]/cf_J_Head_s[0]/p_cf_head_bone[7]/ct_head[1]/n_head_cf2_c1[0]/o_eyebase_L[0]",
+          "mesh_name": "o_eyebase_L",
+          "error": {
+            "vertex_count": 148,
+            "max_l2": 3.0216142795387195e-06,
+            "rms_l2": 2.122485837173679e-06,
+            "max_abs_component": 3.0148690253195554e-06,
+            "reference_bbox_diagonal": 0.4256406778006491,
+            "max_normalized": 7.098979108744647e-06,
+            "rms_normalized": 4.986567186531348e-06
+          }
+        },
+        {
+          "renderer_path": "/CharaCustom[0]/CustomControl[0]/chaF_001[20]/BodyTop[0]/p_cf_anim[0]/cf_J_Root[0]/cf_N_height[0]/cf_J_Hips[0]/cf_J_Spine01[1]/cf_J_Spine02[1]/cf_J_Spine03[1]/cf_J_Neck[1]/cf_J_Head[0]/cf_J_Head_s[0]/p_cf_head_bone[7]/ct_head[1]/n_head_cf2_c1[0]/o_eyebase_R[1]",
+          "mesh_name": "o_eyebase_R",
+          "error": {
+            "vertex_count": 148,
+            "max_l2": 3.5829653430080544e-06,
+            "rms_l2": 2.7153942784448215e-06,
+            "max_abs_component": 3.5806992935150106e-06,
+            "reference_bbox_diagonal": 0.4271046236955134,
+            "max_normalized": 8.388964071628459e-06,
+            "rms_normalized": 6.357679425125235e-06
+          }
+        },
+        {
+          "renderer_path": "/CharaCustom[0]/CustomControl[0]/chaF_001[20]/BodyTop[0]/p_cf_anim[0]/cf_J_Root[0]/cf_N_height[0]/cf_J_Hips[0]/cf_J_Spine01[1]/cf_J_Spine02[1]/cf_J_Spine03[1]/cf_J_Neck[1]/cf_J_Head[0]/cf_J_Head_s[0]/p_cf_head_bone[7]/ct_head[1]/n_head_cf2_c1[0]/o_eyelashes[2]",
+          "mesh_name": "o_eyelashes",
+          "error": {
+            "vertex_count": 398,
+            "max_l2": 4.2435475905793275e-06,
+            "rms_l2": 1.9056703938747503e-06,
+            "max_abs_component": 4.220417562983414e-06,
+            "reference_bbox_diagonal": 1.0225561445846127,
+            "max_normalized": 4.149940923100276e-06,
+            "rms_normalized": 1.8636339960079944e-06
+          }
+        },
+        {
+          "renderer_path": "/CharaCustom[0]/CustomControl[0]/chaF_001[20]/BodyTop[0]/p_cf_anim[0]/cf_J_Root[0]/cf_N_height[0]/cf_J_Hips[0]/cf_J_Spine01[1]/cf_J_Spine02[1]/cf_J_Spine03[1]/cf_J_Neck[1]/cf_J_Head[0]/cf_J_Head_s[0]/p_cf_head_bone[7]/ct_head[1]/n_head_cf2_c1[0]/o_eyeshadow[3]",
+          "mesh_name": "o_eyeshadow",
+          "error": {
+            "vertex_count": 296,
+            "max_l2": 4.01913253540785e-06,
+            "rms_l2": 2.004926907327666e-06,
+            "max_abs_component": 4.013661022039816e-06,
+            "reference_bbox_diagonal": 0.8956639113714034,
+            "max_normalized": 4.487322180095345e-06,
+            "rms_normalized": 2.2384812895473315e-06
+          }
+        },
+        {
+          "renderer_path": "/CharaCustom[0]/CustomControl[0]/chaF_001[20]/BodyTop[0]/p_cf_anim[0]/cf_J_Root[0]/cf_N_height[0]/cf_J_Hips[0]/cf_J_Spine01[1]/cf_J_Spine02[1]/cf_J_Spine03[1]/cf_J_Neck[1]/cf_J_Head[0]/cf_J_Head_s[0]/p_cf_head_bone[7]/ct_head[1]/n_head_cf2_c1[0]/o_head[4]",
+          "mesh_name": "o_head",
+          "error": {
+            "vertex_count": 4439,
+            "max_l2": 4.719609053217134e-06,
+            "rms_l2": 1.951760275832614e-06,
+            "max_abs_component": 4.717504846152298e-06,
+            "reference_bbox_diagonal": 3.203810475735259,
+            "max_normalized": 1.473123672252806e-06,
+            "rms_normalized": 6.091996672757912e-07
+          }
+        },
+        {
+          "renderer_path": "/CharaCustom[0]/CustomControl[0]/chaF_001[20]/BodyTop[0]/p_cf_anim[0]/cf_J_Root[0]/cf_N_height[0]/cf_J_Hips[0]/cf_J_Spine01[1]/cf_J_Spine02[1]/cf_J_Spine03[1]/cf_J_Neck[1]/cf_J_Head[0]/cf_J_Head_s[0]/p_cf_head_bone[7]/ct_head[1]/n_head_cf2_c1[0]/o_namida[5]",
+          "mesh_name": "o_namida",
+          "error": {
+            "vertex_count": 838,
+            "max_l2": 4.700936054730036e-06,
+            "rms_l2": 2.247351450347998e-06,
+            "max_abs_component": 4.696855034735936e-06,
+            "reference_bbox_diagonal": 1.4901127937650573,
+            "max_normalized": 3.1547518244254617e-06,
+            "rms_normalized": 1.5081753943402037e-06
+          }
+        },
+        {
+          "renderer_path": "/CharaCustom[0]/CustomControl[0]/chaF_001[20]/BodyTop[0]/p_cf_anim[0]/cf_J_Root[0]/cf_N_height[0]/cf_J_Hips[0]/cf_J_Spine01[1]/cf_J_Spine02[1]/cf_J_Spine03[1]/cf_J_Neck[1]/cf_J_Head[0]/cf_J_Head_s[0]/p_cf_head_bone[7]/ct_head[1]/n_head_cf2_c1[0]/o_tang[6]",
+          "mesh_name": "o_tang",
+          "error": {
+            "vertex_count": 653,
+            "max_l2": 2.567978226481909e-06,
+            "rms_l2": 2.532878224736672e-06,
+            "max_abs_component": 2.5611498976896296e-06,
+            "reference_bbox_diagonal": 0.7698338898711711,
+            "max_normalized": 3.335756271929846e-06,
+            "rms_normalized": 3.2901620181472392e-06
+          }
+        },
+        {
+          "renderer_path": "/CharaCustom[0]/CustomControl[0]/chaF_001[20]/BodyTop[0]/p_cf_anim[0]/cf_J_Root[0]/cf_N_height[0]/cf_J_Hips[0]/cf_J_Spine01[1]/cf_J_Spine02[1]/cf_J_Spine03[1]/cf_J_Neck[1]/cf_J_Head[0]/cf_J_Head_s[0]/p_cf_head_bone[7]/ct_head[1]/n_head_cf2_c1[0]/o_tooth[7]",
+          "mesh_name": "o_tooth",
+          "error": {
+            "vertex_count": 564,
+            "max_l2": 2.579815184543977e-06,
+            "rms_l2": 2.5301983139086644e-06,
+            "max_abs_component": 2.5727976000478048e-06,
+            "reference_bbox_diagonal": 0.5974349756192856,
+            "max_normalized": 4.318152250577241e-06,
+            "rms_normalized": 4.235102424805188e-06
+          }
+        },
+        {
+          "renderer_path": "/CharaCustom[0]/CustomControl[0]/chaF_001[20]/BodyTop[0]/p_cf_body_00[1]/n_o_root[0]/n_body_base[0]/N_mnpbset[1]/N_tang[1]/o_tang[0]",
+          "mesh_name": "o_tang",
+          "error": {
+            "vertex_count": 653,
+            "max_l2": 3.4911790912158255e-06,
+            "rms_l2": 1.2079246790346627e-06,
+            "max_abs_component": 3.4900225569234333e-06,
+            "reference_bbox_diagonal": 0.7607618846886711,
+            "max_normalized": 4.589056262518371e-06,
+            "rms_normalized": 1.5877828573509374e-06
+          }
+        },
+        {
+          "renderer_path": "/CharaCustom[0]/CustomControl[0]/chaF_001[20]/BodyTop[0]/p_cf_body_silhouette[2]/n_o_root[0]/n_body_base[0]/o_silhouette_cf[0]/N_mnpbset[0]/N_tang[2]/o_tang[0]",
+          "mesh_name": "o_tang",
+          "error": {
+            "vertex_count": 653,
+            "max_l2": 3.843964480964313e-06,
+            "rms_l2": 1.6078479182043482e-06,
+            "max_abs_component": 3.843134289260169e-06,
+            "reference_bbox_diagonal": 0.7607543071832126,
+            "max_normalized": 5.0528330167423825e-06,
+            "rms_normalized": 2.1134917055647114e-06
+          }
+        }
+      ]
+    }
+  ],
+  "existing_parameter_cases": [
+    {
+      "name": "five_jaw_xyz_scale_length_rotation",
+      "same_native": true,
+      "same_ordered_private_modifiers": true,
+      "surfaces": [
+        {
+          "renderer_path": "/CharaCustom[0]/CustomControl[0]/chaF_001[20]/BodyTop[0]/p_cf_anim[0]/cf_J_Root[0]/cf_N_height[0]/cf_J_Hips[0]/cf_J_Spine01[1]/cf_J_Spine02[1]/cf_J_Spine03[1]/cf_J_Neck[1]/cf_J_Head[0]/cf_J_Head_s[0]/p_cf_head_bone[7]/ct_head[1]/n_head_cf2_c1[0]/o_eyebase_L[0]",
+          "mesh_name": "o_eyebase_L",
+          "reference_pose_difference": {
+            "vertex_count": 148,
+            "max_l2": 0.005093245517660919,
+            "rms_l2": 0.004145634454339986,
+            "max_abs_component": 0.005088764109137389,
+            "reference_bbox_diagonal": 0.42708240848217616,
+            "max_normalized": 0.011925673866460554,
+            "rms_normalized": 0.009706872425566084
+          },
+          "candidate_difference": {
+            "vertex_count": 148,
+            "max_l2": 0.005093245517660919,
+            "rms_l2": 0.004145634454339986,
+            "max_abs_component": 0.005088764109137389,
+            "reference_bbox_diagonal": 0.42708240848217616,
+            "max_normalized": 0.011925673866460554,
+            "rms_normalized": 0.009706872425566084
+          }
+        },
+        {
+          "renderer_path": "/CharaCustom[0]/CustomControl[0]/chaF_001[20]/BodyTop[0]/p_cf_anim[0]/cf_J_Root[0]/cf_N_height[0]/cf_J_Hips[0]/cf_J_Spine01[1]/cf_J_Spine02[1]/cf_J_Spine03[1]/cf_J_Neck[1]/cf_J_Head[0]/cf_J_Head_s[0]/p_cf_head_bone[7]/ct_head[1]/n_head_cf2_c1[0]/o_eyebase_R[1]",
+          "mesh_name": "o_eyebase_R",
+          "reference_pose_difference": {
+            "vertex_count": 148,
+            "max_l2": 0.002664083425288668,
+            "rms_l2": 0.0020835997260564383,
+            "max_abs_component": 0.0026639469946138084,
+            "reference_bbox_diagonal": 0.42694272605497346,
+            "max_normalized": 0.006239908218850035,
+            "rms_normalized": 0.00488027924801359
+          },
+          "candidate_difference": {
+            "vertex_count": 148,
+            "max_l2": 0.002664083425288668,
+            "rms_l2": 0.0020835997260564383,
+            "max_abs_component": 0.0026639469946138084,
+            "reference_bbox_diagonal": 0.42694272605497346,
+            "max_normalized": 0.006239908218850035,
+            "rms_normalized": 0.00488027924801359
+          }
+        },
+        {
+          "renderer_path": "/CharaCustom[0]/CustomControl[0]/chaF_001[20]/BodyTop[0]/p_cf_anim[0]/cf_J_Root[0]/cf_N_height[0]/cf_J_Hips[0]/cf_J_Spine01[1]/cf_J_Spine02[1]/cf_J_Spine03[1]/cf_J_Neck[1]/cf_J_Head[0]/cf_J_Head_s[0]/p_cf_head_bone[7]/ct_head[1]/n_head_cf2_c1[0]/o_eyelashes[2]",
+          "mesh_name": "o_eyelashes",
+          "reference_pose_difference": {
+            "vertex_count": 398,
+            "max_l2": 2.61089869034991e-06,
+            "rms_l2": 9.919825982606297e-07,
+            "max_abs_component": 2.609031158395947e-06,
+            "reference_bbox_diagonal": 1.0225565171233515,
+            "max_normalized": 2.553305021902233e-06,
+            "rms_normalized": 9.701005095065726e-07
+          },
+          "candidate_difference": {
+            "vertex_count": 398,
+            "max_l2": 2.61089869034991e-06,
+            "rms_l2": 9.919825982606297e-07,
+            "max_abs_component": 2.609031158395947e-06,
+            "reference_bbox_diagonal": 1.0225565171233515,
+            "max_normalized": 2.553305021902233e-06,
+            "rms_normalized": 9.701005095065726e-07
+          }
+        },
+        {
+          "renderer_path": "/CharaCustom[0]/CustomControl[0]/chaF_001[20]/BodyTop[0]/p_cf_anim[0]/cf_J_Root[0]/cf_N_height[0]/cf_J_Hips[0]/cf_J_Spine01[1]/cf_J_Spine02[1]/cf_J_Spine03[1]/cf_J_Neck[1]/cf_J_Head[0]/cf_J_Head_s[0]/p_cf_head_bone[7]/ct_head[1]/n_head_cf2_c1[0]/o_eyeshadow[3]",
+          "mesh_name": "o_eyeshadow",
+          "reference_pose_difference": {
+            "vertex_count": 296,
+            "max_l2": 2.9603914018436597e-06,
+            "rms_l2": 1.0733326107988614e-06,
+            "max_abs_component": 2.957362212674397e-06,
+            "reference_bbox_diagonal": 0.8956643277282781,
+            "max_normalized": 3.305246519477069e-06,
+            "rms_normalized": 1.1983648087461662e-06
+          },
+          "candidate_difference": {
+            "vertex_count": 296,
+            "max_l2": 2.9603914018436597e-06,
+            "rms_l2": 1.0733326107988614e-06,
+            "max_abs_component": 2.957362212674397e-06,
+            "reference_bbox_diagonal": 0.8956643277282781,
+            "max_normalized": 3.305246519477069e-06,
+            "rms_normalized": 1.1983648087461662e-06
+          }
+        },
+        {
+          "renderer_path": "/CharaCustom[0]/CustomControl[0]/chaF_001[20]/BodyTop[0]/p_cf_anim[0]/cf_J_Root[0]/cf_N_height[0]/cf_J_Hips[0]/cf_J_Spine01[1]/cf_J_Spine02[1]/cf_J_Spine03[1]/cf_J_Neck[1]/cf_J_Head[0]/cf_J_Head_s[0]/p_cf_head_bone[7]/ct_head[1]/n_head_cf2_c1[0]/o_head[4]",
+          "mesh_name": "o_head",
+          "reference_pose_difference": {
+            "vertex_count": 4439,
+            "max_l2": 3.6780518379775197e-06,
+            "rms_l2": 1.0216297851377543e-06,
+            "max_abs_component": 3.676598706758849e-06,
+            "reference_bbox_diagonal": 3.2038109213110184,
+            "max_normalized": 1.1480240027624475e-06,
+            "rms_normalized": 3.1887955008271755e-07
+          },
+          "candidate_difference": {
+            "vertex_count": 4439,
+            "max_l2": 3.7122135472040675e-06,
+            "rms_l2": 1.0474947629135233e-06,
+            "max_abs_component": 3.709584627142881e-06,
+            "reference_bbox_diagonal": 3.2038109213110184,
+            "max_normalized": 1.1586868383871442e-06,
+            "rms_normalized": 3.269527411701569e-07
+          }
+        },
+        {
+          "renderer_path": "/CharaCustom[0]/CustomControl[0]/chaF_001[20]/BodyTop[0]/p_cf_anim[0]/cf_J_Root[0]/cf_N_height[0]/cf_J_Hips[0]/cf_J_Spine01[1]/cf_J_Spine02[1]/cf_J_Spine03[1]/cf_J_Neck[1]/cf_J_Head[0]/cf_J_Head_s[0]/p_cf_head_bone[7]/ct_head[1]/n_head_cf2_c1[0]/o_namida[5]",
+          "mesh_name": "o_namida",
+          "reference_pose_difference": {
+            "vertex_count": 838,
+            "max_l2": 3.0528863618763437e-06,
+            "rms_l2": 9.683460624998618e-07,
+            "max_abs_component": 3.0493269369546994e-06,
+            "reference_bbox_diagonal": 1.490113077015134,
+            "max_normalized": 2.0487615396219607e-06,
+            "rms_normalized": 6.498473689255644e-07
+          },
+          "candidate_difference": {
+            "vertex_count": 838,
+            "max_l2": 3.0528863618763437e-06,
+            "rms_l2": 9.642937392316852e-07,
+            "max_abs_component": 3.0493269369546994e-06,
+            "reference_bbox_diagonal": 1.4865320775811908,
+            "max_normalized": 2.0536969285209403e-06,
+            "rms_normalized": 6.486868018352721e-07
+          }
+        },
+        {
+          "renderer_path": "/CharaCustom[0]/CustomControl[0]/chaF_001[20]/BodyTop[0]/p_cf_anim[0]/cf_J_Root[0]/cf_N_height[0]/cf_J_Hips[0]/cf_J_Spine01[1]/cf_J_Spine02[1]/cf_J_Spine03[1]/cf_J_Neck[1]/cf_J_Head[0]/cf_J_Head_s[0]/p_cf_head_bone[7]/ct_head[1]/n_head_cf2_c1[0]/o_tang[6]",
+          "mesh_name": "o_tang",
+          "reference_pose_difference": {
+            "vertex_count": 653,
+            "max_l2": 4.2298782422620184e-07,
+            "rms_l2": 3.49127708914903e-07,
+            "max_abs_component": 3.6928539337566235e-07,
+            "reference_bbox_diagonal": 0.7698340453969778,
+            "max_normalized": 5.494532578227054e-07,
+            "rms_normalized": 4.535103520069309e-07
+          },
+          "candidate_difference": {
+            "vertex_count": 653,
+            "max_l2": 4.2298782422620184e-07,
+            "rms_l2": 3.49127708914903e-07,
+            "max_abs_component": 3.6928539337566235e-07,
+            "reference_bbox_diagonal": 0.7698340453969778,
+            "max_normalized": 5.494532578227054e-07,
+            "rms_normalized": 4.535103520069309e-07
+          }
+        },
+        {
+          "renderer_path": "/CharaCustom[0]/CustomControl[0]/chaF_001[20]/BodyTop[0]/p_cf_anim[0]/cf_J_Root[0]/cf_N_height[0]/cf_J_Hips[0]/cf_J_Spine01[1]/cf_J_Spine02[1]/cf_J_Spine03[1]/cf_J_Neck[1]/cf_J_Head[0]/cf_J_Head_s[0]/p_cf_head_bone[7]/ct_head[1]/n_head_cf2_c1[0]/o_tooth[7]",
+          "mesh_name": "o_tooth",
+          "reference_pose_difference": {
+            "vertex_count": 564,
+            "max_l2": 4.310079132914628e-07,
+            "rms_l2": 3.298425370772077e-07,
+            "max_abs_component": 3.8587525741373696e-07,
+            "reference_bbox_diagonal": 0.5974350068040035,
+            "max_normalized": 7.214306299142941e-07,
+            "rms_normalized": 5.520977735163365e-07
+          },
+          "candidate_difference": {
+            "vertex_count": 564,
+            "max_l2": 4.310079132914628e-07,
+            "rms_l2": 3.298425370772077e-07,
+            "max_abs_component": 3.8587525741373696e-07,
+            "reference_bbox_diagonal": 0.5974350068040035,
+            "max_normalized": 7.214306299142941e-07,
+            "rms_normalized": 5.520977735163365e-07
+          }
+        },
+        {
+          "renderer_path": "/CharaCustom[0]/CustomControl[0]/chaF_001[20]/BodyTop[0]/p_cf_body_00[1]/n_o_root[0]/n_body_base[0]/N_mnpbset[1]/N_tang[1]/o_tang[0]",
+          "mesh_name": "o_tang",
+          "reference_pose_difference": {
+            "vertex_count": 653,
+            "max_l2": 3.2142406579819328e-06,
+            "rms_l2": 1.0121774757305803e-06,
+            "max_abs_component": 3.1997346843191943e-06,
+            "reference_bbox_diagonal": 0.7607615104629878,
+            "max_normalized": 4.225030596021867e-06,
+            "rms_normalized": 1.3304793444591914e-06
+          },
+          "candidate_difference": {
+            "vertex_count": 653,
+            "max_l2": 3.2142406579819328e-06,
+            "rms_l2": 1.0121774757305803e-06,
+            "max_abs_component": 3.1997346843191943e-06,
+            "reference_bbox_diagonal": 0.7607615104629878,
+            "max_normalized": 4.225030596021867e-06,
+            "rms_normalized": 1.3304793444591914e-06
+          }
+        },
+        {
+          "renderer_path": "/CharaCustom[0]/CustomControl[0]/chaF_001[20]/BodyTop[0]/p_cf_body_silhouette[2]/n_o_root[0]/n_body_base[0]/o_silhouette_cf[0]/N_mnpbset[0]/N_tang[2]/o_tang[0]",
+          "mesh_name": "o_tang",
+          "reference_pose_difference": {
+            "vertex_count": 653,
+            "max_l2": 3.2744898119945714e-06,
+            "rms_l2": 1.1678682113136356e-06,
+            "max_abs_component": 3.264902774486461e-06,
+            "reference_bbox_diagonal": 0.7607537451252835,
+            "max_normalized": 4.304270380496539e-06,
+            "rms_normalized": 1.535146187313619e-06
+          },
+          "candidate_difference": {
+            "vertex_count": 653,
+            "max_l2": 3.2744898119945714e-06,
+            "rms_l2": 1.1678682113136356e-06,
+            "max_abs_component": 3.264902774486461e-06,
+            "reference_bbox_diagonal": 0.7607537451252835,
+            "max_normalized": 4.304270380496539e-06,
+            "rms_normalized": 1.535146187313619e-06
+          }
+        }
+      ],
+      "scope": "Cross-capture comparison. Gaze is retained from baseline capture; source acceptance from another pose/time cannot certify eye surfaces."
+    },
+    {
+      "name": "native_angle_plus_seven_bone_update",
+      "same_native": true,
+      "same_ordered_private_modifiers": true,
+      "surfaces": [
+        {
+          "renderer_path": "/CharaCustom[0]/CustomControl[0]/chaF_001[20]/BodyTop[0]/p_cf_anim[0]/cf_J_Root[0]/cf_N_height[0]/cf_J_Hips[0]/cf_J_Spine01[1]/cf_J_Spine02[1]/cf_J_Spine03[1]/cf_J_Neck[1]/cf_J_Head[0]/cf_J_Head_s[0]/p_cf_head_bone[7]/ct_head[1]/n_head_cf2_c1[0]/o_eyebase_L[0]",
+          "mesh_name": "o_eyebase_L",
+          "reference_pose_difference": {
+            "vertex_count": 148,
+            "max_l2": 0.00509338040529409,
+            "rms_l2": 0.004145464171601597,
+            "max_abs_component": 0.005088883109137465,
+            "reference_bbox_diagonal": 0.4270825384729732,
+            "max_normalized": 0.011925986071697967,
+            "rms_normalized": 0.009706470759548348
+          },
+          "candidate_difference": {
+            "vertex_count": 148,
+            "max_l2": 0.005093364500828323,
+            "rms_l2": 0.004145369952429317,
+            "max_abs_component": 0.005088858170855692,
+            "reference_bbox_diagonal": 0.4270825384729732,
+            "max_normalized": 0.011925948831903935,
+            "rms_normalized": 0.00970625014839291
+          }
+        },
+        {
+          "renderer_path": "/CharaCustom[0]/CustomControl[0]/chaF_001[20]/BodyTop[0]/p_cf_anim[0]/cf_J_Root[0]/cf_N_height[0]/cf_J_Hips[0]/cf_J_Spine01[1]/cf_J_Spine02[1]/cf_J_Spine03[1]/cf_J_Neck[1]/cf_J_Head[0]/cf_J_Head_s[0]/p_cf_head_bone[7]/ct_head[1]/n_head_cf2_c1[0]/o_eyebase_R[1]",
+          "mesh_name": "o_eyebase_R",
+          "reference_pose_difference": {
+            "vertex_count": 148,
+            "max_l2": 0.0026642669035642614,
+            "rms_l2": 0.002082475209600856,
+            "max_abs_component": 0.0026641129946138875,
+            "reference_bbox_diagonal": 0.42694276870554987,
+            "max_normalized": 0.006240337344609599,
+            "rms_normalized": 0.004877644879464112
+          },
+          "candidate_difference": {
+            "vertex_count": 148,
+            "max_l2": 0.002664295446067338,
+            "rms_l2": 0.002082267958746233,
+            "max_abs_component": 0.002664137972881453,
+            "reference_bbox_diagonal": 0.42694276870554987,
+            "max_normalized": 0.0062404041978395145,
+            "rms_normalized": 0.004877159449402253
+          }
+        },
+        {
+          "renderer_path": "/CharaCustom[0]/CustomControl[0]/chaF_001[20]/BodyTop[0]/p_cf_anim[0]/cf_J_Root[0]/cf_N_height[0]/cf_J_Hips[0]/cf_J_Spine01[1]/cf_J_Spine02[1]/cf_J_Spine03[1]/cf_J_Neck[1]/cf_J_Head[0]/cf_J_Head_s[0]/p_cf_head_bone[7]/ct_head[1]/n_head_cf2_c1[0]/o_eyelashes[2]",
+          "mesh_name": "o_eyelashes",
+          "reference_pose_difference": {
+            "vertex_count": 398,
+            "max_l2": 6.372108572066976e-06,
+            "rms_l2": 4.007707024317707e-06,
+            "max_abs_component": 6.368363149822365e-06,
+            "reference_bbox_diagonal": 1.022556697886273,
+            "max_normalized": 6.23154548323703e-06,
+            "rms_normalized": 3.9193005459766075e-06
+          },
+          "candidate_difference": {
+            "vertex_count": 398,
+            "max_l2": 6.8112366502071765e-06,
+            "rms_l2": 4.449141593537222e-06,
+            "max_abs_component": 6.80790615803506e-06,
+            "reference_bbox_diagonal": 1.022556697886273,
+            "max_normalized": 6.660986783702736e-06,
+            "rms_normalized": 4.350997458364943e-06
+          }
+        },
+        {
+          "renderer_path": "/CharaCustom[0]/CustomControl[0]/chaF_001[20]/BodyTop[0]/p_cf_anim[0]/cf_J_Root[0]/cf_N_height[0]/cf_J_Hips[0]/cf_J_Spine01[1]/cf_J_Spine02[1]/cf_J_Spine03[1]/cf_J_Neck[1]/cf_J_Head[0]/cf_J_Head_s[0]/p_cf_head_bone[7]/ct_head[1]/n_head_cf2_c1[0]/o_eyeshadow[3]",
+          "mesh_name": "o_eyeshadow",
+          "reference_pose_difference": {
+            "vertex_count": 296,
+            "max_l2": 6.8069082025913195e-06,
+            "rms_l2": 4.142054506494555e-06,
+            "max_abs_component": 6.796850985812952e-06,
+            "reference_bbox_diagonal": 0.8956643666685418,
+            "max_normalized": 7.599842592722403e-06,
+            "rms_normalized": 4.624561008161e-06
+          },
+          "candidate_difference": {
+            "vertex_count": 296,
+            "max_l2": 7.244056387637429e-06,
+            "rms_l2": 4.583866512248653e-06,
+            "max_abs_component": 7.236353624540115e-06,
+            "reference_bbox_diagonal": 0.8956643666685418,
+            "max_normalized": 8.087914019156503e-06,
+            "rms_normalized": 5.11783954216971e-06
+          }
+        },
+        {
+          "renderer_path": "/CharaCustom[0]/CustomControl[0]/chaF_001[20]/BodyTop[0]/p_cf_anim[0]/cf_J_Root[0]/cf_N_height[0]/cf_J_Hips[0]/cf_J_Spine01[1]/cf_J_Spine02[1]/cf_J_Spine03[1]/cf_J_Neck[1]/cf_J_Head[0]/cf_J_Head_s[0]/p_cf_head_bone[7]/ct_head[1]/n_head_cf2_c1[0]/o_head[4]",
+          "mesh_name": "o_head",
+          "reference_pose_difference": {
+            "vertex_count": 4439,
+            "max_l2": 7.0077253512969325e-06,
+            "rms_l2": 3.095643941383267e-06,
+            "max_abs_component": 7.004068786398143e-06,
+            "reference_bbox_diagonal": 3.203811617896976,
+            "max_normalized": 2.1873088018504955e-06,
+            "rms_normalized": 9.66237816259399e-07
+          },
+          "candidate_difference": {
+            "vertex_count": 4439,
+            "max_l2": 7.454260373753345e-06,
+            "rms_l2": 3.5441959314522724e-06,
+            "max_abs_component": 7.451915214784499e-06,
+            "reference_bbox_diagonal": 3.203811617896976,
+            "max_normalized": 2.326684981137068e-06,
+            "rms_normalized": 1.1062435480456647e-06
+          }
+        },
+        {
+          "renderer_path": "/CharaCustom[0]/CustomControl[0]/chaF_001[20]/BodyTop[0]/p_cf_anim[0]/cf_J_Root[0]/cf_N_height[0]/cf_J_Hips[0]/cf_J_Spine01[1]/cf_J_Spine02[1]/cf_J_Spine03[1]/cf_J_Neck[1]/cf_J_Head[0]/cf_J_Head_s[0]/p_cf_head_bone[7]/ct_head[1]/n_head_cf2_c1[0]/o_namida[5]",
+          "mesh_name": "o_namida",
+          "reference_pose_difference": {
+            "vertex_count": 838,
+            "max_l2": 6.805334247518922e-06,
+            "rms_l2": 3.6631653860167182e-06,
+            "max_abs_component": 6.796391373575794e-06,
+            "reference_bbox_diagonal": 1.4901136749575254,
+            "max_normalized": 4.566989996728205e-06,
+            "rms_normalized": 2.4583127096804437e-06
+          },
+          "candidate_difference": {
+            "vertex_count": 838,
+            "max_l2": 7.248037170362917e-06,
+            "rms_l2": 4.034655145538555e-06,
+            "max_abs_component": 7.241404423985465e-06,
+            "reference_bbox_diagonal": 1.4873193456918163,
+            "max_normalized": 4.8732218748835965e-06,
+            "rms_normalized": 2.7127026601418024e-06
+          }
+        },
+        {
+          "renderer_path": "/CharaCustom[0]/CustomControl[0]/chaF_001[20]/BodyTop[0]/p_cf_anim[0]/cf_J_Root[0]/cf_N_height[0]/cf_J_Hips[0]/cf_J_Spine01[1]/cf_J_Spine02[1]/cf_J_Spine03[1]/cf_J_Neck[1]/cf_J_Head[0]/cf_J_Head_s[0]/p_cf_head_bone[7]/ct_head[1]/n_head_cf2_c1[0]/o_tang[6]",
+          "mesh_name": "o_tang",
+          "reference_pose_difference": {
+            "vertex_count": 653,
+            "max_l2": 5.344045951463012e-06,
+            "rms_l2": 5.324120392189829e-06,
+            "max_abs_component": 5.337310402468709e-06,
+            "reference_bbox_diagonal": 0.7698339473036334,
+            "max_normalized": 6.941816440000722e-06,
+            "rms_normalized": 6.915933508567297e-06
+          },
+          "candidate_difference": {
+            "vertex_count": 653,
+            "max_l2": 5.758768959436266e-06,
+            "rms_l2": 5.736809432892311e-06,
+            "max_abs_component": 5.75371716398515e-06,
+            "reference_bbox_diagonal": 0.7698339473036334,
+            "max_normalized": 7.480533925019192e-06,
+            "rms_normalized": 7.4520089078763795e-06
+          }
+        },
+        {
+          "renderer_path": "/CharaCustom[0]/CustomControl[0]/chaF_001[20]/BodyTop[0]/p_cf_anim[0]/cf_J_Root[0]/cf_N_height[0]/cf_J_Hips[0]/cf_J_Spine01[1]/cf_J_Spine02[1]/cf_J_Spine03[1]/cf_J_Neck[1]/cf_J_Head[0]/cf_J_Head_s[0]/p_cf_head_bone[7]/ct_head[1]/n_head_cf2_c1[0]/o_tooth[7]",
+          "mesh_name": "o_tooth",
+          "reference_pose_difference": {
+            "vertex_count": 564,
+            "max_l2": 5.3585589078982115e-06,
+            "rms_l2": 5.326011634521598e-06,
+            "max_abs_component": 5.350728135566918e-06,
+            "reference_bbox_diagonal": 0.5974350658975018,
+            "max_normalized": 8.96927417517462e-06,
+            "rms_normalized": 8.914795830607218e-06
+          },
+          "candidate_difference": {
+            "vertex_count": 564,
+            "max_l2": 5.7743871081999e-06,
+            "rms_l2": 5.738606245993508e-06,
+            "max_abs_component": 5.768265633476766e-06,
+            "reference_bbox_diagonal": 0.5974350658975018,
+            "max_normalized": 9.665296595078963e-06,
+            "rms_normalized": 9.605405798155885e-06
+          }
+        },
+        {
+          "renderer_path": "/CharaCustom[0]/CustomControl[0]/chaF_001[20]/BodyTop[0]/p_cf_body_00[1]/n_o_root[0]/n_body_base[0]/N_mnpbset[1]/N_tang[1]/o_tang[0]",
+          "mesh_name": "o_tang",
+          "reference_pose_difference": {
+            "vertex_count": 653,
+            "max_l2": 5.133822841975077e-06,
+            "rms_l2": 2.750797377555148e-06,
+            "max_abs_component": 5.129057435528106e-06,
+            "reference_bbox_diagonal": 0.7607609604363833,
+            "max_normalized": 6.74827325396698e-06,
+            "rms_normalized": 3.6158498143454304e-06
+          },
+          "candidate_difference": {
+            "vertex_count": 653,
+            "max_l2": 5.5476899629299685e-06,
+            "rms_l2": 3.140288317614764e-06,
+            "max_abs_component": 5.5434076660990095e-06,
+            "reference_bbox_diagonal": 0.7607609604363833,
+            "max_normalized": 7.2922905504348365e-06,
+            "rms_normalized": 4.127825270914861e-06
+          }
+        },
+        {
+          "renderer_path": "/CharaCustom[0]/CustomControl[0]/chaF_001[20]/BodyTop[0]/p_cf_body_silhouette[2]/n_o_root[0]/n_body_base[0]/o_silhouette_cf[0]/N_mnpbset[0]/N_tang[2]/o_tang[0]",
+          "mesh_name": "o_tang",
+          "reference_pose_difference": {
+            "vertex_count": 653,
+            "max_l2": 4.2536464272023835e-06,
+            "rms_l2": 2.2500377065277268e-06,
+            "max_abs_component": 4.243549506205424e-06,
+            "reference_bbox_diagonal": 0.7607536092300043,
+            "max_normalized": 5.591358852056851e-06,
+            "rms_normalized": 2.9576431570335883e-06
+          },
+          "candidate_difference": {
+            "vertex_count": 653,
+            "max_l2": 4.663981744292666e-06,
+            "rms_l2": 2.624271901423316e-06,
+            "max_abs_component": 4.655166015971046e-06,
+            "reference_bbox_diagonal": 0.7607536092300043,
+            "max_normalized": 6.130738898515787e-06,
+            "rms_normalized": 3.449568782301893e-06
+          }
+        }
+      ],
+      "scope": "Cross-capture comparison. Gaze is retained from baseline capture; source acceptance from another pose/time cannot certify eye surfaces."
+    }
+  ],
+  "appearance_certified": false,
+  "gaps": [
+    "AIT material/shader/SSS/GrabPass image pipeline",
+    "active breathing time state",
+    "PushUp affecting requested geometry beyond the head dependency set"
+  ],
+  "full_report_path": "C:\\Users\\13666\\Workspace\\Face2Parameter\\outputs\\offline_renderer_repair_20261012\\validation_v1.json",
+  "full_report_sha256": "e6f4cd191a7ba0584986c278524da93da83919beb37d5ce42f6f1c421ecaedb8",
+  "snapshot_all_meshes_certified": true,
+  "snapshot_frame_stable": true
+}
