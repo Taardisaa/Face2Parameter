@@ -274,3 +274,23 @@ their original bytes on two consecutive exports; the original resources remain
 unchanged. Receipt: `tools/offline_renderer/raw_resource_validation_20261012.json`.
 Actual Unity plugin-event execution/material resources still require the main
 task's one native capture; this is not yet full renderer or live-resource acceptance.
+
+The first live render-thread export produced 43 complete resources (512,211,024
+bytes), including native BC blocks, full runtime texture mip chains, a six-face
+cube and HDR buffers. Its subsequent HTTP serialization failed on an opaque
+`System.IntPtr` from an engine component wrapper field; the native resource files
+and that failure remain preserved. Pointer/UIntPtr identities are now represented
+explicitly by type and hex identity without dereferencing. Nonfinite scalar values
+retain their IEEE bits/classification. The main task will repeat only the affected
+read-only acceptance with this repaired helper; old process IDs are never rebound
+to a new process merely by number or texture dimensions.
+
+RenderDoc was not found locally. Source inspection confirms public read APIs for
+D3D11 pipeline state, constant variables, buffer/texture bytes and replacements
+([public replay API](https://github.com/baldurk/renderdoc/blob/v1.x/renderdoc/api/replay/renderdoc_replay.h)).
+However, proxy-buffer creation/upload is an internal replay-driver facility,
+not a ready public Python ReplayController method
+([D3D11 implementation](https://github.com/baldurk/renderdoc/blob/v1.x/renderdoc/driver/d3d11/d3d11_replay.cpp)).
+A capture could supply exact pass/cbuffer/SRV evidence, but fixed capture replay
+is not an implemented general parameter renderer, and no game injection or
+capture has been performed by this subtask.

@@ -159,6 +159,18 @@ namespace HS2_RenderAudit
         {
             if(value==null)return null;
             var type=value.GetType();
+            if(value is IntPtr pointer)return new Dictionary<string,object>{{"type",type.FullName},
+                {"pointer_identity_hex","0x"+unchecked((ulong)pointer.ToInt64()).ToString("x16")},
+                {"scope","Opaque native pointer identity read only; not dereferenced."}};
+            if(value is UIntPtr unsignedPointer)return new Dictionary<string,object>{{"type",type.FullName},
+                {"pointer_identity_hex","0x"+unsignedPointer.ToUInt64().ToString("x16")},
+                {"scope","Opaque native pointer identity read only; not dereferenced."}};
+            if(value is float single&&(float.IsNaN(single)||float.IsInfinity(single)))
+                return new Dictionary<string,object>{{"type","System.Single"},{"nonfinite",single.ToString(System.Globalization.CultureInfo.InvariantCulture)},
+                    {"ieee_bits_hex",BitConverter.ToUInt32(BitConverter.GetBytes(single),0).ToString("x8")}};
+            if(value is double dbl&&(double.IsNaN(dbl)||double.IsInfinity(dbl)))
+                return new Dictionary<string,object>{{"type","System.Double"},{"nonfinite",dbl.ToString(System.Globalization.CultureInfo.InvariantCulture)},
+                    {"ieee_bits_hex",BitConverter.ToUInt64(BitConverter.GetBytes(dbl),0).ToString("x16")}};
             if(type.IsPrimitive||value is string||value is decimal)return value;
             if(type.IsEnum)return value.ToString();
             if(value is Color c)return ColorValue(c);
