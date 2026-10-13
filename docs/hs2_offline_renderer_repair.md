@@ -427,3 +427,23 @@ results remain explicit rejected branches. Clear/copy/resolve commands are
 retained for execution; the interpreter does not manufacture their pixels or
 reuse stale creation bytes as updated CB contents. Shared targets and full
 SSS/GrabPass/postprocess integration remain part of the unfinished renderer.
+
+### Dynamic buffer lifetime in the CPU input interpreter
+
+The pinned RenderDoc 1.46
+[D3D11 serialization source](https://github.com/baldurk/renderdoc/blob/v1.46/renderdoc/driver/d3d11/d3d11_context_wrap.cpp)
+defines mapped writes in `Serialise_Unmap` as MapType/MapFlags, the exact start/
+end byte range and `MapWrittenData`. `Serialise_Map` only records bookkeeping;
+actual transfer occurs at Unmap. The interpreter now applies those buffer writes
+and buffer CopyResource operations in order and retains immutable byte versions
+at every draw. CB reads use that draw's version, preventing later writes from
+silently changing an earlier draw's parameters.
+
+Discarded/uninitialized ranges remain unknown: no zero-filled payload is
+manufactured. A draw input that depends on uncaptured bytes fails explicitly.
+CPU regressions cover partial/no-overwrite preservation, earlier-draw retention,
+overlapping latest writes and discarded undefined ranges. Three tests pass;
+the pre-existing capture still passes all nine exact original-byte checks.
+Texture map/update transfer, written initial payloads, GPU-written buffer
+lifetimes and complete frame/SSS/GrabPass/postprocess execution remain required.
+No graphical process was started for this implementation or validation.

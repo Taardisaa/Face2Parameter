@@ -42,6 +42,7 @@ class CapturedPipeline:
         self.manifest=json.loads(path.read_text());self.resources={};self.state=None
         self.commands=[];self.draws=[];self.context=None
         self.needed_initials=[]
+        self.open_maps={}
         self.blobs={b['buffer_index']:b for b in self.manifest['blobs']}
 
     def bytes(self,ref):
@@ -54,6 +55,35 @@ class CapturedPipeline:
         ident=fields[out]
         if not ident or ident in self.resources:raise UnresolvedPipeline('Invalid/reused resource ID')
         self.resources[ident]={'kind':kind,'fields':fields,'descriptor':descriptor,'data':data}
+        if kind=='CreateBuffer':self.resources[ident]['buffer_segments']=[] if data is None else [(0,data)]
+
+    def _buffer_update(self,ident,start,end,payload,discard=False):
+        resource=self.resources.get(ident)
+        if not resource or resource['kind']!='CreateBuffer':raise UnresolvedPipeline('Buffer update requires recorded buffer resource')
+        if start<0 or end<start or end>resource['descriptor']['ByteWidth'] or len(payload)!=end-start:
+            raise UnresolvedPipeline('Mapped write range/byte payload does not match native buffer')
+        old=[] if discard else resource['buffer_segments'];updated=[]
+        for offset,data in old:
+            stop=offset+len(data)
+            if stop<=start or offset>=end:updated.append((offset,data));continue
+            if offset<start:updated.append((offset,data[:start-offset]))
+            if stop>end:updated.append((end,data[end-offset:]))
+        if payload:updated.append((start,payload))
+        resource['buffer_segments']=sorted(updated)
+
+    @staticmethod
+    def buffer_range(segments,start,end):
+        """Read only captured defined byte intervals; discarded gaps stay unknown."""
+        pieces=[];position=start
+        for offset,data in segments:
+            stop=offset+len(data)
+            if stop<=position:continue
+            if offset>position:raise UnresolvedPipeline('Draw input includes undefined/discarded bytes')
+            take=min(end,stop)-position
+            if take>0:pieces.append(data[position-offset:position-offset+take]);position+=take
+            if position==end:return b''.join(pieces)
+        if position==end:return b''.join(pieces)
+        raise UnresolvedPipeline('Draw input bytes are not fully captured')
 
     def _slots(self,stage,key,fields,array):
         start=fields['StartSlot']; values=fields[array]
@@ -134,14 +164,40 @@ class CapturedPipeline:
         elif method=='RSSetState':rs['State']=f['pRasterizerState']
         elif method=='RSSetViewports':rs.update(NumViews=f['NumViewports'],Viewports=f['pViewports'])
         elif method=='RSSetScissorRects':rs.update(NumScissors=f['NumRects'],Scissors=f['pRects'])
-        elif method in ('ClearRenderTargetView','ClearDepthStencilView','CopyResource','ResolveSubresource'):
+        elif method=='Map':
+            if f['Subresource']!=0 or self.resources[f['pResource']]['kind']!='CreateBuffer':raise UnresolvedPipeline('Texture map transfer must be implemented')
+            key=(f['pResource'],f['Subresource'])
+            if key in self.open_maps:raise UnresolvedPipeline('Native resource mapped twice without Unmap')
+            self.open_maps[key]=f['MapType']
+        elif method=='Unmap':
+            key=(f['pResource'],f['Subresource'])
+            if f['Subresource']!=0 or self.resources[f['pResource']]['kind']!='CreateBuffer':raise UnresolvedPipeline('Texture unmap transfer must be implemented')
+            map_type=f['MapType']
+            if key in self.open_maps and self.open_maps.pop(key)!=map_type:raise UnresolvedPipeline('Serialized Map/Unmap type mismatch')
+            if map_type not in (2,3,4,5):raise UnresolvedPipeline('Unmap payload for non-writing map')
+            start=f['Byte offset to start of written data'];end=f['Byte offset to end of written data']
+            ref=f['MapWrittenData'];payload=b'' if ref is None and start==end else self.bytes(ref)
+            self._buffer_update(f['pResource'],start,end,payload,discard=map_type==4)
+        elif method=='CopyResource':
+            src=self.resources[f['pSrcResource']];dst=self.resources[f['pDstResource']]
+            if src['kind']=='CreateBuffer' and dst['kind']=='CreateBuffer':
+                if src['descriptor']['ByteWidth']!=dst['descriptor']['ByteWidth']:raise UnresolvedPipeline('Native CopyResource buffer width mismatch')
+                dst['buffer_segments']=list(src['buffer_segments'])
+            # Texture copy remains an actual ordered command for frame execution.
+        elif method in ('ClearRenderTargetView','ClearDepthStencilView','ResolveSubresource'):
             # Resource mutations are retained in ordered commands for execution.
             # They are not assigned fake pixel contents in this state interpreter.
             pass
         elif method in ('Draw','DrawIndexed','DrawInstanced','DrawIndexedInstanced','Dispatch'):
             if self.state['Predicate']:
                 raise UnresolvedPipeline('Predicated draw execution requires captured query result')
-            self.draws.append({'index':index,'method':method,'arguments':f,'state':deepcopy(self.state)})
+            if any(self.state['SO']['Buffers']) or any(om['UAVs']) or any(self.state['CSUAVs']):
+                raise UnresolvedPipeline('GPU-written buffer lifetime requires actual frame execution')
+            buffers={ident for stage in ('VS','HS','DS','GS','PS','CS') for ident in self.state[stage]['ConstantBuffers'] if ident}
+            buffers.update(ident for ident in ia['VBs'] if ident)
+            if ia['IndexBuffer']:buffers.add(ia['IndexBuffer'])
+            versions={ident:list(self.resources[ident]['buffer_segments']) for ident in buffers}
+            self.draws.append({'index':index,'method':method,'arguments':f,'state':deepcopy(self.state),'buffer_versions':versions})
         else:raise UnresolvedPipeline('Uninterpreted context command '+method)
 
     def shader_matches(self,draw,source_manifests):
@@ -160,7 +216,7 @@ class CapturedPipeline:
         return matches
 
     def constant_buffers(self,draw,stage):
-        """Exact creation bytes for bound CBs whose lifetime has no pre-draw writes.
+        """Exact captured bytes at this draw, including mapped writes and copies.
 
         Dynamic Map/Update is not silently replaced by creation data. D3D11.1
         range binding is represented in float4 units; no getter reconstruction.
@@ -169,14 +225,11 @@ class CapturedPipeline:
         for slot,ident in enumerate(state['ConstantBuffers']):
             if not ident:continue
             resource=self.resources.get(ident)
-            if not resource or resource['kind']!='CreateBuffer' or resource['data'] is None:
+            if not resource or resource['kind']!='CreateBuffer':
                 raise UnresolvedPipeline('Bound CB has no captured byte payload')
-            for c in self.commands:
-                if c['index']>=draw['index']:break
-                if c['name'] in ('ID3D11DeviceContext::CopyResource','ID3D11DeviceContext::ResolveSubresource') and c['fields']['pDstResource']==ident:
-                    raise UnresolvedPipeline('Bound CB requires ordered resource mutation execution')
             start=state['CBOffsets'][slot]*16; count=state['CBCounts'][slot]*16
-            if start>len(resource['data']):raise UnresolvedPipeline('CB range begins outside resource')
+            size=resource['descriptor']['ByteWidth']
+            if start>size:raise UnresolvedPipeline('CB range begins outside resource')
             result[slot]={'resource_id':ident,'byte_offset':start,'float4_count':state['CBCounts'][slot],
-                          'data':resource['data'][start:start+count]}
+                          'data':self.buffer_range(draw['buffer_versions'][ident],start,min(start+count,size))}
         return result

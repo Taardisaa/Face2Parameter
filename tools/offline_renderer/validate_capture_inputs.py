@@ -37,10 +37,12 @@ def main():
     compare('original texture pixels',p.resources[srv['fields']['pResource']]['data'],'texture.bin')
     identities=p.shader_matches(draw,[a.shader_manifest])
     if any(not rows for rows in identities.values()):raise AssertionError('Executed shader source not identified')
+    recorded_draw={k:v for k,v in draw.items() if k!='buffer_versions'}
+    recorded_draw['buffer_versions']={ident:[{'offset':offset,'bytes':len(data),'sha256':digest(data)} for offset,data in segments] for ident,segments in draw['buffer_versions'].items()}
     receipt={'schema_version':1,'status':'pass','scope':'CPU original capture inputs; not HS2/full RGB acceptance',
         'capture_manifest':str(a.manifest.resolve()),'command_count':len(p.commands),'draw_count':len(p.draws),
         'resource_count':len(p.resources),'exact_byte_checks':checks,'shader_source_matches':identities,
-        'draw_state':draw,'unimplemented_execution':['initial-content payloads','dynamic Map/Unmap/Update','deferred command lists','GPU command execution/shared targets','full scene/SSS/postprocess integration']}
+        'draw_state':recorded_draw,'unimplemented_execution':['initial-content payloads','texture Map/Unmap and UpdateSubresource','deferred command lists','GPU command execution/shared targets','full scene/SSS/postprocess integration']}
     a.out.parent.mkdir(parents=True,exist_ok=True);a.out.write_text(json.dumps(receipt,indent=2))
     print(json.dumps({'status':'pass','exact_byte_checks':len(checks),'commands':len(p.commands),'receipt':str(a.out)}))
 if __name__=='__main__':main()
