@@ -327,6 +327,11 @@ contains Python 3.8 DLL/stdlib; this is not a binding compatible with the
 workspace's Python 3.13. The external C++ prototype uses the version-matched
 official headers and DLL rather than guessing a Python binding.
 
+`prepare_renderdoc_headers.py --version 1.46 --out FRESH_IGNORED_DIRECTORY`
+recursively obtains the official release's 21 replay headers, preserves licenses,
+records per-file source URL/hash, and writes the explicit six-export import
+library definition. It downloads data only, without loading any native DLL.
+
 An independent WARP analytic installed-shader pass produced a real capture and
 official XML+ZIP conversion. `export_renderdoc_xml.py` preserves every chunk
 and original data blob (the fixture has 47 chunks and 17 blobs), including
