@@ -1,0 +1,47 @@
+[
+  {
+    "path": "outputs\\offline_renderer_repair_20261012\\end_capture_source_v1\\d3d11_context.cpp",
+    "url": "https://raw.githubusercontent.com/baldurk/renderdoc/v1.46/renderdoc/driver/d3d11/d3d11_context.cpp",
+    "sha256": "d532f4333d711d3e0ee4cbe52378d67179c898e1d4771aa446d55ef547c1d2cb"
+  },
+  {
+    "path": "outputs\\offline_renderer_repair_20261012\\end_capture_source_v1\\d3d11_context.h",
+    "url": "https://raw.githubusercontent.com/baldurk/renderdoc/v1.46/renderdoc/driver/d3d11/d3d11_context.h",
+    "sha256": "f702a024877e9052d1d9bf6411ee112864c450cf4d7af0ba777ff2d0120ace23"
+  },
+  {
+    "path": "outputs\\offline_renderer_repair_20261012\\end_capture_source_v1\\d3d11_device.cpp",
+    "url": "https://raw.githubusercontent.com/baldurk/renderdoc/v1.46/renderdoc/driver/d3d11/d3d11_device.cpp",
+    "sha256": "d7e76a1436d45741b99a0d1202c12b43e479e60693e443c82e9ff3d272e2f494"
+  },
+  {
+    "path": "outputs\\offline_renderer_repair_20261012\\end_capture_source_v1\\d3d11_device.h",
+    "url": "https://raw.githubusercontent.com/baldurk/renderdoc/v1.46/renderdoc/driver/d3d11/d3d11_device.h",
+    "sha256": "435d45cff5496dc2acc422a8479aec633902b303603efd2d0f6491317b7979ee"
+  },
+  {
+    "path": "outputs\\offline_renderer_repair_20261012\\end_capture_source_v1\\core.cpp",
+    "url": "https://raw.githubusercontent.com/baldurk/renderdoc/v1.46/renderdoc/core/core.cpp",
+    "sha256": "778249d0c0dcee0d1ac34c4a5cb18a0b3d8ccb649d8af305671cad6476ca4503"
+  },
+  {
+    "path": "outputs\\offline_renderer_repair_20261012\\end_capture_source_v1\\core.h",
+    "url": "https://raw.githubusercontent.com/baldurk/renderdoc/v1.46/renderdoc/core/core.h",
+    "sha256": "d18952031c7a1a1f4d58d6012b18187725b858e3ce7586a9fd33fdc18cca360d"
+  },
+  {
+    "path": "outputs\\offline_renderer_repair_20261012\\end_capture_source_v1\\renderdoc_app.h",
+    "url": "https://raw.githubusercontent.com/baldurk/renderdoc/v1.46/renderdoc/api/app/renderdoc_app.h",
+    "sha256": "b7005e7dc34c3635046868bbd76d81b9b055aede0f56daa0bd39fedee0639ffb"
+  },
+  {
+    "url": "https://raw.githubusercontent.com/baldurk/renderdoc/v1.46/renderdoc/driver/d3d11/d3d11_context_wrap.cpp",
+    "sha256": "c3698d1473577e16df64f493e9da8731e28c66b038de17326c761fd8440342e0",
+    "path": "outputs/offline_renderer_repair_20261012/renderdoc_source/d3d11_context_wrap146.cpp"
+  },
+  {
+    "url": "https://raw.githubusercontent.com/baldurk/renderdoc/v1.46/renderdoc/driver/d3d11/d3d11_device_wrap.cpp",
+    "sha256": "8c6ec22f0ea67a7481b8c42c9e74c31e13bd754357b66a3bc6e99304e80cbd24",
+    "path": "outputs/offline_renderer_repair_20261012/renderdoc_source/d3d11_device_wrap146.cpp"
+  }
+]

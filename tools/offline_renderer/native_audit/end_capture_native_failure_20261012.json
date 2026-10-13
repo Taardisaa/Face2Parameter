@@ -1,0 +1,48 @@
+{
+  "attempts": [
+    {
+      "start_line": 28,
+      "status": "driver_rejected",
+      "events": [
+        {
+          "line": 31,
+          "branch": "uncaptured_map_unmap",
+          "text": "RDOC 054072: [22:53:53] d3d11_context_wrap.cpp(8189) - Warning - Saw an Unmap that we didn't capture the corresponding Map for - this frame is unsuccessful"
+        },
+        {
+          "line": 32,
+          "branch": "uncaptured_map_unmap",
+          "text": "RDOC 054072: [22:53:53] d3d11_context_wrap.cpp(8189) - Warning - Saw an Unmap that we didn't capture the corresponding Map for - this frame is unsuccessful"
+        },
+        {
+          "line": 33,
+          "branch": "uncaptured_map_unmap",
+          "text": "RDOC 054072: [22:53:53] d3d11_context_wrap.cpp(8189) - Warning - Saw an Unmap that we didn't capture the corresponding Map for - this frame is unsuccessful"
+        },
+        {
+          "line": 34,
+          "branch": "uncaptured_map_unmap",
+          "text": "RDOC 054072: [22:53:53] d3d11_context_wrap.cpp(8189) - Warning - Saw an Unmap that we didn't capture the corresponding Map for - this frame is unsuccessful"
+        },
+        {
+          "line": 35,
+          "branch": "uncaptured_map_unmap",
+          "text": "RDOC 054072: [22:53:54]     d3d11_device.cpp(2399) - Log     - Failed to capture, frame 4294967295: Uncapped Map()/Unmap()",
+          "frame": 4294967295
+        }
+      ],
+      "selected_reason": "uncaptured_map_unmap",
+      "final_reason_string": "Uncapped Map()/Unmap()",
+      "end_line": 35
+    }
+  ],
+  "orphan_events": [],
+  "native_capture_accepted": false,
+  "scope": "Log evidence only; no graphics, file replay or capture success assertion",
+  "source_commit": "e4bd23b671d3d5a747ff5221dbe08a63eb6ca200",
+  "input": {
+    "path": "C:\\Users\\13666\\Workspace\\HS2Mod\\artifacts\\chenger_reference_fit_20261012\\native_scope_early_boot_v2\\RenderDoc_app_2026.10.12_22.51.09.log",
+    "bytes": 4490,
+    "sha256": "a84da4e2a2b537ec2cb0d1ed025eb9a87e6af44fd3aee053022da8533b61b27b"
+  }
+}

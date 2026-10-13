@@ -687,3 +687,23 @@ assembly, plus old22 SDK and paired geometry/freshness cases. Source/native C AP
 sixteen-render scope remain unchanged. Native corrected scope/RDC/candidate RGB
 still need acceptance; only main controls restart/deployment. Receipt:
 `tools/offline_renderer/native_audit/scope_streaming_json_validation_20261012.json`.
+
+### Native SDK End rejects the recorded frame
+
+The streaming JSON fix passed in the actual game. Main retained the original
+sixteen renders/full SSS and saved the native PNG/before-geometry file, but the
+official SDK End returnedfalse and discarded the application-controlled capture.
+No RDC/after-geometry acceptance is claimed. The pinned D3D11 driver source defines
+two context failure branches: executing an uncaptured deferred command list, or
+Unmap without compatible captured Map state. Null-window offscreen capture is
+supported; replacing the window or repeating End is not a source-derived repair.
+
+Read-only log classification and the exact call-chain/conditional repair are in
+[end_capture_source_audit.md](../tools/offline_renderer/native_audit/end_capture_source_audit.md).
+Main's flushed official log now identifies four uncaptured-Unmap warnings and a
+final Map/Unmap failure. The command-list option would not fix this case. The
+responsible resource IDs/original Map lifetimes remain unknown; repair the actual
+render-thread/frame boundary while retaining original rendering and all effects.
+Do not retry blindly or substitute a completed PNG for full RGB. The subsequent
+pre-stop normal-card reload state check was not accepted and remains a separate
+restoration-record gap.
