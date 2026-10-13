@@ -550,3 +550,57 @@ Next implementation uses official full driver replay as the baseline shader/
 SSS/pass execution oracle and changes source-derived dynamic geometry bytes with
 all shadow/motion/previous-cache dependencies accounted for. It does not reduce
 the intended renderer to unchanged fixed-capture replay or a selected pass.
+
+### Official full-driver execution and candidate byte transfer
+
+The pinned v1.46 `CaptureFile`/XML codec source confirms full roundtrip support
+uses **`zip.xml`**, not XML-only `xml` (which cannot be imported). The source is
+retained with hashes in ignored `renderdoc_source/replay_codec_sources.json`.
+Official source URLs:
+[capture_file.cpp](https://github.com/baldurk/renderdoc/blob/v1.46/renderdoc/replay/capture_file.cpp),
+[xml_codec.cpp](https://github.com/baldurk/renderdoc/blob/v1.46/renderdoc/serialise/codecs/xml_codec.cpp).
+
+`renderdoc_replay_frame.cpp` now implements explicit full XML+ZIP/native conversion
+and local D3D11 frame execution through the official driver. MSVC compilation
+passed; no RenderDoc DLL/tool or GPU was run for this milestone. The public
+interface uses no GNU C++ ABI. It verifies the pinned DLL commit, reads the actual
+recorded driver, uses NoOptimisation, and requires an explicit existing event and
+actual texture identity. It never selects a convenient substitute target.
+It can save the original final 2D single-sample target with official PNG conversion
+and official texture readback; transfer/layout/native PNG agreement remains to be
+accepted with the actual scoped capture.
+
+```text
+renderdoc_replay_msvc.exe convert ORIGINAL.rdc rdc ORIGINAL.zip.xml zip.xml
+renderdoc_replay_msvc.exe convert CANDIDATE.zip.xml zip.xml CANDIDATE.rdc rdc
+renderdoc_replay_msvc.exe inspect ORIGINAL.rdc
+renderdoc_replay_msvc.exe replay ORIGINAL.rdc EVENT_ID RESOURCE_ID OUTPUT.png OUTPUT.bin
+```
+
+The commands above are interfaces, not instructions to start a new game/capture.
+Main alone authorizes/owns runtime execution and keeps logs/deadlines. Generated
+MSVC tool SHA/build receipt: ignored `official_full_replay_msvc_v3/`.
+
+`capture_mutation.py` transfers explicitly witnessed source bytes into one
+specific original buffer occurrence, including data attached to CreateBuffer or
+recorded dynamic updates. Shared blob references use copy-on-write; every original
+blob and unknown command is retained. Index/resource IDs, byte lengths and all
+other structured values are invariant. Hashes bind original capture, candidate
+bytes and replaced original range; mismatched/overlapping patches fail. Pinned
+codec zero-padded numeric ZIP members and thumbnail/log/D3D12 literal sections
+are preserved; the existing structured exporter now also retains these valid
+auxiliary sections instead of rejecting a legitimate full capture.
+
+CPU acceptance on the pre-existing independent analytic capture preserved all
+47 chunks and all 17 original ZIP members while changing exactly one diagnostic
+first vertex word in a new isolated blob. Three regression cases with five
+rejection subcases cover shared-blob isolation, auxiliary metadata preservation,
+source hashes/selectors and overlap. Receipts preserve pending native roundtrip
+and candidate/full-RGB status; no HS2 card was modified.
+
+Remaining source integration is substantial: bind all ten actual surfaces to
+every GPU resource lifetime/write; reproduce position/normal/tangent and previous
+geometry, bone, shadow and motion inputs; determine culling/draw-list invariance
+and every dependent cache; restore camera/material control through actual inputs;
+accept official baseline replay and candidate RGB against native pipeline. The
+full-driver baseline is the execution oracle, not the final parameter renderer.

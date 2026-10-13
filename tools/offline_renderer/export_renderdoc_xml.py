@@ -11,6 +11,9 @@ import json
 from pathlib import Path
 import xml.etree.ElementTree as ET
 import zipfile
+import sys
+sys.path.insert(0,str(Path(__file__).resolve().parents[2]))
+from src.render.capture_mutation import AUXILIARY_MEMBERS
 
 def digest(data):
     return hashlib.sha256(data).hexdigest()
@@ -35,12 +38,17 @@ def main():
     if root.tag!='rdc' or root.find('header/driver').text!='D3D11':
         raise ValueError('Actual D3D11 RenderDoc XML required')
     args.out.mkdir(parents=True)
-    blobs=[]
+    blobs=[];auxiliary=[];seen=set()
     with zipfile.ZipFile(archive_path) as archive:
         for name in archive.namelist():
-            if not name.isdecimal() or '/' in name or '\\' in name:
+            if name in seen or (not name.isdecimal() and name not in AUXILIARY_MEMBERS) or '/' in name or '\\' in name:
                 raise ValueError('Unexpected external data-buffer member '+name)
+            seen.add(name)
             data=archive.read(name)
+            if name in AUXILIARY_MEMBERS:
+                target='aux_'+name;(args.out/target).write_bytes(data)
+                auxiliary.append({'source_member':name,'path':target,'bytes':len(data),'sha256':digest(data)})
+                continue
             target='blob_'+name+'.bin'
             (args.out/target).write_bytes(data)
             blobs.append({'buffer_index':int(name),'path':target,'bytes':len(data),'sha256':digest(data)})
@@ -57,7 +65,7 @@ def main():
         'source_xml_sha256':digest(raw),'source_zip':str(archive_path.resolve()),
         'source_zip_sha256':digest(archive_path.read_bytes()),
         'header':structured(root.find('header')),'chunk_format_version':chunks.attrib['version'],
-        'chunks':records,'blobs':blobs,'chunk_count':len(records),'blob_count':len(blobs),
+        'chunks':records,'blobs':blobs,'auxiliary_members':auxiliary,'chunk_count':len(records),'blob_count':len(blobs),
         'scope':'All actual D3D11 resource creation, bytecode, data buffers and command chunks preserved. No selected-draw or dynamic scene compatibility claim.',
         'pending_state_interpretation':[n for n in sorted(set(names)) if any(word in n for word in
             ('Beginning of Capture','CommandList','Map','Unmap','UpdateSubresource','CopyResource','Dispatch'))],

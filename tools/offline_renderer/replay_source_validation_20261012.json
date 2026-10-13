@@ -1,0 +1,163 @@
+{
+  "native_roundtrip_replay_accepted": false,
+  "full_rgb_renderer_complete": false,
+  "pinned_source": [
+    {
+      "path": "outputs\\offline_renderer_repair_20261012\\renderdoc_source\\xml_codec146.cpp",
+      "url": "https://raw.githubusercontent.com/baldurk/renderdoc/v1.46/renderdoc/serialise/codecs/xml_codec.cpp",
+      "sha256": "8fba07bc933085426a14be847e2bf1814133dad054efcf99c547124045750baa"
+    },
+    {
+      "path": "outputs\\offline_renderer_repair_20261012\\renderdoc_source\\capture_file146.cpp",
+      "url": "https://raw.githubusercontent.com/baldurk/renderdoc/v1.46/renderdoc/replay/capture_file.cpp",
+      "sha256": "4165fc3a252e171c21a839987df224d17c36feffa1dcaf22eb42accf6050edbc"
+    }
+  ],
+  "build": {
+    "scope": "MSVC compilation/static C++ layout only; no DLL/replay/graphics execution or runtime acceptance",
+    "headers": "C:\\Users\\13666\\Workspace\\Face2Parameter\\outputs\\offline_renderer_repair_20261012\\renderdoc_headers_146",
+    "vcvars": "C:\\Program Files (x86)\\Microsoft Visual Studio\\18\\BuildTools\\VC\\Auxiliary\\Build\\vcvars64.bat",
+    "outputs": [
+      {
+        "path": "C:\\Users\\13666\\Workspace\\Face2Parameter\\outputs\\offline_renderer_repair_20261012\\official_full_replay_msvc_v3\\renderdoc_replay_msvc.exe",
+        "bytes": 307712,
+        "sha256": "98f37e5409b181f8e9a9c192043c94e1d72ef2743aa4f7042d56c6af46b10c3e"
+      },
+      {
+        "path": "C:\\Users\\13666\\Workspace\\Face2Parameter\\outputs\\offline_renderer_repair_20261012\\official_full_replay_msvc_v3\\replay_static.asm",
+        "bytes": 3169946,
+        "sha256": "a3338719a305c40a3cb2e73381dfc3fad6e884d8b2dea69c368f3ad32ca151ef"
+      }
+    ]
+  },
+  "cpu_regression": "unittest: 3 cases, including 5 rejection subcases passed",
+  "schema_version": 1,
+  "existing_capture_byte_transfer": {
+    "schema_version": 1,
+    "scope": "CPU mutation of pre-existing independent capture; no HS2 candidate/rendering acceptance",
+    "source_xml_sha256": "c00510d66b24f0373c0919314dde728066949d649e16af2a131a32421bbfa4d0",
+    "source_zip_sha256": "e1c0761fdd439079861528eca5bd9b3e23df6021dd2266f443355aa1100144e7",
+    "plan_sha256": "26c279d062692374503d09bb80fea8bd1f5ac23b61e645ce199a3d8c1c2dcad5",
+    "output_xml": "C:\\Users\\13666\\Workspace\\Face2Parameter\\outputs\\offline_renderer_repair_20261012\\actual_capture_cpu_mutation_v1\\mutated.zip.xml",
+    "output_xml_sha256": "26e327b08768a16d27b2b0bd2a93c0db89fcade1028bb6396b3ab1d4955c2fd4",
+    "output_zip": "C:\\Users\\13666\\Workspace\\Face2Parameter\\outputs\\offline_renderer_repair_20261012\\actual_capture_cpu_mutation_v1\\mutated.zip",
+    "output_zip_sha256": "0f9d321b12c73e9dda8ac7b9277836b540ce3bf54a42da6cdbb7ca01d1bdaf34",
+    "original_chunks_preserved": 47,
+    "original_blobs_preserved": 17,
+    "original_archive_members_preserved": 17,
+    "copy_on_write_occurrences": 1,
+    "patches": [
+      {
+        "chunk_index": 5,
+        "chunk_name": "ID3D11Device::CreateBuffer",
+        "buffer_ordinal": 1,
+        "expected_buffer_index": 4,
+        "byte_offset": 0,
+        "source_witness": "pre-existing recorded immutable VB CreateBuffer ByteWidth/payload provenance",
+        "semantic_role": "isolated diagnostic independent fixture first vertex float; not HS2 fitting",
+        "replacement_sha256": "c501756a4047ad5f4e34b90c82bfc72525fbdd8fef4db202bce938cdb82b3881",
+        "replacement_bytes": 4,
+        "new_buffer_index": 17
+      }
+    ],
+    "candidate_geometry_complete": false,
+    "rgb_renderer_complete": false,
+    "remaining_dependencies": [
+      "actual all10 surface-to-resource correspondence",
+      "every dynamic/previous geometry stream",
+      "shadow/motion/skinning/cache inputs",
+      "CPU culling/command visibility invariance",
+      "full camera/material control and native RGB agreement"
+    ],
+    "actual_original_members_checked": [
+      {
+        "member": "000000",
+        "bytes": 1212,
+        "exact": true
+      },
+      {
+        "member": "000001",
+        "bytes": 676,
+        "exact": true
+      },
+      {
+        "member": "000002",
+        "bytes": 1212,
+        "exact": true
+      },
+      {
+        "member": "000003",
+        "bytes": 0,
+        "exact": true
+      },
+      {
+        "member": "000004",
+        "bytes": 512,
+        "exact": true
+      },
+      {
+        "member": "000005",
+        "bytes": 0,
+        "exact": true
+      },
+      {
+        "member": "000006",
+        "bytes": 24,
+        "exact": true
+      },
+      {
+        "member": "000007",
+        "bytes": 0,
+        "exact": true
+      },
+      {
+        "member": "000008",
+        "bytes": 128,
+        "exact": true
+      },
+      {
+        "member": "000009",
+        "bytes": 0,
+        "exact": true
+      },
+      {
+        "member": "000010",
+        "bytes": 176,
+        "exact": true
+      },
+      {
+        "member": "000011",
+        "bytes": 0,
+        "exact": true
+      },
+      {
+        "member": "000012",
+        "bytes": 368,
+        "exact": true
+      },
+      {
+        "member": "000013",
+        "bytes": 0,
+        "exact": true
+      },
+      {
+        "member": "000014",
+        "bytes": 128,
+        "exact": true
+      },
+      {
+        "member": "000015",
+        "bytes": 0,
+        "exact": true
+      },
+      {
+        "member": "000016",
+        "bytes": 1024,
+        "exact": true
+      }
+    ],
+    "changed_vb_first_word_exact": true,
+    "native_roundtrip_replay_accepted": false
+  },
+  "scope": "CPU source/build/byte-transfer only; no RenderDoc or graphics execution"
+}
