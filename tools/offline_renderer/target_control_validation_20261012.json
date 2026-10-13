@@ -1,0 +1,80 @@
+{
+  "status": "pass",
+  "scope": "one independent 32x32 WARP fixture; no HS2 launch or injection",
+  "retries": 0,
+  "inventory_before": [],
+  "launcher_pid": 32052,
+  "fixture_pid": 52140,
+  "ident": 38920,
+  "client": {
+    "argv": [
+      "C:\\Users\\13666\\Workspace\\Face2Parameter\\outputs\\offline_renderer_repair_20261012\\controlled_msvc_v1\\renderdoc_target_msvc.exe",
+      "38920",
+      "52140",
+      "trigger",
+      "8",
+      "C:\\Users\\13666\\Workspace\\Face2Parameter\\outputs\\offline_renderer_repair_20261012\\msvc_one_authorized_capture_v1\\capture"
+    ],
+    "timeout_seconds": 12,
+    "started_unix": 1791859859.3026617,
+    "status": "pass",
+    "stdout": "C:\\Users\\13666\\Workspace\\Face2Parameter\\outputs\\offline_renderer_repair_20261012\\msvc_one_authorized_capture_v1\\client\\stdout.bin",
+    "stderr": "C:\\Users\\13666\\Workspace\\Face2Parameter\\outputs\\offline_renderer_repair_20261012\\msvc_one_authorized_capture_v1\\client\\stderr.bin",
+    "pid": 45880,
+    "returncode": 0,
+    "ended_unix": 1791859859.5623932,
+    "stdout_bytes": 479,
+    "stdout_sha256": "f4966c8337bd50d0f9eed31afbc25bee12c036833f61679e3e778e97f9e8a40e",
+    "stderr_bytes": 0,
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "messages": [
+    {
+      "event": "connected",
+      "pid": 52140,
+      "ident": 38920,
+      "target": "renderdoc_control_fixture_msvc",
+      "api": ""
+    },
+    {
+      "event": "trigger_requested",
+      "frames": 1
+    },
+    {
+      "event": "target_message",
+      "type": 6
+    },
+    {
+      "event": "target_message",
+      "type": 9
+    },
+    {
+      "event": "new_capture",
+      "capture_id": 0,
+      "frame": 73,
+      "timestamp": 1791859859,
+      "bytes": 2603,
+      "path": "C:\\Users\\13666\\Workspace\\Face2Parameter\\outputs\\offline_renderer_repair_20261012\\msvc_one_authorized_capture_v1\\capture_frame73.rdc",
+      "api": "D3D11",
+      "local": true
+    }
+  ],
+  "capture_sha256": "18eafcb218084b146b95830816945c6f9314b3b7b48984b31db5ddb912f3ee71",
+  "inventory_after": [],
+  "MSVC_build_receipt": "C:\\Users\\13666\\Workspace\\Face2Parameter\\outputs\\offline_renderer_repair_20261012\\controlled_msvc_v1\\build_receipt.json",
+  "binaries": [
+    {
+      "path": "C:\\Users\\13666\\Workspace\\Face2Parameter\\outputs\\offline_renderer_repair_20261012\\controlled_msvc_v1\\renderdoc_target_msvc.exe",
+      "bytes": 302592,
+      "sha256": "96803069d054923dcf88086c99b9dad4df49087cd74d580a0a6344b0a7cc83f4"
+    },
+    {
+      "path": "C:\\Users\\13666\\Workspace\\Face2Parameter\\outputs\\offline_renderer_repair_20261012\\controlled_msvc_v1\\renderdoc_control_fixture_msvc.exe",
+      "bytes": 269824,
+      "sha256": "ee81ef3ca2d69c6869868fd68377c5a331ae251191c15426a6531c6ffd58fd3b"
+    }
+  ],
+  "full_RGB_renderer_acceptance": false,
+  "HS2_game_operation": false,
+  "logs_retained_in_ignored_directory": "C:\\Users\\13666\\Workspace\\Face2Parameter\\outputs\\offline_renderer_repair_20261012\\msvc_one_authorized_capture_v1"
+}

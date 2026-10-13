@@ -503,3 +503,27 @@ Remaining runtime boundary: the repaired MSVC target interface and complete fram
 rendering have not yet passed a graphical check. One independent controlled
 fixture check is authorized by the main task after these CPU repairs are saved;
 it must not be called HS2 or full RGB acceptance.
+
+The one authorized MSVC standalone check subsequently **passed**: independent
+32x32 WARP process PID52140, D3D11 frame73, fresh 2603-byte capture, exact file
+size/path/timestamp match, client exit0 and empty stderr. Both before and after
+related-process inventories are empty; the fixture exited normally. No retry,
+game launch/injection or HS2 control occurred. The prior failures remain intact.
+Receipt: `tools/offline_renderer/target_control_validation_20261012.json`.
+
+Verified client: ignored `controlled_msvc_v1/renderdoc_target_msvc.exe`, SHA256
+`96803069d054923dcf88086c99b9dad4df49087cd74d580a0a6344b0a7cc83f4`.
+The calling process must put the pinned official portable directory on PATH
+(the client uses its `renderdoc.dll`) and preserve direct binary stdout/stderr
+logs. For a main-task-owned native process launched with its fresh capture path
+template, the supported commands are:
+
+```text
+renderdoc_target_msvc.exe list
+renderdoc_target_msvc.exe IDENT EXPECTED_PID trigger DEADLINE_SECONDS ABSOLUTE_FRESH_CAPTURE_PREFIX
+```
+
+The main task alone chooses/launches HS2, waits for the actual Maker/card/SSS
+state, obtains its PID/target ident and triggers its one native frame. This
+standalone check validates the repaired control interface, not the pending
+complete scene/SSS/GrabPass/postprocess renderer or its native RGB agreement.
