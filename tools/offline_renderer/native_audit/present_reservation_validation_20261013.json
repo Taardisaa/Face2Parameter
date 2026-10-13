@@ -1,0 +1,48 @@
+{
+  "scope": "CPU official C table mock, x64 MSVC build and managed compile; no RenderDoc DLL/graphics/native game execution",
+  "vcvars": "C:\\Program Files (x86)\\Microsoft Visual Studio\\18\\BuildTools\\VC\\Auxiliary\\Build\\vcvars64.bat",
+  "sdk_header": "C:\\Users\\13666\\Workspace\\Face2Parameter\\outputs\\offline_renderer_repair_20261012\\renderdoc_portable_1_46\\extracted\\RenderDoc_1.46_64\\renderdoc_app.h",
+  "sdk_header_sha256": "b7005e7dc34c3635046868bbd76d81b9b055aede0f56daa0bd39fedee0639ffb",
+  "outputs": [
+    {
+      "path": "C:\\Users\\13666\\Workspace\\Face2Parameter\\outputs\\offline_renderer_repair_20261013\\present_reservation_cpu_v1\\hs2_renderdoc_scope_native.dll",
+      "bytes": 350720,
+      "sha256": "4049d2617d624d52a907c0c881e9076e9bf79f1a6179690f4a245eb69aa96123"
+    },
+    {
+      "path": "C:\\Users\\13666\\Workspace\\Face2Parameter\\outputs\\offline_renderer_repair_20261013\\present_reservation_cpu_v1\\HS2_RenderDocScope.dll",
+      "bytes": 35840,
+      "sha256": "ec461c1eed9a49799f2431f20bb646269e6f6e3d7f915982c81c207ea9702790"
+    },
+    {
+      "path": "C:\\Users\\13666\\Workspace\\Face2Parameter\\outputs\\offline_renderer_repair_20261013\\present_reservation_cpu_v1\\Newtonsoft.Json.dll",
+      "bytes": 711952,
+      "sha256": "e1e27af7b07eeedf5ce71a9255f0422816a6fc5849a483c6714e1b472044fa9d"
+    },
+    {
+      "path": "C:\\Users\\13666\\Workspace\\Face2Parameter\\outputs\\offline_renderer_repair_20261013\\present_reservation_cpu_v1\\scope_cpu_mock.exe",
+      "bytes": 377856,
+      "sha256": "335382e7a5780ecc1df9020370d0a421df0412dbea8ca0be45dd5463ac98ffba"
+    },
+    {
+      "path": "C:\\Users\\13666\\Workspace\\Face2Parameter\\outputs\\offline_renderer_repair_20261013\\present_reservation_cpu_v1\\present_cpu_mock.exe",
+      "bytes": 375808,
+      "sha256": "1f51824a5b044d3a97ff6ba76579279ea22220e689872e25c524c12b30b0b4af"
+    },
+    {
+      "path": "C:\\Users\\13666\\Workspace\\Face2Parameter\\outputs\\offline_renderer_repair_20261013\\present_reservation_cpu_v1\\imports.txt",
+      "bytes": 5508,
+      "sha256": "f53b4406609dc23088b891f074d06820f43c16ea57bff39ce3d7a1d9a380e054"
+    },
+    {
+      "path": "C:\\Users\\13666\\Workspace\\Face2Parameter\\outputs\\offline_renderer_repair_20261013\\present_reservation_cpu_v1\\exports.txt",
+      "bytes": 1385,
+      "sha256": "0010257b193aedfbf8c1f37d08ef8893e9db73dff2ee62502af7a26b1aae425f"
+    },
+    {
+      "path": "C:\\Users\\13666\\Workspace\\Face2Parameter\\outputs\\offline_renderer_repair_20261013\\present_reservation_cpu_v1\\scope_static.asm",
+      "bytes": 5293922,
+      "sha256": "8142fcd5ff5521abf9739c4c8e7fe721bcf91d7caf6b8e230ac939bfc9d46594"
+    }
+  ]
+}

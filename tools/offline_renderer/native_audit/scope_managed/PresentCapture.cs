@@ -3,6 +3,7 @@ using System.IO;
 using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Text;
+using System.Collections.Generic;
 
 public static partial class HS2_RenderDocScope
 {
@@ -128,5 +129,18 @@ public static partial class HS2_RenderDocScope
             try{int code=abortPresent(active.ExpectedPid,token);string native=ReadReceipt();if(NoLongerOwned(native))token=0;
                 presentOriginalComplete=false;presentInsideOriginal=false;Save("present_abort",code,native);
             }catch(Exception error){presentOriginalComplete=false;presentInsideOriginal=false;SafeSave("present_abort_failure",error);}}
+    }
+    // Called by root after the actual original callback returns, before any
+    // subsequent scope failure/throw. Keep its entire native dictionary even
+    // when that original PNG succeeded but capture/geometry did not.
+    public static void RecordOriginalCallResult(object result)
+    {
+        lock(Gate){
+            if(active==null || active.CaptureMode!="official_present")return;
+            try{
+                var payload=ScopeJson.ParseObject(ScopeJson.Object(new Dictionary<string,object>{{"original_result",result}}));
+                Save("original_call_returned",0,null,null,payload["original_result"]);
+            }catch(Exception error){SafeSave("original_call_result_failure",error);}
+        }
     }
 }

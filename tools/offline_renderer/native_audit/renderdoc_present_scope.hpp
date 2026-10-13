@@ -152,8 +152,10 @@ extern "C" __declspec(dllexport) int __cdecl HS2_RDOC_AbortPresent(uint32_t pid,
   std::lock_guard<std::mutex> lock(gate);if(auto bad=presentOwned(pid,supplied))return bad;
   if(api->GetNumCaptures()!=beginCount){bool running=api->IsFrameCapturing()!=0;if(!running)owned=false;presentMessage("present_abort",-27,"Capture already saved/changed; no other active scope discarded");if(!running)releasePresent();return -27;}
   if(!api->IsFrameCapturing()){
-    if(presentPhase==PresentPhase::Queued){presentMessage("present_abort",-21,"SDK cannot cancel a pending trigger; reservation retained until active discard or owned process shutdown");return -21;}
-    owned=false;presentMessage("present_abort",3,"Original scope inactive without saved file; released");releasePresent();return 3;
+    // In pinned core End decrements the global active counter even when the
+    // D3D11 ordinary driver remains active for retry. False therefore does NOT
+    // prove completion in any phase (including Entered/Bound/AwaitPresent).
+    presentMessage("present_abort",-21,"SDK active counter false with unchanged file count cannot exclude retry/write; reservation and prefix retained until authoritative completion or owned process shutdown");return -21;
   }
   if(!api->DiscardFrameCapture(device,nullptr) || api->IsFrameCapturing()){presentMessage("present_abort",-8,"Owned active discard failed; reservation retained");return -8;}
   owned=false;presentMessage("present_abort",3,"Discarded only reserved active capture; no forced SDK End");releasePresent();return 3;

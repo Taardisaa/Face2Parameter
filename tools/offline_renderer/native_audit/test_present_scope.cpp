@@ -73,5 +73,11 @@ int main(int argc,char** argv){try{
   check(HS2_RDOC_AbortPresent(pid,ticket)==3 && !owned && discarded==1 && deviceA.refs==1 && target.refs==1);
   check(HS2_RDOC_AbortPresent(pid,ticket)==-20 && discarded==1);
   check(HS2_RDOC_QueuePresentFromNativeTexture(pid,path("cancel").c_str(),&source,&ticket)==4);running=true;check(HS2_RDOC_AbortPresent(pid,ticket)==3 && !owned && deviceA.refs==1);
+  check(HS2_RDOC_QueuePresentFromNativeTexture(pid,path("inactive_entered_retry").c_str(),&source,&ticket)==4);
+  running=true;check(HS2_RDOC_PollPresent(pid,ticket)==5);check(HS2_RDOC_EnterOriginal(pid,ticket)==6);
+  running=false;auto oldTemplate=captureTemplate;int oldDiscardCount=discarded;
+  check(HS2_RDOC_AbortPresent(pid,ticket)==-21 && owned && captureTemplate==oldTemplate && discarded==oldDiscardCount && deviceA.refs==2);
+  // Simulate authoritative eventual file completion, not a GPU/readiness claim.
+  fakePresentSave();check(HS2_RDOC_PollPresent(pid,ticket)==-23 && !owned && deviceA.refs==1);
   std::cout<<"CPU Present/table/COM-identity protocol passed "<<checks<<" checks; no Unity callback, GPU, RenderDoc DLL or real RDC execution\n";return 0;
 }catch(const std::exception& e){std::cerr<<e.what()<<"\n";return 1;}}

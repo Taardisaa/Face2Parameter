@@ -36,6 +36,10 @@ internal static class TestPresentManaged
         check(queuedEvents.Count==3 && abortCount==0);
         HS2_RenderDocScope.AbortPresentSafely();check(abortCount==1 && (ulong)Field("token").GetValue(null)==0);
         check(ScopeJson.ParseObject(HS2_RenderDocScope.LastReceipt)["events"]!=null);
+        var result=new Dictionary<string,object>{{"path",png},{"capture",new Dictionary<string,object>{{"renders",16},{"SSS",true},{"nested",new object[]{1,"unchanged",null}}}}};
+        HS2_RenderDocScope.RecordOriginalCallResult(result);
+        var saved=(Newtonsoft.Json.Linq.JArray)ScopeJson.ParseObject(HS2_RenderDocScope.LastReceipt)["events"];
+        check(saved[saved.Count-1]["stage"].ToString()=="original_call_returned" && saved[saved.Count-1]["original_result"]["capture"]["renders"].ToString()=="16");
         File.Delete(png);File.Delete(request.ReceiptPath);
         Field("active").SetValue(null,null);
         check(HS2_RenderDocScope.EnterOriginalPresentCapture(png)==0 && HS2_RenderDocScope.PollPresentCapture()==0);

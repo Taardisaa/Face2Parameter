@@ -19,6 +19,7 @@ int ArmPresentFromNativeTexture(IntPtr existingRealUnityTexture,string exactPngP
 int PollPresentCapture()
 int EnterOriginalPresentCapture(string exactPngPath)
 void AbortPresentSafely()
+void RecordOriginalCallResult(object actualOriginalCallbackDictionary)
 void BeginFromNativeTexture(IntPtr actualOriginalRt,string exactPngPath) [existing hook]
 void EndAfterSavedPng(string exactPngPath) [existing hook]
 void AbortOwnedSafely() [existing finally hook]
@@ -133,7 +134,9 @@ root's separate receipt, not this helper's assertion.
 
 Original SDK has no cancel-pending-trigger API. Abort while queued/inactive
 returns-21 and retains reservation until active owned discard or root-owned
-process shutdown. It never calls Discard on an inactive device or falsely clears
+process shutdown. Every phase with SDKfalse/unchanged count now retains reservation:
+pinned core's counter can befalse while the D3D11 driver retries/writes. It never
+calls Discard on an assumed inactive device or falsely clears
 a pending trigger. An external saved entry/capture is not discarded. Present
 reservations reject legacy SDK End/Abort routes. Default hotkey/other capture
 writers must remain absent by root's explicit exclusive-writer contract; the SDK
@@ -159,6 +162,8 @@ imports have no renderdoc.dll or d3d11.dll dependency.
 - Installed Unity GL/texture/end-of-frame Cecil audit and banned JSON-call audit.
 
 CPU fixtures are isolated diagnostics, not native images/captures. Native Present
-startup/boundary/annotation/readback acceptance remains unexecuted. Full renderer
+attempt33736 failed and is preserved. The abort/result fix build does not resolve
+its source lifecycle and must not be treated as another native-ready candidate.
+See [present_retry_lifecycle_failure.md](present_retry_lifecycle_failure.md). Full renderer
 still needs source-exact replay/candidate vertex/normal/tangent/bone/previous/
 shadow/motion/culling/material/resource dependency integration and pixel checks.

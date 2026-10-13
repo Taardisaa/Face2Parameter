@@ -717,3 +717,13 @@ native/managed CPU guards, source-schema XML verifier and deployment receipt are
 in [present_scope_contract.md](../tools/offline_renderer/native_audit/present_scope_contract.md).
 No graphics/game was started for this milestone; native boundary/RDC proof and
 full source-driven candidate RGB remain unaccepted.
+
+The single real Present attempt subsequently failed. Pinned core decrements its
+SDK active counter even when D3D11 continues automatic retry, so false public flag
+is not driver inactivity. V3 wrongly released/restored the prefix before the
+eventual retry file finished. All phases now retain uncertain reservations and a
+new direct-streaming hook preserves the actual original callback dictionary.
+Source evidence and required independent D3D11 lifecycle/API extension are in
+[present_retry_lifecycle_failure.md](../tools/offline_renderer/native_audit/present_retry_lifecycle_failure.md).
+This is a safety/provenance fix; recording lifecycle remains unaccepted and no
+additional graphical attempt was executed.

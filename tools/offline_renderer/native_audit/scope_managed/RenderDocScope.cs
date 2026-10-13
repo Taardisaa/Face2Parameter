@@ -115,7 +115,7 @@ public static partial class HS2_RenderDocScope
         if (value == null || value.Type != JTokenType.Boolean) throw new InvalidOperationException("Native receipt must declare boolean ownership");
         return !value.Value<bool>();
     }
-    static void Save(string stage, int code, string native, Exception error = null)
+    static void Save(string stage, int code, string native, Exception error = null, JToken originalResult = null)
     {
         var entry = new Dictionary<string, object> {
             { "schema_version", 1 }, { "stage", stage }, { "code", code },
@@ -125,6 +125,7 @@ public static partial class HS2_RenderDocScope
             { "error", error == null ? null : error.ToString() },
             { "request", ScopeJson.RequestFields(active) }
         };
+        if(originalResult!=null)entry.Add("original_result",originalResult);
         if (geometry != null) entry.Add("geometry", geometry.Describe());
         events.Add(entry);
         LastReceipt = ScopeJson.Object(new Dictionary<string, object> { { "schema_version", 1 }, { "events", events } });
