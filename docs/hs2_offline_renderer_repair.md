@@ -294,3 +294,61 @@ not a ready public Python ReplayController method
 A capture could supply exact pass/cbuffer/SRV evidence, but fixed capture replay
 is not an implemented general parameter renderer, and no game injection or
 capture has been performed by this subtask.
+
+### Actual v3 resources and native input assembly
+
+The main task's repaired helper completed **44 raw jobs, zero pending/failed**
+(517,971,024 original-format bytes) in `runtime_audit_hook_v3`. The geometry
+export in that folder is from the same process; prior-process instance IDs are
+not rebound. All eight actual head renderer manifests are covered and their
+property-block presence checks are false. The main task's public card/ABMX/
+expression/renderstyle checks and restoration receipts remain the authority.
+
+`src/render/native_inputs.py` implements Unity's exact SH polynomial coefficient
+packing, captured Color versus Vector semantics, typed native-resource views,
+and the installed DHH SSS vertical/horizontal pass schedule. Current captured
+SSS fields generate four passes and the same float32 radius as the actual
+convolution material. Unknown typeless view interpretation, hidden setter
+semantics and missing raw data raise explicit errors. Material/global getters
+returning zero are not used as a substitute for the engine's per-draw cbuffers.
+The actual head interpolated probe SH is nonzero; these coefficients are retained.
+
+CPU verification: `python -m unittest tools.offline_renderer.test_native_inputs
+tools.offline_renderer.test_dxbc tools.offline_renderer.test_cpu` — 14 tests pass.
+This is input assembly, not full native RGB acceptance. Complete draw/pass state,
+shared depth, SSS/profile/GrabPass/postprocess execution and active shader variant
+selection remain required.
+
+### RenderDoc portable preparation and retained target-client failure
+
+`tools/offline_renderer/prepare_renderdoc.py` downloads the pinned official
+portable RenderDoc 1.46 archive and records its URL/hash. The portable package
+contains Python 3.8 DLL/stdlib; this is not a binding compatible with the
+workspace's Python 3.13. The external C++ prototype uses the version-matched
+official headers and DLL rather than guessing a Python binding.
+
+An independent WARP analytic installed-shader pass produced a real capture and
+official XML+ZIP conversion. `export_renderdoc_xml.py` preserves every chunk
+and original data blob (the fixture has 47 chunks and 17 blobs), including
+uninterpreted branches. The fixture's capture is not HS2 evidence and does not
+demonstrate parameter/resource replacement or the complete RGB renderer.
+
+**The external target-control prototype is NOT accepted and must not be used
+with HS2.** Enumeration succeeded and the official log records successful
+handshakes, but the client then failed before emitting its connected message.
+The two retained logs show `renderdoccmd.exe --crash` servers; the user's bug
+reporter observation is consistent with this failed client path. The exact
+failure cause (including cross-toolchain C++ aggregate-return ABI) is unresolved,
+not described as a pure network timeout. No new reproduction was attempted
+after the stop instruction. No RenderDoc process was injected into HS2.
+
+The experiment is isolated in `renderdoc_target.cpp` and
+`renderdoc_control_fixture.cpp`; its failed acceptance metadata is
+`tools/offline_renderer/renderdoc_target_failure_20261012.json`. Complete logs,
+portable tools, source headers, binaries and captures are under the ignored
+`outputs/offline_renderer_repair_20261012` tree. The read-only process inventory
+after stopping found no live RenderDoc client, fixture or bugreporter. Other
+applications and the game's UnityCrashHandler were left untouched. While the
+user is gaming, work continues on CPU data/source only; graphically executing
+this prototype requires a repaired ABI path and later explicit native-session
+authorization. The full renderer goal remains unfinished.

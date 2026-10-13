@@ -12,6 +12,9 @@
 #include <iostream>
 #include <stdexcept>
 #include <cstdint>
+#ifdef HS2_RENDERDOC_SUPPORT
+#include "renderdoc_app.h"
+#endif
 
 static void check(HRESULT hr,const char* where){
     if(FAILED(hr)) throw std::runtime_error(std::string(where)+" HRESULT "+std::to_string((unsigned)hr));
@@ -56,6 +59,14 @@ int main(int argc,char** argv){
         D3D_FEATURE_LEVEL feature;
         check(D3D11CreateDevice(nullptr,D3D_DRIVER_TYPE_WARP,nullptr,0,nullptr,0,D3D11_SDK_VERSION,
             device.address(),&feature,context.address()),"D3D11CreateDevice WARP");
+#ifdef HS2_RENDERDOC_SUPPORT
+        RENDERDOC_API_1_6_0* captureApi=nullptr;
+        if(auto module=GetModuleHandleA("renderdoc.dll")){
+            auto getApi=(pRENDERDOC_GetAPI)GetProcAddress(module,"RENDERDOC_GetAPI");
+            if(!getApi||!getApi(eRENDERDOC_API_Version_1_6_0,(void**)&captureApi))throw std::runtime_error("RenderDoc SDK API unavailable");
+            captureApi->StartFrameCapture(device.p,nullptr);
+        }
+#endif
         auto vsBytes=read(root/"vertex.dxbc"),psBytes=read(root/"pixel.dxbc");
         Com<ID3D11VertexShader> vs;Com<ID3D11PixelShader> ps;
         check(device->CreateVertexShader(vsBytes.data(),vsBytes.size(),nullptr,vs.address()),"CreateVertexShader");
@@ -140,6 +151,9 @@ int main(int argc,char** argv){
         std::ofstream output(root/"rgba32f.bin",std::ios::binary);
         for(UINT y=0;y<height;y++)output.write((char*)mapped.pData+y*mapped.RowPitch,width*16);
         context->Unmap(staging.p,0);if(!output)throw std::runtime_error("Failed output write");
+#ifdef HS2_RENDERDOC_SUPPORT
+        if(captureApi&&!captureApi->EndFrameCapture(device.p,nullptr))throw std::runtime_error("RenderDoc fixture capture failed");
+#endif
         context->ClearState();for(auto* x:ownedBuffers)x->Release();for(auto* x:ownedViews)x->Release();for(auto* x:ownedSamplers)x->Release();for(auto* x:ownedTextures)x->Release();
         std::cout<<"WARP original DXBC pass executed "<<width<<"x"<<height<<" samples="<<samples<<"\n";
         return 0;

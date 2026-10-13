@@ -1,0 +1,31 @@
+{
+  "schema_version": 1,
+  "status": "failed_not_accepted_do_not_use_with_hs2",
+  "release": "RenderDoc 1.46 e4bd23b671d3d5a747ff5221dbe08a63eb6ca200",
+  "official_archive": "https://renderdoc.org/stable/1.46/RenderDoc_1.46_64.zip",
+  "archive_sha256": "9ca4d09ecaba2cc791168660d6fc2a7e3d70fe67146e87ec05c5f8dea70772f7",
+  "toolchain": "MinGW C++ external client against official MSVC-built DLL and v1.46 headers",
+  "independent_fixture_only": true,
+  "hs2_launched_or_injected_by_subtask": false,
+  "actual_observations": [
+    "Target enumeration returned ident 38920",
+    "Official logs recorded successful handshake for independent fixtures PID50344 and PID43760",
+    "Client emitted no connected/capture message and exceeded external deadline",
+    "Official logs record renderdoccmd.exe --crash server processes",
+    "User observed recurring bugreporter; no popup title or dump was captured, so precise crash linkage is not asserted",
+    "Read-only process inventory after stop found no live RenderDoc client/fixture/bugreporter"
+  ],
+  "retained_logs": [
+    "outputs/offline_renderer_repair_20261012/target_control_failure_audit/RenderDoc_2026.10.12_18.03.12.log",
+    "outputs/offline_renderer_repair_20261012/target_control_failure_audit/RenderDoc_2026.10.12_18.04.57.log"
+  ],
+  "successful_separate_fixture": {
+    "path": "outputs/offline_renderer_repair_20261012/renderdoc_analytic/capture_capture.rdc",
+    "bytes": 4541,
+    "xml_chunks": 47,
+    "zip_blobs": 17,
+    "scope": "independent installed-shader analytic pass; not HS2 or full RGB acceptance"
+  },
+  "unresolved_cause": "Post-handshake client path; cross-toolchain aggregate-return ABI must be checked before any additional execution",
+  "execution_constraint": "No further game, GPU, WARP, RenderDoc or graphical fixture execution while user is gaming. CPU source/data work continues."
+}
