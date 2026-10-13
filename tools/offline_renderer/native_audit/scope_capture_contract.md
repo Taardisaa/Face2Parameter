@@ -168,3 +168,42 @@ Installed geometry has no **baked tangent** array. Source tangents and blendfram
 delta_tangents are retained; GPU tangent identity remains unverified until actual
 draw buffers are decoded. Neither same-freeze pairing nor full renderer completion
 can be claimed from the CPU fixture.
+
+## Stripped Unity JSON boundary repair
+
+The first native scope attempt failed before PNG/geometry/RDC: generic reflection
+serialization required unavailable System.Data4.0. The failure and exact state
+restoration remain main-task evidence; no success or retry was inferred.
+
+The helper now follows the installed bridge's actual JsonUtil dictionary/
+sequence/primitive boundary. Installed WriteValue/ParseObject/Object IL and
+bridge SHA are retained in the CPU receipt. Request parsing uses JsonTextReader
+and duplicate-strict JObject.Load with explicit named boolean/uint32/string
+fields. Request DTO output is an explicit field dictionary. Native receipt
+objects use direct JToken.WriteTo; nested geometry/export metadata retains all
+dictionary/list/primitive values. Unsupported types/fields/tokens and nonfinite
+numeric values fail explicitly; no DataTable behavior is simulated or disabled.
+
+Save and SafeSave use JsonTextWriter directly. A secondary failure envelope
+preserves previous complete receipt, request and all error strings; if even that
+writer/previous-JSON pass fails, an independent ASCII JSON escape routine retains
+all raw diagnostics as strings in valid JSON. Primary receipt I/O failure can
+produce a separate fresh `.failure.GUID.json` without throwing through native
+restoration. The hook signatures and original sixteen renders are unchanged.
+
+Production helper source/IL has no JsonConvert/JsonSerializer/DefaultContractResolver
+call or System.Data assembly reference. A fresh .NET CPU process exercises all
+request fields, numeric bounds, nested native JTokens, timestamp strings, Unicode,
+wrong/unknown types, nonfinite values, primary file failures and double-writer/
+invalid-history fallback: thirty-three checks pass with **no System.Data load**.
+Old twenty-two SDK checks and paired geometry/freshness fixtures also pass.
+
+Latest build: `scope_streaming_json_cpu_v3/HS2_RenderDocScope.dll` SHA256
+`11f02550423db6c2dfd8de586e916b64b2c40b30d0580d9702bd234a7c5f887f`.
+Rebuilt native source is unchanged, C API intact; its SHA is
+`b93200cd15650c3e617d235350adc1d670bf35fab85a8fd1b57b13f87a159339`.
+Existing Newtonsoft dependency hash remains e1e27af7... and matches installed.
+The same managed filename/version is used; main must restart to replace the
+already-loaded old assembly and update sidecar ExpectedNativeSha256 for the
+chosen verified native binary. No game/GPU or deployment was done by this child.
+Actual corrected native scope/RDC/GPU geometry/full RGB acceptance remains pending.

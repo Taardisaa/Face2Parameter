@@ -5,7 +5,7 @@ using System.IO;
 using System.Runtime.InteropServices;
 using System.Security.Cryptography;
 using System.Text;
-using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 
 // Independent, opt-in hook shim; never loads renderdoc.dll or changes rendering.
 // The existing game Capture owns all Camera.Render/ReadPixels/finally restoration.
@@ -17,9 +17,9 @@ public static class HS2_RenderDocScope
         public uint ExpectedPid;
         public string ExactPngPath, CapturePrefix, ReceiptPath;
         public string ExpectedNativeSha256, ExpectedRenderDocSha256;
-        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)] public string GeometryBeforePath;
-        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)] public string GeometryAfterPath;
-        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)] public string ExpectedBridgeSha256;
+        public string GeometryBeforePath;
+        public string GeometryAfterPath;
+        public string ExpectedBridgeSha256;
     }
     static readonly object Gate = new object();
     static readonly string DirectoryPath = Path.GetDirectoryName(typeof(HS2_RenderDocScope).Assembly.Location);
@@ -110,9 +110,9 @@ public static class HS2_RenderDocScope
     }
     static bool NoLongerOwned(string native)
     {
-        var values = JsonConvert.DeserializeObject<Dictionary<string, object>>(native);
-        object value;
-        return values != null && values.TryGetValue("owned", out value) && value is bool && !(bool)value;
+        var values = ScopeJson.ParseObject(native); var value = values["owned"];
+        if (value == null || value.Type != JTokenType.Boolean) throw new InvalidOperationException("Native receipt must declare boolean ownership");
+        return !value.Value<bool>();
     }
     static void Save(string stage, int code, string native, Exception error = null)
     {
@@ -120,21 +120,34 @@ public static class HS2_RenderDocScope
             { "schema_version", 1 }, { "stage", stage }, { "code", code },
             { "pid", Process.GetCurrentProcess().Id }, { "owned_token", token.ToString() },
             { "utc", DateTime.UtcNow.ToString("o") },
-            { "native", native == null ? null : JsonConvert.DeserializeObject(native) },
+            { "native", native == null ? null : ScopeJson.ParseObject(native) },
             { "error", error == null ? null : error.ToString() },
-            { "request", active }
+            { "request", ScopeJson.RequestFields(active) }
         };
         if (geometry != null) entry.Add("geometry", geometry.Describe());
         events.Add(entry);
-        LastReceipt = JsonConvert.SerializeObject(new Dictionary<string, object> { { "schema_version", 1 }, { "events", events } });
+        LastReceipt = ScopeJson.Object(new Dictionary<string, object> { { "schema_version", 1 }, { "events", events } });
         if (active != null && !String.IsNullOrEmpty(active.ReceiptPath)) File.WriteAllText(active.ReceiptPath, LastReceipt, new UTF8Encoding(false));
     }
     static void SafeSave(string stage, Exception error)
     {
         try { Save(stage, -100, null, error); }
-        catch (Exception saveError) { LastReceipt = JsonConvert.SerializeObject(new Dictionary<string, object> {
-            { "stage", stage }, { "error", error.ToString() }, { "receipt_write_error", saveError.ToString() }
-        }); }
+        catch (Exception saveError) {
+            try { LastReceipt = ScopeJson.Object(new Dictionary<string, object> {
+                { "schema_version", 1 }, { "stage", stage }, { "code", -100 }, { "error", error.ToString() }, { "receipt_write_error", saveError.ToString() },
+                { "previous_receipt", ScopeJson.ParseObject(LastReceipt) }, { "request", ScopeJson.RequestFields(active) }, { "failed_event_count", events.Count }
+            }); }
+            catch(Exception fallbackError) { LastReceipt=ScopeJson.Emergency(stage,error.ToString(),saveError.ToString(),fallbackError.ToString(),LastReceipt); }
+            // A locked/unwritable primary receipt must not erase diagnostics or
+            // throw through native restoration. A separate fresh failure file is
+            // recoverable when its original parent remains writable.
+            if(active!=null && !String.IsNullOrEmpty(active.ReceiptPath)) {
+                string path=active.ReceiptPath+".failure."+Guid.NewGuid().ToString("N")+".json";
+                try {using(var file=new FileStream(path,FileMode.CreateNew,FileAccess.Write,FileShare.Read))
+                    using(var writer=new StreamWriter(file,new UTF8Encoding(false)))writer.Write(LastReceipt);}
+                catch(Exception fallbackWrite) { LastReceipt=ScopeJson.Emergency(stage,error.ToString(),saveError.ToString(),fallbackWrite.ToString(),LastReceipt); }
+            }
+        }
     }
 
     // IL: after assigning actual RT to Camera.targetTexture, before ResetTemporal.
@@ -148,7 +161,7 @@ public static class HS2_RenderDocScope
             try {
                 string path = Path.Combine(DirectoryPath, "HS2_RenderDocScope.request.json");
                 if (!File.Exists(path)) return;
-                var request = JsonConvert.DeserializeObject<Request>(File.ReadAllText(path));
+                var request = ScopeJson.ReadRequest(File.ReadAllText(path));
                 if (request == null || !request.Enabled) return;
                 // Ignore other ordinary Captures; exact opt-in pathname selects one.
                 if (String.IsNullOrEmpty(request.ExactPngPath) || !String.Equals(Path.GetFullPath(request.ExactPngPath), Path.GetFullPath(capturePngPath), StringComparison.OrdinalIgnoreCase)) return;

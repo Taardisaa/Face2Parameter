@@ -1,0 +1,14 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net472</TargetFramework><OutputType>Exe</OutputType><AssemblyName>ScopeJsonCpuTest</AssemblyName>
+    <LangVersion>latest</LangVersion><AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath><EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="../scope_managed/RenderDocScope.cs" Link="RenderDocScope.cs" />
+    <Compile Include="../scope_managed/GeometryCapture.cs" Link="GeometryCapture.cs" />
+    <Compile Include="../scope_managed/ScopeJson.cs" Link="ScopeJson.cs" />
+    <Compile Include="TestJson.cs" />
+    <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies" Version="1.0.3" PrivateAssets="all" />
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+  </ItemGroup>
+</Project>

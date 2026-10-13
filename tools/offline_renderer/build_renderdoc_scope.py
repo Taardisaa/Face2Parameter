@@ -15,6 +15,7 @@ def main():
     ap.add_argument('--sdk',required=True,type=Path)
     ap.add_argument('--vcvars',required=True,type=Path)
     ap.add_argument('--out',required=True,type=Path)
+    ap.add_argument('--cecil',type=Path,default=Path('E:/HoneySelect2_ArcticFox/BepInEx/core/Mono.Cecil.dll'))
     a=ap.parse_args()
     header=a.sdk/'renderdoc_app.h'
     if not header.is_file() or not a.vcvars.is_file():raise FileNotFoundError('Pinned SDK/installed vcvars64 required')
@@ -38,6 +39,12 @@ def main():
     if test['status']!='pass':raise RuntimeError('CPU mock failed; logs retained')
     managed=run_logged(['dotnet','build',root/'scope_managed/HS2_RenderDocScope.csproj','-c','Release','-o',out],out/'managed_build_log',timeout=120,cwd=out)
     if managed['status']!='pass':raise RuntimeError('Managed build failed; logs retained')
+    json_audit=run_logged(['powershell','-NoProfile','-File',root/'audit_scope_json.ps1','-Helper',out/'HS2_RenderDocScope.dll','-Cecil',a.cecil.resolve(),'-Output',out/'json_dependency_audit.json'],out/'json_il_audit_log',timeout=30,cwd=out)
+    if json_audit['status']!='pass':raise RuntimeError('JSON source/IL dependency audit failed')
+    json_build=run_logged(['dotnet','build',root/'scope_json_cpu/JsonCpuTest.csproj','-c','Release','-o',out/'json_cpu_only'],out/'json_cpu_build_log',timeout=120,cwd=out)
+    if json_build['status']!='pass':raise RuntimeError('JSON CPU fixture compile failed')
+    json_test=run_logged([out/'json_cpu_only/ScopeJsonCpuTest.exe'],out/'json_cpu_log',timeout=15,cwd=out)
+    if json_test['status']!='pass':raise RuntimeError('JSON CPU dependency/roundtrip checks failed')
     managed_test=run_logged(['powershell','-NoProfile','-File',root/'test_scope_managed.ps1','-BuildDirectory',out],out/'managed_cpu_log',timeout=15,cwd=out)
     if managed_test['status']!='pass':raise RuntimeError('Managed CPU checks failed; logs retained')
     for variant,define in [('good',''),('wrong_signature','WRONG_SIGNATURE'),('wrong_ctor','WRONG_CTOR')]:

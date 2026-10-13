@@ -664,3 +664,26 @@ No OpenCapture, GPU driver replay or HS2 was executed. Receipt:
 `tools/offline_renderer/official_parser_validation_20261012.json`. This validates
 the official C++ file parser/export interface; full replay, modified capture
 roundtrip, actual HS2 capture and candidate RGB remain unaccepted.
+
+### Native scope JSON dependency failure and source repair
+
+Early bootstrap subsequently succeeded in the native game: official SDK loaded
+before the original full preloader, original Doorstop path restored, bridge/Maker/
+normal card/SSS ready. The first owned scope attempt then failed before its data
+outputs because the helper's generic JSON contract resolver required System.Data
+absent from Unity's stripped profile. Main preserved the actual stack and exact
+public state restoration; no native success or immediate retry was claimed.
+
+The helper now reuses the installed bridge-style streaming JSON boundary. Explicit
+request field parsing/dictionary output, direct native JToken writing and native
+geometry metadata keep the complete supported schema without reflection DTO
+serialization. Unknown branches fail explicitly. SafeSave preserves file/JSON
+errors and previous raw evidence in parseable envelopes even after the second
+writer fails, keeping native restoration reachable.
+
+Production IL/source bans the failing serializer calls and System.Data references.
+A fresh CPU runtime passed33 schema/error/fallback checks without loading that
+assembly, plus old22 SDK and paired geometry/freshness cases. Source/native C API/
+sixteen-render scope remain unchanged. Native corrected scope/RDC/candidate RGB
+still need acceptance; only main controls restart/deployment. Receipt:
+`tools/offline_renderer/native_audit/scope_streaming_json_validation_20261012.json`.

@@ -1,0 +1,729 @@
+{
+  "scope": "CPU official C table mock, x64 MSVC build and managed compile; no RenderDoc DLL/graphics/native game execution",
+  "vcvars": "C:\\Program Files (x86)\\Microsoft Visual Studio\\18\\BuildTools\\VC\\Auxiliary\\Build\\vcvars64.bat",
+  "sdk_header": "C:\\Users\\13666\\Workspace\\Face2Parameter\\outputs\\offline_renderer_repair_20261012\\renderdoc_portable_1_46\\extracted\\RenderDoc_1.46_64\\renderdoc_app.h",
+  "sdk_header_sha256": "b7005e7dc34c3635046868bbd76d81b9b055aede0f56daa0bd39fedee0639ffb",
+  "outputs": [
+    {
+      "path": "C:\\Users\\13666\\Workspace\\Face2Parameter\\outputs\\offline_renderer_repair_20261012\\scope_streaming_json_cpu_v3\\hs2_renderdoc_scope_native.dll",
+      "bytes": 324608,
+      "sha256": "b93200cd15650c3e617d235350adc1d670bf35fab85a8fd1b57b13f87a159339"
+    },
+    {
+      "path": "C:\\Users\\13666\\Workspace\\Face2Parameter\\outputs\\offline_renderer_repair_20261012\\scope_streaming_json_cpu_v3\\HS2_RenderDocScope.dll",
+      "bytes": 28672,
+      "sha256": "11f02550423db6c2dfd8de586e916b64b2c40b30d0580d9702bd234a7c5f887f"
+    },
+    {
+      "path": "C:\\Users\\13666\\Workspace\\Face2Parameter\\outputs\\offline_renderer_repair_20261012\\scope_streaming_json_cpu_v3\\Newtonsoft.Json.dll",
+      "bytes": 711952,
+      "sha256": "e1e27af7b07eeedf5ce71a9255f0422816a6fc5849a483c6714e1b472044fa9d"
+    },
+    {
+      "path": "C:\\Users\\13666\\Workspace\\Face2Parameter\\outputs\\offline_renderer_repair_20261012\\scope_streaming_json_cpu_v3\\scope_cpu_mock.exe",
+      "bytes": 351744,
+      "sha256": "14662464422e93e12e4194e8d9133c0e1d97cfb6aeb4a776365ca5f4d34284c7"
+    },
+    {
+      "path": "C:\\Users\\13666\\Workspace\\Face2Parameter\\outputs\\offline_renderer_repair_20261012\\scope_streaming_json_cpu_v3\\imports.txt",
+      "bytes": 5509,
+      "sha256": "8f27566f77a2cc742616606e2df9d3822938a463a8dfffe9d3cedb918c131cac"
+    },
+    {
+      "path": "C:\\Users\\13666\\Workspace\\Face2Parameter\\outputs\\offline_renderer_repair_20261012\\scope_streaming_json_cpu_v3\\exports.txt",
+      "bytes": 954,
+      "sha256": "d5c1d2e69a50758f089de58b4a198775aa4acec497124aa80be73737e222f47f"
+    },
+    {
+      "path": "C:\\Users\\13666\\Workspace\\Face2Parameter\\outputs\\offline_renderer_repair_20261012\\scope_streaming_json_cpu_v3\\scope_static.asm",
+      "bytes": 4566341,
+      "sha256": "c625726e333cff71d3148039f1dbdcad3b5a6862feebf5e845577031818bdde5"
+    }
+  ],
+  "installed_json_oracle": {
+    "methods": [
+      {
+        "attributes": "Public, Static, HideBySig",
+        "signature": "Newtonsoft.Json.Linq.JObject HS2Mod.McpBridge.JsonUtil::ParseObject(System.String)",
+        "il": [
+          "IL_0000: ldarg.0",
+          "IL_0001: call System.Boolean System.String::IsNullOrWhiteSpace(System.String)",
+          "IL_0006: brfalse.s IL_000e",
+          "IL_0008: newobj System.Void Newtonsoft.Json.Linq.JObject::.ctor()",
+          "IL_000d: ret",
+          "IL_000e: ldarg.0",
+          "IL_000f: ldsfld System.String HS2Mod.McpBridge.JsonUtil::_lastJson",
+          "IL_0014: call System.Boolean System.String::op_Equality(System.String,System.String)",
+          "IL_0019: brfalse.s IL_0028",
+          "IL_001b: ldsfld Newtonsoft.Json.Linq.JObject HS2Mod.McpBridge.JsonUtil::_lastObject",
+          "IL_0020: brfalse.s IL_0028",
+          "IL_0022: ldsfld Newtonsoft.Json.Linq.JObject HS2Mod.McpBridge.JsonUtil::_lastObject",
+          "IL_0027: ret",
+          "IL_0028: nop",
+          "IL_0029: ldarg.0",
+          "IL_002a: newobj System.Void System.IO.StringReader::.ctor(System.String)",
+          "IL_002f: newobj System.Void Newtonsoft.Json.JsonTextReader::.ctor(System.IO.TextReader)",
+          "IL_0034: dup",
+          "IL_0035: ldc.i4.0",
+          "IL_0036: callvirt System.Void Newtonsoft.Json.JsonReader::set_DateParseHandling(Newtonsoft.Json.DateParseHandling)",
+          "IL_003b: stloc.1",
+          "IL_003c: ldloc.1",
+          "IL_003d: newobj System.Void Newtonsoft.Json.Linq.JsonLoadSettings::.ctor()",
+          "IL_0042: dup",
+          "IL_0043: ldc.i4.2",
+          "IL_0044: callvirt System.Void Newtonsoft.Json.Linq.JsonLoadSettings::set_DuplicatePropertyNameHandling(Newtonsoft.Json.Linq.DuplicatePropertyNameHandling)",
+          "IL_0049: call Newtonsoft.Json.Linq.JObject Newtonsoft.Json.Linq.JObject::Load(Newtonsoft.Json.JsonReader,Newtonsoft.Json.Linq.JsonLoadSettings)",
+          "IL_004e: stloc.0",
+          "IL_004f: br.s IL_0065",
+          "IL_0051: ldloc.1",
+          "IL_0052: callvirt Newtonsoft.Json.JsonToken Newtonsoft.Json.JsonReader::get_TokenType()",
+          "IL_0057: ldc.i4.5",
+          "IL_0058: beq.s IL_0065",
+          "IL_005a: ldstr \"Unexpected content after JSON object\"",
+          "IL_005f: newobj System.Void Newtonsoft.Json.JsonReaderException::.ctor(System.String)",
+          "IL_0064: throw",
+          "IL_0065: ldloc.1",
+          "IL_0066: callvirt System.Boolean Newtonsoft.Json.JsonReader::Read()",
+          "IL_006b: brtrue.s IL_0051",
+          "IL_006d: leave.s IL_0079",
+          "IL_006f: ldloc.1",
+          "IL_0070: brfalse.s IL_0078",
+          "IL_0072: ldloc.1",
+          "IL_0073: callvirt System.Void System.IDisposable::Dispose()",
+          "IL_0078: endfinally",
+          "IL_0079: ldarg.0",
+          "IL_007a: stsfld System.String HS2Mod.McpBridge.JsonUtil::_lastJson",
+          "IL_007f: ldloc.0",
+          "IL_0080: stsfld Newtonsoft.Json.Linq.JObject HS2Mod.McpBridge.JsonUtil::_lastObject",
+          "IL_0085: ldloc.0",
+          "IL_0086: stloc.2",
+          "IL_0087: leave.s IL_00a1",
+          "IL_0089: stloc.3",
+          "IL_008a: ldc.i4 400",
+          "IL_008f: ldstr \"invalid_json\"",
+          "IL_0094: ldloc.3",
+          "IL_0095: callvirt System.String System.Exception::get_Message()",
+          "IL_009a: ldnull",
+          "IL_009b: newobj System.Void HS2Mod.McpBridge.MakerServiceError::.ctor(System.Int32,System.String,System.String,System.String)",
+          "IL_00a0: throw",
+          "IL_00a1: ldloc.2",
+          "IL_00a2: ret"
+        ]
+      },
+      {
+        "attributes": "Public, Static, HideBySig",
+        "signature": "System.String HS2Mod.McpBridge.JsonUtil::Object(System.Collections.Generic.Dictionary`2<System.String,System.Object>)",
+        "il": [
+          "IL_0000: newobj System.Void System.Text.StringBuilder::.ctor()",
+          "IL_0005: stloc.0",
+          "IL_0006: ldloc.0",
+          "IL_0007: call System.Globalization.CultureInfo System.Globalization.CultureInfo::get_InvariantCulture()",
+          "IL_000c: newobj System.Void System.IO.StringWriter::.ctor(System.Text.StringBuilder,System.IFormatProvider)",
+          "IL_0011: stloc.1",
+          "IL_0012: ldloc.1",
+          "IL_0013: newobj System.Void Newtonsoft.Json.JsonTextWriter::.ctor(System.IO.TextWriter)",
+          "IL_0018: dup",
+          "IL_0019: ldc.i4.0",
+          "IL_001a: callvirt System.Void Newtonsoft.Json.JsonWriter::set_Formatting(Newtonsoft.Json.Formatting)",
+          "IL_001f: stloc.2",
+          "IL_0020: ldloc.2",
+          "IL_0021: ldarg.0",
+          "IL_0022: call System.Void HS2Mod.McpBridge.JsonUtil::WriteValue(Newtonsoft.Json.JsonWriter,System.Object)",
+          "IL_0027: leave.s IL_003d",
+          "IL_0029: ldloc.2",
+          "IL_002a: brfalse.s IL_0032",
+          "IL_002c: ldloc.2",
+          "IL_002d: callvirt System.Void System.IDisposable::Dispose()",
+          "IL_0032: endfinally",
+          "IL_0033: ldloc.1",
+          "IL_0034: brfalse.s IL_003c",
+          "IL_0036: ldloc.1",
+          "IL_0037: callvirt System.Void System.IDisposable::Dispose()",
+          "IL_003c: endfinally",
+          "IL_003d: ldloc.0",
+          "IL_003e: callvirt System.String System.Object::ToString()",
+          "IL_0043: ret"
+        ]
+      },
+      {
+        "attributes": "Assembly, Static, HideBySig",
+        "signature": "System.Void HS2Mod.McpBridge.JsonUtil::WriteValue(Newtonsoft.Json.JsonWriter,System.Object)",
+        "il": [
+          "IL_0000: ldarg.1",
+          "IL_0001: brtrue.s IL_000a",
+          "IL_0003: ldarg.0",
+          "IL_0004: callvirt System.Void Newtonsoft.Json.JsonWriter::WriteNull()",
+          "IL_0009: ret",
+          "IL_000a: ldarg.1",
+          "IL_000b: isinst Newtonsoft.Json.Linq.JToken",
+          "IL_0010: stloc.0",
+          "IL_0011: ldloc.0",
+          "IL_0012: brfalse.s IL_0021",
+          "IL_0014: ldloc.0",
+          "IL_0015: ldarg.0",
+          "IL_0016: call !!0[] System.Array::Empty<Newtonsoft.Json.JsonConverter>()",
+          "IL_001b: callvirt System.Void Newtonsoft.Json.Linq.JToken::WriteTo(Newtonsoft.Json.JsonWriter,Newtonsoft.Json.JsonConverter[])",
+          "IL_0020: ret",
+          "IL_0021: ldarg.1",
+          "IL_0022: isinst System.Collections.IDictionary",
+          "IL_0027: stloc.1",
+          "IL_0028: ldloc.1",
+          "IL_0029: brfalse.s IL_009e",
+          "IL_002b: ldarg.0",
+          "IL_002c: callvirt System.Void Newtonsoft.Json.JsonWriter::WriteStartObject()",
+          "IL_0031: ldloc.1",
+          "IL_0032: callvirt System.Collections.IDictionaryEnumerator System.Collections.IDictionary::GetEnumerator()",
+          "IL_0037: stloc.3",
+          "IL_0038: br.s IL_0079",
+          "IL_003a: ldloc.3",
+          "IL_003b: callvirt System.Object System.Collections.IEnumerator::get_Current()",
+          "IL_0040: unbox.any System.Collections.DictionaryEntry",
+          "IL_0045: stloc.s V_4",
+          "IL_0047: ldloca.s V_4",
+          "IL_0049: call System.Object System.Collections.DictionaryEntry::get_Key()",
+          "IL_004e: isinst System.String",
+          "IL_0053: stloc.s V_5",
+          "IL_0055: ldloc.s V_5",
+          "IL_0057: brtrue.s IL_0064",
+          "IL_0059: ldstr \"JSON object keys must be strings\"",
+          "IL_005e: newobj System.Void System.InvalidOperationException::.ctor(System.String)",
+          "IL_0063: throw",
+          "IL_0064: ldarg.0",
+          "IL_0065: ldloc.s V_5",
+          "IL_0067: callvirt System.Void Newtonsoft.Json.JsonWriter::WritePropertyName(System.String)",
+          "IL_006c: ldarg.0",
+          "IL_006d: ldloca.s V_4",
+          "IL_006f: call System.Object System.Collections.DictionaryEntry::get_Value()",
+          "IL_0074: call System.Void HS2Mod.McpBridge.JsonUtil::WriteValue(Newtonsoft.Json.JsonWriter,System.Object)",
+          "IL_0079: ldloc.3",
+          "IL_007a: callvirt System.Boolean System.Collections.IEnumerator::MoveNext()",
+          "IL_007f: brtrue.s IL_003a",
+          "IL_0081: leave.s IL_0097",
+          "IL_0083: ldloc.3",
+          "IL_0084: isinst System.IDisposable",
+          "IL_0089: stloc.s V_6",
+          "IL_008b: ldloc.s V_6",
+          "IL_008d: brfalse.s IL_0096",
+          "IL_008f: ldloc.s V_6",
+          "IL_0091: callvirt System.Void System.IDisposable::Dispose()",
+          "IL_0096: endfinally",
+          "IL_0097: ldarg.0",
+          "IL_0098: callvirt System.Void Newtonsoft.Json.JsonWriter::WriteEndObject()",
+          "IL_009d: ret",
+          "IL_009e: ldarg.1",
+          "IL_009f: isinst System.Collections.IEnumerable",
+          "IL_00a4: stloc.2",
+          "IL_00a5: ldloc.2",
+          "IL_00a6: brfalse.s IL_00f8",
+          "IL_00a8: ldarg.1",
+          "IL_00a9: isinst System.String",
+          "IL_00ae: brtrue.s IL_00f8",
+          "IL_00b0: ldarg.0",
+          "IL_00b1: callvirt System.Void Newtonsoft.Json.JsonWriter::WriteStartArray()",
+          "IL_00b6: ldloc.2",
+          "IL_00b7: callvirt System.Collections.IEnumerator System.Collections.IEnumerable::GetEnumerator()",
+          "IL_00bc: stloc.s V_7",
+          "IL_00be: br.s IL_00d1",
+          "IL_00c0: ldloc.s V_7",
+          "IL_00c2: callvirt System.Object System.Collections.IEnumerator::get_Current()",
+          "IL_00c7: stloc.s V_8",
+          "IL_00c9: ldarg.0",
+          "IL_00ca: ldloc.s V_8",
+          "IL_00cc: call System.Void HS2Mod.McpBridge.JsonUtil::WriteValue(Newtonsoft.Json.JsonWriter,System.Object)",
+          "IL_00d1: ldloc.s V_7",
+          "IL_00d3: callvirt System.Boolean System.Collections.IEnumerator::MoveNext()",
+          "IL_00d8: brtrue.s IL_00c0",
+          "IL_00da: leave.s IL_00f1",
+          "IL_00dc: ldloc.s V_7",
+          "IL_00de: isinst System.IDisposable",
+          "IL_00e3: stloc.s V_6",
+          "IL_00e5: ldloc.s V_6",
+          "IL_00e7: brfalse.s IL_00f0",
+          "IL_00e9: ldloc.s V_6",
+          "IL_00eb: callvirt System.Void System.IDisposable::Dispose()",
+          "IL_00f0: endfinally",
+          "IL_00f1: ldarg.0",
+          "IL_00f2: callvirt System.Void Newtonsoft.Json.JsonWriter::WriteEndArray()",
+          "IL_00f7: ret",
+          "IL_00f8: ldarg.1",
+          "IL_00f9: isinst System.String",
+          "IL_00fe: stloc.s V_9",
+          "IL_0100: ldloc.s V_9",
+          "IL_0102: brtrue IL_022c",
+          "IL_0107: ldarg.1",
+          "IL_0108: isinst System.Char",
+          "IL_010d: brfalse.s IL_011c",
+          "IL_010f: ldarg.1",
+          "IL_0110: unbox.any System.Char",
+          "IL_0115: stloc.s V_10",
+          "IL_0117: br IL_0235",
+          "IL_011c: ldarg.1",
+          "IL_011d: isinst System.Boolean",
+          "IL_0122: brfalse.s IL_0131",
+          "IL_0124: ldarg.1",
+          "IL_0125: unbox.any System.Boolean",
+          "IL_012a: stloc.s V_11",
+          "IL_012c: br IL_0243",
+          "IL_0131: ldarg.1",
+          "IL_0132: isinst System.Byte",
+          "IL_0137: brfalse.s IL_0146",
+          "IL_0139: ldarg.1",
+          "IL_013a: unbox.any System.Byte",
+          "IL_013f: stloc.s V_12",
+          "IL_0141: br IL_024c",
+          "IL_0146: ldarg.1",
+          "IL_0147: isinst System.SByte",
+          "IL_014c: brfalse.s IL_015b",
+          "IL_014e: ldarg.1",
+          "IL_014f: unbox.any System.SByte",
+          "IL_0154: stloc.s V_13",
+          "IL_0156: br IL_0255",
+          "IL_015b: ldarg.1",
+          "IL_015c: isinst System.Int16",
+          "IL_0161: brfalse.s IL_0170",
+          "IL_0163: ldarg.1",
+          "IL_0164: unbox.any System.Int16",
+          "IL_0169: stloc.s V_14",
+          "IL_016b: br IL_025e",
+          "IL_0170: ldarg.1",
+          "IL_0171: isinst System.UInt16",
+          "IL_0176: brfalse.s IL_0185",
+          "IL_0178: ldarg.1",
+          "IL_0179: unbox.any System.UInt16",
+          "IL_017e: stloc.s V_15",
+          "IL_0180: br IL_0267",
+          "IL_0185: ldarg.1",
+          "IL_0186: isinst System.Int32",
+          "IL_018b: brfalse.s IL_019a",
+          "IL_018d: ldarg.1",
+          "IL_018e: unbox.any System.Int32",
+          "IL_0193: stloc.s V_16",
+          "IL_0195: br IL_0270",
+          "IL_019a: ldarg.1",
+          "IL_019b: isinst System.UInt32",
+          "IL_01a0: brfalse.s IL_01af",
+          "IL_01a2: ldarg.1",
+          "IL_01a3: unbox.any System.UInt32",
+          "IL_01a8: stloc.s V_17",
+          "IL_01aa: br IL_0279",
+          "IL_01af: ldarg.1",
+          "IL_01b0: isinst System.Int64",
+          "IL_01b5: brfalse.s IL_01c4",
+          "IL_01b7: ldarg.1",
+          "IL_01b8: unbox.any System.Int64",
+          "IL_01bd: stloc.s V_18",
+          "IL_01bf: br IL_0282",
+          "IL_01c4: ldarg.1",
+          "IL_01c5: isinst System.UInt64",
+          "IL_01ca: brfalse.s IL_01d9",
+          "IL_01cc: ldarg.1",
+          "IL_01cd: unbox.any System.UInt64",
+          "IL_01d2: stloc.s V_19",
+          "IL_01d4: br IL_028b",
+          "IL_01d9: ldarg.1",
+          "IL_01da: isinst System.Single",
+          "IL_01df: brfalse.s IL_01ee",
+          "IL_01e1: ldarg.1",
+          "IL_01e2: unbox.any System.Single",
+          "IL_01e7: stloc.s V_20",
+          "IL_01e9: br IL_0294",
+          "IL_01ee: ldarg.1",
+          "IL_01ef: isinst System.Double",
+          "IL_01f4: brfalse.s IL_0203",
+          "IL_01f6: ldarg.1",
+          "IL_01f7: unbox.any System.Double",
+          "IL_01fc: stloc.s V_21",
+          "IL_01fe: br IL_029d",
+          "IL_0203: ldarg.1",
+          "IL_0204: isinst System.Decimal",
+          "IL_0209: brfalse.s IL_0218",
+          "IL_020b: ldarg.1",
+          "IL_020c: unbox.any System.Decimal",
+          "IL_0211: stloc.s V_22",
+          "IL_0213: br IL_02a6",
+          "IL_0218: ldarg.1",
+          "IL_0219: isinst System.Enum",
+          "IL_021e: stloc.s V_23",
+          "IL_0220: ldloc.s V_23",
+          "IL_0222: brtrue IL_02af",
+          "IL_0227: br IL_02c2",
+          "IL_022c: ldarg.0",
+          "IL_022d: ldloc.s V_9",
+          "IL_022f: callvirt System.Void Newtonsoft.Json.JsonWriter::WriteValue(System.String)",
+          "IL_0234: ret",
+          "IL_0235: ldarg.0",
+          "IL_0236: ldloca.s V_10",
+          "IL_0238: call System.String System.Char::ToString()",
+          "IL_023d: callvirt System.Void Newtonsoft.Json.JsonWriter::WriteValue(System.String)",
+          "IL_0242: ret",
+          "IL_0243: ldarg.0",
+          "IL_0244: ldloc.s V_11",
+          "IL_0246: callvirt System.Void Newtonsoft.Json.JsonWriter::WriteValue(System.Boolean)",
+          "IL_024b: ret",
+          "IL_024c: ldarg.0",
+          "IL_024d: ldloc.s V_12",
+          "IL_024f: callvirt System.Void Newtonsoft.Json.JsonWriter::WriteValue(System.Byte)",
+          "IL_0254: ret",
+          "IL_0255: ldarg.0",
+          "IL_0256: ldloc.s V_13",
+          "IL_0258: callvirt System.Void Newtonsoft.Json.JsonWriter::WriteValue(System.SByte)",
+          "IL_025d: ret",
+          "IL_025e: ldarg.0",
+          "IL_025f: ldloc.s V_14",
+          "IL_0261: callvirt System.Void Newtonsoft.Json.JsonWriter::WriteValue(System.Int16)",
+          "IL_0266: ret",
+          "IL_0267: ldarg.0",
+          "IL_0268: ldloc.s V_15",
+          "IL_026a: callvirt System.Void Newtonsoft.Json.JsonWriter::WriteValue(System.UInt16)",
+          "IL_026f: ret",
+          "IL_0270: ldarg.0",
+          "IL_0271: ldloc.s V_16",
+          "IL_0273: callvirt System.Void Newtonsoft.Json.JsonWriter::WriteValue(System.Int32)",
+          "IL_0278: ret",
+          "IL_0279: ldarg.0",
+          "IL_027a: ldloc.s V_17",
+          "IL_027c: callvirt System.Void Newtonsoft.Json.JsonWriter::WriteValue(System.UInt32)",
+          "IL_0281: ret",
+          "IL_0282: ldarg.0",
+          "IL_0283: ldloc.s V_18",
+          "IL_0285: callvirt System.Void Newtonsoft.Json.JsonWriter::WriteValue(System.Int64)",
+          "IL_028a: ret",
+          "IL_028b: ldarg.0",
+          "IL_028c: ldloc.s V_19",
+          "IL_028e: callvirt System.Void Newtonsoft.Json.JsonWriter::WriteValue(System.UInt64)",
+          "IL_0293: ret",
+          "IL_0294: ldarg.0",
+          "IL_0295: ldloc.s V_20",
+          "IL_0297: callvirt System.Void Newtonsoft.Json.JsonWriter::WriteValue(System.Single)",
+          "IL_029c: ret",
+          "IL_029d: ldarg.0",
+          "IL_029e: ldloc.s V_21",
+          "IL_02a0: callvirt System.Void Newtonsoft.Json.JsonWriter::WriteValue(System.Double)",
+          "IL_02a5: ret",
+          "IL_02a6: ldarg.0",
+          "IL_02a7: ldloc.s V_22",
+          "IL_02a9: callvirt System.Void Newtonsoft.Json.JsonWriter::WriteValue(System.Decimal)",
+          "IL_02ae: ret",
+          "IL_02af: ldarg.0",
+          "IL_02b0: ldloc.s V_23",
+          "IL_02b2: call System.Globalization.CultureInfo System.Globalization.CultureInfo::get_InvariantCulture()",
+          "IL_02b7: call System.Int64 System.Convert::ToInt64(System.Object,System.IFormatProvider)",
+          "IL_02bc: callvirt System.Void Newtonsoft.Json.JsonWriter::WriteValue(System.Int64)",
+          "IL_02c1: ret",
+          "IL_02c2: ldstr \"Unsupported JSON response value: \"",
+          "IL_02c7: ldarg.1",
+          "IL_02c8: callvirt System.Type System.Object::GetType()",
+          "IL_02cd: callvirt System.String System.Type::get_FullName()",
+          "IL_02d2: call System.String System.String::Concat(System.String,System.String)",
+          "IL_02d7: newobj System.Void System.InvalidOperationException::.ctor(System.String)",
+          "IL_02dc: throw"
+        ]
+      }
+    ],
+    "bridge": "E:/HoneySelect2_ArcticFox/BepInEx/Plugins/HS2_McpBridge/HS2_McpBridge.dll",
+    "bridge_sha256": "6293ded0fdfe0bfb51ae8af5e5741e19db5d8a9838830255b9bc75d6f7af42dd",
+    "scope": "CPU read installed working JsonUtil IL; no bridge execution"
+  },
+  "helper_json_il_audit": {
+    "scope": "CPU IL dependency audit only",
+    "assembly_references": [
+      "mscorlib",
+      "Newtonsoft.Json",
+      "System.Core",
+      "System"
+    ],
+    "forbidden_reflection_serializer_calls": 0,
+    "helper": "C:\\Users\\13666\\Workspace\\Face2Parameter\\outputs\\offline_renderer_repair_20261012\\scope_streaming_json_cpu_v3\\HS2_RenderDocScope.dll",
+    "newtonsoft_calls": [
+      {
+        "caller": "System.Collections.Generic.Dictionary`2<System.String,System.Object> GeometryCapture::Export(System.String)",
+        "target": "System.Void Newtonsoft.Json.JsonTextReader::.ctor(System.IO.TextReader)"
+      },
+      {
+        "caller": "System.Collections.Generic.Dictionary`2<System.String,System.Object> GeometryCapture::Export(System.String)",
+        "target": "System.Void Newtonsoft.Json.JsonReader::set_DateParseHandling(Newtonsoft.Json.DateParseHandling)"
+      },
+      {
+        "caller": "System.Collections.Generic.Dictionary`2<System.String,System.Object> GeometryCapture::Export(System.String)",
+        "target": "Newtonsoft.Json.JsonToken Newtonsoft.Json.JsonReader::get_TokenType()"
+      },
+      {
+        "caller": "System.Collections.Generic.Dictionary`2<System.String,System.Object> GeometryCapture::Export(System.String)",
+        "target": "System.Int32 Newtonsoft.Json.JsonReader::get_Depth()"
+      },
+      {
+        "caller": "System.Collections.Generic.Dictionary`2<System.String,System.Object> GeometryCapture::Export(System.String)",
+        "target": "System.Object Newtonsoft.Json.JsonReader::get_Value()"
+      },
+      {
+        "caller": "System.Collections.Generic.Dictionary`2<System.String,System.Object> GeometryCapture::Export(System.String)",
+        "target": "System.Boolean Newtonsoft.Json.JsonReader::Read()"
+      },
+      {
+        "caller": "System.Collections.Generic.Dictionary`2<System.String,System.Object> GeometryCapture::Export(System.String)",
+        "target": "Newtonsoft.Json.JsonToken Newtonsoft.Json.JsonReader::get_TokenType()"
+      },
+      {
+        "caller": "System.Collections.Generic.Dictionary`2<System.String,System.Object> GeometryCapture::Export(System.String)",
+        "target": "Newtonsoft.Json.JsonToken Newtonsoft.Json.JsonReader::get_TokenType()"
+      },
+      {
+        "caller": "System.Collections.Generic.Dictionary`2<System.String,System.Object> GeometryCapture::Export(System.String)",
+        "target": "Newtonsoft.Json.JsonToken Newtonsoft.Json.JsonReader::get_TokenType()"
+      },
+      {
+        "caller": "System.Collections.Generic.Dictionary`2<System.String,System.Object> GeometryCapture::Export(System.String)",
+        "target": "System.Object Newtonsoft.Json.JsonReader::get_Value()"
+      },
+      {
+        "caller": "System.Collections.Generic.Dictionary`2<System.String,System.Object> GeometryCapture::Export(System.String)",
+        "target": "System.Boolean Newtonsoft.Json.JsonReader::Read()"
+      },
+      {
+        "caller": "System.Boolean HS2_RenderDocScope::NoLongerOwned(System.String)",
+        "target": "Newtonsoft.Json.Linq.JToken Newtonsoft.Json.Linq.JObject::get_Item(System.String)"
+      },
+      {
+        "caller": "System.Boolean HS2_RenderDocScope::NoLongerOwned(System.String)",
+        "target": "Newtonsoft.Json.Linq.JTokenType Newtonsoft.Json.Linq.JToken::get_Type()"
+      },
+      {
+        "caller": "System.Boolean HS2_RenderDocScope::NoLongerOwned(System.String)",
+        "target": "!!0 Newtonsoft.Json.Linq.Extensions::Value<System.Boolean>(System.Collections.Generic.IEnumerable`1<Newtonsoft.Json.Linq.JToken>)"
+      },
+      {
+        "caller": "Newtonsoft.Json.Linq.JObject ScopeJson::ParseObject(System.String)",
+        "target": "System.Void Newtonsoft.Json.JsonTextReader::.ctor(System.IO.TextReader)"
+      },
+      {
+        "caller": "Newtonsoft.Json.Linq.JObject ScopeJson::ParseObject(System.String)",
+        "target": "System.Void Newtonsoft.Json.JsonReader::set_DateParseHandling(Newtonsoft.Json.DateParseHandling)"
+      },
+      {
+        "caller": "Newtonsoft.Json.Linq.JObject ScopeJson::ParseObject(System.String)",
+        "target": "System.Void Newtonsoft.Json.Linq.JsonLoadSettings::.ctor()"
+      },
+      {
+        "caller": "Newtonsoft.Json.Linq.JObject ScopeJson::ParseObject(System.String)",
+        "target": "System.Void Newtonsoft.Json.Linq.JsonLoadSettings::set_DuplicatePropertyNameHandling(Newtonsoft.Json.Linq.DuplicatePropertyNameHandling)"
+      },
+      {
+        "caller": "Newtonsoft.Json.Linq.JObject ScopeJson::ParseObject(System.String)",
+        "target": "Newtonsoft.Json.Linq.JObject Newtonsoft.Json.Linq.JObject::Load(Newtonsoft.Json.JsonReader,Newtonsoft.Json.Linq.JsonLoadSettings)"
+      },
+      {
+        "caller": "Newtonsoft.Json.Linq.JObject ScopeJson::ParseObject(System.String)",
+        "target": "Newtonsoft.Json.JsonToken Newtonsoft.Json.JsonReader::get_TokenType()"
+      },
+      {
+        "caller": "Newtonsoft.Json.Linq.JObject ScopeJson::ParseObject(System.String)",
+        "target": "System.Void Newtonsoft.Json.JsonReaderException::.ctor(System.String)"
+      },
+      {
+        "caller": "Newtonsoft.Json.Linq.JObject ScopeJson::ParseObject(System.String)",
+        "target": "System.Boolean Newtonsoft.Json.JsonReader::Read()"
+      },
+      {
+        "caller": "System.Void ScopeJson::ValidateToken(Newtonsoft.Json.Linq.JToken)",
+        "target": "Newtonsoft.Json.Linq.JTokenType Newtonsoft.Json.Linq.JToken::get_Type()"
+      },
+      {
+        "caller": "System.Void ScopeJson::ValidateToken(Newtonsoft.Json.Linq.JToken)",
+        "target": "System.Collections.Generic.IEnumerable`1<Newtonsoft.Json.Linq.JProperty> Newtonsoft.Json.Linq.JObject::Properties()"
+      },
+      {
+        "caller": "System.Void ScopeJson::ValidateToken(Newtonsoft.Json.Linq.JToken)",
+        "target": "Newtonsoft.Json.Linq.JToken Newtonsoft.Json.Linq.JProperty::get_Value()"
+      },
+      {
+        "caller": "System.Void ScopeJson::ValidateToken(Newtonsoft.Json.Linq.JToken)",
+        "target": "System.Collections.Generic.IEnumerator`1<Newtonsoft.Json.Linq.JToken> Newtonsoft.Json.Linq.JArray::GetEnumerator()"
+      },
+      {
+        "caller": "System.Void ScopeJson::ValidateToken(Newtonsoft.Json.Linq.JToken)",
+        "target": "!!0 Newtonsoft.Json.Linq.Extensions::Value<System.Double>(System.Collections.Generic.IEnumerable`1<Newtonsoft.Json.Linq.JToken>)"
+      },
+      {
+        "caller": "System.Void ScopeJson::ValidateToken(Newtonsoft.Json.Linq.JToken)",
+        "target": "Newtonsoft.Json.Linq.JTokenType Newtonsoft.Json.Linq.JToken::get_Type()"
+      },
+      {
+        "caller": "HS2_RenderDocScope/Request ScopeJson::ReadRequest(System.String)",
+        "target": "System.Collections.Generic.IEnumerable`1<Newtonsoft.Json.Linq.JProperty> Newtonsoft.Json.Linq.JObject::Properties()"
+      },
+      {
+        "caller": "HS2_RenderDocScope/Request ScopeJson::ReadRequest(System.String)",
+        "target": "System.String Newtonsoft.Json.Linq.JProperty::get_Name()"
+      },
+      {
+        "caller": "HS2_RenderDocScope/Request ScopeJson::ReadRequest(System.String)",
+        "target": "Newtonsoft.Json.Linq.JToken Newtonsoft.Json.Linq.JProperty::get_Value()"
+      },
+      {
+        "caller": "HS2_RenderDocScope/Request ScopeJson::ReadRequest(System.String)",
+        "target": "Newtonsoft.Json.Linq.JTokenType Newtonsoft.Json.Linq.JToken::get_Type()"
+      },
+      {
+        "caller": "HS2_RenderDocScope/Request ScopeJson::ReadRequest(System.String)",
+        "target": "Newtonsoft.Json.Linq.JToken Newtonsoft.Json.Linq.JProperty::get_Value()"
+      },
+      {
+        "caller": "HS2_RenderDocScope/Request ScopeJson::ReadRequest(System.String)",
+        "target": "!!0 Newtonsoft.Json.Linq.Extensions::Value<System.Boolean>(System.Collections.Generic.IEnumerable`1<Newtonsoft.Json.Linq.JToken>)"
+      },
+      {
+        "caller": "HS2_RenderDocScope/Request ScopeJson::ReadRequest(System.String)",
+        "target": "Newtonsoft.Json.Linq.JToken Newtonsoft.Json.Linq.JProperty::get_Value()"
+      },
+      {
+        "caller": "HS2_RenderDocScope/Request ScopeJson::ReadRequest(System.String)",
+        "target": "Newtonsoft.Json.Linq.JTokenType Newtonsoft.Json.Linq.JToken::get_Type()"
+      },
+      {
+        "caller": "HS2_RenderDocScope/Request ScopeJson::ReadRequest(System.String)",
+        "target": "Newtonsoft.Json.Linq.JToken Newtonsoft.Json.Linq.JProperty::get_Value()"
+      },
+      {
+        "caller": "HS2_RenderDocScope/Request ScopeJson::ReadRequest(System.String)",
+        "target": "!!0 Newtonsoft.Json.Linq.Extensions::Value<System.UInt32>(System.Collections.Generic.IEnumerable`1<Newtonsoft.Json.Linq.JToken>)"
+      },
+      {
+        "caller": "HS2_RenderDocScope/Request ScopeJson::ReadRequest(System.String)",
+        "target": "System.String Newtonsoft.Json.Linq.JProperty::get_Name()"
+      },
+      {
+        "caller": "System.String ScopeJson::StringField(Newtonsoft.Json.Linq.JProperty)",
+        "target": "Newtonsoft.Json.Linq.JToken Newtonsoft.Json.Linq.JProperty::get_Value()"
+      },
+      {
+        "caller": "System.String ScopeJson::StringField(Newtonsoft.Json.Linq.JProperty)",
+        "target": "Newtonsoft.Json.Linq.JTokenType Newtonsoft.Json.Linq.JToken::get_Type()"
+      },
+      {
+        "caller": "System.String ScopeJson::StringField(Newtonsoft.Json.Linq.JProperty)",
+        "target": "Newtonsoft.Json.Linq.JToken Newtonsoft.Json.Linq.JProperty::get_Value()"
+      },
+      {
+        "caller": "System.String ScopeJson::StringField(Newtonsoft.Json.Linq.JProperty)",
+        "target": "Newtonsoft.Json.Linq.JTokenType Newtonsoft.Json.Linq.JToken::get_Type()"
+      },
+      {
+        "caller": "System.String ScopeJson::StringField(Newtonsoft.Json.Linq.JProperty)",
+        "target": "System.String Newtonsoft.Json.Linq.JProperty::get_Name()"
+      },
+      {
+        "caller": "System.String ScopeJson::StringField(Newtonsoft.Json.Linq.JProperty)",
+        "target": "Newtonsoft.Json.Linq.JToken Newtonsoft.Json.Linq.JProperty::get_Value()"
+      },
+      {
+        "caller": "System.String ScopeJson::StringField(Newtonsoft.Json.Linq.JProperty)",
+        "target": "!!0 Newtonsoft.Json.Linq.Extensions::Value<System.String>(System.Collections.Generic.IEnumerable`1<Newtonsoft.Json.Linq.JToken>)"
+      },
+      {
+        "caller": "System.String ScopeJson::Object(System.Collections.Generic.Dictionary`2<System.String,System.Object>)",
+        "target": "System.Void Newtonsoft.Json.JsonTextWriter::.ctor(System.IO.TextWriter)"
+      },
+      {
+        "caller": "System.String ScopeJson::Object(System.Collections.Generic.Dictionary`2<System.String,System.Object>)",
+        "target": "System.Void Newtonsoft.Json.JsonWriter::set_Formatting(Newtonsoft.Json.Formatting)"
+      },
+      {
+        "caller": "System.Void ScopeJson::WriteValue(Newtonsoft.Json.JsonWriter,System.Object)",
+        "target": "System.Void Newtonsoft.Json.JsonWriter::WriteNull()"
+      },
+      {
+        "caller": "System.Void ScopeJson::WriteValue(Newtonsoft.Json.JsonWriter,System.Object)",
+        "target": "System.Void Newtonsoft.Json.Linq.JToken::WriteTo(Newtonsoft.Json.JsonWriter,Newtonsoft.Json.JsonConverter[])"
+      },
+      {
+        "caller": "System.Void ScopeJson::WriteValue(Newtonsoft.Json.JsonWriter,System.Object)",
+        "target": "System.Void Newtonsoft.Json.JsonWriter::WriteStartObject()"
+      },
+      {
+        "caller": "System.Void ScopeJson::WriteValue(Newtonsoft.Json.JsonWriter,System.Object)",
+        "target": "System.Void Newtonsoft.Json.JsonWriter::WritePropertyName(System.String)"
+      },
+      {
+        "caller": "System.Void ScopeJson::WriteValue(Newtonsoft.Json.JsonWriter,System.Object)",
+        "target": "System.Void Newtonsoft.Json.JsonWriter::WriteEndObject()"
+      },
+      {
+        "caller": "System.Void ScopeJson::WriteValue(Newtonsoft.Json.JsonWriter,System.Object)",
+        "target": "System.Void Newtonsoft.Json.JsonWriter::WriteStartArray()"
+      },
+      {
+        "caller": "System.Void ScopeJson::WriteValue(Newtonsoft.Json.JsonWriter,System.Object)",
+        "target": "System.Void Newtonsoft.Json.JsonWriter::WriteEndArray()"
+      },
+      {
+        "caller": "System.Void ScopeJson::WriteValue(Newtonsoft.Json.JsonWriter,System.Object)",
+        "target": "System.Void Newtonsoft.Json.JsonWriter::WriteValue(System.String)"
+      },
+      {
+        "caller": "System.Void ScopeJson::WriteValue(Newtonsoft.Json.JsonWriter,System.Object)",
+        "target": "System.Void Newtonsoft.Json.JsonWriter::WriteValue(System.String)"
+      },
+      {
+        "caller": "System.Void ScopeJson::WriteValue(Newtonsoft.Json.JsonWriter,System.Object)",
+        "target": "System.Void Newtonsoft.Json.JsonWriter::WriteValue(System.Boolean)"
+      },
+      {
+        "caller": "System.Void ScopeJson::WriteValue(Newtonsoft.Json.JsonWriter,System.Object)",
+        "target": "System.Void Newtonsoft.Json.JsonWriter::WriteValue(System.Byte)"
+      },
+      {
+        "caller": "System.Void ScopeJson::WriteValue(Newtonsoft.Json.JsonWriter,System.Object)",
+        "target": "System.Void Newtonsoft.Json.JsonWriter::WriteValue(System.SByte)"
+      },
+      {
+        "caller": "System.Void ScopeJson::WriteValue(Newtonsoft.Json.JsonWriter,System.Object)",
+        "target": "System.Void Newtonsoft.Json.JsonWriter::WriteValue(System.Int16)"
+      },
+      {
+        "caller": "System.Void ScopeJson::WriteValue(Newtonsoft.Json.JsonWriter,System.Object)",
+        "target": "System.Void Newtonsoft.Json.JsonWriter::WriteValue(System.UInt16)"
+      },
+      {
+        "caller": "System.Void ScopeJson::WriteValue(Newtonsoft.Json.JsonWriter,System.Object)",
+        "target": "System.Void Newtonsoft.Json.JsonWriter::WriteValue(System.Int32)"
+      },
+      {
+        "caller": "System.Void ScopeJson::WriteValue(Newtonsoft.Json.JsonWriter,System.Object)",
+        "target": "System.Void Newtonsoft.Json.JsonWriter::WriteValue(System.UInt32)"
+      },
+      {
+        "caller": "System.Void ScopeJson::WriteValue(Newtonsoft.Json.JsonWriter,System.Object)",
+        "target": "System.Void Newtonsoft.Json.JsonWriter::WriteValue(System.Int64)"
+      },
+      {
+        "caller": "System.Void ScopeJson::WriteValue(Newtonsoft.Json.JsonWriter,System.Object)",
+        "target": "System.Void Newtonsoft.Json.JsonWriter::WriteValue(System.UInt64)"
+      },
+      {
+        "caller": "System.Void ScopeJson::WriteValue(Newtonsoft.Json.JsonWriter,System.Object)",
+        "target": "System.Void Newtonsoft.Json.JsonWriter::WriteValue(System.Single)"
+      },
+      {
+        "caller": "System.Void ScopeJson::WriteValue(Newtonsoft.Json.JsonWriter,System.Object)",
+        "target": "System.Void Newtonsoft.Json.JsonWriter::WriteValue(System.Double)"
+      },
+      {
+        "caller": "System.Void ScopeJson::WriteValue(Newtonsoft.Json.JsonWriter,System.Object)",
+        "target": "System.Void Newtonsoft.Json.JsonWriter::WriteValue(System.Decimal)"
+      },
+      {
+        "caller": "System.Void ScopeJson::WriteValue(Newtonsoft.Json.JsonWriter,System.Object)",
+        "target": "System.Void Newtonsoft.Json.JsonWriter::WriteValue(System.Int64)"
+      }
+    ]
+  },
+  "cpu_logs": {
+    "json_cpu_log": "Streaming request/receipt/native-token/error JSON passed 33 checks with no System.Data load; no game/GPU/native capture executed\r\n",
+    "geometry_cpu_wrong_signature_log": "CPU geometry wrong_signature metadata rejection passed; fixture never invoked.\r\n",
+    "managed_cpu_log": "Managed CPU opt-in checks passed: missing/disabled/mismatched request, wrong PID, no native loads.\r\n",
+    "geometry_cpu_wrong_ctor_log": "CPU geometry wrong_ctor metadata rejection passed; fixture never invoked.\r\n",
+    "cpu_mock_log": "CPU official SDK scope mock passed 22 checks; synthetic files are not native/RDC acceptance\r\n",
+    "geometry_cpu_good_log": "CPU geometry fixture checks passed: optional legacy, exact signature/ctor/arguments, paths, loaded hash, paired metadata, before/after export/hash/late-freshness failures retained; no graphics/game.\r\n"
+  },
+  "corrected_native_scope_accepted": false
+}
