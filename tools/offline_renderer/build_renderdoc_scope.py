@@ -40,6 +40,12 @@ def main():
     if managed['status']!='pass':raise RuntimeError('Managed build failed; logs retained')
     managed_test=run_logged(['powershell','-NoProfile','-File',root/'test_scope_managed.ps1','-BuildDirectory',out],out/'managed_cpu_log',timeout=15,cwd=out)
     if managed_test['status']!='pass':raise RuntimeError('Managed CPU checks failed; logs retained')
+    for variant,define in [('good',''),('wrong_signature','WRONG_SIGNATURE'),('wrong_ctor','WRONG_CTOR')]:
+        fixture=out/('fixture_'+variant)
+        fixture_build=run_logged(['dotnet','build',root/'scope_fixture/HS2_McpBridge.csproj','-c','Release','-o',fixture,'-p:DefineConstants='+define],out/('fixture_build_'+variant),timeout=120,cwd=out)
+        if fixture_build['status']!='pass':raise RuntimeError('CPU geometry fixture compilation failed: '+variant)
+        fixture_test=run_logged(['powershell','-NoProfile','-File',root/'test_scope_geometry.ps1','-BuildDirectory',out,'-FixtureDirectory',fixture,'-Variant',variant],out/('geometry_cpu_'+variant+'_log'),timeout=15,cwd=out)
+        if fixture_test['status']!='pass':raise RuntimeError('CPU geometry fixture failed: '+variant)
     result={'scope':'CPU official C table mock, x64 MSVC build and managed compile; no RenderDoc DLL/graphics/native game execution',
       'vcvars':str(a.vcvars.resolve()),'sdk_header':str(header.resolve()),'sdk_header_sha256':hashlib.sha256(header.read_bytes()).hexdigest(),'outputs':[]}
     for name in ('hs2_renderdoc_scope_native.dll','HS2_RenderDocScope.dll','Newtonsoft.Json.dll','scope_cpu_mock.exe','imports.txt','exports.txt','scope_static.asm'):

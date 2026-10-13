@@ -108,3 +108,63 @@ Remaining: parent-controlled actual scoped frame capture; full replay/mutation
 of every geometry/material/cache dependency; full standalone candidate RGB
 agreement and detector-forward fitting. A baseline RDC replay alone is not the
 completed arbitrary-parameter offline renderer.
+
+## Optional same-freeze geometry pair
+
+The managed helper accepts three optional sidecar strings:
+
+```json
+{
+  "GeometryBeforePath": "C:/absolute/fresh_geometry_before.json",
+  "GeometryAfterPath": "C:/absolute/fresh_geometry_after.json",
+  "ExpectedBridgeSha256": "29a3b2aa8ead6ea16d61013930cd8de2af81dc7bca0e8d3645c491b4aadc5482"
+}
+```
+
+These values supplement the enabled/selected-path request above. All three must
+be supplied together; both JSON paths must be distinct, absolute, fresh and have
+existing parents. They cannot alias the PNG, receipt or capture prefix. Use the
+**actual deployed narrow-hook bridge hash**, not the pre-patch bridge hash.
+Missing all three preserves the previous execution/optional receipt fields.
+Absent/disabled/nonmatching sidecar never exports geometry or loads native DLLs.
+
+Reflection resolves exactly one **already-loaded** HS2_McpBridge assembly, verifies
+its file SHA and internal sealed BeforeFieldInit service type, the public default
+constructor attributes and audited seven-byte object-only IL, and the exact
+public instance Dictionary<string,object> ExportGeometry method. Five parameters
+must be the installed ordered names/types. The helper invokes precisely:
+
+```text
+HS2Mod.McpBridge.MakerGeometryService.ExportGeometry(path,null,true,null,true)
+```
+
+The first export occurs immediately before SDK Start while the outer Capture
+already holds its actor freeze/current temporary main camera. The second occurs
+after SDK End succeeds and the PNG is saved, before the existing outer restoration.
+The installed serializer writes the geometry files unchanged: default eight mesh
+names include the actual working card's ten surfaces (three o_tang), full loaded
+API blendframes, actor transforms, native drivers and private diagnostics.
+No texture export is requested; existing resource capture handles GPU data.
+
+Receipts bind both actual file paths/hashes/byte counts, native frame_count and
+frame_count_end, native captured_utc and invocation/return UTC, native export
+receipts, method signature, loaded assembly identity/MVID/SHA and constructor
+attributes. Root metadata is read as a streaming JSON scalar pass, preserving
+the native timestamp strings. Export/hash/metadata failure rejects a completed
+paired result and retains files/errors. An SDK success preceding a failed AFTER
+export remains evidence under `end_native_pending_geometry`, followed by a
+failure event; it is not accepted as a complete pair. Active owned SDK failures
+still reach owned-only outer-finally abort. Already saved/ended RDC is retained.
+
+CPU good/wrong-signature/wrong-constructor fixtures validate exact arguments,
+optional legacy behavior, freshness/alias/relative paths, loaded-file SHA,
+before/after frame/file metadata and export/hash/late-freshness failure handling.
+Fixture-only HS2_McpBridge.dll files live inside ignored **fixture_*** subfolders;
+**never deploy those synthetic assemblies to the game**. Deploy only the two
+real scope helper DLLs at the build root. Current build is scoped_geometry_cpu_v4.
+All checks are CPU-only; actual same-freeze native capture is still pending.
+
+Installed geometry has no **baked tangent** array. Source tangents and blendframe
+delta_tangents are retained; GPU tangent identity remains unverified until actual
+draw buffers are decoded. Neither same-freeze pairing nor full renderer completion
+can be claimed from the CPU fixture.

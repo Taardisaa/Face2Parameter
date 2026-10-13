@@ -17,6 +17,9 @@ public static class HS2_RenderDocScope
         public uint ExpectedPid;
         public string ExactPngPath, CapturePrefix, ReceiptPath;
         public string ExpectedNativeSha256, ExpectedRenderDocSha256;
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)] public string GeometryBeforePath;
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)] public string GeometryAfterPath;
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)] public string ExpectedBridgeSha256;
     }
     static readonly object Gate = new object();
     static readonly string DirectoryPath = Path.GetDirectoryName(typeof(HS2_RenderDocScope).Assembly.Location);
@@ -29,6 +32,7 @@ public static class HS2_RenderDocScope
     static Receipt receipt;
     static readonly List<object> events = new List<object>();
     static string loadedNativeSha;
+    static GeometryCapture geometry;
     public static string LastReceipt { get; private set; } = "{\"status\":\"not_started\"}";
 
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
@@ -117,9 +121,10 @@ public static class HS2_RenderDocScope
             { "pid", Process.GetCurrentProcess().Id }, { "owned_token", token.ToString() },
             { "utc", DateTime.UtcNow.ToString("o") },
             { "native", native == null ? null : JsonConvert.DeserializeObject(native) },
-            { "error", error == null ? null : error.GetType().FullName + ": " + error.Message },
+            { "error", error == null ? null : error.ToString() },
             { "request", active }
         };
+        if (geometry != null) entry.Add("geometry", geometry.Describe());
         events.Add(entry);
         LastReceipt = JsonConvert.SerializeObject(new Dictionary<string, object> { { "schema_version", 1 }, { "events", events } });
         if (active != null && !String.IsNullOrEmpty(active.ReceiptPath)) File.WriteAllText(active.ReceiptPath, LastReceipt, new UTF8Encoding(false));
@@ -138,6 +143,7 @@ public static class HS2_RenderDocScope
         lock (Gate) {
             if (token != 0) { SafeSave("begin_rejected_owned", new InvalidOperationException("Previous owned scope still active")); return; }
             active = null;
+            geometry = null;
             events.Clear();
             try {
                 string path = Path.Combine(DirectoryPath, "HS2_RenderDocScope.request.json");
@@ -146,7 +152,10 @@ public static class HS2_RenderDocScope
                 if (request == null || !request.Enabled) return;
                 // Ignore other ordinary Captures; exact opt-in pathname selects one.
                 if (String.IsNullOrEmpty(request.ExactPngPath) || !String.Equals(Path.GetFullPath(request.ExactPngPath), Path.GetFullPath(capturePngPath), StringComparison.OrdinalIgnoreCase)) return;
-                Validate(request, capturePngPath); active = request; LoadOwnHelper();
+                Validate(request, capturePngPath); active = request;
+                geometry = GeometryCapture.Prepare(request); LoadOwnHelper();
+                // Same frozen actor/current temporary camera, immediately before SDK Start.
+                if (geometry != null) geometry.Before();
                 int code = begin(request.ExpectedPid, Encoding.UTF8.GetBytes(request.CapturePrefix + "\0"), resource, out token);
                 Save("begin", code, ReadReceipt());
             } catch (Exception error) { SafeSave("begin_failure", error); }
@@ -163,6 +172,12 @@ public static class HS2_RenderDocScope
                 int code = end(active.ExpectedPid, token);
                 string native = ReadReceipt();
                 if (NoLongerOwned(native)) token = 0;
+                if (geometry != null && code == 2) {
+                    Save("end_native_pending_geometry", code, native);
+                    // SDK End and saved PNG succeeded; existing outer restoration has not run.
+                    geometry.After();
+                    if (!geometry.Complete) throw new InvalidOperationException("Paired geometry export incomplete");
+                }
                 Save("end", code, native);
             } catch (Exception error) { SafeSave("end_failure", error); }
         }

@@ -614,3 +614,22 @@ not guess a surface by appearance or declare previous/shadow/motion dependencies
 covered. Source/compile only, no runtime acceptance yet; newest ignored tool build
 is `official_full_replay_msvc_v5/`. Its input receipt scope is specifically vertex/
 index data, not all constant/texture inputs.
+
+### Same-freeze geometry/RDC evidence
+
+The optional geometry pair is implemented in the existing net472 scope helper.
+It calls the exact loaded installed native exporter immediately before SDK Start
+and after successful SDK End/PNG save, before original restoration. Both fresh
+paths and the loaded narrow-hook bridge SHA are explicit opt-in fields. Native
+serializer output, full actor transforms/blendframes/native-driver diagnostics
+and file/frame/timestamp provenance are preserved. Failed before/after exports
+reject pair completion, preserve evidence and retain owned-only abort behavior.
+The three public hook signatures remain unchanged.
+
+CPU protocol fixture variants validate the installed internal type/default
+constructor IL, exact five-parameter method, optional legacy path, pinned SHA,
+freshness, exact arguments, paired scalar metadata and before/after failures.
+Native scope acceptance remains pending; no game or graphics were started. The
+installed exporter lacks baked tangents, so actual GPU tangent correspondence is
+still a separate required proof. See the scope contract for deployment hashes/
+paths and the warning against deploying synthetic fixture bridge assemblies.

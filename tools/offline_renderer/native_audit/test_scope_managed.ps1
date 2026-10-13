@@ -11,9 +11,9 @@ if (Test-Path -LiteralPath $requestPath) { throw 'Fresh managed CPU test require
 [HS2_RenderDocScope]::AbortOwnedSafely()
 if ([HS2_RenderDocScope]::LastReceipt -ne '{"status":"not_started"}') { throw 'No-request path changed state' }
 try {
-  @{Enabled=$false} | ConvertTo-Json | Set-Content -LiteralPath $requestPath -Encoding UTF8
+  @{Enabled=$false; GeometryBeforePath='invalid-relative-before.json'; GeometryAfterPath='invalid-relative-after.json'; ExpectedBridgeSha256='invalid'} | ConvertTo-Json | Set-Content -LiteralPath $requestPath -Encoding UTF8
   [HS2_RenderDocScope]::BeginFromNativeTexture([IntPtr]1, (Join-Path $scopeRoot 'disabled.png'))
-  @{Enabled=$true; ExactPngPath=(Join-Path $scopeRoot 'requested.png')} | ConvertTo-Json | Set-Content -LiteralPath $requestPath -Encoding UTF8
+  @{Enabled=$true; ExactPngPath=(Join-Path $scopeRoot 'requested.png'); GeometryBeforePath='invalid-relative-before.json'; GeometryAfterPath='invalid-relative-after.json'; ExpectedBridgeSha256='invalid'} | ConvertTo-Json | Set-Content -LiteralPath $requestPath -Encoding UTF8
   [HS2_RenderDocScope]::BeginFromNativeTexture([IntPtr]1, (Join-Path $scopeRoot 'mismatch.png'))
   if ([HS2_RenderDocScope]::LastReceipt -ne '{"status":"not_started"}') { throw 'Nonselected capture changed state' }
   @{Enabled=$true; ExpectedPid=0; ExactPngPath=(Join-Path $scopeRoot 'pid.png')} | ConvertTo-Json | Set-Content -LiteralPath $requestPath -Encoding UTF8

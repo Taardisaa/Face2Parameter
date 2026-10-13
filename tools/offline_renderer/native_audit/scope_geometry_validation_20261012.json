@@ -1,0 +1,55 @@
+{
+  "scope": "CPU official C table mock, x64 MSVC build and managed compile; no RenderDoc DLL/graphics/native game execution",
+  "vcvars": "C:\\Program Files (x86)\\Microsoft Visual Studio\\18\\BuildTools\\VC\\Auxiliary\\Build\\vcvars64.bat",
+  "sdk_header": "C:\\Users\\13666\\Workspace\\Face2Parameter\\outputs\\offline_renderer_repair_20261012\\renderdoc_portable_1_46\\extracted\\RenderDoc_1.46_64\\renderdoc_app.h",
+  "sdk_header_sha256": "b7005e7dc34c3635046868bbd76d81b9b055aede0f56daa0bd39fedee0639ffb",
+  "outputs": [
+    {
+      "path": "C:\\Users\\13666\\Workspace\\Face2Parameter\\outputs\\offline_renderer_repair_20261012\\scoped_geometry_cpu_v4\\hs2_renderdoc_scope_native.dll",
+      "bytes": 324608,
+      "sha256": "275df4ef95fc8e76f949361038545fe372c9e5236fe8e802aed0b9a32a83662c"
+    },
+    {
+      "path": "C:\\Users\\13666\\Workspace\\Face2Parameter\\outputs\\offline_renderer_repair_20261012\\scoped_geometry_cpu_v4\\HS2_RenderDocScope.dll",
+      "bytes": 22016,
+      "sha256": "e54e438bd3af8a7dfce3abc4548409ac13f433db16f843b77bbcbc8abfd36348"
+    },
+    {
+      "path": "C:\\Users\\13666\\Workspace\\Face2Parameter\\outputs\\offline_renderer_repair_20261012\\scoped_geometry_cpu_v4\\Newtonsoft.Json.dll",
+      "bytes": 711952,
+      "sha256": "e1e27af7b07eeedf5ce71a9255f0422816a6fc5849a483c6714e1b472044fa9d"
+    },
+    {
+      "path": "C:\\Users\\13666\\Workspace\\Face2Parameter\\outputs\\offline_renderer_repair_20261012\\scoped_geometry_cpu_v4\\scope_cpu_mock.exe",
+      "bytes": 351744,
+      "sha256": "1ba402aaea7d90c1665d4834c96247b3ef8e07451087d129e410e52fd055179e"
+    },
+    {
+      "path": "C:\\Users\\13666\\Workspace\\Face2Parameter\\outputs\\offline_renderer_repair_20261012\\scoped_geometry_cpu_v4\\imports.txt",
+      "bytes": 5504,
+      "sha256": "a139d0fe1f31ebc1761ad6b2bbaa732bdb50c4bf3f74ef23ae62fbbb7328420f"
+    },
+    {
+      "path": "C:\\Users\\13666\\Workspace\\Face2Parameter\\outputs\\offline_renderer_repair_20261012\\scoped_geometry_cpu_v4\\exports.txt",
+      "bytes": 949,
+      "sha256": "1cfa817874aacdefd00e75535366cd90711a827561a16d55eed2da7dfa2b5547"
+    },
+    {
+      "path": "C:\\Users\\13666\\Workspace\\Face2Parameter\\outputs\\offline_renderer_repair_20261012\\scoped_geometry_cpu_v4\\scope_static.asm",
+      "bytes": 4566341,
+      "sha256": "c625726e333cff71d3148039f1dbdcad3b5a6862feebf5e845577031818bdde5"
+    }
+  ],
+  "cpu_outputs": {
+    "geometry_cpu_wrong_ctor_log": "CPU geometry wrong_ctor metadata rejection passed; fixture never invoked.\r\n",
+    "geometry_cpu_wrong_signature_log": "CPU geometry wrong_signature metadata rejection passed; fixture never invoked.\r\n",
+    "cpu_mock_log": "CPU official SDK scope mock passed 22 checks; synthetic files are not native/RDC acceptance\r\n",
+    "geometry_cpu_good_log": "CPU geometry fixture checks passed: optional legacy, exact signature/ctor/arguments, paths, loaded hash, paired metadata, export/hash failures retained; no graphics/game.\r\n",
+    "managed_cpu_log": "Managed CPU opt-in checks passed: missing/disabled/mismatched request, wrong PID, no native loads.\r\n"
+  },
+  "extended_good_fixture_command": "powershell -NoProfile -File tools/offline_renderer/native_audit/test_scope_geometry.ps1 -BuildDirectory outputs/offline_renderer_repair_20261012/scoped_geometry_cpu_v4 -FixtureDirectory outputs/offline_renderer_repair_20261012/scoped_geometry_cpu_v4/fixture_good -Variant good",
+  "extended_good_fixture_output": "CPU geometry fixture checks passed: optional legacy, exact signature/ctor/arguments, paths, loaded hash, paired metadata, before/after export/hash/late-freshness failures retained; no graphics/game.",
+  "installed_source_bridge_sha256": "52e6e9830d85c4e95f9098570c804b5f6d27d3fc3ce78b615098753ce466e7f9",
+  "parent_prepared_hook_bridge_sha256": "29a3b2aa8ead6ea16d61013930cd8de2af81dc7bca0e8d3645c491b4aadc5482",
+  "native_same_scope_accepted": false
+}

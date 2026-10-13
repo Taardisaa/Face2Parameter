@@ -8,6 +8,7 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Remove="scope_managed/**/*.cs" />
+    <Compile Remove="scope_fixture/**/*.cs" />
     <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies" Version="1.0.3" PrivateAssets="all" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
     <Reference Include="UnityEngine"><HintPath>$(HS2GameRoot)\HoneySelect2_Data\Managed\UnityEngine.dll</HintPath><Private>false</Private></Reference>
