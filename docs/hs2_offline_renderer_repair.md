@@ -612,5 +612,5 @@ and actual draw arguments. This is the required source-correspondence input;
 shader constant/SRV/pass data remain in the complete original capture. It does
 not guess a surface by appearance or declare previous/shadow/motion dependencies
 covered. Source/compile only, no runtime acceptance yet; newest ignored tool build
-is `official_full_replay_msvc_v4/`. Its input receipt scope is specifically vertex/
+is `official_full_replay_msvc_v5/`. Its input receipt scope is specifically vertex/
 index data, not all constant/texture inputs.
