@@ -707,3 +707,13 @@ render-thread/frame boundary while retaining original rendering and all effects.
 Do not retry blindly or substitute a completed PNG for full RGB. The subsequent
 pre-stop normal-card reload state check was not accepted and remains a separate
 restoration-record gap.
+
+The new optional Present protocol reserves one official TriggerCapture, waits for
+actual active readiness, gates the complete original Capture once and lets normal
+Present finish it. It records begin/real-RT/end command annotations on Unity's
+actual render thread and keeps final file acceptance explicitly pending RDC proof,
+so automatic retries cannot silently substitute a later ordinary frame. Source,
+native/managed CPU guards, source-schema XML verifier and deployment receipt are
+in [present_scope_contract.md](../tools/offline_renderer/native_audit/present_scope_contract.md).
+No graphics/game was started for this milestone; native boundary/RDC proof and
+full source-driven candidate RGB remain unaccepted.

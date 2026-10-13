@@ -47,6 +47,8 @@ internal static class ScopeJson
                 case "GeometryBeforePath": request.GeometryBeforePath = StringField(field); break;
                 case "GeometryAfterPath": request.GeometryAfterPath = StringField(field); break;
                 case "ExpectedBridgeSha256": request.ExpectedBridgeSha256 = StringField(field); break;
+                case "CaptureMode": request.CaptureMode = StringField(field); if(request.CaptureMode!=null && request.CaptureMode!="official_present") throw new InvalidOperationException("Unsupported CaptureMode"); break;
+                case "ExpectedUnityCoreSha256": request.ExpectedUnityCoreSha256 = StringField(field); break;
                 default: throw new InvalidOperationException("Unsupported scope request field: " + field.Name);
             }
         }
@@ -69,6 +71,8 @@ internal static class ScopeJson
         if (request.GeometryBeforePath != null) fields.Add("GeometryBeforePath", request.GeometryBeforePath);
         if (request.GeometryAfterPath != null) fields.Add("GeometryAfterPath", request.GeometryAfterPath);
         if (request.ExpectedBridgeSha256 != null) fields.Add("ExpectedBridgeSha256", request.ExpectedBridgeSha256);
+        if (request.CaptureMode != null) fields.Add("CaptureMode", request.CaptureMode);
+        if (request.ExpectedUnityCoreSha256 != null) fields.Add("ExpectedUnityCoreSha256", request.ExpectedUnityCoreSha256);
         return fields;
     }
     internal static string Object(Dictionary<string, object> fields)

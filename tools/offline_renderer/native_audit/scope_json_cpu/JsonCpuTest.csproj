@@ -7,7 +7,9 @@
     <Compile Include="../scope_managed/RenderDocScope.cs" Link="RenderDocScope.cs" />
     <Compile Include="../scope_managed/GeometryCapture.cs" Link="GeometryCapture.cs" />
     <Compile Include="../scope_managed/ScopeJson.cs" Link="ScopeJson.cs" />
+    <Compile Include="../scope_managed/PresentCapture.cs" Link="PresentCapture.cs" />
     <Compile Include="TestJson.cs" />
+    <Compile Include="TestPresentManaged.cs" />
     <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies" Version="1.0.3" PrivateAssets="all" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
   </ItemGroup>

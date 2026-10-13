@@ -32,6 +32,7 @@ static std::string receipt="{\"status\":\"not_started\"}";
 static uint64_t serial=0,token=0,beginTime=0;
 static uint32_t beginCount=0;
 static bool owned=false;
+static bool presentReserved=false;
 static void* device=nullptr;static void* window=nullptr;
 static ID3D11Device* heldDevice=nullptr;
 static std::string previousPath,prefix,modulePath,installedPath;
@@ -66,7 +67,7 @@ static void releaseScope(){
   }
   templateChanged=false;
   if(heldDevice){heldDevice->Release();heldDevice=nullptr;}
-  owned=false;device=nullptr;window=nullptr;fileGuard.reset();
+  owned=false;presentReserved=false;device=nullptr;window=nullptr;fileGuard.reset();
 }
 
 #ifdef HS2_RDOC_SCOPE_TEST
@@ -137,6 +138,7 @@ static int verifyOwned(uint32_t pid,uint64_t supplied){
 extern "C" __declspec(dllexport) int __cdecl HS2_RDOC_End(uint32_t pid,uint64_t supplied){
   std::lock_guard<std::mutex> lock(gate);
   try{
+    if(presentReserved){message("end",-29,"Present reservation cannot be ended through legacy mid-frame SDK End");return -29;}
     if(auto failure=verifyOwned(pid,supplied))return failure;
     auto success=api->EndFrameCapture(device,window);
     if(!success){if(api->IsFrameCapturing()){message("end",-7,"SDK End failed and owned capture remains active; caller must AbortOwned");return -7;}releaseScope();message("end",-7,"SDK End failed");return -7;}
@@ -153,6 +155,7 @@ extern "C" __declspec(dllexport) int __cdecl HS2_RDOC_End(uint32_t pid,uint64_t 
 }
 extern "C" __declspec(dllexport) int __cdecl HS2_RDOC_AbortOwned(uint32_t pid,uint64_t supplied){
   std::lock_guard<std::mutex> lock(gate);try{
+    if(presentReserved){message("abort",-29,"Use owned Present abort protocol; no legacy discard of pending trigger");return -29;}
     if(auto failure=verifyOwned(pid,supplied))return failure;
     if(!api->DiscardFrameCapture(device,window) || api->IsFrameCapturing()){message("abort",-8,"Owned discard failed; active scope retained, not silently cleared");return -8;}
     releaseScope();message("abort",3,"Only the matching owned capture was discarded");return 3;
@@ -161,3 +164,6 @@ extern "C" __declspec(dllexport) int __cdecl HS2_RDOC_AbortOwned(uint32_t pid,ui
 extern "C" __declspec(dllexport) uint32_t __cdecl HS2_RDOC_GetReceipt(char* output,uint32_t capacity){
   std::lock_guard<std::mutex> lock(gate);auto required=(uint32_t)receipt.size()+1;if(output && capacity>=required)memcpy(output,receipt.c_str(),required);return required;
 }
+
+// Separate opt-in Present-boundary protocol. Legacy SDK scope signatures remain.
+#include "renderdoc_present_scope.hpp"

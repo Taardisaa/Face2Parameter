@@ -26,6 +26,8 @@ def main():
       'if errorlevel 1 exit /b 1',
       f'cl /nologo /std:c++17 /EHsc /O2 /MT /I{quoted(a.sdk)} /Fo{quoted(out/"mock.obj")} /Fe{quoted(out/"scope_cpu_mock.exe")} {quoted(root/"test_renderdoc_scope.cpp")} bcrypt.lib',
       'if errorlevel 1 exit /b 1',
+      f'cl /nologo /std:c++17 /EHsc /O2 /MT /I{quoted(a.sdk)} /Fo{quoted(out/"present_mock.obj")} /Fe{quoted(out/"present_cpu_mock.exe")} {quoted(root/"test_present_scope.cpp")} bcrypt.lib',
+      'if errorlevel 1 exit /b 1',
       f'dumpbin /imports {quoted(out/"hs2_renderdoc_scope_native.dll")} > {quoted(out/"imports.txt")}',
       'if errorlevel 1 exit /b 1',
       f'dumpbin /exports {quoted(out/"hs2_renderdoc_scope_native.dll")} > {quoted(out/"exports.txt")}',
@@ -37,6 +39,8 @@ def main():
     if 'renderdoc.dll' in imports.lower() or 'd3d11.dll' in imports.lower():raise RuntimeError('Forbidden native dependency import')
     test=run_logged([out/'scope_cpu_mock.exe',out/'synthetic_mock_files'],out/'cpu_mock_log',timeout=15,cwd=out)
     if test['status']!='pass':raise RuntimeError('CPU mock failed; logs retained')
+    present=run_logged([out/'present_cpu_mock.exe',out/'synthetic_present_files'],out/'present_cpu_mock_log',timeout=15,cwd=out)
+    if present['status']!='pass':raise RuntimeError('CPU Present protocol failed; logs retained')
     managed=run_logged(['dotnet','build',root/'scope_managed/HS2_RenderDocScope.csproj','-c','Release','-o',out],out/'managed_build_log',timeout=120,cwd=out)
     if managed['status']!='pass':raise RuntimeError('Managed build failed; logs retained')
     json_audit=run_logged(['powershell','-NoProfile','-File',root/'audit_scope_json.ps1','-Helper',out/'HS2_RenderDocScope.dll','-Cecil',a.cecil.resolve(),'-Output',out/'json_dependency_audit.json'],out/'json_il_audit_log',timeout=30,cwd=out)
@@ -55,7 +59,7 @@ def main():
         if fixture_test['status']!='pass':raise RuntimeError('CPU geometry fixture failed: '+variant)
     result={'scope':'CPU official C table mock, x64 MSVC build and managed compile; no RenderDoc DLL/graphics/native game execution',
       'vcvars':str(a.vcvars.resolve()),'sdk_header':str(header.resolve()),'sdk_header_sha256':hashlib.sha256(header.read_bytes()).hexdigest(),'outputs':[]}
-    for name in ('hs2_renderdoc_scope_native.dll','HS2_RenderDocScope.dll','Newtonsoft.Json.dll','scope_cpu_mock.exe','imports.txt','exports.txt','scope_static.asm'):
+    for name in ('hs2_renderdoc_scope_native.dll','HS2_RenderDocScope.dll','Newtonsoft.Json.dll','scope_cpu_mock.exe','present_cpu_mock.exe','imports.txt','exports.txt','scope_static.asm'):
         path=out/name;result['outputs'].append({'path':str(path),'bytes':path.stat().st_size,'sha256':hashlib.sha256(path.read_bytes()).hexdigest()})
     (out/'build_receipt.json').write_text(json.dumps(result,indent=2));print(json.dumps(result))
 if __name__=='__main__':main()

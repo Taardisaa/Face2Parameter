@@ -9,7 +9,7 @@ using Newtonsoft.Json.Linq;
 
 // Independent, opt-in hook shim; never loads renderdoc.dll or changes rendering.
 // The existing game Capture owns all Camera.Render/ReadPixels/finally restoration.
-public static class HS2_RenderDocScope
+public static partial class HS2_RenderDocScope
 {
     public sealed class Request
     {
@@ -20,6 +20,7 @@ public static class HS2_RenderDocScope
         public string GeometryBeforePath;
         public string GeometryAfterPath;
         public string ExpectedBridgeSha256;
+        public string CaptureMode, ExpectedUnityCoreSha256;
     }
     static readonly object Gate = new object();
     static readonly string DirectoryPath = Path.GetDirectoryName(typeof(HS2_RenderDocScope).Assembly.Location);
@@ -154,6 +155,7 @@ public static class HS2_RenderDocScope
     public static void BeginFromNativeTexture(IntPtr resource, string capturePngPath)
     {
         lock (Gate) {
+            if (active != null && active.CaptureMode == "official_present") { if(ExactPresentPath(capturePngPath)) BindPresentTarget(resource, capturePngPath); return; }
             if (token != 0) { SafeSave("begin_rejected_owned", new InvalidOperationException("Previous owned scope still active")); return; }
             active = null;
             geometry = null;
@@ -165,6 +167,7 @@ public static class HS2_RenderDocScope
                 if (request == null || !request.Enabled) return;
                 // Ignore other ordinary Captures; exact opt-in pathname selects one.
                 if (String.IsNullOrEmpty(request.ExactPngPath) || !String.Equals(Path.GetFullPath(request.ExactPngPath), Path.GetFullPath(capturePngPath), StringComparison.OrdinalIgnoreCase)) return;
+                if (request.CaptureMode == "official_present") throw new InvalidOperationException("Present mode requires outer dispatch Arm/ready/Enter before original full Capture");
                 Validate(request, capturePngPath); active = request;
                 geometry = GeometryCapture.Prepare(request); LoadOwnHelper();
                 // Same frozen actor/current temporary camera, immediately before SDK Start.
@@ -178,6 +181,7 @@ public static class HS2_RenderDocScope
     public static void EndAfterSavedPng(string capturePngPath)
     {
         lock (Gate) {
+            if (active != null && active.CaptureMode == "official_present") { if(ExactPresentPath(capturePngPath)) CompletePresentOriginal(capturePngPath); return; }
             if (token == 0) return;
             try {
                 if (!String.Equals(Path.GetFullPath(capturePngPath), Path.GetFullPath(active.ExactPngPath), StringComparison.OrdinalIgnoreCase)) throw new InvalidOperationException("End pathname mismatch");
@@ -199,6 +203,10 @@ public static class HS2_RenderDocScope
     public static void AbortOwnedSafely()
     {
         lock (Gate) {
+            if (active != null && active.CaptureMode == "official_present") {
+                if(presentInsideOriginal){presentInsideOriginal=false;if (!presentOriginalComplete) AbortPresentSafely();}
+                return;
+            }
             if (token == 0) return;
             try {
                 int code = abort(active.ExpectedPid, token);

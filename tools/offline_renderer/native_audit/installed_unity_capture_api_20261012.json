@@ -1,0 +1,120 @@
+﻿{
+    "assembly":  "UnityEngine.CoreModule, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null",
+    "mvid":  "a43c4779-6b1b-4dc7-8509-dc74aec2356b",
+    "native_callback_accepted":  false,
+    "core_path":  "E:\\HoneySelect2_ArcticFox\\HoneySelect2_Data\\Managed\\UnityEngine.CoreModule.dll",
+    "methods":  [
+                    {
+                        "il":  [
+                                   "IL_0000: ldarg.0",
+                                   "IL_0001: call System.Void System.Object::.ctor()",
+                                   "IL_0006: ret"
+                               ],
+                        "signature":  "System.Void UnityEngine.GL::.ctor()",
+                        "attributes":  "CompilerControlled, Public, HideBySig, SpecialName, RTSpecialName",
+                        "implementation":  "Managed"
+                    },
+                    {
+                        "il":  {
+
+                               },
+                        "signature":  "System.Void UnityEngine.GL::IssuePluginEvent(System.Int32)",
+                        "attributes":  "CompilerControlled, Public, Static, HideBySig",
+                        "implementation":  "IL, InternalCall"
+                    },
+                    {
+                        "il":  [
+                                   "IL_0000: nop",
+                                   "IL_0001: ldarg.0",
+                                   "IL_0002: ldsfld System.IntPtr System.IntPtr::Zero",
+                                   "IL_0007: call System.Boolean System.IntPtr::op_Equality(System.IntPtr,System.IntPtr)",
+                                   "IL_000c: brfalse IL_0021",
+                                   "IL_0011: ldstr \"Null callback specified.\"",
+                                   "IL_0016: ldstr \"callback\"",
+                                   "IL_001b: newobj System.Void System.ArgumentException::.ctor(System.String,System.String)",
+                                   "IL_0020: throw",
+                                   "IL_0021: ldarg.0",
+                                   "IL_0022: ldarg.1",
+                                   "IL_0023: call System.Void UnityEngine.GL::GLIssuePluginEvent(System.IntPtr,System.Int32)",
+                                   "IL_0028: ret"
+                               ],
+                        "signature":  "System.Void UnityEngine.GL::IssuePluginEvent(System.IntPtr,System.Int32)",
+                        "attributes":  "CompilerControlled, Public, Static, HideBySig",
+                        "implementation":  "Managed"
+                    },
+                    {
+                        "il":  [
+                                   "IL_0000: ldarg.0",
+                                   "IL_0001: call System.Void System.Object::.ctor()",
+                                   "IL_0006: nop",
+                                   "IL_0007: ldarg.0",
+                                   "IL_0008: call System.IntPtr UnityEngine.Rendering.CommandBuffer::InitBuffer()",
+                                   "IL_000d: stfld System.IntPtr UnityEngine.Rendering.CommandBuffer::m_Ptr",
+                                   "IL_0012: ret"
+                               ],
+                        "signature":  "System.Void UnityEngine.Rendering.CommandBuffer::.ctor()",
+                        "attributes":  "CompilerControlled, Public, HideBySig, SpecialName, RTSpecialName",
+                        "implementation":  "Managed"
+                    },
+                    {
+                        "il":  {
+
+                               },
+                        "signature":  "System.Void UnityEngine.Rendering.CommandBuffer::IssuePluginEventInternal(System.IntPtr,System.Int32)",
+                        "attributes":  "CompilerControlled, Private, HideBySig",
+                        "implementation":  "IL, InternalCall"
+                    },
+                    {
+                        "il":  [
+                                   "IL_0000: nop",
+                                   "IL_0001: ldarg.1",
+                                   "IL_0002: ldsfld System.IntPtr System.IntPtr::Zero",
+                                   "IL_0007: call System.Boolean System.IntPtr::op_Equality(System.IntPtr,System.IntPtr)",
+                                   "IL_000c: brfalse IL_001c",
+                                   "IL_0011: ldstr \"Null callback specified.\"",
+                                   "IL_0016: newobj System.Void System.ArgumentException::.ctor(System.String)",
+                                   "IL_001b: throw",
+                                   "IL_001c: ldarg.0",
+                                   "IL_001d: ldarg.1",
+                                   "IL_001e: ldarg.2",
+                                   "IL_001f: call System.Void UnityEngine.Rendering.CommandBuffer::IssuePluginEventInternal(System.IntPtr,System.Int32)",
+                                   "IL_0024: ret"
+                               ],
+                        "signature":  "System.Void UnityEngine.Rendering.CommandBuffer::IssuePluginEvent(System.IntPtr,System.Int32)",
+                        "attributes":  "CompilerControlled, Public, HideBySig",
+                        "implementation":  "Managed"
+                    },
+                    {
+                        "il":  [
+                                   "IL_0000: ldarg.0",
+                                   "IL_0001: call System.Void UnityEngine.Object::.ctor()",
+                                   "IL_0006: nop",
+                                   "IL_0007: ret"
+                               ],
+                        "signature":  "System.Void UnityEngine.Texture::.ctor()",
+                        "attributes":  "CompilerControlled, Family, HideBySig, SpecialName, RTSpecialName",
+                        "implementation":  "Managed"
+                    },
+                    {
+                        "il":  {
+
+                               },
+                        "signature":  "System.IntPtr UnityEngine.Texture::GetNativeTexturePtr()",
+                        "attributes":  "CompilerControlled, Public, HideBySig",
+                        "implementation":  "IL, InternalCall"
+                    },
+                    {
+                        "il":  [
+                                   "IL_0000: ldarg.0",
+                                   "IL_0001: call System.Void UnityEngine.YieldInstruction::.ctor()",
+                                   "IL_0006: ret"
+                               ],
+                        "signature":  "System.Void UnityEngine.WaitForEndOfFrame::.ctor()",
+                        "attributes":  "CompilerControlled, Public, HideBySig, SpecialName, RTSpecialName",
+                        "implementation":  "Managed"
+                    }
+                ],
+    "scope":  "Installed Unity2018 metadata/source only; GL event threading ordering comes from official documentation, persistent Map closure remains unproven",
+    "map_lifetime_repair_accepted":  false,
+    "core_sha256":  "1dbc6ba5ecaf6c5f890ad12aa677f7897fd62356b6ace27c1c3fda73de16ae11"
+}

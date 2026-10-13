@@ -16,6 +16,11 @@ internal static class ScopeJsonCpuTest {
         const string input="{\"Enabled\":true,\"ExpectedPid\":4294967295,\"ExactPngPath\":\"C:/程儿/a.png\",\"CapturePrefix\":\"C:/a\",\"ReceiptPath\":\"C:/r.json\",\"ExpectedNativeSha256\":\"native\",\"ExpectedRenderDocSha256\":\"renderdoc\",\"GeometryBeforePath\":\"C:/before.json\",\"GeometryAfterPath\":\"C:/after.json\",\"ExpectedBridgeSha256\":\"bridge\"}";
         var request=ScopeJson.ReadRequest(input);Check(request.ExpectedPid==UInt32.MaxValue && request.Enabled && request.ExactPngPath=="C:/程儿/a.png");
         Check(JToken.DeepEquals(ScopeJson.ParseObject(input),ScopeJson.ParseObject(ScopeJson.Object(ScopeJson.RequestFields(request)))));
+        var present=ScopeJson.ReadRequest("{\"CaptureMode\":\"official_present\",\"ExpectedUnityCoreSha256\":\"core\"}");
+        Check(present.CaptureMode=="official_present" && present.ExpectedUnityCoreSha256=="core");
+        Check(ScopeJson.RequestFields(present)["CaptureMode"].ToString()=="official_present");
+        Reject(()=>ScopeJson.ReadRequest("{\"CaptureMode\":\"guessed_frame\"}"),"Unsupported CaptureMode");
+        Reject(()=>ScopeJson.ReadRequest("{\"ExpectedUnityCoreSha256\":4}"),"string or null");
         string stamp="2026-10-12T03:04:05.1234567Z";var native=ScopeJson.ParseObject("{\"owned\":false,\"nested\":[1,2.5,null,true,\""+stamp+"\"]}");
         Check(native["nested"][4].Type==JTokenType.String);
         var values=new Dictionary<string,object>{{"native",native},{"unicode","程儿\\\"\n"},{"ints",new object[]{(byte)2,(sbyte)-3,(short)-4,(ushort)5,6,(uint)7,(long)-8,(ulong)9}},{"float",1.25f},{"double",2.5},{"decimal",3.125m},{"char",'字'},{"bool",true},{"null",null}};
@@ -50,6 +55,7 @@ internal static class ScopeJsonCpuTest {
         var emergency=ScopeJson.ParseObject(HS2_RenderDocScope.LastReceipt);
         Check(emergency["previous_receipt_raw"].Value<string>()=="{} {}" && emergency["streaming_fallback_error"]!=null && !emergency["capture_accepted"].Value<bool>());
         foreach(string path in Directory.GetFiles(directory,"*.failure.*.json")){ScopeJson.ParseObject(File.ReadAllText(path));File.Delete(path);}
+        TestPresentManaged.Run(Check,directory);
         Directory.Delete(impossible);Directory.Delete(directory);
         foreach(var assembly in AppDomain.CurrentDomain.GetAssemblies())Check(assembly.GetName().Name!="System.Data");Check(!forbiddenLoaded);
         Console.WriteLine("Streaming request/receipt/native-token/error JSON passed "+checks+" checks with no System.Data load; no game/GPU/native capture executed");return 0;
