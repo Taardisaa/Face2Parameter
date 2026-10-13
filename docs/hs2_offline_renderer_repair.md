@@ -633,3 +633,34 @@ Native scope acceptance remains pending; no game or graphics were started. The
 installed exporter lacks baked tangents, so actual GPU tangent correspondence is
 still a separate required proof. See the scope contract for deployment hashes/
 paths and the warning against deploying synthetic fixture bridge assemblies.
+
+### Doorstop/RenderDoc early startup compatibility
+
+The main-task-owned official injected HS2 attempt reached native D3D11 vanilla
+menus, but not BepInEx/bridge initialization. Zero captures were accepted; owned
+processes were stopped. Upstream Doorstop issue24 and pinned source explain the
+competing GetProcAddress IAT hooks. An independent mscorlib-only net472 bootstrap
+now loads the exact official RenderDoc library **inside Doorstop's already-entered
+Mono invocation**, before the original installed BepInEx entry assembly loads.
+
+All original entry calls verify the installed preloader SHA and invoke its actual
+public static Main; its resolver/platform/runtime-fix/preloader chain is retained.
+The correct original DOORSTOP_INVOKE_DLL_PATH is restored and timed. Disabled/no
+request executes the original entry only; failed opt-in still runs the original
+entry and explicitly rejects capture compatibility. Fresh receipts retain exact
+load/order/errors; original files and feature settings are untouched.
+
+CPU build/metadata and nineteen synthetic entry/sequence checks pass. No game,
+RenderDoc DLL, installed preloader or graphics was executed by this child. Late
+startup guards and full plugin/native capture acceptance remain pending. Main
+alone controls config deployment/restore and the next actual startup.
+Contract/provenance: [early_bootstrap/contract.md](../tools/offline_renderer/native_audit/early_bootstrap/contract.md).
+
+The main task also performed one actual **parser/export-only** run of the repaired
+MSVC replay tool against the existing independent32x32 WARP capture. Explicit
+`convert ... rdc ... zip.xml` passed with exit0/empty stderr and empty related
+process inventories before/after. Source RDC SHA18eafcb2..., tool SHA076aae9c....
+No OpenCapture, GPU driver replay or HS2 was executed. Receipt:
+`tools/offline_renderer/official_parser_validation_20261012.json`. This validates
+the official C++ file parser/export interface; full replay, modified capture
+roundtrip, actual HS2 capture and candidate RGB remain unaccepted.

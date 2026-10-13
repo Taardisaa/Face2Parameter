@@ -1,0 +1,31 @@
+{
+  "scope": "one original independent 32x32 capture parser/export check; no game, no OpenCapture/driver replay",
+  "source_sha256": "18eafcb218084b146b95830816945c6f9314b3b7b48984b31db5ddb912f3ee71",
+  "exe_sha256": "076aae9c52608ab3ded305f5f4c7814ebc4ed8623c101362df948999509a9cb6",
+  "result": {
+    "argv": [
+      "C:\\Users\\13666\\Workspace\\Face2Parameter\\outputs\\offline_renderer_repair_20261012\\official_full_replay_msvc_v5\\renderdoc_replay_msvc.exe",
+      "convert",
+      "C:\\Users\\13666\\Workspace\\Face2Parameter\\outputs\\offline_renderer_repair_20261012\\msvc_one_authorized_capture_v1\\capture_frame73.rdc",
+      "rdc",
+      "C:\\Users\\13666\\Workspace\\Face2Parameter\\outputs\\offline_renderer_repair_20261012\\official_parser_runtime_v1\\original.zip.xml",
+      "zip.xml"
+    ],
+    "timeout_seconds": 20,
+    "started_unix": 1791865806.9465647,
+    "status": "pass",
+    "stdout": "C:\\Users\\13666\\Workspace\\Face2Parameter\\outputs\\offline_renderer_repair_20261012\\official_parser_runtime_v1\\convert\\stdout.bin",
+    "stderr": "C:\\Users\\13666\\Workspace\\Face2Parameter\\outputs\\offline_renderer_repair_20261012\\official_parser_runtime_v1\\convert\\stderr.bin",
+    "pid": 11192,
+    "returncode": 0,
+    "ended_unix": 1791865807.1337256,
+    "stdout_bytes": 290,
+    "stdout_sha256": "09ff2d5fb4f1ed1effedf5d3a6b2e89c18777110f7492a833ef9d3cb13bcc90e",
+    "stderr_bytes": 0,
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "inventory_before": [],
+  "inventory_after": [],
+  "full_renderer_accepted": false,
+  "HS2_capture_accepted": false
+}

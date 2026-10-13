@@ -1,0 +1,11 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net472</TargetFramework><OutputType>Exe</OutputType>
+    <AssemblyName>HS2_BootstrapCpuTest</AssemblyName><StartupObject>BootstrapCpuTest</StartupObject>
+    <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath><EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="Bootstrap.cs" /><Compile Include="TestBootstrap.cs" />
+    <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies" Version="1.0.3" PrivateAssets="all" />
+  </ItemGroup>
+</Project>
