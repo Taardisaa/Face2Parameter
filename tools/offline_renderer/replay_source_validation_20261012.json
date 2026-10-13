@@ -19,14 +19,14 @@
     "vcvars": "C:\\Program Files (x86)\\Microsoft Visual Studio\\18\\BuildTools\\VC\\Auxiliary\\Build\\vcvars64.bat",
     "outputs": [
       {
-        "path": "C:\\Users\\13666\\Workspace\\Face2Parameter\\outputs\\offline_renderer_repair_20261012\\official_full_replay_msvc_v3\\renderdoc_replay_msvc.exe",
-        "bytes": 307712,
-        "sha256": "98f37e5409b181f8e9a9c192043c94e1d72ef2743aa4f7042d56c6af46b10c3e"
+        "path": "C:\\Users\\13666\\Workspace\\Face2Parameter\\outputs\\offline_renderer_repair_20261012\\official_full_replay_msvc_v4\\renderdoc_replay_msvc.exe",
+        "bytes": 319488,
+        "sha256": "a81a59a3c01e6d6ee9f734b63785915fc529e54866c76048f3481742db5025ab"
       },
       {
-        "path": "C:\\Users\\13666\\Workspace\\Face2Parameter\\outputs\\offline_renderer_repair_20261012\\official_full_replay_msvc_v3\\replay_static.asm",
-        "bytes": 3169946,
-        "sha256": "a3338719a305c40a3cb2e73381dfc3fad6e884d8b2dea69c368f3ad32ca151ef"
+        "path": "C:\\Users\\13666\\Workspace\\Face2Parameter\\outputs\\offline_renderer_repair_20261012\\official_full_replay_msvc_v4\\replay_static.asm",
+        "bytes": 3744723,
+        "sha256": "ea154d17de8a5cbcf732c999ea1fcffcb75ff2159f7badf013f806c82125c8fc"
       }
     ]
   },
@@ -159,5 +159,6 @@
     "changed_vb_first_word_exact": true,
     "native_roundtrip_replay_accepted": false
   },
-  "scope": "CPU source/build/byte-transfer only; no RenderDoc or graphics execution"
+  "scope": "CPU source/build/byte-transfer only; no RenderDoc or graphics execution",
+  "drawinputs_runtime_accepted": false
 }

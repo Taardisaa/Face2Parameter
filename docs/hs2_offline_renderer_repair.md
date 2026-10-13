@@ -604,3 +604,13 @@ geometry, bone, shadow and motion inputs; determine culling/draw-list invariance
 and every dependent cache; restore camera/material control through actual inputs;
 accept official baseline replay and candidate RGB against native pipeline. The
 full-driver baseline is the execution oracle, not the final parameter renderer.
+
+The compiled official replay tool also has `drawinputs RDC EVENT NEW_DIRECTORY`.
+For one explicitly selected actual draw, it exports every bound vertex/index
+buffer's actual replayed bytes, resource identity, stride/offset, semantic layout
+and actual draw arguments. This is the required source-correspondence input;
+shader constant/SRV/pass data remain in the complete original capture. It does
+not guess a surface by appearance or declare previous/shadow/motion dependencies
+covered. Source/compile only, no runtime acceptance yet; newest ignored tool build
+is `official_full_replay_msvc_v4/`. Its input receipt scope is specifically vertex/
+index data, not all constant/texture inputs.
