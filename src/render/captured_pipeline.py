@@ -9,6 +9,8 @@ from copy import deepcopy
 import hashlib
 import json
 from pathlib import Path
+from .texture_storage import layouts,paint,update_box,UnresolvedTexture
+from .shared_targets import SharedTargets
 
 class UnresolvedPipeline(RuntimeError):
     pass
@@ -31,8 +33,13 @@ def decode(node):
         result={}
         for c in node.get('children',[]):
             name=c['attributes'].get('name')
-            if not name or name in result:raise UnresolvedPipeline('Missing/duplicate structured field')
-            result[name]=decode(c)
+            if not name:raise UnresolvedPipeline('Missing structured field')
+            value=decode(c)
+            if name in result:
+                if name not in ('SubresourceContents','SubresourceContentsLength'):raise UnresolvedPipeline('Unexpected duplicate structured field '+name)
+                old=result[name]
+                result[name]={'__repeated_field__':old['__repeated_field__']+[value] if isinstance(old,dict) and '__repeated_field__' in old else [old,value]}
+            else:result[name]=value
         return result
     raise UnresolvedPipeline('Uninterpreted XML kind '+kind)
 
@@ -43,6 +50,7 @@ class CapturedPipeline:
         self.commands=[];self.draws=[];self.context=None
         self.needed_initials=[]
         self.open_maps={}
+        self.targets=SharedTargets(self.resources)
         self.blobs={b['buffer_index']:b for b in self.manifest['blobs']}
 
     def bytes(self,ref):
@@ -70,6 +78,26 @@ class CapturedPipeline:
             if stop>end:updated.append((end,data[end-offset:]))
         if payload:updated.append((start,payload))
         resource['buffer_segments']=sorted(updated)
+
+    def _texture_create(self,f,kind):
+        desc=f['Descriptor'];ls=layouts(kind,desc)
+        initial=f.get('SubresourceContents')
+        refs=initial['__repeated_field__'] if isinstance(initial,dict) and '__repeated_field__' in initial else ([] if initial is None else [initial])
+        if refs and len(refs)!=len(ls):raise UnresolvedPipeline('Serialized mip/array payload count mismatch')
+        payloads=[self.bytes(r) for r in refs]
+        for row,data in zip(ls,payloads):
+            if len(data)!=row['bytes']:raise UnresolvedPipeline('Tightly packed original texture byte count mismatch')
+        self._resource(f,'pTexture',kind,desc,payloads[0] if len(payloads)==1 else None)
+        resource=self.resources[f['pTexture']]
+        resource['texture_layouts']=ls
+        resource['texture_segments']={row['subresource']:([(0,payloads[i])] if payloads else []) for i,row in enumerate(ls)}
+        self.targets.created(f['pTexture'])
+
+    def _texture_subresource(self,ident,subresource):
+        resource=self.resources[ident]
+        if subresource<0 or subresource>=len(resource['texture_layouts']):raise UnresolvedPipeline('Texture subresource outside actual mip/array range')
+        if resource['descriptor'].get('SampleDesc',{}).get('Count',1)>1:raise UnresolvedPipeline('MSAA texture CPU transfer requires sample-level data')
+        return resource,resource['texture_layouts'][subresource]
 
     @staticmethod
     def buffer_range(segments,start,end):
@@ -123,7 +151,7 @@ class CapturedPipeline:
                     if data is not None and len(data)!=f['pDesc']['ByteWidth']:raise UnresolvedPipeline('Buffer initial-data length mismatch')
                     self._resource(f,'pBuffer',method,f['pDesc'],data)
                 elif method in ('CreateTexture1D','CreateTexture2D','CreateTexture3D'):
-                    self._resource(f,'pTexture',method,f['Descriptor'],self.bytes(f['SubresourceContents']) if 'SubresourceContents' in f else None)
+                    self._texture_create(f,method)
                 elif method=='CreateInputLayout':self._resource(f,'pInputLayout',method,f['pInputElementDescs'],self.bytes(f['pShaderBytecodeWithInputSignature']))
                 elif method in ('CreateShaderResourceView','CreateRenderTargetView','CreateDepthStencilView','CreateUnorderedAccessView'):
                     self._resource(f,'pView',method,f['pDesc'])
@@ -165,29 +193,71 @@ class CapturedPipeline:
         elif method=='RSSetViewports':rs.update(NumViews=f['NumViewports'],Viewports=f['pViewports'])
         elif method=='RSSetScissorRects':rs.update(NumScissors=f['NumRects'],Scissors=f['pRects'])
         elif method=='Map':
-            if f['Subresource']!=0 or self.resources[f['pResource']]['kind']!='CreateBuffer':raise UnresolvedPipeline('Texture map transfer must be implemented')
+            if self.resources[f['pResource']]['kind']=='CreateBuffer':
+                if f['Subresource']!=0:raise UnresolvedPipeline('Buffer map subresource must be zero')
+            else:self._texture_subresource(f['pResource'],f['Subresource'])
             key=(f['pResource'],f['Subresource'])
             if key in self.open_maps:raise UnresolvedPipeline('Native resource mapped twice without Unmap')
             self.open_maps[key]=f['MapType']
         elif method=='Unmap':
             key=(f['pResource'],f['Subresource'])
-            if f['Subresource']!=0 or self.resources[f['pResource']]['kind']!='CreateBuffer':raise UnresolvedPipeline('Texture unmap transfer must be implemented')
             map_type=f['MapType']
             if key in self.open_maps and self.open_maps.pop(key)!=map_type:raise UnresolvedPipeline('Serialized Map/Unmap type mismatch')
             if map_type not in (2,3,4,5):raise UnresolvedPipeline('Unmap payload for non-writing map')
             start=f['Byte offset to start of written data'];end=f['Byte offset to end of written data']
             ref=f['MapWrittenData'];payload=b'' if ref is None and start==end else self.bytes(ref)
-            self._buffer_update(f['pResource'],start,end,payload,discard=map_type==4)
+            if self.resources[f['pResource']]['kind']=='CreateBuffer':
+                if f['Subresource']!=0:raise UnresolvedPipeline('Buffer unmap subresource must be zero')
+                self._buffer_update(f['pResource'],start,end,payload,discard=map_type==4)
+            else:
+                resource,row=self._texture_subresource(f['pResource'],f['Subresource'])
+                if end-start!=len(payload):raise UnresolvedPipeline('Texture MapWrittenData length/range mismatch')
+                resource['texture_segments'][f['Subresource']]=paint(resource['texture_segments'][f['Subresource']],start,payload,row['bytes'],discard=map_type==4)
+                self.targets.changed(f['pResource'],f['Subresource'],'native_unmap_texture',f)
+        elif method in ('UpdateSubresource','UpdateSubresource1'):
+            ident=f['pDstResource'];sub=f['DstSubresource'];resource=self.resources[ident]
+            flags=f['CopyFlags']
+            if flags not in (0,1,2,0xffffffff):raise UnresolvedPipeline('Unknown native update CopyFlags')
+            discard=flags==2
+            if f['IsUpdate']:
+                ref=f['pSrcData'];payload=b'' if ref is None and f['SourceDataLength']==0 else self.bytes(ref)
+                if len(payload)!=f['SourceDataLength']:raise UnresolvedPipeline('Captured update source length mismatch')
+                box=f['pDstBox']
+                if resource['kind']=='CreateBuffer':
+                    if sub!=0:raise UnresolvedPipeline('Buffer update subresource must be zero')
+                    start=box['left'] if box else 0;end=box['right'] if box else resource['descriptor']['ByteWidth']
+                    self._buffer_update(ident,start,end,payload,discard=discard)
+                else:
+                    resource,row=self._texture_subresource(ident,sub)
+                    resource['texture_segments'][sub]=update_box(resource['texture_segments'][sub],row,box,payload,f['SrcRowPitch'],f['SrcDepthPitch'],discard=discard)
+                    self.targets.changed(ident,sub,'native_update_texture',f)
+            else:
+                payload=self.bytes(f['Contents'])
+                if len(payload)!=f['ContentsLength']:raise UnresolvedPipeline('Captured full update ContentsLength mismatch')
+                if resource['kind']=='CreateBuffer':
+                    self._buffer_update(ident,0,resource['descriptor']['ByteWidth'],payload,discard=True)
+                else:
+                    resource,row=self._texture_subresource(ident,sub)
+                    if len(payload)!=row['bytes']:raise UnresolvedPipeline('Full updated texture payload length mismatch')
+                    resource['texture_segments'][sub]=[(0,payload)]
+                    self.targets.changed(ident,sub,'native_full_update_texture',f)
         elif method=='CopyResource':
             src=self.resources[f['pSrcResource']];dst=self.resources[f['pDstResource']]
             if src['kind']=='CreateBuffer' and dst['kind']=='CreateBuffer':
                 if src['descriptor']['ByteWidth']!=dst['descriptor']['ByteWidth']:raise UnresolvedPipeline('Native CopyResource buffer width mismatch')
                 dst['buffer_segments']=list(src['buffer_segments'])
-            # Texture copy remains an actual ordered command for frame execution.
-        elif method in ('ClearRenderTargetView','ClearDepthStencilView','ResolveSubresource'):
+            elif src['kind']==dst['kind'] and 'texture_segments' in src:
+                for key in ('Width','Height','Depth','MipLevels','ArraySize','Format','SampleDesc'):
+                    if src['descriptor'].get(key)!=dst['descriptor'].get(key):raise UnresolvedPipeline('CopyResource reinterpret/differing texture descriptors require source-compatible implementation')
+                dst['texture_segments']={sub:list(segments) for sub,segments in src['texture_segments'].items()}
+                self.targets.copy(f['pDstResource'],f['pSrcResource'],f)
+            else:raise UnresolvedPipeline('Incompatible CopyResource resource dimensions')
+        elif method=='ClearRenderTargetView':self.targets.clear(f['pRenderTargetView'],'native_clear_color',f)
+        elif method=='ClearDepthStencilView':self.targets.clear(f['pDepthStencilView'],'native_clear_depth_stencil',f)
+        elif method=='ResolveSubresource':
             # Resource mutations are retained in ordered commands for execution.
             # They are not assigned fake pixel contents in this state interpreter.
-            pass
+            self.targets.resolve(f)
         elif method in ('Draw','DrawIndexed','DrawInstanced','DrawIndexedInstanced','Dispatch'):
             if self.state['Predicate']:
                 raise UnresolvedPipeline('Predicated draw execution requires captured query result')
@@ -197,7 +267,8 @@ class CapturedPipeline:
             buffers.update(ident for ident in ia['VBs'] if ident)
             if ia['IndexBuffer']:buffers.add(ia['IndexBuffer'])
             versions={ident:list(self.resources[ident]['buffer_segments']) for ident in buffers}
-            self.draws.append({'index':index,'method':method,'arguments':f,'state':deepcopy(self.state),'buffer_versions':versions})
+            draw={'index':index,'method':method,'arguments':f,'state':deepcopy(self.state),'buffer_versions':versions}
+            self.targets.draw(draw);self.draws.append(draw)
         else:raise UnresolvedPipeline('Uninterpreted context command '+method)
 
     def shader_matches(self,draw,source_manifests):

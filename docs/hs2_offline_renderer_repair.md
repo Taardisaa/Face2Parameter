@@ -447,3 +447,36 @@ the pre-existing capture still passes all nine exact original-byte checks.
 Texture map/update transfer, written initial payloads, GPU-written buffer
 lifetimes and complete frame/SSS/GrabPass/postprocess execution remain required.
 No graphical process was started for this implementation or validation.
+
+### Texture transfers and shared-target dependencies
+
+The CPU interpreter now retains every repeated `SubresourceContents` field in
+the original capture, in actual mip/array order. Previously a multi-mip creation
+would be rejected as duplicate XML fields. Original encoded bytes remain encoded;
+there is no PNG conversion, BC decoding, color conversion or mip reconstruction.
+
+`texture_storage.py` follows pinned `Serialise_CreateTextureData`, `MapIntercept`
+and `UpdateDataSize` source: 1D/2D/3D and array layouts, block-format row sizes,
+tightly packed Map/Unmap ranges, pitched boxed UpdateSubresource updates, idle
+full-subresource contents and exact-descriptor CopyResource transfers. Row/slice
+padding is excluded from texels. Discarded/uninitialized ranges stay unknown.
+YUV layouts, unaligned encoded-block boxes and reinterpret-format copies remain
+explicit unsupported branches.
+
+`shared_targets.py` tracks resource/subresource identities and clear/copy/resolve/
+potential draw producers. Subsequent SRV inputs refer to the appropriate producer,
+including shared depth dependencies. Write-disabled depth and color masks retain
+their earlier versions. Clear values and draw dependencies are executable command
+data, not manufactured texture pixels: actual frame execution is still required.
+Partial-volume render views and SRV/output overlap handling remain unresolved.
+
+CPU verification: seven texture/resource checks plus three buffer lifetime
+checks pass; the pre-existing capture still passes nine original-byte comparisons.
+No game, RenderDoc or graphical fixture was started for these checks.
+
+Source inspection also found a raw-exporter format enum defect: `R1_UNORM` is
+DXGI **66**, while `R9G9B9E5_SHAREDEXP` is **67**. The source now assigns bit-packed
+pitch to 66 and four bytes per texel to 67. The 44 actual v3 resource descriptors
+contain neither format, so their recorded raw bytes are unaffected. These repaired
+format branches have CPU layout checks but no new native readback acceptance;
+the installed module was not replaced.

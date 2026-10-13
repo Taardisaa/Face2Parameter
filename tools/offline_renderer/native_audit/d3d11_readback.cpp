@@ -23,7 +23,7 @@ static unsigned pixelBytes(DXGI_FORMAT f){
     unsigned n=(unsigned)f;
     if(n>=1&&n<=4)return 16;if(n>=5&&n<=8)return 12;
     if(n>=9&&n<=22)return 8;if(n>=23&&n<=47)return 4;
-    if(n>=48&&n<=59)return 2;if(n>=60&&n<=66)return 1;
+    if(n>=48&&n<=59)return 2;if(n>=60&&n<=65)return 1;if(n==67)return 4;
     if(n==85||n==86)return 2;if(n>=87&&n<=93)return 4;
     throw std::runtime_error("Unsupported raw DXGI texel format "+std::to_string(n));
 }
@@ -71,7 +71,7 @@ static void capture(Job& job){
         unsigned w=std::max(1u,width>>mip),h=std::max(1u,height>>mip),z=std::max(1u,depth>>mip);
         unsigned sub=D3D11CalcSubresource(mip,array,mips),rows=h,pitch;
         if(blockFormat((unsigned)format)){pitch=std::max(1u,(w+3)/4)*blockBytes((unsigned)format);rows=std::max(1u,(h+3)/4);}
-        else if((unsigned)format==67)pitch=(w+7)/8;
+        else if((unsigned)format==66)pitch=(w+7)/8;
         else pitch=w*pixelBytes(format);
         D3D11_MAPPED_SUBRESOURCE mapped{};check(context->Map(staging.p,sub,D3D11_MAP_READ,0,&mapped),"Map staging mip");
         try{
