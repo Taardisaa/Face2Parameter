@@ -87,13 +87,16 @@ def verify(root, nonce: str, width: int, height: int) -> dict:
         if name not in ("ID3D11DeviceContext::CopyResource", "ID3D11DeviceContext::CopySubresourceRegion",
                         "ID3D11DeviceContext1::CopySubresourceRegion1", "ID3D11DeviceContext::ResolveSubresource"):
             continue
-        if number(chunk, "Context") != context:
-            raise ValueError("Readback transfer uses a different context; explicit integration needed")
         src, dst = number(chunk, "pSrcResource"), number(chunk, "pDstResource")
         # A later write from an unrelated source invalidates an earlier alias path.
         if src not in paths:
-            paths.pop(dst, None)
+            # The root is the actual current camera-output resource, irrespective
+            # of which original renderer command produced its current pixels.
+            if dst != ident:
+                paths.pop(dst, None)
             continue
+        if number(chunk, "Context") != context:
+            raise ValueError("Readback transfer uses a different context; explicit integration needed")
         if name.endswith("CopySubresourceRegion") or name.endswith("CopySubresourceRegion1"):
             if any(number(chunk, key) for key in ("DstSubresource", "DstX", "DstY", "DstZ", "SrcSubresource")):
                 raise ValueError("Original target readback uses offsets/subresources; unresolved branch")

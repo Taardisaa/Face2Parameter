@@ -42,6 +42,13 @@ class ScopeXmlTests(unittest.TestCase):
             if row.attrib['name'].endswith('SetCommandAnnotation'):chunks.remove(row)
         with self.assertRaisesRegex(ValueError,'reject retry frame'):verify(root,'synthetic_nonce',32,32)
 
+    def test_unrelated_context_copy_and_output_write_do_not_erase_root(self):
+        root=fixture();chunks=root.find('chunks')
+        unrelated=ET.fromstring('<chunk name="ID3D11DeviceContext::CopyResource" chunkIndex="99" threadID="88"><ResourceId name="Context">9</ResourceId><ResourceId name="pSrcResource">111</ResourceId><ResourceId name="pDstResource">112</ResourceId></chunk>')
+        output=ET.fromstring('<chunk name="ID3D11DeviceContext::CopyResource" chunkIndex="100" threadID="44"><ResourceId name="Context">5</ResourceId><ResourceId name="pSrcResource">113</ResourceId><ResourceId name="pDstResource">17</ResourceId></chunk>')
+        chunks.insert(5,unrelated);chunks.insert(6,output)
+        self.assertTrue(verify(root,'synthetic_nonce',32,32)['marker_and_copy_provenance_passed'])
+
     def test_wrong_nonce_duplicate_context_and_readback_rejected(self):
         with self.assertRaisesRegex(ValueError,'nonce mismatch'):verify(fixture(),'other',32,32)
         root=fixture();root.find('chunks').append(root.find('chunks')[-1])
