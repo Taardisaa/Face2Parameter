@@ -19,8 +19,13 @@ public:
     return name.size()>base.size() && name.compare(0,base.size(),base)==0 && (name[base.size()]=='_'||name[base.size()]=='.');
   }
   bool accepts(const std::string& value,const std::string& api,bool local,uint64_t timestamp,uint64_t bytes,uint64_t requested,std::string& reason) const {
-    auto path=std::filesystem::absolute(std::filesystem::u8path(value)).lexically_normal();
     if(!local || api!="D3D11"){reason="Capture must be local D3D11";return false;}
+    return accepts_file(value,timestamp,bytes,requested,reason);
+  }
+  // The in-process C SDK has no driver/local fields. Do not manufacture them.
+  // A local file guard alone does not prove the RDC driver or frame contents.
+  bool accepts_file(const std::string& value,uint64_t timestamp,uint64_t bytes,uint64_t requested,std::string& reason) const {
+    auto path=std::filesystem::absolute(std::filesystem::u8path(value)).lexically_normal();
     if(timestamp<requested){reason="Capture timestamp predates explicit trigger";return false;}
     if(!matches(path) || path.extension()!=".rdc"){reason="Capture path does not belong to fresh output prefix";return false;}
     if(!bytes || !std::filesystem::is_regular_file(path) || std::filesystem::file_size(path)!=bytes){reason="Actual RDC file missing, empty or size disagrees with target";return false;}

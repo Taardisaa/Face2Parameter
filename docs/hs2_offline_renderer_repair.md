@@ -527,3 +527,26 @@ The main task alone chooses/launches HS2, waits for the actual Maker/card/SSS
 state, obtains its PID/target ident and triggers its one native frame. This
 standalone check validates the repaired control interface, not the pending
 complete scene/SSS/GrabPass/postprocess renderer or its native RGB agreement.
+
+### Scoped original main-camera command capture
+
+An independent strict-C-ABI native helper and net472 shim are now implemented and
+CPU-checked against the pinned official application SDK. They only obtain an
+already-loaded RenderDoc API, guard existing capture state and capture the
+parent-selected actual native RT device. The installed bridge narrow-hook
+contract surrounds its original frozen sixteen renders and synchronized saved
+PNG; all SSS/postprocess and original restoration remain the bridge's computation.
+Detailed deployment/ownership/API limits:
+[scope_capture_contract.md](../tools/offline_renderer/native_audit/scope_capture_contract.md).
+
+Twenty-two official-table CPU mock checks and managed opt-in rejection checks
+pass. Native imports exclude RenderDoc/D3D11; official C table offsets are static
+assertions. Runtime game scope acceptance remains pending. Actual fresh RDC file
+metadata and SHA can be recorded, but driver/frame contents require subsequent
+RDC parsing because the C SDK does not expose them. The API cannot distinguish an
+unobserved external discard/restart; one capture writer remains required.
+
+Next implementation uses official full driver replay as the baseline shader/
+SSS/pass execution oracle and changes source-derived dynamic geometry bytes with
+all shadow/motion/previous-cache dependencies accounted for. It does not reduce
+the intended renderer to unchanged fixed-capture replay or a selected pass.
