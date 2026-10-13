@@ -480,3 +480,26 @@ pitch to 66 and four bytes per texel to 67. The 44 actual v3 resource descriptor
 contain neither format, so their recorded raw bytes are unaffected. These repaired
 format branches have CPU layout checks but no new native readback acceptance;
 the installed module was not replaced.
+
+### Target-control acceptance guards
+
+The pinned target server sends initial capture notifications asynchronously, one
+per tick; `ReceiveMessage` can return Noop before they arrive. The client no longer
+uses Noop as a completed-list barrier. An explicit trigger now requires a fresh
+caller-owned filename prefix, no pre-existing matching files, and accepts only
+a local D3D11 result whose actual new `.rdc` path/byte count and timestamp agree.
+The eight CPU policy checks cover old timestamps, wrong API/local flag/paths,
+incorrect file size and prefix reuse. No RenderDoc DLL is loaded in these checks.
+
+`validate_target_control.py` inventories exact related PID, parent PID, executable,
+command line and window title before and after its single explicit standalone
+attempt. It verifies binaries against the MSVC build receipt and uses the binary
+logger with bounded readiness/enumeration/client deadlines. It does not retry,
+force a connection, launch HS2 or kill a process by name. Only its owned Popen
+launcher/client may be stopped on deadline; surviving helper/fixture processes
+remain explicitly reported for ownership review. The controlled fixture is 32x32.
+
+Remaining runtime boundary: the repaired MSVC target interface and complete frame
+rendering have not yet passed a graphical check. One independent controlled
+fixture check is authorized by the main task after these CPU repairs are saved;
+it must not be called HS2 or full RGB acceptance.

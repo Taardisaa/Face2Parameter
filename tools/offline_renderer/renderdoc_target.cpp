@@ -10,6 +10,8 @@
 #include <chrono>
 #include <stdexcept>
 #include <set>
+#include <memory>
+#include "capture_guard.h"
 REPLAY_PROGRAM_MARKER();
 
 // The official Windows DLL uses the MS C++ ABI. MinGW's non-trivial aggregate
@@ -42,38 +44,31 @@ int main(int argc,char** argv) {
   struct Session {
     Session(){GlobalEnvironment env;env.enumerateGPUs=false;RENDERDOC_InitialiseReplay(env,{});}
     ~Session(){RENDERDOC_ShutdownReplay();}
-  } session;
+  };
+  std::unique_ptr<Session> session;
   ITargetControl* target=nullptr;
   try {
     if(argc==2 && std::string(argv[1])=="list") {
+      session=std::make_unique<Session>();
       uint32_t ident=0;
       while((ident=RENDERDOC_EnumerateRemoteTargets("",ident)))
         std::cout<<"{\"event\":\"target_ident\",\"ident\":"<<ident<<"}\n";
       return 0;
     }
-    if(argc!=5) throw std::runtime_error("Usage: renderdoc_target list | ident expected_pid status|trigger timeout_seconds");
+    if(argc!=5 && argc!=6) throw std::runtime_error("Usage: renderdoc_target list | ident expected_pid status timeout_seconds | ident expected_pid trigger timeout_seconds fresh_capture_prefix");
     uint32_t ident=(uint32_t)std::stoul(argv[1]),pid=(uint32_t)std::stoul(argv[2]);
     std::string action=argv[3];int seconds=std::stoi(argv[4]);
     if(!pid || seconds<1 || (action!="status"&&action!="trigger")) throw std::runtime_error("Explicit expected PID, action and positive deadline required");
+    if((action=="trigger" && argc!=6)||(action=="status" && argc!=5))throw std::runtime_error("Trigger requires explicit fresh output prefix");
+    std::unique_ptr<CaptureGuard> guard;
+    if(action=="trigger")guard=std::make_unique<CaptureGuard>(argv[5]);
+    session=std::make_unique<Session>();
     target=RENDERDOC_CreateTargetControl("",ident,"HS2 offline renderer audit",false);
     if(!target || !target->Connected()) throw std::runtime_error("Target unavailable or another client owns it; no forced connection attempted");
     if(target->GetPID()!=pid) throw std::runtime_error("Expected PID mismatch; capture not triggered");
     std::cout<<"{\"event\":\"connected\",\"pid\":"<<target->GetPID()<<",\"ident\":"<<ident
       <<",\"target\":"<<json(target_name(target).c_str())<<",\"api\":"<<json(target_api(target).c_str())<<"}"<<std::endl;
-    std::set<uint32_t> existing;
-    // Drain initial notifications so a pre-existing capture cannot satisfy this request.
-    auto drainDeadline=std::chrono::steady_clock::now()+std::chrono::seconds(5);
-    bool drained=false;
-    while(target->Connected() && std::chrono::steady_clock::now()<drainDeadline) {
-      auto m=receive(target);
-      if(m.type==TargetControlMessageType::NewCapture) {
-        existing.insert(m.newCapture.captureId);
-        std::cout<<"{\"event\":\"existing_capture\",\"capture_id\":"<<m.newCapture.captureId
-          <<",\"path\":"<<json(m.newCapture.path.c_str())<<"}"<<std::endl;
-      }
-      if(m.type==TargetControlMessageType::Noop) {drained=true;break;}
-    }
-    if(!drained)throw std::runtime_error("Initial target notification queue did not drain; capture not triggered");
+    uint64_t requested=(uint64_t)std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch()).count();
     // Trigger is deliberately explicit. Caller must first establish Maker/card/SSS readiness.
     if(action=="trigger") {target->TriggerCapture(1);std::cout<<"{\"event\":\"trigger_requested\",\"frames\":1}"<<std::endl;}
     auto deadline=std::chrono::steady_clock::now()+std::chrono::seconds(seconds);
@@ -85,7 +80,11 @@ int main(int argc,char** argv) {
         std::cout<<"{\"event\":\"new_capture\",\"capture_id\":"<<c.captureId<<",\"frame\":"<<c.frameNumber
           <<",\"timestamp\":"<<c.timestamp<<",\"bytes\":"<<c.byteSize<<",\"path\":"<<json(c.path.c_str())
           <<",\"api\":"<<json(c.api.c_str())<<",\"local\":"<<(c.local?"true":"false")<<"}"<<std::endl;
-        if(action=="trigger" && !existing.count(c.captureId)) {completed=true;break;}
+        if(action=="trigger") {
+          std::string reason;
+          if(guard->accepts(c.path.c_str(),c.api.c_str(),c.local,c.timestamp,c.byteSize,requested,reason)){completed=true;break;}
+          std::cout<<"{\"event\":\"capture_rejected\",\"capture_id\":"<<c.captureId<<",\"reason\":"<<json(reason.c_str())<<"}"<<std::endl;
+        }
       } else if(message.type!=TargetControlMessageType::Noop && message.type!=TargetControlMessageType::Unknown) {
         std::cout<<"{\"event\":\"target_message\",\"type\":"<<(uint32_t)message.type<<"}"<<std::endl;
       }
