@@ -26,6 +26,16 @@
     "zip_blobs": 17,
     "scope": "independent installed-shader analytic pass; not HS2 or full RGB acceptance"
   },
-  "unresolved_cause": "Post-handshake client path; cross-toolchain aggregate-return ABI must be checked before any additional execution",
+  "static_source_finding": {
+    "original_callsite": "main VA 0x1400c3ee6-0x1400c3ef1: RCX points to rdcstr output; RDX holds ITargetControl this; virtual slot2 called",
+    "incompatibility": "MinGW C++ non-trivial aggregate member return passes sret before this; the official MSVC Windows DLL expects this before sret",
+    "primary_abi_source": "https://github.com/Microsoft/clang/blob/master/lib/CodeGen/MicrosoftCXXABI.cpp",
+    "source_mechanism": "MicrosoftCXXABI sets SRetAfterThis for instance methods",
+    "affected_members": ["GetTarget", "GetAPI", "ReceiveMessage"],
+    "source_repair": "Explicit Windows x64 MS member ABI wrapper for these aggregate-return slots; scalar/extern-C calls remain unchanged",
+    "validation": "CPU syntax-only compilation passed. No new binary was run or linked/loaded into HS2.",
+    "acceptance_status": "unaccepted_pending_later_authorized_independent_fixture",
+    "crash_dump_linkage": "No dump captured; this identified ABI defect is consistent with the failed call path, but exact popup/dump identity was not proved"
+  },
   "execution_constraint": "No further game, GPU, WARP, RenderDoc or graphical fixture execution while user is gaming. CPU source/data work continues."
 }

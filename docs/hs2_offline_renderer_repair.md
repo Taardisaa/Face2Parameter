@@ -337,10 +337,17 @@ demonstrate parameter/resource replacement or the complete RGB renderer.
 with HS2.** Enumeration succeeded and the official log records successful
 handshakes, but the client then failed before emitting its connected message.
 The two retained logs show `renderdoccmd.exe --crash` servers; the user's bug
-reporter observation is consistent with this failed client path. The exact
-failure cause (including cross-toolchain C++ aggregate-return ABI) is unresolved,
-not described as a pure network timeout. No new reproduction was attempted
-after the stop instruction. No RenderDoc process was injected into HS2.
+reporter observation is consistent with this failed client path. CPU-only
+disassembly locates an ABI defect at the first `GetTarget` call: the GNU caller
+passes its output `rdcstr` in RCX and `this` in RDX. The official Windows DLL uses
+the MS C++ ABI, which requires `this` before the aggregate return buffer
+([LLVM Microsoft ABI implementation](https://github.com/Microsoft/clang/blob/master/lib/CodeGen/MicrosoftCXXABI.cpp)).
+The source now explicitly supplies that ordering for `GetTarget`, `GetAPI` and
+`ReceiveMessage`; a CPU syntax-only compilation passed. This source repair has
+not received runtime acceptance, and no exact popup/crash-dump identity was
+captured. The failure is not described as a pure network timeout. No new
+reproduction was attempted after the stop instruction, and no RenderDoc process
+was injected into HS2.
 
 The experiment is isolated in `renderdoc_target.cpp` and
 `renderdoc_control_fixture.cpp`; its failed acceptance metadata is

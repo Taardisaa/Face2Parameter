@@ -9,6 +9,42 @@
 #include <set>
 REPLAY_PROGRAM_MARKER();
 
+// The official Windows DLL uses the MS C++ ABI. MinGW's non-trivial aggregate
+// member returns put sret before this; MSVC puts it after this. Plain calls such
+// as Connected/GetPID and the extern-C factory do not have this discrepancy.
+// The previously built GNU client passed an output object as this to GetTarget,
+// which explains why a successful native handshake was followed by a crash.
+// This source repair has NOT received graphical/native acceptance: do not run
+// it against HS2 until the later authorized independent fixture check passes.
+template<class T,class... Args> static T member_result(ITargetControl* object,size_t slot,Args... args) {
+  T result;
+  auto table=*reinterpret_cast<void***>(object);
+  using ExplicitMSMember=T* (__cdecl *)(ITargetControl*,T*,Args...);
+  reinterpret_cast<ExplicitMSMember>(table[slot])(object,&result,args...);
+  return result;
+}
+static rdcstr target_name(ITargetControl* object) {
+#if defined(__GNUC__) && defined(_WIN64)
+  return member_result<rdcstr>(object,2);
+#else
+  return object->GetTarget();
+#endif
+}
+static rdcstr target_api(ITargetControl* object) {
+#if defined(__GNUC__) && defined(_WIN64)
+  return member_result<rdcstr>(object,3);
+#else
+  return object->GetAPI();
+#endif
+}
+static TargetControlMessage receive(ITargetControl* object) {
+#if defined(__GNUC__) && defined(_WIN64)
+  return member_result<TargetControlMessage>(object,10,(RENDERDOC_ProgressCallback)nullptr);
+#else
+  return object->ReceiveMessage(nullptr);
+#endif
+}
+
 static std::string json(const char* p) {
   std::string out="\"";
   for(const unsigned char* c=(const unsigned char*)p;*c;++c) {
@@ -39,13 +75,13 @@ int main(int argc,char** argv) {
     if(!target || !target->Connected()) throw std::runtime_error("Target unavailable or another client owns it; no forced connection attempted");
     if(target->GetPID()!=pid) throw std::runtime_error("Expected PID mismatch; capture not triggered");
     std::cout<<"{\"event\":\"connected\",\"pid\":"<<target->GetPID()<<",\"ident\":"<<ident
-      <<",\"target\":"<<json(target->GetTarget().c_str())<<",\"api\":"<<json(target->GetAPI().c_str())<<"}"<<std::endl;
+      <<",\"target\":"<<json(target_name(target).c_str())<<",\"api\":"<<json(target_api(target).c_str())<<"}"<<std::endl;
     std::set<uint32_t> existing;
     // Drain initial notifications so a pre-existing capture cannot satisfy this request.
     auto drainDeadline=std::chrono::steady_clock::now()+std::chrono::seconds(5);
     bool drained=false;
     while(target->Connected() && std::chrono::steady_clock::now()<drainDeadline) {
-      auto m=target->ReceiveMessage(nullptr);
+      auto m=receive(target);
       if(m.type==TargetControlMessageType::NewCapture) {
         existing.insert(m.newCapture.captureId);
         std::cout<<"{\"event\":\"existing_capture\",\"capture_id\":"<<m.newCapture.captureId
@@ -59,7 +95,7 @@ int main(int argc,char** argv) {
     auto deadline=std::chrono::steady_clock::now()+std::chrono::seconds(seconds);
     bool completed=action=="status";
     while(target->Connected() && std::chrono::steady_clock::now()<deadline) {
-      TargetControlMessage message=target->ReceiveMessage(nullptr);
+      TargetControlMessage message=receive(target);
       if(message.type==TargetControlMessageType::NewCapture) {
         const auto &c=message.newCapture;
         std::cout<<"{\"event\":\"new_capture\",\"capture_id\":"<<c.captureId<<",\"frame\":"<<c.frameNumber
