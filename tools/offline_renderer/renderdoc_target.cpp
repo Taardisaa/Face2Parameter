@@ -1,6 +1,9 @@
 // External target-control client. Never launches/injects a process or forces a connection.
 // Headers and DLL must both come from the pinned official RenderDoc release.
 #define RENDERDOC_PLATFORM_WIN32
+#if defined(__MINGW32__)
+#error "Use the installed MSVC x64 toolchain for the official MSVC C++ replay interface; GNU prototype is not accepted"
+#endif
 #include "renderdoc_replay.h"
 #include <iostream>
 #include <string>
@@ -14,35 +17,16 @@ REPLAY_PROGRAM_MARKER();
 // as Connected/GetPID and the extern-C factory do not have this discrepancy.
 // The previously built GNU client passed an output object as this to GetTarget,
 // which explains why a successful native handshake was followed by a crash.
-// This source repair has NOT received graphical/native acceptance: do not run
-// it against HS2 until the later authorized independent fixture check passes.
-template<class T,class... Args> static T member_result(ITargetControl* object,size_t slot,Args... args) {
-  T result;
-  auto table=*reinterpret_cast<void***>(object);
-  using ExplicitMSMember=T* (__cdecl *)(ITargetControl*,T*,Args...);
-  reinterpret_cast<ExplicitMSMember>(table[slot])(object,&result,args...);
-  return result;
-}
+// Use MSVC directly rather than shipping an unaccepted cross-toolchain shim.
+// Native acceptance remains pending; do not run against HS2 before it passes.
 static rdcstr target_name(ITargetControl* object) {
-#if defined(__GNUC__) && defined(_WIN64)
-  return member_result<rdcstr>(object,2);
-#else
   return object->GetTarget();
-#endif
 }
 static rdcstr target_api(ITargetControl* object) {
-#if defined(__GNUC__) && defined(_WIN64)
-  return member_result<rdcstr>(object,3);
-#else
   return object->GetAPI();
-#endif
 }
 static TargetControlMessage receive(ITargetControl* object) {
-#if defined(__GNUC__) && defined(_WIN64)
-  return member_result<TargetControlMessage>(object,10,(RENDERDOC_ProgressCallback)nullptr);
-#else
   return object->ReceiveMessage(nullptr);
-#endif
 }
 
 static std::string json(const char* p) {

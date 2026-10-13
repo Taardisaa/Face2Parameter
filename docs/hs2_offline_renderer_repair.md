@@ -365,6 +365,38 @@ user is gaming, work continues on CPU data/source only; graphically executing
 this prototype requires a repaired ABI path and later explicit native-session
 authorization. The full renderer goal remains unfinished.
 
+### MSVC client source repair; graphical acceptance remains pending
+
+After the user resumed GPU work, one necessary independent corrected-GNU-client
+check reached an external 25-second timeout. The experiment's timeout handler
+then incorrectly used `write_bytes` on a string and lost its buffered output.
+That output is not reconstructed. The launch/enumeration/readiness files and
+terminal exceptions are retained, and a read-only inventory found no remaining
+related processes or newer TEMP/RenderDoc crash log. This timeout is not claimed
+to be a proven repeat of the first crash. No new graphical attempt followed it.
+
+CPU source inspection identified another concrete cross-toolchain defect:
+`RENDERDOC_ProgressCallback` is `std::function<void(float)>`, not a plain function
+pointer. The same official headers produce **64 bytes with MSVC and 32 bytes
+with GNU**, while `rdcstr` and `TargetControlMessage` agree at 24 and 240 bytes.
+Correcting only the member return ordering does not make the callback ABI
+compatible. The target client now requires the installed MSVC x64 toolchain and
+uses the official C++ interface directly; GNU compilation is rejected.
+
+`build_target_client_msvc.py` compiles without executing a RenderDoc DLL, client,
+or graphics program. The native MSVC assembly confirms `this` in RCX, output in
+RDX and the MSVC callback object in R8. The independent CPU ABI mock passed for
+24/512-byte nontrivial results and explicit argument identities. No repaired
+MSVC client has yet received graphical/runtime acceptance; it remains unusable
+for HS2 until that separate check is authorized and passes. Receipt:
+`tools/offline_renderer/renderdoc_target_msvc_cpu_20261012.json`.
+
+`logged_process.py` now directs output into binary files before process startup,
+retains it on timeout/nonzero exit and records status/hashes. Its three CPU
+regressions pass, including UTF-8 progress/error output surviving a timeout.
+It never retries or stops a process discovered by name, only its own supplied
+child. This repairs the evidence loss without inventing the lost earlier output.
+
 ### CPU interpretation of recorded draw inputs
 
 `src/render/captured_pipeline.py` now interprets the original XML+ZIP's native

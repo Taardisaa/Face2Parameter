@@ -1,0 +1,60 @@
+{
+  "schema_version": 1,
+  "status": "cpu_source_build_pass_native_graphical_acceptance_pending",
+  "prior_failure": {
+    "path": "outputs/offline_renderer_repair_20261012/target_control_fixed_v1/fixture_capture",
+    "scope": "one authorized corrected GNU client attempt on independent WARP fixture; no HS2 operation",
+    "fixture_pid": 46720,
+    "ident": 38920,
+    "client_deadline_seconds": 25,
+    "result": "subprocess timeout",
+    "logging_failure": "timeout handler incorrectly wrote str with write_bytes, raising TypeError and losing captured stdout/stderr; lost output was not reconstructed",
+    "retained": [
+      "launch.log",
+      "listing.log",
+      "ready_pid.txt",
+      "original terminal exception in chat"
+    ],
+    "read_only_inventory": "No related live process and no newer TEMP/RenderDoc crash log after this attempt",
+    "crash_claim": "This timeout is not classified as proven same crash or proven reporter popup"
+  },
+  "source_defects": [
+    {
+      "path": "GetTarget/GetAPI/ReceiveMessage nontrivial member return",
+      "mechanism": "GNU caller sret-before-this; official MSVC DLL this-before-sret",
+      "evidence": "first-client disassembly at main 0x1400c3ee6-0x1400c3ef1"
+    },
+    {
+      "path": "ReceiveMessage argument RENDERDOC_ProgressCallback",
+      "official_typedef": "std::function<void(float)>",
+      "header": "RenderDoc v1.46 control_types.h:1668",
+      "cpu_measured_sizeof": {
+        "MSVC_x64": 64,
+        "GNU_x64": 32
+      },
+      "other_sizeof": {
+        "rdcstr_both": 24,
+        "TargetControlMessage_both": 240
+      },
+      "mechanism": "Fixing sret order alone still passes an incompatible standard-library callback object"
+    }
+  ],
+  "repair": {
+    "supported_target_client_toolchain": "Installed Microsoft Visual Studio 18 BuildTools, MSVC x64",
+    "GNU_target_client_build": "explicit compile-time rejection; historical shim retained solely in CPU mock/evidence",
+    "build_script": "tools/offline_renderer/build_target_client_msvc.py",
+    "output_directory": "outputs/offline_renderer_repair_20261012/target_control_msvc_v3",
+    "target_client_sha256": "a62e6c0c53d169a9907ad91f4daf0373821a146cd9c23c842056d05f5ce368e8",
+    "CPU_mock": "24/512-byte nontrivial results and this/output/argument identity passed without RenderDoc DLL",
+    "static_assembly": "GetTarget/GetAPI use RCX=this, RDX=result; ReceiveMessage R8 points to MSVC callback object",
+    "runtime_acceptance": "not run; do not use with HS2 yet",
+    "CPU_mock_output_directory": "outputs/offline_renderer_repair_20261012/target_control_msvc_v2/abi_log",
+    "mock_and_layout_scope": "CPU executables only; no RenderDoc DLL imports or graphics"
+  },
+  "log_repair": {
+    "source": "tools/offline_renderer/logged_process.py",
+    "mechanism": "stdout/stderr are persisted directly as binary files before launch; timeout terminates only supplied Popen child, flushes files and records hashes/status; no retries",
+    "CPU_regression": "3 passed: UTF8 streams survive timeout, nonzero exit keeps both streams, launch failure retained"
+  },
+  "complete_RGB_renderer": false
+}
