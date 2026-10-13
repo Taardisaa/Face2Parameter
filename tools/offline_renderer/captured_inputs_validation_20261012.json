@@ -1,0 +1,131 @@
+{
+  "schema_version": 1,
+  "status": "pass",
+  "scope": "CPU original capture inputs; not HS2/full RGB acceptance",
+  "capture_manifest": "C:\\Users\\13666\\Workspace\\Face2Parameter\\outputs\\offline_renderer_repair_20261012\\renderdoc_analytic\\exported_inputs\\manifest.json",
+  "command_count": 47,
+  "draw_count": 1,
+  "resource_count": 20,
+  "exact_byte_checks": [
+    {
+      "input": "VS",
+      "source_file": "vertex.dxbc",
+      "byte_count": 1212,
+      "sha256": "c6664888a741fe4cc3e0d4819ba9d2d960c3e47642a45da4c39d22e2692ea299",
+      "exact": true
+    },
+    {
+      "input": "PS",
+      "source_file": "pixel.dxbc",
+      "byte_count": 676,
+      "sha256": "2e78cb22152ddc34298d45b93ee77bba77116bf8a608a1f09aee733454325a25",
+      "exact": true
+    },
+    {
+      "input": "vertex data",
+      "source_file": "vertices.bin",
+      "byte_count": 512,
+      "sha256": "c170cc840cc8b9f9ee7de29aad104ac12dec0e7e034a1209c82ed4500e201a31",
+      "exact": true
+    },
+    {
+      "input": "index data",
+      "source_file": "indices.bin",
+      "byte_count": 24,
+      "sha256": "18689a54c1ff754be58500b2ed77a6c75b025be96f6d01fef89c42da1c953f34",
+      "exact": true
+    },
+    {
+      "input": "VS cb0",
+      "source_file": "cb_0_0.bin",
+      "byte_count": 128,
+      "sha256": "a730ea89017046d330615f078a88f71644feff6f33549f1732f31fa1a5e80bbf",
+      "exact": true
+    },
+    {
+      "input": "VS cb1",
+      "source_file": "cb_0_1.bin",
+      "byte_count": 176,
+      "sha256": "9240aa7c3ea55e904e8bc524d944d6d22dff83f6354199cd3ac964f5f89670a3",
+      "exact": true
+    },
+    {
+      "input": "VS cb2",
+      "source_file": "cb_0_2.bin",
+      "byte_count": 368,
+      "sha256": "02aeeb1e459e041b1c747509c1280fef0cf175fda881b8769792f93716100f54",
+      "exact": true
+    },
+    {
+      "input": "PS cb0",
+      "source_file": "cb_1_0.bin",
+      "byte_count": 128,
+      "sha256": "fd819900417af5452e9b11ee074270f5f1dcdd1ac45e697c83e854ef156c3036",
+      "exact": true
+    },
+    {
+      "input": "original texture pixels",
+      "source_file": "texture.bin",
+      "byte_count": 1024,
+      "sha256": "25a44afed0f3e7047996f27682f35aa6184e9a8a33b8b964b8f7c13ddced02b4",
+      "exact": true
+    }
+  ],
+  "shader_source_matches": {
+    "VS": [
+      {
+        "bundle_sha256": "66ba2ef7f95fa4d79ad87b3d1e11e90e8f1f78ed79e0dc7cb1e4e2969f100edf",
+        "shader": "AIT/main eyeshadow lambert",
+        "subshader": 0,
+        "pass": 0,
+        "dxbc_sha256": "c6664888a741fe4cc3e0d4819ba9d2d960c3e47642a45da4c39d22e2692ea299",
+        "keywords": [
+          "DIRECTIONAL"
+        ]
+      },
+      {
+        "bundle_sha256": "66ba2ef7f95fa4d79ad87b3d1e11e90e8f1f78ed79e0dc7cb1e4e2969f100edf",
+        "shader": "AIT/main eyeshadow lambert",
+        "subshader": 0,
+        "pass": 0,
+        "dxbc_sha256": "c6664888a741fe4cc3e0d4819ba9d2d960c3e47642a45da4c39d22e2692ea299",
+        "keywords": [
+          "DIRECTIONAL",
+          "LIGHTPROBE_SH"
+        ]
+      }
+    ],
+    "PS": [
+      {
+        "bundle_sha256": "66ba2ef7f95fa4d79ad87b3d1e11e90e8f1f78ed79e0dc7cb1e4e2969f100edf",
+        "shader": "AIT/main eyeshadow lambert",
+        "subshader": 0,
+        "pass": 0,
+        "dxbc_sha256": "2e78cb22152ddc34298d45b93ee77bba77116bf8a608a1f09aee733454325a25",
+        "keywords": [
+          "DIRECTIONAL"
+        ]
+      },
+      {
+        "bundle_sha256": "66ba2ef7f95fa4d79ad87b3d1e11e90e8f1f78ed79e0dc7cb1e4e2969f100edf",
+        "shader": "AIT/main eyeshadow lambert",
+        "subshader": 0,
+        "pass": 0,
+        "dxbc_sha256": "2e78cb22152ddc34298d45b93ee77bba77116bf8a608a1f09aee733454325a25",
+        "keywords": [
+          "DIRECTIONAL",
+          "LIGHTPROBE_SH"
+        ]
+      }
+    ]
+  },
+  "unimplemented_execution": [
+    "initial-content payloads",
+    "dynamic Map/Unmap/Update",
+    "deferred command lists",
+    "GPU command execution/shared targets",
+    "full scene/SSS/postprocess integration",
+    "SRV/output subresource hazard handling",
+    "predicated draw query results"
+  ]
+}

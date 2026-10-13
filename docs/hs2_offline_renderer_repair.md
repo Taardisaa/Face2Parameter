@@ -352,3 +352,34 @@ applications and the game's UnityCrashHandler were left untouched. While the
 user is gaming, work continues on CPU data/source only; graphically executing
 this prototype requires a repaired ABI path and later explicit native-session
 authorization. The full renderer goal remains unfinished.
+
+### CPU interpretation of recorded draw inputs
+
+`src/render/captured_pipeline.py` now interprets the original XML+ZIP's native
+initial context state and ordered D3D11 resource/binding commands. It retains
+input layouts, CB byte ranges, original textures/views/samplers, all shader
+stages, depth/stencil/blend/raster states, viewport data and draw arguments.
+Executed vertex/pixel DXBC bytes are identified by exact hash against installed
+shader exports; identical programs with several keyword labels retain every
+matching source identity instead of claiming one guessed active keyword set.
+
+The pre-existing independent capture has 47 interpreted commands, 20 resources
+and one draw. Nine original byte inputs (VS, PS, vertex/index data, four CBs and
+texture pixels) match the declared original packet exactly. CPU-only command:
+
+```powershell
+python tools/offline_renderer/validate_capture_inputs.py `
+  --manifest ABSOLUTE/exported_inputs/manifest.json `
+  --packet ABSOLUTE/original_packet `
+  --shader-manifest ABSOLUTE/shader_programs_v2/manifest.json `
+  --out ABSOLUTE/fresh_receipt.json
+```
+
+Receipt: `tools/offline_renderer/captured_inputs_validation_20261012.json`.
+This does not launch a graphical process. It is input interpretation, not
+completed frame execution. Written initial-content payloads, dynamic updates,
+deferred command lists, SRV/output subresource hazards and predicated query
+results remain explicit rejected branches. Clear/copy/resolve commands are
+retained for execution; the interpreter does not manufacture their pixels or
+reuse stale creation bytes as updated CB contents. Shared targets and full
+SSS/GrabPass/postprocess integration remain part of the unfinished renderer.
