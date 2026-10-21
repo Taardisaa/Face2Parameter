@@ -161,3 +161,47 @@ class UnityEmuTests(unittest.TestCase):
         p, r = global_position_rotation(self.emu, [([0.5, 1.0, -2.0], q, [1, 1, 1])])
         self.assertTrue(np.array_equal(p, np.float32([0.5, 1.0, -2.0])))
         self.assertTrue(np.array_equal(r, q))
+
+
+@unittest.skipUnless(DLL.exists(), 'installed UnityPlayer.dll required')
+class UnityChainTests(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        from src.render.unity_skin_emu import shared_emulator
+        cls.emu = shared_emulator()
+
+    def test_setter_normalization_port_matches_original(self):
+        from src.render.unity_skin_emu import emulated_normalize
+        from src.render.unity_transform_math import normalize_quaternion
+        rng = np.random.default_rng(9)
+        for _ in range(300):
+            q = (rng.normal(size=4) * rng.choice([1e-20, 1e-3, 1, 30])).astype(np.float32)
+            self.assertTrue(np.array_equal(normalize_quaternion(q).view(np.uint32), emulated_normalize(self.emu, q).view(np.uint32)))
+
+    def test_blendshape_port_matches_native(self):
+        from src.render.unity_blendshape import BlendShapeData, apply_blendshapes, emulate_apply_blendshapes
+        rng = np.random.default_rng(11)
+        n = 40
+        base = np.c_[rng.random((n, 9)), np.ones(n)].astype(np.float32)
+        def frame(w):
+            d = (rng.normal(size=(n, 3)) * 0.01).astype(np.float32)
+            d[rng.random(n) < .5] = 0
+            return (w, d, (d * 0.3).astype(np.float32), (d * -0.2).astype(np.float32))
+        channels = [[frame(100.0)], [frame(30.0), frame(70.0), frame(100.0)], [frame(50.0), frame(150.0)]]
+        data = BlendShapeData.from_dense_frames(channels)
+        for w in ([100, 0, 0], [55.5, 12.0, 3.0], [-20, 85, 120], [250, 70, 50], [0.00001, 100, 150], [42, 29.999, 149.9]):
+            for flags in ((True, True), (True, False), (False, False)):
+                a = apply_blendshapes(data, np.float32(w), base, *flags)
+                b = emulate_apply_blendshapes(self.emu, data, np.float32(w), base, *flags)
+                self.assertTrue(np.array_equal(a.view(np.uint32), b.view(np.uint32)), (w, flags))
+
+    def test_generated_shape_program_matches_enums(self):
+        import json
+        from src.render.shape_head_female_program import DST, SRC, UPDATE
+        self.assertEqual(len(DST), 52)
+        self.assertEqual(len(SRC), 102)
+        self.assertEqual(len(UPDATE), 113)
+        enums = Path(__file__).resolve().parents[2] / 'data/hs2_head/enums.json'
+        if enums.exists():
+            e = json.loads(enums.read_text())
+            self.assertEqual((DST, SRC), (e['dst'], e['src']))

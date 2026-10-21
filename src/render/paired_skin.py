@@ -285,8 +285,7 @@ def unity_exact_vertices(emu, win: ProbeWindow, frame, renderer, mesh, ancestors
     base, _ = emu.world_to_local_noscale(mats['root_pos'], mats['root_rot'])
     entries, where = chain_entries(win, frame, renderer['bones'], ancestors)
     palette = prepared_palette(emu, base, entries, [where[b] for b in renderer['bones']], list(mesh['bind']))
-    v, n, t = blend_f32(mesh, frame['W'][renderer['id']])
-    src = np.concatenate([v, n, t, mesh['t'][:, 3:4]], 1).astype(F)
+    src = unity_blend(mesh, frame['W'][renderer['id']])
     return emu.skin_vertices4(src, palette, mesh['w'], mesh['bi'])
 
 
@@ -299,3 +298,17 @@ def unity_object_matrices(emu, win: ProbeWindow, frame, renderer):
     o2w[:3, :3] = g.unity_rotation_matrix(mats['root_rot'])
     o2w[:3, 3] = mats['root_pos']
     return g.matrix_bytes(o2w), g.matrix_bytes(invert_general3d(emu, o2w))
+
+
+def unity_blend(mesh, weights):
+    """Native-exact ApplyBlendShapes (src.render.unity_blendshape) on the mesh stream."""
+    from .unity_blendshape import BlendShapeData, apply_blendshapes
+    base = np.concatenate([mesh['v'], mesh['nrm'], mesh['t']], 1).astype(F)
+    if not mesh['shapes']:
+        return base
+    data = mesh.get('_bsd')
+    if data is None:
+        data = BlendShapeData.from_dense_frames([[(f['weight'], f['dv'], f['dn'], f['dt']) for f in s['frames']]
+                                                 for s in mesh['shapes']])
+        mesh['_bsd'] = data
+    return apply_blendshapes(data, weights, base)

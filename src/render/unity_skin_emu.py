@@ -268,3 +268,47 @@ def skin_from_locals(emu: UnityPlayerEmu, parent, local, bone_ids, root_id, mesh
     o2w[:3, :3] = unity_rotation_matrix(rot)
     o2w[:3, 3] = pos
     return vb, matrix_bytes(o2w), matrix_bytes(invert_general3d(emu, o2w))
+
+
+FROM_EULER_RAD = 0x9541d0  # Quaternion_CUSTOM_Internal_FromEulerRad_Injected -> EulerToQuaternion(ZXY) with UnityPlayer sinf/cosf
+_SHARED = None
+
+
+def shared_emulator():
+    global _SHARED
+    if _SHARED is None:
+        _SHARED = UnityPlayerEmu()
+    return _SHARED
+
+
+def quaternion_euler_degrees(emu: UnityPlayerEmu, degrees):
+    """UnityEngine.Quaternion.Euler: managed `euler * Mathf.Deg2Rad` (float32,
+    Deg2Rad = 0.0174532924f), then the native Internal_FromEulerRad."""
+    rad = np.asarray(degrees, np.float32) * np.float32(0.0174532924)
+    emu.reset_heap()
+    src = emu.alloc(rad.astype(np.float32).tobytes() + bytes(4))
+    dst = emu.alloc(bytes(16))
+    emu.call(FROM_EULER_RAD, (src, dst))
+    return np.frombuffer(emu.read(dst, 16), np.float32).copy()
+
+
+SETLOCALR_NORMALIZE = (0x1b130f, 0x1b1350)  # xmm2 = q in, xmm2 = normalized out
+
+
+def _consts():
+    import pefile
+    pe = pefile.PE(str(DLL), fast_load=True)
+    img = pe.get_memory_mapped_image()
+    eps = np.frombuffer(img[0x1b1334 + 0x101f00c:0x1b1334 + 0x101f00c + 16], np.float32).copy()
+    fb = np.frombuffer(img[0x1b134d + 0x101f103:0x1b134d + 0x101f103 + 16], np.float32).copy()
+    return eps, fb
+
+
+def emulated_normalize(emu: UnityPlayerEmu, q):
+    from unicorn import x86_const as x
+    q = np.asarray(q, np.float32)
+    emu.uc.reg_write(x.UC_X86_REG_XMM2, int.from_bytes(q.tobytes(), 'little'))
+    emu.uc.reg_write(x.UC_X86_REG_RAX, HEAP)  # interleaved address arithmetic reads [rax+0x18]
+    emu.uc.reg_write(x.UC_X86_REG_R10, 0)
+    emu.uc.emu_start(emu.base + SETLOCALR_NORMALIZE[0], emu.base + SETLOCALR_NORMALIZE[1])
+    return np.frombuffer(emu.uc.reg_read(x.UC_X86_REG_XMM2).to_bytes(16, 'little'), np.float32).copy()

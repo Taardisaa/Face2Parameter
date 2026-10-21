@@ -32,7 +32,9 @@ def reset(local, cache):
     if not cache['_hasBaseline']:
         return
     local['local_scale']=copy.deepcopy(cache['_sclBaseline'])
-    local['local_rotation_xyzw']=copy.deepcopy(cache['_rotBaseline'])
+    # BoneTransform.localRotation = _rotBaseline: the setter stores SetLocalR's normalized value.
+    from src.render.unity_transform_math import normalize_quaternion
+    local['local_rotation_xyzw']=normalize_quaternion(cache['_rotBaseline']).tolist()
     position=np.asarray(cache['_posBaseline'],np.float32)
     if not unity_zero(np.asarray(cache['_positionBaseline'],np.float32)):
         if cache['_lenModNeedsPositionRestore'] or unity_zero(position):
@@ -159,78 +161,103 @@ class CapturedHeadForward:
         return additional,decisions
 
     def _face_update(self,local,native):
-        values=np.asarray(native,float)
+        """Installed ShapeHeadInfoFemale ChangeValue(0..58) + Update, float32-exact.
+
+        Ports AnimationKeyInfo.GetInfo / ShapeInfoBase.ChangeValue with Mono
+        double-evaluation semantics and the generated Update program; rotations
+        go through native Quaternion.Euler and the Transform setter normalization
+        (src/hs2_native_shape.py). Replaces the former world-FK decomposition.
+        """
+        from src.hs2_native_shape import NativeShapeHead
+        from src.render.shape_head_female_program import DST
+        values=np.asarray(native,np.float32)
         if values.shape!=(59,) or not np.isfinite(values).all():
             raise ValueError('All 59 finite native values required')
         if self.identity['mouth_shape_mask']:
+            # ChaFileDefine.cf_MouthShapeMaskID with cf_MouthShapeDefault (all 0.5f)
             values=values.copy()
-            values[[3,6,11,47,48,49,50,51,52,53]]=.5
-        world=_fk_world(self.rig,values,None)
-        field_axes={}
-        for e in self.rig.eqns:
-            name=self.rig.enums['dst'][e['dst']]
-            field_axes.setdefault(name,[]).append(e)
-        for name,equations in field_axes.items():
-            if not any(i in self.needed for i in self.names.get(name,[])):
-                continue
-            pid=self.rig.name2pid.get(name)
-            if pid is None:
-                raise ValueError('Native equation missing cached bone '+name)
-            parent=self.rig.bones[pid]['parent']
-            m=np.linalg.inv(world[parent]) @ world[pid] if parent in world else world[pid]
-            scale=np.linalg.norm(m[:3,:3],axis=0)
-            quat=Rotation.from_matrix(m[:3,:3]/scale).as_quat()
-            live=local[self.unique(name)]
-            for equation in equations:
-                if equation['target']=='pos':
-                    live['local_position'][equation['axis']]=float(np.float32(m[equation['axis'],3]))
-                elif equation['target']=='rot':
-                    live['local_rotation_xyzw']=quat.astype(np.float32).tolist()
-                elif equation['target']=='scl':
-                    live['local_scale']=scale.astype(np.float32).tolist()
+            values[[3,6,11,47,48,49,50,51,52,53]]=np.float32(.5)
+        shape=NativeShapeHead(self.rig)
+        for category in range(59):
+            shape.change_value(category,values[category])
+        targets={name:local[self.unique(name)] for name in DST
+                 if any(i in self.needed for i in self.names.get(name,[]))}
+        shape.update(targets)
 
     def _body_update(self,local):
-        # Installed ShapeBodyInfoFemale.DstName intersect ALL captured surface
-        # palettes+ancestors is exactly these two. The remaining body writers
-        # (including bust-mask updates) are disjoint from this requested head.
+        """ShapeBodyInfoFemale writes reaching head chains (cf_N_height, cf_J_Head_s), exact."""
+        from src.hs2_native_shape import NativeShapeBodyHeadChain, body_tables
         if self._body_tables is None:
-            import UnityPy
-            from scripts.hs2_extract_head import CUSTOMSHAPE, parse_anm_shape
-            rows=[]
-            for reader in UnityPy.load(CUSTOMSHAPE).objects:
-                if reader.type.name!='TextAsset':
-                    continue
-                asset=reader.read_typetree()
-                if asset['m_Name']!='cf_custombody':
-                    continue
-                text=asset['m_Script']
-                if not isinstance(text,str):
-                    text=bytes(text).decode('utf-8')
-                for line in text.splitlines():
-                    if line.strip():
-                        fields=line.split('\t')
-                        rows.append((int(fields[0]),fields[1],[v!='0' for v in fields[2:11]]))
-            self._body_tables=(rows,parse_anm_shape(CUSTOMSHAPE,'cf_anmShapeBody'))
-        rows,keys=self._body_tables
-        wanted={'cf_s_Head_h','cf_s_Head_s','cf_s_height'}
-        scales={name:np.ones(3,np.float32) for name in wanted}
-        for category,name,use in rows:
-            if name not in wanted:
-                continue
-            _,_,s=sample_keyframes(keys[name],float(self.identity['body_values'][category]),
-                                  profile='slider_unlocker_18_2',bone_name=name,sample_rotation=False)
-            for axis in range(3):
-                if use[6+axis]:
-                    scales[name][axis]=s[axis]
-        local[self.unique('cf_N_height')]['local_scale']=scales['cf_s_height'].tolist()
-        local[self.unique('cf_J_Head_s')]['local_scale']=(scales['cf_s_Head_h']*scales['cf_s_Head_s']).tolist()
+            self._body_tables=body_tables()
+        keys,rows=self._body_tables
+        port=NativeShapeBodyHeadChain(keys,rows)
+        values=np.asarray(self.identity['body_values'],np.float32)
+        wanted={'cf_s_height','cf_s_Head_h','cf_s_Head_s'}
+        for category in sorted(port.categories):
+            if any(r['name'] in wanted for r in port.categories[category]):
+                if category==32:
+                    raise ValueError('Body category 32 (nipStandRate blend) reaches a head chain; port required')
+                port.change_value(category,values[category])
+        targets={name:local[self.unique(name)] for name in ('cf_N_height','cf_J_Head_s')}
+        port.update(targets)
 
-    def evaluate(self,patches=(),*,native=None,apply_count=1):
+    def _card_load_baselines(self,local,modifiers,native):
+        """BoneController.CollectBaselineCo after a card load, float32-exact.
+
+        Freshly instantiated head bones carry the head prefab's authored local
+        TRS; LateUpdateForce applies the native face/body update; every head
+        modifier then collects a fresh baseline (no Reset, so no length-history
+        renormalization). Native-written channels persist into the frame state.
+        """
+        from src.render.shape_head_female_program import DST,UPDATE
+        prefab={}
+        for b in self.rig.bones.values():
+            prefab.setdefault(b['name'],b)
+        L0=copy.deepcopy(local)
+        for tid in L0:
+            name=self.transforms[tid]['name']
+            if name in prefab and self.names.get(name)==[tid]:
+                b=prefab[name]
+                L0[tid]={'local_position':list(map(float,np.float32(b['pos']))),
+                         'local_rotation_xyzw':list(map(float,np.float32(b['rot']))),
+                         'local_scale':list(map(float,np.float32(b['scale'])))}
+        self._face_update(L0,native)
+        self._body_update(L0)
+        for m in modifiers:
+            if m['name'] in prefab or m['name'] in ('cf_N_height','cf_J_Head_s'):
+                cache={k:False for k in FLAG_FIELDS}
+                cache.update({'_sclBaseline':[1.,1.,1.],'_posBaseline':[0.,0.,0.],
+                              '_positionBaseline':[0.,0.,0.],'_rotBaseline':[0.,0.,0.,0.],'_lenBaseline':0.})
+                collect(L0[m['id']],cache)
+                m['cache']=cache
+        written={}
+        for op in UPDATE:
+            channel=('local_position' if 'Position' in op['method'] else
+                     'local_rotation_xyzw' if 'Rotation' in op['method'] else 'local_scale')
+            written.setdefault(DST[op['dst']],set()).add(channel)
+        written.setdefault('cf_N_height',set()).add('local_scale')
+        written.setdefault('cf_J_Head_s',set()).add('local_scale')
+        for name,channels in written.items():
+            for tid in self.names.get(name,[]):
+                if tid in local:
+                    for channel in channels:
+                        local[tid][channel]=copy.deepcopy(L0[tid][channel])
+
+    def evaluate(self,patches=(),*,native=None,apply_count=1,baseline_mode='captured'):
+        """baseline_mode: 'captured' keeps recorded ABMX caches; 'card_load' rebuilds
+        them as BoneController.CollectBaselineCo does after a card load;
+        'update_baseline' (implied by native!=None with captured caches) follows
+        BoneController.UpdateBaseline (Reset -> UpdateShapeFace/Body -> CollectBaseline)."""
         if type(apply_count)!=int or not 1<=apply_count<=32:
             raise ValueError('Declared Apply count 1..32 required')
+        if baseline_mode not in ('captured','card_load'):
+            raise ValueError('baseline_mode must be captured or card_load')
         local={i:{k:copy.deepcopy(r[k]) for k in ('local_position','local_rotation_xyzw','local_scale')}
                for i,r in self.transforms.items()}
         modifiers=copy.deepcopy(self.modifiers)
+        if baseline_mode=='card_load':
+            self._card_load_baselines(local,modifiers,native if native is not None else self.identity['native59'])
+            native=None
         allowed=set(IDENTITY)|{'name','remove'}
         if any(not isinstance(p,dict) or set(p)-allowed or 'name' not in p for p in patches):
             raise ValueError('Explicit supported patch fields required')

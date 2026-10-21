@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import copy
 import numpy as np
+from src.render.unity_transform_math import normalize_quaternion, managed_quaternion_mul
 
 F = np.float32
 FLAG_FIELDS = ("_hasBaseline", "_lenModForceUpdate", "_lenModNeedsPositionRestore",
@@ -62,8 +63,10 @@ def modifier(value):
 
 
 def unity_sqrmag(vector):
-    # Actual installed UnityEngine.Vector3.SqrMagnitude evaluation order.
-    return F(F(F(vector[0] * vector[0]) + F(vector[1] * vector[1])) + F(vector[2] * vector[2]))
+    # Installed UnityEngine.Vector3.SqrMagnitude expression order (x*x + y*y + z*z),
+    # evaluated by Mono in double precision and rounded once at return.
+    x, y, z = (float(F(v)) for v in vector)
+    return F(x * x + y * y + z * z)
 
 
 def unity_zero(vector):
@@ -90,6 +93,12 @@ def euler_zxy(value):
         q[axis] = F(np.sin(half))
         quaternions.append(q)
     return qmul(quaternions[1], qmul(quaternions[0], quaternions[2]))
+
+
+def native_quaternion_euler(value):
+    """UnityEngine.Quaternion.Euler with the installed native EulerToQuaternion (emulated)."""
+    from src.render.unity_skin_emu import shared_emulator, quaternion_euler_degrees
+    return quaternion_euler_degrees(shared_emulator(), value)
 
 
 def serialized(value):
@@ -174,12 +183,16 @@ def replay_apply(*, before, cache, coordinate_modifiers, coordinate, additional_
         state["_changedScale"] = False
         decisions.append("restore_cached_scale")
     if has_rotation and not rotation_excluded:
-        local["local_rotation_xyzw"] = qmul(state["_rotBaseline"], euler_zxy(effective["rotation"]))
+        # Transform.localRotation setter stores SetLocalR's normalized quaternion.
+        # _rotBaseline * Quaternion.Euler(r): managed product (Mono double evaluation),
+        # native Internal_FromEulerRad (emulated UnityPlayer), then the setter's SetLocalR normalization.
+        local["local_rotation_xyzw"] = normalize_quaternion(managed_quaternion_mul(
+            state["_rotBaseline"], native_quaternion_euler(effective["rotation"])))
         require(float(np.linalg.norm(local["local_rotation_xyzw"])) > 0, "Cannot certify Unity setter of zero quaternion")
         state["_changedRotation"] = True
         decisions.append("rotation_baseline_times_euler_zxy")
     elif state["_changedRotation"]:
-        local["local_rotation_xyzw"] = state["_rotBaseline"].copy()
+        local["local_rotation_xyzw"] = normalize_quaternion(state["_rotBaseline"])
         state["_changedRotation"] = False
         decisions.append("restore_cached_rotation_including_excluded_bone")
     if (state["_lenModForceUpdate"] or has_length) and not unity_zero(state["_positionBaseline"]):

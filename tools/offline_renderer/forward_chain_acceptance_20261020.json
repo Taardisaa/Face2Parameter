@@ -1,0 +1,82 @@
+{
+ "schema_version": 1,
+ "date": "2026-10-20",
+ "scope": "Offline (no game). Source chain card/prefab/native59/body -> CollectBaselineCo -> ABMX Apply -> UnityPlayer skinning, against paired RDC uploads.",
+ "session": "HS2Mod/artifacts/chenger_reference_fit_20261012/paired_capture_session_20261020",
+ "bulky_outputs": "E:\\HS2_offline_renderer_data\\skinning_20261020",
+ "captures": {
+  "04d1e76f": {
+   "marker_frame": 26060,
+   "apply_count": 2,
+   "summary": {
+    "skinned_vertices_previous": [
+     6,
+     6
+    ],
+    "skinned_vertices_current": [
+     8,
+     8
+    ],
+    "per_draw_object_matrices": [
+     16,
+     16
+    ],
+    "motion_vector_previous_matrix": [
+     6,
+     6
+    ]
+   },
+   "chain_bone_fields_differing": {
+    "26059": 0,
+    "26060": 0
+   },
+   "chain_bones": {
+    "26059": 98,
+    "26060": 98
+   }
+  },
+  "625aa0f2": {
+   "marker_frame": 12741,
+   "apply_count": 2,
+   "summary": {
+    "skinned_vertices_previous": [
+     6,
+     6
+    ],
+    "skinned_vertices_current": [
+     8,
+     8
+    ],
+    "per_draw_object_matrices": [
+     16,
+     16
+    ],
+    "motion_vector_previous_matrix": [
+     6,
+     6
+    ]
+   },
+   "chain_bone_fields_differing": {
+    "12740": 0,
+    "12741": 0
+   },
+   "chain_bones": {
+    "12740": 98,
+    "12741": 98
+   }
+  }
+ },
+ "blendshape": {
+  "captured_e00_defo_100": "port == native emulation == captured skin input (5 surfaces)",
+  "synthetic_port_vs_native": "108/108 cases, 2298 frame weights",
+  "clamp": "legacyClampBlendShapeWeights=True -> [0,1]"
+ },
+ "explained": {
+  "mv_pass_world_to_object": "InvertMatrix4x4_General3D(identity), stale: BeforeDrawCall recomputes only when shader flag +0x56e0 set",
+  "current_vb_capture_start": "skin of frame F-2 (8/8 bit-exact): double-buffered skinned VBs"
+ },
+ "abmx_baseline_rebuild": {
+  "head_modifiers_bit_exact": "30/30 (signed zero not representable in bridge JSON)",
+  "breast_modifiers_outside_head_chains": 12
+ }
+}

@@ -269,3 +269,92 @@ bit-exactly from locals alone.
 CPU tests: `python -m unittest tools.offline_renderer.test_paired_skin
 tools.offline_renderer.test_gpu_skin_inputs` (14 pass; the emulator tests run
 the installed UnityPlayer.dll).
+
+## 8 Source chain to upload bytes, blendshapes (2026-10-20, offline)
+
+Receipt: `tools/offline_renderer/forward_chain_acceptance_20261020.json`.
+Bulky outputs: `E:/HS2_offline_renderer_data/skinning_20261020/`.
+
+**Result: bit-exact on both paired captures** (frames 26060 and 12741, plus
+their previous frames). The chain was card → head prefab locals → native59 face
+→ body → ABMX `CollectBaselineCo` → ABMX `Apply` (steady state) → bone local
+TRS → `skin_from_locals` → upload bytes.
+
+| Stage | Result |
+|---|---|
+| 98 skin-chain bones' local pos/rot/scale | 0 fields differ (F and F-1) |
+| ABMX baselines rebuilt from prefab + native59 | 30/30 head modifiers |
+| skinned VB (current / previous) | 8/8, 6/6 |
+| `unity_ObjectToWorld` + `unity_WorldToObject` | 16/16 |
+| `_PreviousM` | 6/6 |
+
+Mechanisms recovered and fixed. Each is backed by an installed binary or
+decompiled IL, with the paired frame as acceptance; none is fitted.
+
+- **Transform rotation setter**: `SetLocalR` normalizes every quaternion it
+  stores (per-lane horizontal sums, sqrtps, divps, 1e-30 fallback). The port is
+  `src/render/unity_transform_math.normalize_quaternion`, equal to the emulated
+  original. It is applied in ABMX Apply/Reset and in the native setters.
+- **`Quaternion.Euler`**: native `EulerToQuaternion` with UnityPlayer's own
+  `sinf`/`cosf`, run under emulation. The numpy sin/cos version is off by 1 ulp
+  in 3-axis cases.
+- **Mono float semantics**: C# float32 expressions are evaluated in double.
+  Register locals stay double; values are rounded at memory stores, float32
+  arguments and returns. This covers `Quaternion.operator*`, `GetInfo`'s `num`
+  local, `LerpAngle` and `Vector3.SqrMagnitude`.
+- **Native face shape**: `src/hs2_native_shape.py` ports `AnimationKeyInfo.GetInfo`,
+  `ShapeInfoBase.ChangeValue`, and the `ShapeHeadInfoFemale.Update` program.
+  The program is generated from the decompiled source into
+  `src/render/shape_head_female_program.py` (113 assignments). This replaces the
+  former world-FK decomposition, which flipped quaternion signs and lost bits.
+- **Native body**: `ShapeBodyInfoFemale` writes reaching the head chains are
+  only `cf_N_height` and `cf_J_Head_s`, both ported exactly.
+- **ABMX baselines**: the card-load path is `BoneController.CollectBaselineCo`.
+  `LateUpdateForce` applies the native update, then a fresh `CollectBaseline`
+  runs with no Reset. `CapturedHeadForward.evaluate(baseline_mode='card_load')`
+  reproduces it. `Apply` reaches a stationary state from the 2nd call on (results
+  identical for 2, 3 and 8 calls).
+  - The slider-change path (`UpdateBaseline`: Reset → `UpdateShapeFace`/`Body` →
+    CollectBaseline) is still the `native=` route. It applies `Reset`'s
+    length-history renormalization, which can move unwritten channels by about
+    1e-9. That is real engine behaviour after a slider change, not reproduced by
+    this frame.
+- **Blendshapes**: `src/render/unity_blendshape.py` ports `ApplyBlendShapes`,
+  `CalculateBlendShapeWeights` and `ApplyBlendShapeTmpl`, and runs the original
+  under Unicorn (dynamic_array reserve/grow hooked).
+  - Weights are clamped to [0, 1] because `PlayerSettings.legacyClampBlendShapeWeights`
+    is True.
+  - Multi-frame shapes interpolate `(j, 1-t)` and `(j+1, t)`; accumulation is
+    `dst += F(w·d)` in frame order.
+  - Port vs native: 108/108 synthetic cases (2298 frame weights), plus the
+    captured `e00_defo=100` case.
+
+Explained items:
+- The motion-vector-pass `unity_WorldToObject` equals
+  `InvertMatrix4x4_General3D(identity)`. `GfxDeviceD3D11Base::BeforeDrawCall`
+  recomputes the inverse only when the shader needs it (flag +0x56e0), so the
+  slot keeps a stale inverse.
+- The current skinned VB's capture-start bytes equal frame F-2's skin (8/8):
+  Unity alternates two buffers per renderer.
+
+Files outside this module changed (all report-worthy):
+- `tools/abmx_replay/model.py`: native Euler, Mono product, setter
+  normalization, Mono `SqrMagnitude`.
+- `src/hs2_offline_state.py`: exact `_face_update`/`_body_update`, Reset setter
+  normalization, `baseline_mode='card_load'`, and the earlier `bone_local`
+  output.
+
+The frozen-provenance guards in `tools/abmx_stability`,
+`tools/abmx_stable_lowering` and `tools/native_radial_target` pin `model.py` by
+SHA. They now reject their older frozen artifacts, which were produced by the
+previous inexact model. Re-freezing those is a decision for their owner.
+
+Gaps:
+- Per-frame drivers are frame inputs from the probe: animation pose, eye look,
+  mouth width and blendshape weights. Their own source chains are not ported here.
+- SliderUnlocker's out-of-range extrapolation (`SliderMath`) is not ported;
+  it raises.
+- Signed zeros in bridge JSON baselines are unrecoverable, because .NET
+  Framework's "R" format drops -0.
+- The sparse blendshape rows are rebuilt from API dense frames. This matters
+  only for -0.0 source components.
