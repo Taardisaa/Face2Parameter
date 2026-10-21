@@ -5,9 +5,12 @@
     <AssemblyName>HS2_FramePairProbe</AssemblyName>
     <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
     <AllowUnsafeBlocks>false</AllowUnsafeBlocks>
+    <Deterministic>true</Deterministic>
+    <Version>5.0.0</Version>
     <HS2GameRoot Condition="'$(HS2GameRoot)' == ''">E:\HoneySelect2_ArcticFox</HS2GameRoot>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Remove="tests/**/*.cs" />
     <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies" Version="1.0.3" PrivateAssets="all" />
     <Reference Include="BepInEx"><HintPath>$(HS2GameRoot)\BepInEx\core\BepInEx.dll</HintPath><Private>false</Private></Reference>
     <Reference Include="UnityEngine"><HintPath>$(HS2GameRoot)\HoneySelect2_Data\Managed\UnityEngine.dll</HintPath><Private>false</Private></Reference>

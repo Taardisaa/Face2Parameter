@@ -1,14 +1,28 @@
-// Full render-scene state export for the frame-pair probe (read-only).
+// Full render-scene state export for the frame-pair probe v5 (read-only).
 //
-// Reflects the complete public Unity API surface of cameras, lights, renderers,
-// reflection probes, light probes, RenderSettings/QualitySettings/GraphicsSettings/
-// Screen/Time, and ALL (public and non-public) instance fields of every
-// MonoBehaviour on cameras plus effect/volume components (DHH SSS, CTAA,
-// PostProcessing v2 layer/volume/profile, liquid). Materials are exported by
-// shader/keywords/queue/passes/textures and typed properties from a supplied
-// shader manifest (Unity 2018.4 cannot enumerate material uniforms at runtime).
-// Getters with known side effects (instantiation) are never invoked; every
-// failing getter is recorded with its error instead of being dropped.
+// Reflects the public Unity API surface of cameras, lights, renderers, probes,
+// RenderSettings/QualitySettings/GraphicsSettings/Screen/Time/ReflectionProbe/GL,
+// ALL instance fields of every MonoBehaviour on cameras and lights plus every
+// effect/volume component (DHH, CTAA, PostProcessing v2, liquid), the static
+// fields of the DHH, CTAA and PPv2 assemblies, and the plugin member paths that
+// the generators name explicitly. Native state the managed API does not expose
+// (shader property sheets with their raw GPU-bound bytes, global keyword bits,
+// the temporary RenderTexture pool, camera previous VP) comes from UnityNative.
+//
+// v5 changes against v4 (each was a reported gap or a v4 defect):
+//  * RenderTexture.colorBuffer/depthBuffer are no longer invoked: their native
+//    RenderTextureScripting::GetColorBuffer (UnityPlayer 0x705390) calls
+//    RenderTexture::Create, so v4's reflection could create never-created RTs.
+//  * Shader.IsKeywordEnabled is no longer called: it runs keywords::Create
+//    (0x712040 -> 0x82bac0), which registers unknown names in the 256-entry
+//    keyword table. Global keywords are read natively instead.
+//  * Managed material/global getters are only called for names already in the
+//    native FastPropertyName table (PropertyToID would register new names).
+//  * Reflection depth 12 (v4: 6) with a cycle guard along the reflection path, and an
+//    AnimationCurve case (keys + wrap modes) so PPv2 Spline curves, Spline.cachedData
+//    and MultiScaleVO.m_AmbientOnlyAO are reached. Output formats are v4's.
+//  * Light/camera transforms, Behaviour.enabled of every effect component, all
+//    RenderTexture objects (pooled temporaries and camera targets included).
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -16,7 +30,7 @@ using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Reflection;
-using System.Text;
+using System.Runtime.CompilerServices;
 using UnityEngine;
 using UnityEngine.Rendering;
 
@@ -28,19 +42,22 @@ namespace HS2Codex.FramePairProbe
         public readonly Dictionary<string, List<string[]>> Properties = new Dictionary<string, List<string[]>>();
         public readonly List<string> Keywords = new List<string>();
         public readonly List<string[]> Globals = new List<string[]>();
+        public string Path, Sha256;
 
-        // Plain line format (no JSON dependency):
+        // Plain line format (no JSON dependency); '#' lines are provenance comments:
         //   P<TAB>shader<TAB>name<TAB>type<TAB>arraySize
         //   K<TAB>keyword
         //   G<TAB>name<TAB>type<TAB>arraySize
         public static ShaderManifest Load(string path)
         {
-            var m = new ShaderManifest();
-            if (string.IsNullOrEmpty(path)) return m;
-            foreach (var raw in File.ReadAllLines(path))
+            var m = new ShaderManifest { Path = path };
+            var bytes = File.ReadAllBytes(path);
+            using (var h = System.Security.Cryptography.SHA256.Create()) m.Sha256 = Mem.Hex(h.ComputeHash(bytes));
+            foreach (var raw in System.Text.Encoding.UTF8.GetString(bytes).Split('\n'))
             {
-                var f = raw.Split('\t');
-                if (f.Length == 0 || f[0].Length == 0) continue;
+                var line = raw.TrimEnd('\r');
+                if (line.Length == 0 || line[0] == '#') continue;
+                var f = line.Split('\t');
                 if (f[0] == "P" && f.Length == 5)
                 {
                     List<string[]> list;
@@ -49,145 +66,238 @@ namespace HS2Codex.FramePairProbe
                 }
                 else if (f[0] == "K" && f.Length == 2) m.Keywords.Add(f[1]);
                 else if (f[0] == "G" && f.Length == 4) m.Globals.Add(new[] { f[1], f[2], f[3] });
-                else throw new FormatException("Bad manifest line: " + raw);
+                else throw new FormatException("Bad manifest line: " + line);
             }
+            if (m.Properties.Count == 0) throw new FormatException("Shader manifest has no properties: " + path);
             return m;
         }
     }
 
+    internal sealed class RefEq : IEqualityComparer<object>
+    {
+        public static readonly RefEq Instance = new RefEq();
+        public new bool Equals(object a, object b) { return ReferenceEquals(a, b); }
+        public int GetHashCode(object o) { return RuntimeHelpers.GetHashCode(o); }
+    }
+
+    internal sealed class ExportContext
+    {
+        public readonly Dictionary<int, Texture> Textures = new Dictionary<int, Texture>();
+        public readonly Dictionary<int, Material> Materials = new Dictionary<int, Material>();
+        public readonly HashSet<object> Path = new HashSet<object>(RefEq.Instance);   // reflection ancestors (cycle guard)
+        public UnityNative Native;
+        public ShaderManifest Manifest;
+        public HashSet<string> RegisteredNames = new HashSet<string>(StringComparer.Ordinal);
+        public readonly HashSet<int> SheetTextureIds = new HashSet<int>();   // native TextureIDs bound in material sheets
+        public readonly HashSet<int> GlobalTextureIds = new HashSet<int>();  // native TextureIDs bound in the global sheet (any callback)
+
+        public SheetSnapshot GlobalSheet()
+        {
+            var sheet = Native.GlobalSheet();
+            foreach (var e in sheet.Entries)
+                if (e.Type == "texture") { int id = BitConverter.ToInt32(e.Value, 0); if (id != 0) GlobalTextureIds.Add(id); }
+            return sheet;
+        }
+
+        public ExportContext(UnityNative native, ShaderManifest manifest)
+        {
+            Native = native; Manifest = manifest;
+            RefreshNames();
+        }
+
+        // Native FastPropertyName and keyword tables grow when shaders/scripts register
+        // names; re-read once per exported frame.
+        public void RefreshNames()
+        {
+            Native.RefreshNames();
+            RegisteredNames.Clear();
+            foreach (var n in Native.PropertyNames) if (n != null) RegisteredNames.Add(n);
+        }
+
+        public void Add(Texture t) { if (t != null) Textures[t.GetInstanceID()] = t; }
+        public void Add(Material m) { if (m != null) Materials[m.GetInstanceID()] = m; }
+    }
+
     internal static class SceneState
     {
-        static readonly HashSet<string> SideEffectGetters = new HashSet<string>
+        static readonly Dictionary<string, string> SkippedGetters = new Dictionary<string, string>
         {
-            "UnityEngine.Renderer.material", "UnityEngine.Renderer.materials",
-            "UnityEngine.MeshFilter.mesh", "UnityEngine.Collider.material",
-            "UnityEngine.SkinnedMeshRenderer.material", "UnityEngine.SkinnedMeshRenderer.materials",
-            "UnityEngine.MeshRenderer.material", "UnityEngine.MeshRenderer.materials",
-            "UnityEngine.ParticleSystemRenderer.material", "UnityEngine.ParticleSystemRenderer.materials",
-            "UnityEngine.TrailRenderer.material", "UnityEngine.TrailRenderer.materials",
-            "UnityEngine.LineRenderer.material", "UnityEngine.LineRenderer.materials",
+            { "UnityEngine.Renderer.material", "instantiating getter" }, { "UnityEngine.Renderer.materials", "instantiating getter" },
+            { "UnityEngine.MeshFilter.mesh", "instantiating getter" }, { "UnityEngine.Collider.material", "instantiating getter" },
+            { "UnityEngine.SkinnedMeshRenderer.material", "instantiating getter" }, { "UnityEngine.SkinnedMeshRenderer.materials", "instantiating getter" },
+            { "UnityEngine.MeshRenderer.material", "instantiating getter" }, { "UnityEngine.MeshRenderer.materials", "instantiating getter" },
+            { "UnityEngine.ParticleSystemRenderer.material", "instantiating getter" }, { "UnityEngine.ParticleSystemRenderer.materials", "instantiating getter" },
+            { "UnityEngine.TrailRenderer.material", "instantiating getter" }, { "UnityEngine.TrailRenderer.materials", "instantiating getter" },
+            { "UnityEngine.LineRenderer.material", "instantiating getter" }, { "UnityEngine.LineRenderer.materials", "instantiating getter" },
+            { "UnityEngine.RenderTexture.colorBuffer", "RenderTextureScripting::GetColorBuffer (UnityPlayer 0x705390) calls RenderTexture::Create" },
+            { "UnityEngine.RenderTexture.depthBuffer", "RenderTextureScripting::GetDepthBuffer (UnityPlayer 0x705400) calls RenderTexture::Create" },
         };
 
-        const int MaxDepth = 6;
+        const int MaxDepth = 12;
         const int MaxElements = 1 << 16;
 
-        public static void Write(string path, ShaderManifest manifest, int windowIndex)
+        // Types whose static constructor has necessarily run: their statics are used by the
+        // per-frame code of live instances (PPv2 layer/volumes, DHH plugin, CTAA component).
+        static readonly HashSet<string> InitializedStaticTypes = new HashSet<string>(StringComparer.Ordinal)
         {
-            var w = new JsonOut();
-            var materials = new Dictionary<int, Material>();
-            var textures = new Dictionary<int, Texture>();
+            "UnityEngine.Rendering.PostProcessing.PostProcessManager", "UnityEngine.Rendering.PostProcessing.RuntimeUtilities",
+            "UnityEngine.Rendering.PostProcessing.ShaderIDs", "UnityEngine.Rendering.PostProcessing.ColorUtilities",
+            "UnityEngine.Rendering.PostProcessing.TextureLerper",
+            // BetterAA plugin class: its Awake reads the static ConfigEntries and _instances.
+            // (DHH_Base, DHH_Main, SSSManager have static fields without initializers, so no list entry is needed.)
+            "AI_stuff.BetterAA",
+        };
+
+        public static string[] PluginAssemblyAnchors = { "DHH.SSS", "CTAA_PC", "UnityEngine.Rendering.PostProcessing.PostProcessLayer" };
+
+        public static void Write(string path, ExportContext ctx, int windowIndex)
+        {
+            ctx.Path.Clear();
+            ctx.RefreshNames();
+            var w = new JsonOut(1 << 22);
             w.Begin('{');
-            w.Key("schema_version"); w.Raw("1");
-            w.Key("window_index"); w.Raw(windowIndex.ToString(CultureInfo.InvariantCulture));
-            w.Key("frame_count"); w.Raw(Time.frameCount.ToString(CultureInfo.InvariantCulture));
+            w.Key("schema_version"); w.Raw("5");
+            w.Key("window_index"); w.Int(windowIndex);
+            w.Key("frame_count"); w.Int(Time.frameCount);
+            w.Key("rendered_frame_count"); w.Int(Time.renderedFrameCount);
             w.Key("statics"); w.Begin('{');
             foreach (var t in new[] { typeof(Time), typeof(QualitySettings), typeof(RenderSettings), typeof(GraphicsSettings),
-                                      typeof(Screen), typeof(SystemInfo), typeof(Shader), typeof(LightmapSettings) })
+                                      typeof(Screen), typeof(SystemInfo), typeof(Shader), typeof(LightmapSettings), typeof(ReflectionProbe),
+                                      typeof(RenderTexture), typeof(GL), typeof(Camera) })
             {
-                w.Key(t.FullName); StaticMembers(w, t, textures, materials);
+                w.Key(t.FullName); StaticMembers(w, t, ctx);
             }
             w.Key("RenderSettings.ambientProbe"); SH(w, RenderSettings.ambientProbe);
+            w.Key("ReflectionProbe.defaultTexture"); TextureRowOrNull(w, ReflectionProbe.defaultTexture, ctx);
+            w.Key("ReflectionProbe.defaultTextureHDRDecodeValues"); Value(w, ReflectionProbe.defaultTextureHDRDecodeValues, 0, ctx);
             w.End('}');
-            w.Key("global_keywords"); w.Begin('{');
-            foreach (var k in manifest.Keywords.Distinct()) { w.Key(k); w.Raw(Shader.IsKeywordEnabled(k) ? "true" : "false"); }
+
+            w.Guard("native", n => NativeFrame(n, ctx));
+
+            w.Key("global_keywords_manifest"); w.Begin('{');
+            w.Key("source"); w.Str("native keyword table + g_SharedPassContext bits; Shader.IsKeywordEnabled is not called (keywords::Create side effect)");
+            w.Guard("keywords", k =>
+            {
+                var bits = ctx.Native.GlobalKeywordBits();
+                var byName = ctx.Native.KeywordNames.ToDictionary(p => p.Value, p => p.Key, StringComparer.Ordinal);
+                k.Begin('{');
+                foreach (var name in ctx.Manifest.Keywords.Distinct())
+                {
+                    int idx;
+                    k.Key(name);
+                    if (!byName.TryGetValue(name, out idx)) k.Str("unregistered");
+                    else k.Bool(((bits[idx >> 6] >> (idx & 63)) & 1) != 0);
+                }
+                k.End('}');
+            });
             w.End('}');
-            w.Key("global_uniforms"); w.Begin('{');
-            foreach (var g in manifest.Globals) { w.Key(g[0]); GlobalUniform(w, g[0], g[1], int.Parse(g[2], CultureInfo.InvariantCulture), textures); }
+
+            w.Key("global_uniforms_managed"); w.Begin('{');
+            w.Key("source"); w.Str("Shader.GetGlobal* for manifest names already registered natively; the complete global sheet is native.global_sheet");
+            foreach (var g in ctx.Manifest.Globals)
+            {
+                if (!ctx.RegisteredNames.Contains(g[0])) continue;
+                w.Key(g[0]); GlobalUniform(w, g[0], g[1], int.Parse(g[2], CultureInfo.InvariantCulture), ctx);
+            }
             w.End('}');
 
             var cameras = Resources.FindObjectsOfTypeAll<Camera>().Where(c => c.gameObject.scene.IsValid()).ToArray();
             w.Key("cameras"); w.Begin('[');
-            foreach (var cam in cameras.OrderBy(c => c.depth)) { w.Next(); CameraRow(w, cam, textures, materials); }
+            foreach (var cam in cameras.OrderBy(c => c.depth)) CameraRow(w, cam, ctx);
             w.End(']');
 
             var lights = Resources.FindObjectsOfTypeAll<Light>().Where(l => l.gameObject.scene.IsValid()).ToArray();
             w.Key("lights"); w.Begin('[');
             foreach (var l in lights)
             {
-                w.Next(); w.Begin('{'); Ident(w, l);
-                w.Key("properties"); Members(w, l, 0, textures, materials, false);
+                w.Begin('{'); Ident(w, l);
+                w.Key("enabled"); w.Bool(l.enabled);
+                w.Key("transform"); TransformBlock(w, l.transform, ctx);
+                w.Key("properties"); Members(w, l, 0, ctx, false);
                 w.Key("command_buffers"); w.Begin('{');
                 foreach (LightEvent e in Enum.GetValues(typeof(LightEvent)))
-                { w.Key(e.ToString()); Names(w, l.GetCommandBuffers(e).Select(b => b.name)); }
+                { w.Key(e.ToString()); Names(w, l.GetCommandBuffers(e).Select(b => b.name + "|size=" + b.sizeInBytes)); }
                 w.End('}');
-                w.Key("components"); Components(w, l.gameObject, textures, materials);
+                w.Key("components"); Components(w, l.gameObject, ctx);
                 w.End('}');
             }
             w.End(']');
 
             var renderers = Resources.FindObjectsOfTypeAll<Renderer>().Where(r => r.gameObject.scene.IsValid()).ToArray();
             w.Key("renderers"); w.Begin('[');
-            var blends = new List<ReflectionProbeBlendInfo>();
-            foreach (var r in renderers)
-            {
-                w.Next(); w.Begin('{'); Ident(w, r);
-                w.Key("type"); w.Str(r.GetType().FullName);
-                w.Key("properties"); Members(w, r, 0, textures, materials, false);
-                w.Key("shared_materials"); w.Begin('[');
-                foreach (var m in r.sharedMaterials) { w.Next(); Ref(w, m); if (m != null) materials[m.GetInstanceID()] = m; }
-                w.End(']');
-                var block = new MaterialPropertyBlock();
-                w.Key("property_block_empty_per_slot"); w.Begin('[');
-                for (int i = 0; i < r.sharedMaterials.Length; i++) { r.GetPropertyBlock(block, i); w.Next(); w.Raw(block.isEmpty ? "true" : "false"); }
-                w.End(']');
-                r.GetPropertyBlock(block); w.Key("property_block_empty"); w.Raw(block.isEmpty ? "true" : "false");
-                w.Key("probe_position"); Value(w, r.probeAnchor != null ? r.probeAnchor.position : r.bounds.center, 0, textures, materials);
-                SphericalHarmonicsL2 sh;
-                try { LightProbes.GetInterpolatedProbe(r.probeAnchor != null ? r.probeAnchor.position : r.bounds.center, r, out sh); w.Key("interpolated_sh"); SH(w, sh); }
-                catch (Exception e) { w.Key("interpolated_sh_error"); w.Str(e.ToString()); }
-                blends.Clear();
-                try
-                {
-                    r.GetClosestReflectionProbes(blends);
-                    w.Key("reflection_probe_blends"); w.Begin('[');
-                    foreach (var b in blends) { w.Next(); w.Begin('{'); w.Key("weight"); Value(w, b.weight, 0, textures, materials); w.Key("probe"); Ref(w, b.probe); w.End('}'); }
-                    w.End(']');
-                }
-                catch (Exception e) { w.Key("reflection_probe_blends_error"); w.Str(e.ToString()); }
-                var smr = r as SkinnedMeshRenderer;
-                if (smr != null && smr.sharedMesh != null)
-                {
-                    w.Key("blendshape_weights"); w.Begin('[');
-                    for (int i = 0; i < smr.sharedMesh.blendShapeCount; i++) { w.Next(); Value(w, smr.GetBlendShapeWeight(i), 0, textures, materials); }
-                    w.End(']');
-                    w.Key("bones"); w.Begin('[');
-                    foreach (var b in smr.bones) { w.Next(); Ref(w, b); }
-                    w.End(']');
-                }
-                var mf = r.GetComponent<MeshFilter>();
-                if (mf != null) { w.Key("mesh_filter_shared_mesh"); Ref(w, mf.sharedMesh); }
-                w.Key("components"); Components(w, r.gameObject, textures, materials);
-                w.End('}');
-            }
+            foreach (var r in renderers) RendererRow(w, r, ctx);
             w.End(']');
 
             w.Key("reflection_probes"); w.Begin('[');
             foreach (var p in Resources.FindObjectsOfTypeAll<ReflectionProbe>().Where(p => p.gameObject.scene.IsValid()))
-            { w.Next(); w.Begin('{'); Ident(w, p); w.Key("properties"); Members(w, p, 0, textures, materials, false); w.End('}'); }
+            {
+                w.Begin('{'); Ident(w, p); w.Key("enabled"); w.Bool(p.enabled);
+                w.Key("transform"); TransformBlock(w, p.transform, ctx);
+                w.Key("properties"); Members(w, p, 0, ctx, false); w.End('}');
+            }
             w.End(']');
 
             w.Key("light_probes"); LightProbesRow(w);
 
             w.Key("effect_components"); w.Begin('[');
             foreach (var mb in Resources.FindObjectsOfTypeAll<MonoBehaviour>().Where(m => m != null && m.gameObject.scene.IsValid() && IsEffect(m)))
-            { w.Next(); w.Begin('{'); Ident(w, mb); w.Key("type"); w.Str(mb.GetType().AssemblyQualifiedName); w.Key("fields"); AllFields(w, mb, 0, textures, materials); w.End('}'); }
+            {
+                w.Begin('{'); Ident(w, mb); w.Key("type"); w.Str(mb.GetType().AssemblyQualifiedName);
+                w.Key("enabled"); w.Bool(mb.enabled);
+                w.Key("component_index"); w.Int(Array.IndexOf(mb.gameObject.GetComponents<Component>(), mb));
+                w.Key("fields"); AllFields(w, mb, 0, ctx); w.End('}');
+            }
+            w.End(']');
+
+            w.Guard("plugin_member_paths", p => PluginPaths.Write(p, ctx));
+            w.Key("plugin_static_fields"); PluginStatics(w, ctx);
+            w.Guard("chara_custom_textures", c => CharaTextures(c, ctx));
+
+            // All RenderTexture objects: camera targets ("TempBuffer N WxH"), pooled
+            // temporaries, CTAA/PPv2 persistent RTs. Rows are emitted in "textures".
+            w.Key("render_texture_ids"); w.Begin('[');
+            foreach (var rt in Resources.FindObjectsOfTypeAll<RenderTexture>()) { ctx.Add(rt); w.Int(rt.GetInstanceID()); }
             w.End(']');
 
             w.Key("materials"); w.Begin('[');
-            foreach (var m in materials.Values.ToArray()) { w.Next(); MaterialRow(w, m, manifest, textures); }
+            var done = new HashSet<int>();
+            while (true)
+            {
+                var pending = ctx.Materials.Where(kv => !done.Contains(kv.Key)).Select(kv => kv.Value).ToArray();
+                if (pending.Length == 0) break;
+                foreach (var m in pending) { done.Add(m.GetInstanceID()); MaterialRow(w, m, ctx); }
+            }
             w.End(']');
             w.Key("textures"); w.Begin('[');
-            foreach (var t in textures.Values.ToArray()) { w.Next(); TextureRow(w, t); }
+            var texDone = new HashSet<int>();
+            while (true)
+            {
+                var pending = ctx.Textures.Where(kv => !texDone.Contains(kv.Key)).Select(kv => kv.Value).ToArray();
+                if (pending.Length == 0) break;
+                foreach (var t in pending) { texDone.Add(t.GetInstanceID()); TextureRow(w, t, ctx); }
+            }
             w.End(']');
             w.End('}');
             File.WriteAllText(path, w.ToString());
         }
 
-        // Serialize an arbitrary helper result (e.g. HS2_RenderAudit.Capture()) losslessly.
-        public static void WriteObject(string path, object value)
+        static void NativeFrame(JsonOut n, ExportContext ctx)
         {
+            n.Begin('{');
+            n.Key("identity"); ctx.Native.WriteIdentity(n);
+            n.Guard("settings", s => ctx.Native.WriteSettings(s));
+            n.Guard("global_keywords", k => ctx.Native.WriteKeywords(k));
+            n.Guard("global_sheet", g => SheetReader.Write(g, ctx.GlobalSheet(), ctx.Native.Name));
+            n.Guard("render_buffer_pool", p => PoolWalker.Write(p, ctx.Native.Pool()));
+            n.Guard("builtin_params", b => ctx.Native.WriteBuiltins(b));
+            n.End('}');
+        }
+
+        public static void WriteObject(string path, object value, ExportContext ctx)
+        {
+            ctx.Path.Clear();
             var w = new JsonOut();
-            Value(w, value, 0, null, null);
+            Value(w, value, 0, ctx);
             File.WriteAllText(path, w.ToString());
         }
 
@@ -196,40 +306,145 @@ namespace HS2Codex.FramePairProbe
             var n = m.GetType().FullName ?? "";
             return n.StartsWith("DHH.") || n.Contains("CTAA") || n.Contains("BetterAA") || n.StartsWith("UnityEngine.Rendering.PostProcessing.")
                    || n.IndexOf("Liquid", StringComparison.OrdinalIgnoreCase) >= 0 || n.IndexOf("Siru", StringComparison.OrdinalIgnoreCase) >= 0
+                   || n == "CharaCustom.CustomRender"
                    || m.GetComponent<Camera>() != null || m.GetComponent<Light>() != null;
         }
 
-        static void CameraRow(JsonOut w, Camera cam, Dictionary<int, Texture> tex, Dictionary<int, Material> mats)
+        public static void TransformBlock(JsonOut w, Transform t, ExportContext ctx)
+        {
+            w.Begin('{');
+            w.Key("position"); Value(w, t.position, 0, ctx);
+            w.Key("rotation"); Value(w, t.rotation, 0, ctx);
+            w.Key("lossy_scale"); Value(w, t.lossyScale, 0, ctx);
+            w.Key("local_position"); Value(w, t.localPosition, 0, ctx);
+            w.Key("local_rotation"); Value(w, t.localRotation, 0, ctx);
+            w.Key("local_scale"); Value(w, t.localScale, 0, ctx);
+            w.Key("local_to_world_rowmajor"); Value(w, t.localToWorldMatrix, 0, ctx);
+            w.Key("world_to_local_rowmajor"); Value(w, t.worldToLocalMatrix, 0, ctx);
+            w.End('}');
+        }
+
+        static void CameraRow(JsonOut w, Camera cam, ExportContext ctx)
         {
             w.Begin('{'); Ident(w, cam);
-            w.Key("properties"); Members(w, cam, 0, tex, mats, false);
-            w.Key("matrices"); w.Begin('{');
-            w.Key("projectionMatrix"); Value(w, cam.projectionMatrix, 0, tex, mats);
-            w.Key("nonJitteredProjectionMatrix"); Value(w, cam.nonJitteredProjectionMatrix, 0, tex, mats);
-            w.Key("worldToCameraMatrix"); Value(w, cam.worldToCameraMatrix, 0, tex, mats);
-            w.Key("cameraToWorldMatrix"); Value(w, cam.cameraToWorldMatrix, 0, tex, mats);
-            w.Key("GL.GetGPUProjectionMatrix(proj,true)"); Value(w, GL.GetGPUProjectionMatrix(cam.projectionMatrix, true), 0, tex, mats);
-            w.Key("GL.GetGPUProjectionMatrix(proj,false)"); Value(w, GL.GetGPUProjectionMatrix(cam.projectionMatrix, false), 0, tex, mats);
-            w.End('}');
-            w.Key("target_texture"); TextureRowOrNull(w, cam.targetTexture);
+            w.Key("enabled"); w.Bool(cam.enabled);
+            w.Key("is_main"); w.Bool(cam == Camera.main);
+            w.Key("transform"); TransformBlock(w, cam.transform, ctx);
+            w.Guard("native", n => ctx.Native.WriteCamera(n, cam));
+            w.Key("properties"); Members(w, cam, 0, ctx, false);
+            w.Key("matrices"); CameraMatrices(w, cam, ctx);
+            w.Key("target_texture"); TextureRowOrNull(w, cam.targetTexture, ctx);
             w.Key("command_buffers"); w.Begin('{');
             foreach (CameraEvent e in Enum.GetValues(typeof(CameraEvent)))
             { w.Key(e.ToString()); Names(w, cam.GetCommandBuffers(e).Select(b => b.name + "|size=" + b.sizeInBytes)); }
             w.End('}');
-            w.Key("components"); Components(w, cam.gameObject, tex, mats);
+            w.Key("components"); Components(w, cam.gameObject, ctx);
             w.End('}');
         }
 
-        static void Components(JsonOut w, GameObject go, Dictionary<int, Texture> tex, Dictionary<int, Material> mats)
+        public static void CameraMatrices(JsonOut w, Camera cam, ExportContext ctx)
+        {
+            w.Begin('{');
+            w.Key("order"); w.Str("row-major m00,m01,m02,m03,m10,...");
+            w.Key("projectionMatrix"); Value(w, cam.projectionMatrix, 0, ctx);
+            w.Key("nonJitteredProjectionMatrix"); Value(w, cam.nonJitteredProjectionMatrix, 0, ctx);
+            w.Key("worldToCameraMatrix"); Value(w, cam.worldToCameraMatrix, 0, ctx);
+            w.Key("cameraToWorldMatrix"); Value(w, cam.cameraToWorldMatrix, 0, ctx);
+            w.Key("cullingMatrix"); Value(w, cam.cullingMatrix, 0, ctx);
+            w.Key("GL.GetGPUProjectionMatrix(proj,true)"); Value(w, GL.GetGPUProjectionMatrix(cam.projectionMatrix, true), 0, ctx);
+            w.Key("GL.GetGPUProjectionMatrix(proj,false)"); Value(w, GL.GetGPUProjectionMatrix(cam.projectionMatrix, false), 0, ctx);
+            w.End('}');
+        }
+
+        static void RendererRow(JsonOut w, Renderer r, ExportContext ctx)
+        {
+            w.Begin('{'); Ident(w, r);
+            w.Key("type"); w.Str(r.GetType().FullName);
+            w.Key("enabled"); w.Bool(r.enabled);
+            w.Guard("native", n => ctx.Native.WriteRenderer(n, r));
+            w.Key("transform"); TransformBlock(w, r.transform, ctx);
+            w.Key("properties"); Members(w, r, 0, ctx, false);
+            var shared = r.sharedMaterials;
+            w.Key("shared_materials"); w.Begin('[');
+            foreach (var m in shared) { Ref(w, m); ctx.Add(m); }
+            w.End(']');
+            var block = new MaterialPropertyBlock();
+            w.Key("property_blocks_per_slot"); w.Begin('[');
+            for (int i = 0; i < shared.Length; i++)
+            {
+                r.GetPropertyBlock(block, i);
+                w.Begin('{'); w.Key("slot"); w.Int(i); w.Key("is_empty"); w.Bool(block.isEmpty);
+                w.Guard("native_sheet", s => SheetReader.Write(s, ctx.Native.BlockSheet(block), ctx.Native.Name));
+                w.End('}');
+            }
+            w.End(']');
+            block.Clear();
+            r.GetPropertyBlock(block);
+            w.Key("property_block"); w.Begin('{'); w.Key("is_empty"); w.Bool(block.isEmpty);
+            w.Guard("native_sheet", s => SheetReader.Write(s, ctx.Native.BlockSheet(block), ctx.Native.Name));
+            w.End('}');
+            var anchor = r.probeAnchor != null ? r.probeAnchor.position : r.bounds.center;
+            w.Key("probe_position"); Value(w, anchor, 0, ctx);
+            SphericalHarmonicsL2 sh;
+            try { LightProbes.GetInterpolatedProbe(anchor, r, out sh); w.Key("interpolated_sh"); SH(w, sh); }
+            catch (Exception e) { w.Key("interpolated_sh_error"); w.Str(e.ToString()); }
+            var blends = new List<ReflectionProbeBlendInfo>();
+            try
+            {
+                r.GetClosestReflectionProbes(blends);
+                w.Key("reflection_probe_blends"); w.Begin('[');
+                foreach (var b in blends) { w.Begin('{'); w.Key("weight"); w.Num(b.weight); w.Key("probe"); Ref(w, b.probe); w.End('}'); }
+                w.End(']');
+            }
+            catch (Exception e) { w.Key("reflection_probe_blends_error"); w.Str(e.ToString()); }
+            var smr = r as SkinnedMeshRenderer;
+            Mesh mesh = null;
+            if (smr != null)
+            {
+                mesh = smr.sharedMesh;
+                if (mesh != null)
+                {
+                    w.Key("blendshape_weights"); w.Begin('[');
+                    for (int i = 0; i < mesh.blendShapeCount; i++) w.Num(smr.GetBlendShapeWeight(i));
+                    w.End(']');
+                }
+                w.Key("bones"); w.Begin('['); foreach (var b in smr.bones) Ref(w, b); w.End(']');
+                w.Key("root_bone"); Ref(w, smr.rootBone);
+            }
+            var mf = r.GetComponent<MeshFilter>();
+            if (mf != null) { mesh = mf.sharedMesh; w.Key("mesh_filter_shared_mesh"); Ref(w, mesh); }
+            if (mesh != null) w.Guard("submeshes", s => Submeshes(s, mesh));
+            w.Key("components"); Components(w, r.gameObject, ctx);
+            w.End('}');
+        }
+
+        static void Submeshes(JsonOut w, Mesh mesh)
+        {
+            w.Begin('{');
+            w.Key("mesh"); Ref(w, mesh);
+            w.Key("index_format"); w.Str(mesh.indexFormat.ToString());
+            w.Key("list"); w.Begin('[');
+            for (int i = 0; i < mesh.subMeshCount; i++)
+            {
+                w.Begin('{'); w.Key("index"); w.Int(i);
+                w.Key("index_start"); w.Int(mesh.GetIndexStart(i)); w.Key("index_count"); w.Int(mesh.GetIndexCount(i));
+                w.Key("base_vertex"); w.Int(mesh.GetBaseVertex(i)); w.Key("topology"); w.Str(mesh.GetTopology(i).ToString());
+                w.End('}');
+            }
+            w.End(']');
+            w.End('}');
+        }
+
+        public static void Components(JsonOut w, GameObject go, ExportContext ctx)
         {
             w.Begin('[');
             foreach (var c in go.GetComponents<Component>())
             {
-                w.Next(); w.Begin('{');
+                w.Begin('{');
                 if (c == null) { w.Key("missing_script"); w.Raw("true"); w.End('}'); continue; }
                 Ident(w, c); w.Key("type"); w.Str(c.GetType().AssemblyQualifiedName);
-                var b = c as Behaviour; if (b != null) { w.Key("enabled"); w.Raw(b.enabled ? "true" : "false"); }
-                if (c is MonoBehaviour) { w.Key("fields"); AllFields(w, c, 0, tex, mats); }
+                var b = c as Behaviour; if (b != null) { w.Key("enabled"); w.Bool(b.enabled); }
+                if (c is MonoBehaviour) { w.Key("fields"); AllFields(w, c, 0, ctx); }
                 w.End('}');
             }
             w.End(']');
@@ -240,73 +455,103 @@ namespace HS2Codex.FramePairProbe
             var lp = LightmapSettings.lightProbes;
             w.Begin('{');
             if (lp == null) { w.Key("present"); w.Raw("false"); w.End('}'); return; }
-            w.Key("present"); w.Raw("true"); w.Key("count"); w.Raw(lp.count.ToString(CultureInfo.InvariantCulture));
+            w.Key("present"); w.Raw("true"); w.Key("count"); w.Int(lp.count);
             w.Key("positions"); w.Begin('[');
-            foreach (var p in lp.positions) { w.Next(); w.Num(p.x); w.Next(); w.Num(p.y); w.Next(); w.Num(p.z); }
+            foreach (var p in lp.positions) { w.Num(p.x); w.Num(p.y); w.Num(p.z); }
             w.End(']');
             w.Key("baked_probes"); w.Begin('[');
-            foreach (var sh in lp.bakedProbes) { w.Next(); SH(w, sh); }
+            foreach (var sh in lp.bakedProbes) SH(w, sh);
             w.End(']');
             w.End('}');
         }
 
-        static void SH(JsonOut w, SphericalHarmonicsL2 sh)
+        public static void SH(JsonOut w, SphericalHarmonicsL2 sh)
         {
             w.Begin('[');
-            for (int c = 0; c < 3; c++) for (int k = 0; k < 9; k++) { w.Next(); w.Num(sh[c, k]); }
+            for (int c = 0; c < 3; c++) for (int k = 0; k < 9; k++) w.Num(sh[c, k]);
             w.End(']');
         }
 
-        static void MaterialRow(JsonOut w, Material m, ShaderManifest manifest, Dictionary<int, Texture> tex)
+        static void MaterialRow(JsonOut w, Material m, ExportContext ctx)
         {
             w.Begin('{'); Ident(w, m);
             w.Key("shader"); w.Str(m.shader == null ? null : m.shader.name);
             w.Key("shader_id"); w.Raw(m.shader == null ? "null" : m.shader.GetInstanceID().ToString(CultureInfo.InvariantCulture));
-            w.Key("render_queue"); w.Raw(m.renderQueue.ToString(CultureInfo.InvariantCulture));
+            w.Key("render_queue"); w.Int(m.renderQueue);
             w.Key("shader_keywords"); Names(w, m.shaderKeywords);
-            w.Key("pass_count"); w.Raw(m.passCount.ToString(CultureInfo.InvariantCulture));
+            w.Key("pass_count"); w.Int(m.passCount);
+            w.Key("passes"); w.Begin('[');
+            for (int i = 0; i < m.passCount; i++)
+            {
+                var name = m.GetPassName(i);
+                w.Begin('{'); w.Key("index"); w.Int(i); w.Key("name"); w.Str(name);
+                w.Key("enabled"); w.Bool(name == null || m.GetShaderPassEnabled(name)); w.End('}');
+            }
+            w.End(']');
             w.Key("global_illumination_flags"); w.Str(m.globalIlluminationFlags.ToString());
-            w.Key("enable_instancing"); w.Raw(m.enableInstancing ? "true" : "false");
-            w.Key("double_sided_gi"); w.Raw(m.doubleSidedGI ? "true" : "false");
+            w.Key("enable_instancing"); w.Bool(m.enableInstancing);
+            w.Key("double_sided_gi"); w.Bool(m.doubleSidedGI);
             w.Key("tags"); w.Begin('{');
-            foreach (var tag in new[] { "RenderType", "Queue", "LightMode", "IgnoreProjector", "DisableBatching", "ForceNoShadowCasting", "PreviewType" })
+            foreach (var tag in new[] { "RenderType", "Queue", "LightMode", "IgnoreProjector", "DisableBatching", "ForceNoShadowCasting", "PreviewType", "CanUseSpriteAtlas" })
             { w.Key(tag); w.Str(m.GetTag(tag, false, null)); }
             w.End('}');
+            SheetSnapshot sheet = null;
+            w.Guard("native_sheet", s =>
+            {
+                sheet = ctx.Native.MaterialSheet(m);
+                if (sheet == null) s.Str("not_built (Material::BuildProperties not yet run; the probe does not force it)");
+                else SheetReader.Write(s, sheet, ctx.Native.Name);
+            });
+            if (sheet != null)
+            {
+                foreach (var e in sheet.Entries)
+                    if (e.Type == "texture")
+                    {
+                        int id = BitConverter.ToInt32(e.Value, 0);
+                        if (id != 0) ctx.SheetTextureIds.Add(id);
+                    }
+            }
             w.Key("texture_properties"); w.Begin('{');
             foreach (var name in m.GetTexturePropertyNames())
             {
                 w.Key(name); w.Begin('{');
-                var t = m.GetTexture(name); w.Key("texture"); Ref(w, t); if (t != null) tex[t.GetInstanceID()] = t;
-                w.Key("scale"); Value(w, m.GetTextureScale(name), 0, tex, null);
-                w.Key("offset"); Value(w, m.GetTextureOffset(name), 0, tex, null);
+                var t = m.GetTexture(name); w.Key("texture"); Ref(w, t); ctx.Add(t);
+                w.Key("scale"); Value(w, m.GetTextureScale(name), 0, ctx);
+                w.Key("offset"); Value(w, m.GetTextureOffset(name), 0, ctx);
                 w.End('}');
             }
             w.End('}');
             List<string[]> props;
-            w.Key("typed_properties_from_manifest");
-            if (m.shader == null || !manifest.Properties.TryGetValue(m.shader.name, out props)) { w.Raw("null"); }
+            w.Key("typed_properties_managed");
+            if (sheet == null) w.Str("skipped: native sheet not built (managed getters would run Material::BuildProperties)");
+            else if (m.shader == null || !ctx.Manifest.Properties.TryGetValue(m.shader.name, out props)) w.Str("shader not in library manifest; native_sheet is complete");
             else
             {
                 w.Begin('{');
                 foreach (var p in props)
                 {
-                    w.Key(p[0]); w.Begin('{'); w.Key("type"); w.Str(p[1]); w.Key("has"); w.Raw(m.HasProperty(p[0]) ? "true" : "false");
-                    try
+                    w.Key(p[0]); w.Begin('{'); w.Key("type"); w.Str(p[1]);
+                    if (!ctx.RegisteredNames.Contains(p[0])) { w.Key("registered"); w.Bool(false); w.End('}'); continue; }
+                    w.Key("has"); w.Bool(m.HasProperty(p[0]));
+                    if (m.HasProperty(p[0]))
                     {
-                        int n = int.Parse(p[2], CultureInfo.InvariantCulture);
-                        w.Key("value");
-                        switch (p[1])
+                        try
                         {
-                            case "float": if (n > 0) Value(w, m.GetFloatArray(p[0]), 0, tex, null); else w.Num(m.GetFloat(p[0])); break;
-                            case "int": w.Raw(m.GetInt(p[0]).ToString(CultureInfo.InvariantCulture)); break;
-                            case "vector": if (n > 0) Value(w, m.GetVectorArray(p[0]), 0, tex, null); else Value(w, m.GetVector(p[0]), 0, tex, null); break;
-                            case "color": Value(w, m.GetColor(p[0]), 0, tex, null); break;
-                            case "matrix": if (n > 0) Value(w, m.GetMatrixArray(p[0]), 0, tex, null); else Value(w, m.GetMatrix(p[0]), 0, tex, null); break;
-                            case "texture": var t = m.GetTexture(p[0]); Ref(w, t); if (t != null) tex[t.GetInstanceID()] = t; break;
-                            default: throw new FormatException("Unknown manifest type " + p[1]);
+                            int n = int.Parse(p[2], CultureInfo.InvariantCulture);
+                            w.Key("value");
+                            switch (p[1])
+                            {
+                                case "float": if (n > 0) Value(w, m.GetFloatArray(p[0]), 0, ctx); else w.Num(m.GetFloat(p[0])); break;
+                                case "int": w.Int(m.GetInt(p[0])); break;
+                                case "vector": if (n > 0) Value(w, m.GetVectorArray(p[0]), 0, ctx); else Value(w, m.GetVector(p[0]), 0, ctx); break;
+                                case "color": Value(w, m.GetColor(p[0]), 0, ctx); break;
+                                case "matrix": if (n > 0) Value(w, m.GetMatrixArray(p[0]), 0, ctx); else Value(w, m.GetMatrix(p[0]), 0, ctx); break;
+                                case "texture": var t = m.GetTexture(p[0]); Ref(w, t); ctx.Add(t); break;
+                                default: throw new FormatException("Unknown manifest type " + p[1]);
+                            }
                         }
+                        catch (Exception e) { w.Key("error"); w.Str(e.GetType().Name + ": " + e.Message); }
                     }
-                    catch (Exception e) { w.Key("error"); w.Str(e.GetType().Name + ": " + e.Message); }
                     w.End('}');
                 }
                 w.End('}');
@@ -314,7 +559,7 @@ namespace HS2Codex.FramePairProbe
             w.End('}');
         }
 
-        static void GlobalUniform(JsonOut w, string name, string type, int n, Dictionary<int, Texture> tex)
+        public static void GlobalUniform(JsonOut w, string name, string type, int n, ExportContext ctx)
         {
             w.Begin('{');
             try
@@ -322,11 +567,11 @@ namespace HS2Codex.FramePairProbe
                 w.Key("value");
                 switch (type)
                 {
-                    case "float": if (n > 0) Value(w, Shader.GetGlobalFloatArray(name), 0, tex, null); else w.Num(Shader.GetGlobalFloat(name)); break;
-                    case "int": w.Raw(Shader.GetGlobalInt(name).ToString(CultureInfo.InvariantCulture)); break;
-                    case "vector": case "color": if (n > 0) Value(w, Shader.GetGlobalVectorArray(name), 0, tex, null); else Value(w, Shader.GetGlobalVector(name), 0, tex, null); break;
-                    case "matrix": if (n > 0) Value(w, Shader.GetGlobalMatrixArray(name), 0, tex, null); else Value(w, Shader.GetGlobalMatrix(name), 0, tex, null); break;
-                    case "texture": var t = Shader.GetGlobalTexture(name); Ref(w, t); if (t != null) tex[t.GetInstanceID()] = t; break;
+                    case "float": if (n > 0) Value(w, Shader.GetGlobalFloatArray(name), 0, ctx); else w.Num(Shader.GetGlobalFloat(name)); break;
+                    case "int": w.Int(Shader.GetGlobalInt(name)); break;
+                    case "vector": case "color": if (n > 0) Value(w, Shader.GetGlobalVectorArray(name), 0, ctx); else Value(w, Shader.GetGlobalVector(name), 0, ctx); break;
+                    case "matrix": if (n > 0) Value(w, Shader.GetGlobalMatrixArray(name), 0, ctx); else Value(w, Shader.GetGlobalMatrix(name), 0, ctx); break;
+                    case "texture": var t = Shader.GetGlobalTexture(name); Ref(w, t); ctx.Add(t); break;
                     default: throw new FormatException("Unknown global type " + type);
                 }
             }
@@ -334,20 +579,101 @@ namespace HS2Codex.FramePairProbe
             w.End('}');
         }
 
-        static void TextureRowOrNull(JsonOut w, Texture t) { if (t == null) w.Raw("null"); else TextureRow(w, t); }
+        public static void TextureRowOrNull(JsonOut w, Texture t, ExportContext ctx) { if (t == null) w.Raw("null"); else { ctx.Add(t); Ref(w, t); } }
 
-        static void TextureRow(JsonOut w, Texture t)
+        static void TextureRow(JsonOut w, Texture t, ExportContext ctx)
         {
             w.Begin('{'); Ident(w, t); w.Key("type"); w.Str(t.GetType().FullName);
-            w.Key("properties"); Members(w, t, 0, null, null, false);
-            try { w.Key("native_ptr"); w.Str("0x" + t.GetNativeTexturePtr().ToInt64().ToString("x")); }
-            catch (Exception e) { w.Key("native_ptr_error"); w.Str(e.Message); }
+            var rt = t as RenderTexture;
+            bool created = rt == null || rt.IsCreated();
+            if (rt != null)
+            {
+                w.Key("is_created"); w.Bool(created);
+                w.Key("descriptor"); Value(w, rt.descriptor, 0, ctx);
+            }
+            w.Guard("native", n => ctx.Native.WriteTexture(n, t));
+            w.Key("properties"); Members(w, t, 0, ctx, false);
+            if (created)
+            {
+                try { w.Key("native_ptr"); w.Str("0x" + t.GetNativeTexturePtr().ToInt64().ToString("x")); }
+                catch (Exception e) { w.Key("native_ptr_error"); w.Str(e.Message); }
+            }
+            else { w.Key("native_ptr"); w.Str("not queried: RenderTexture not created"); }
+            w.End('}');
+        }
+
+        static void CharaTextures(JsonOut w, ExportContext ctx)
+        {
+            w.Begin('[');
+            foreach (var cha in UnityEngine.Object.FindObjectsOfType<AIChara.ChaControl>())
+                foreach (var prop in new[] { "customTexCtrlFace", "customTexCtrlBody" })
+                {
+                    w.Begin('{'); w.Key("chara"); Ref(w, cha); w.Key("control"); w.Str(prop);
+                    var pi = cha.GetType().GetProperty(prop, BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
+                    var control = pi == null ? null : pi.GetValue(cha, null);
+                    if (control == null) { w.Key("value"); w.Raw("null"); w.End('}'); continue; }
+                    w.Key("fields"); AllFields(w, control, 0, ctx);
+                    var f = control.GetType().GetField("createCustomTex", BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
+                    var arr = f == null ? null : f.GetValue(control) as Array;
+                    w.Key("create_textures"); w.Begin('[');
+                    if (arr != null)
+                        foreach (var creator in arr)
+                        {
+                            if (creator == null) { w.Raw("null"); continue; }
+                            var get = creator.GetType().GetMethod("GetCreateTexture", BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance, null, Type.EmptyTypes, null);
+                            var tex = get == null ? null : get.Invoke(creator, null) as Texture;
+                            Ref(w, tex); ctx.Add(tex);
+                        }
+                    w.End(']');
+                    w.End('}');
+                }
+            w.End(']');
+        }
+
+        static void PluginStatics(JsonOut w, ExportContext ctx)
+        {
+            w.Begin('{');
+            var assemblies = new List<Assembly>();
+            foreach (var anchor in PluginAssemblyAnchors)
+            {
+                var t = AppDomain.CurrentDomain.GetAssemblies().Select(a => a.GetType(anchor, false)).FirstOrDefault(x => x != null);
+                if (t == null) { w.Key(anchor + "_error"); w.Str("type not loaded"); continue; }
+                if (!assemblies.Contains(t.Assembly)) assemblies.Add(t.Assembly);
+            }
+            foreach (var asm in assemblies)
+            {
+                w.Key(asm.GetName().Name); w.Begin('{');
+                Type[] types;
+                try { types = asm.GetTypes(); }
+                catch (ReflectionTypeLoadException e) { types = e.Types.Where(x => x != null).ToArray(); }
+                foreach (var t in types.Where(x => !x.ContainsGenericParameters).OrderBy(x => x.FullName, StringComparer.Ordinal))
+                {
+                    var fields = t.GetFields(BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.DeclaredOnly)
+                                  .Where(f => !f.IsLiteral).OrderBy(f => f.Name, StringComparer.Ordinal).ToArray();
+                    if (fields.Length == 0) continue;
+                    // Reading a static field runs the type's static constructor if it has not run
+                    // yet; that would be a probe side effect. Only types without one, or types whose
+                    // instances/statics are demonstrably in use every rendered frame, are read.
+                    if (t.TypeInitializer != null && !InitializedStaticTypes.Contains(t.FullName))
+                    { w.Key(t.FullName); w.Str("<skipped: has a static constructor that may not have run; reading would run it>"); continue; }
+                    w.Key(t.FullName); w.Begin('{');
+                    foreach (var f in fields)
+                    {
+                        w.Key(f.Name);
+                        object v;
+                        try { v = f.GetValue(null); } catch (Exception e) { Err(w, e); continue; }
+                        Value(w, v, 1, ctx);
+                    }
+                    w.End('}');
+                }
+                w.End('}');
+            }
             w.End('}');
         }
 
         // ---- reflection helpers ----
 
-        static void StaticMembers(JsonOut w, Type t, Dictionary<int, Texture> tex, Dictionary<int, Material> mats)
+        static void StaticMembers(JsonOut w, Type t, ExportContext ctx)
         {
             w.Begin('{');
             foreach (var p in t.GetProperties(BindingFlags.Public | BindingFlags.Static).OrderBy(p => p.Name))
@@ -357,25 +683,35 @@ namespace HS2Codex.FramePairProbe
                 object v;
                 try { v = p.GetValue(null, null); }
                 catch (Exception e) { Err(w, e); continue; }
-                Value(w, v, 1, tex, mats);
+                Value(w, v, 1, ctx);
+            }
+            foreach (var f in t.GetFields(BindingFlags.Public | BindingFlags.Static).OrderBy(f => f.Name))
+            {
+                if (f.IsLiteral) continue;
+                w.Key("field:" + f.Name);
+                object v;
+                try { v = f.GetValue(null); } catch (Exception e) { Err(w, e); continue; }
+                Value(w, v, 1, ctx);
             }
             w.End('}');
         }
 
-        static void Members(JsonOut w, object o, int depth, Dictionary<int, Texture> tex, Dictionary<int, Material> mats, bool nonPublicFields)
+        public static void Members(JsonOut w, object o, int depth, ExportContext ctx, bool nonPublicFields)
         {
             w.Begin('{');
             var t = o.GetType();
             foreach (var p in t.GetProperties(BindingFlags.Public | BindingFlags.Instance).OrderBy(p => p.Name))
             {
                 if (!p.CanRead || p.GetIndexParameters().Length > 0 || Obsolete(p)) continue;
-                if (SideEffectGetters.Contains(t.FullName + "." + p.Name) || SideEffectGetters.Contains(p.DeclaringType.FullName + "." + p.Name)) { w.Key(p.Name); w.Str("<skipped: instantiating getter>"); continue; }
+                string why;
+                if (SkippedGetters.TryGetValue(t.FullName + "." + p.Name, out why) || SkippedGetters.TryGetValue(p.DeclaringType.FullName + "." + p.Name, out why))
+                { w.Key(p.Name); w.Str("<skipped: " + why + ">"); continue; }
                 if (p.Name == "gameObject" || p.Name == "transform") { w.Key(p.Name); try { Ref(w, (UnityEngine.Object)p.GetValue(o, null)); } catch (Exception e) { Err(w, e); } continue; }
                 w.Key(p.Name);
                 object v;
                 try { v = p.GetValue(o, null); }
                 catch (Exception e) { Err(w, e); continue; }
-                Value(w, v, depth + 1, tex, mats);
+                Value(w, v, depth + 1, ctx);
             }
             foreach (var f in t.GetFields(BindingFlags.Public | BindingFlags.Instance | (nonPublicFields ? BindingFlags.NonPublic : 0)).OrderBy(f => f.Name))
             {
@@ -383,12 +719,12 @@ namespace HS2Codex.FramePairProbe
                 object v;
                 try { v = f.GetValue(o); }
                 catch (Exception e) { Err(w, e); continue; }
-                Value(w, v, depth + 1, tex, mats);
+                Value(w, v, depth + 1, ctx);
             }
             w.End('}');
         }
 
-        static void AllFields(JsonOut w, object o, int depth, Dictionary<int, Texture> tex, Dictionary<int, Material> mats)
+        public static void AllFields(JsonOut w, object o, int depth, ExportContext ctx)
         {
             w.Begin('{');
             for (var t = o.GetType(); t != null && t != typeof(MonoBehaviour) && t != typeof(ScriptableObject) && t != typeof(object); t = t.BaseType)
@@ -399,7 +735,7 @@ namespace HS2Codex.FramePairProbe
                     object v;
                     try { v = f.GetValue(o); }
                     catch (Exception e) { Err(w, e); continue; }
-                    Value(w, v, depth + 1, tex, mats);
+                    Value(w, v, depth + 1, ctx);
                 }
             }
             w.End('}');
@@ -407,21 +743,21 @@ namespace HS2Codex.FramePairProbe
 
         static bool Obsolete(MemberInfo m) { return m.GetCustomAttributes(typeof(ObsoleteAttribute), true).Length > 0; }
 
-        static void Err(JsonOut w, Exception e)
+        public static void Err(JsonOut w, Exception e)
         {
             var inner = e is TargetInvocationException && e.InnerException != null ? e.InnerException : e;
             w.Begin('{'); w.Key("error"); w.Str(inner.GetType().Name + ": " + inner.Message); w.End('}');
         }
 
-        static void Ident(JsonOut w, UnityEngine.Object o)
+        public static void Ident(JsonOut w, UnityEngine.Object o)
         {
-            w.Key("id"); w.Raw(o.GetInstanceID().ToString(CultureInfo.InvariantCulture));
+            w.Key("id"); w.Int(o.GetInstanceID());
             w.Key("name"); w.Str(o.name);
             var c = o as Component;
-            if (c != null) { w.Key("path"); w.Str(Path(c.transform)); w.Key("active_in_hierarchy"); w.Raw(c.gameObject.activeInHierarchy ? "true" : "false"); w.Key("layer"); w.Raw(c.gameObject.layer.ToString(CultureInfo.InvariantCulture)); }
+            if (c != null) { w.Key("path"); w.Str(Path(c.transform)); w.Key("active_in_hierarchy"); w.Bool(c.gameObject.activeInHierarchy); w.Key("layer"); w.Int(c.gameObject.layer); }
         }
 
-        static string Path(Transform t)
+        public static string Path(Transform t)
         {
             var parts = new List<string>();
             for (; t != null; t = t.parent) parts.Add(t.name + "[" + t.GetSiblingIndex() + "]");
@@ -429,42 +765,48 @@ namespace HS2Codex.FramePairProbe
             return "/" + string.Join("/", parts.ToArray());
         }
 
-        static void Ref(JsonOut w, UnityEngine.Object o)
+        public static void Ref(JsonOut w, UnityEngine.Object o)
         {
             if (o == null) { w.Raw("null"); return; }
-            w.Begin('{'); w.Key("ref_id"); w.Raw(o.GetInstanceID().ToString(CultureInfo.InvariantCulture));
+            w.Begin('{'); w.Key("ref_id"); w.Int(o.GetInstanceID());
             w.Key("ref_type"); w.Str(o.GetType().FullName); w.Key("ref_name"); w.Str(o.name); w.End('}');
         }
 
-        static void Names(JsonOut w, IEnumerable<string> names) { w.Begin('['); foreach (var n in names) { w.Next(); w.Str(n); } w.End(']'); }
+        public static void Names(JsonOut w, IEnumerable<string> names) { w.Begin('['); foreach (var n in names) w.Str(n); w.End(']'); }
 
-        static void Value(JsonOut w, object v, int depth, Dictionary<int, Texture> tex, Dictionary<int, Material> mats)
+        public static void Value(JsonOut w, object v, int depth, ExportContext ctx)
         {
             if (v == null) { w.Raw("null"); return; }
-            var uo = v as UnityEngine.Object;
-            if (uo != null || (v is UnityEngine.Object))
+            if (v is UnityEngine.Object)
             {
-                if (uo == null) { w.Raw("null"); return; }
-                var t = uo as Texture; if (t != null && tex != null) tex[t.GetInstanceID()] = t;
-                var m = uo as Material; if (m != null && mats != null) mats[m.GetInstanceID()] = m;
-                // ScriptableObject settings (e.g. PostProcessProfile and its effect settings) are expanded.
-                if (uo is ScriptableObject && depth < MaxDepth) { w.Begin('{'); w.Key("ref"); Ref(w, uo); w.Key("fields"); AllFields(w, uo, depth, tex, mats); w.End('}'); }
+                var uo = (UnityEngine.Object)v;
+                if (uo == null) { w.Raw("null"); return; }   // destroyed native object
+                var t = uo as Texture; if (t != null) ctx.Add(t);
+                var m = uo as Material; if (m != null) ctx.Add(m);
+                if (uo is ScriptableObject && depth < MaxDepth && !ctx.Path.Contains(uo))
+                {
+                    // ScriptableObject settings (PPv2 profiles and effect settings) are expanded as in v4.
+                    ctx.Path.Add(uo);
+                    try { w.Begin('{'); w.Key("ref"); Ref(w, uo); w.Key("fields"); AllFields(w, uo, depth, ctx); w.End('}'); }
+                    finally { ctx.Path.Remove(uo); }
+                }
                 else Ref(w, uo);
                 return;
             }
             switch (v)
             {
-                case bool b: w.Raw(b ? "true" : "false"); return;
+                case bool b: w.Bool(b); return;
                 case float f: w.Num(f); return;
                 case double d: w.Str(d.ToString("R", CultureInfo.InvariantCulture)); return;
-                case int i: w.Raw(i.ToString(CultureInfo.InvariantCulture)); return;
-                case uint ui: w.Raw(ui.ToString(CultureInfo.InvariantCulture)); return;
-                case long l: w.Raw(l.ToString(CultureInfo.InvariantCulture)); return;
+                case int i: w.Int(i); return;
+                case uint ui: w.Int(ui); return;
+                case long l: w.Int(l); return;
                 case ulong ul: w.Raw(ul.ToString(CultureInfo.InvariantCulture)); return;
-                case short s: w.Raw(s.ToString(CultureInfo.InvariantCulture)); return;
-                case ushort us: w.Raw(us.ToString(CultureInfo.InvariantCulture)); return;
-                case byte by: w.Raw(by.ToString(CultureInfo.InvariantCulture)); return;
-                case sbyte sb: w.Raw(sb.ToString(CultureInfo.InvariantCulture)); return;
+                case short s: w.Int(s); return;
+                case ushort us: w.Int(us); return;
+                case byte by: w.Int(by); return;
+                case sbyte sb: w.Int(sb); return;
+                case char ch: w.Int(ch); return;
                 case string str: w.Str(str); return;
                 case Enum e: w.Str(e.GetType().Name + "." + e.ToString() + "=" + Convert.ToInt64(e).ToString(CultureInfo.InvariantCulture)); return;
                 case Vector2 a: Floats(w, a.x, a.y); return;
@@ -472,77 +814,76 @@ namespace HS2Codex.FramePairProbe
                 case Vector4 a: Floats(w, a.x, a.y, a.z, a.w); return;
                 case Quaternion a: Floats(w, a.x, a.y, a.z, a.w); return;
                 case Color a: Floats(w, a.r, a.g, a.b, a.a); return;
-                case Color32 a: w.Begin('['); foreach (var x in new[] { a.r, a.g, a.b, a.a }) { w.Next(); w.Raw(x.ToString(CultureInfo.InvariantCulture)); } w.End(']'); return;
+                case Color32 a: w.Begin('['); w.Int(a.r); w.Int(a.g); w.Int(a.b); w.Int(a.a); w.End(']'); return;
                 case Rect a: Floats(w, a.x, a.y, a.width, a.height); return;
                 case Bounds a: Floats(w, a.center.x, a.center.y, a.center.z, a.extents.x, a.extents.y, a.extents.z); return;
                 case Matrix4x4 a:
-                    w.Begin('['); for (int r = 0; r < 4; r++) for (int c = 0; c < 4; c++) { w.Next(); w.Num(a[r, c]); } w.End(']'); return;
+                    w.Begin('['); for (int r = 0; r < 4; r++) for (int c = 0; c < 4; c++) w.Num(a[r, c]); w.End(']'); return;
                 case SphericalHarmonicsL2 sh: SH(w, sh); return;
+                case LayerMask lm: w.Begin('{'); w.Key("m_Mask"); w.Int(lm.value); w.End('}'); return;
                 case IntPtr p: w.Str("ptr:0x" + p.ToInt64().ToString("x")); return;
-                case Delegate dl: w.Str("delegate:" + dl.GetType().FullName); return;
+                case Delegate dl:
+                    w.Begin('{'); w.Key("delegate"); w.Str(dl.GetType().FullName); w.Key("invocation_list"); w.Begin('[');
+                    foreach (var inv in dl.GetInvocationList()) w.Str((inv.Method.DeclaringType == null ? "?" : inv.Method.DeclaringType.FullName) + "." + inv.Method.Name);
+                    w.End(']'); w.End('}'); return;
             }
-            if (depth >= MaxDepth) { w.Str("<depth limit: " + v.GetType().FullName + ">"); return; }
-            var dict = v as IDictionary;
-            if (dict != null)
+            var curve = v as AnimationCurve;
+            if (curve != null)
             {
-                w.Begin('{'); int n = 0;
-                foreach (DictionaryEntry kv in dict) { if (n++ >= MaxElements) { w.Key("<truncated>"); w.Raw(dict.Count.ToString(CultureInfo.InvariantCulture)); break; } w.Key(Convert.ToString(kv.Key, CultureInfo.InvariantCulture)); Value(w, kv.Value, depth + 1, tex, mats); }
-                w.End('}'); return;
-            }
-            var en = v as IEnumerable;
-            if (en != null)
-            {
-                w.Begin('['); int n = 0;
-                foreach (var x in en) { if (n++ >= MaxElements) { w.Next(); w.Str("<truncated>"); break; } w.Next(); Value(w, x, depth + 1, tex, mats); }
-                w.End(']'); return;
+                w.Begin('{'); w.Key("$type"); w.Str("UnityEngine.AnimationCurve");
+                w.Key("preWrapMode"); Value(w, curve.preWrapMode, depth + 1, ctx);
+                w.Key("postWrapMode"); Value(w, curve.postWrapMode, depth + 1, ctx);
+                w.Key("keys"); w.Begin('[');
+                foreach (var key in curve.keys) Value(w, key, depth + 1, ctx);   // Keyframe private fields m_Time..m_OutWeight
+                w.End(']'); w.End('}');
+                return;
             }
             var type = v.GetType();
+            if (depth >= MaxDepth) { w.Str("<depth limit " + MaxDepth + ": " + type.FullName + ">"); return; }
             if (type.IsPrimitive) { w.Str(Convert.ToString(v, CultureInfo.InvariantCulture)); return; }
-            // Plain managed object/struct (plugin settings, PPv2 parameter overrides...): all fields.
-            w.Begin('{'); w.Key("$type"); w.Str(type.FullName);
-            for (var t = type; t != null && t != typeof(object) && t != typeof(ValueType); t = t.BaseType)
-                foreach (var f in t.GetFields(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.DeclaredOnly))
+            // Cycle protection along the current reflection path only; shared (DAG) objects
+            // are expanded at every occurrence exactly as v4 did, so v4 consumers keep working.
+            bool tracked = !type.IsValueType;
+            if (tracked)
+            {
+                if (ctx.Path.Contains(v)) { w.Begin('{'); w.Key("$cycle"); w.Str(type.FullName); w.End('}'); return; }
+                ctx.Path.Add(v);
+            }
+            try
+            {
+                var dict = v as IDictionary;
+                if (dict != null)
                 {
-                    w.Key(t.Name + "." + f.Name);
-                    object fv;
-                    try { fv = f.GetValue(v); } catch (Exception e) { Err(w, e); continue; }
-                    Value(w, fv, depth + 1, tex, mats);
+                    w.Begin('{'); int n = 0;
+                    foreach (DictionaryEntry kv in dict)
+                    {
+                        if (n++ >= MaxElements) { w.Key("<truncated>"); w.Int(dict.Count); break; }
+                        w.Key(Convert.ToString(kv.Key, CultureInfo.InvariantCulture)); Value(w, kv.Value, depth + 1, ctx);
+                    }
+                    w.End('}'); return;
                 }
-            w.End('}');
+                var en = v as IEnumerable;
+                if (en != null)
+                {
+                    w.Begin('['); int n = 0;
+                    foreach (var x in en) { if (n++ >= MaxElements) { w.Str("<truncated>"); break; } Value(w, x, depth + 1, ctx); }
+                    w.End(']'); return;
+                }
+                // Plain managed object/struct (plugin settings, PPv2 parameter overrides, splines...): all fields.
+                w.Begin('{'); w.Key("$type"); w.Str(type.FullName);
+                for (var t = type; t != null && t != typeof(object) && t != typeof(ValueType); t = t.BaseType)
+                    foreach (var f in t.GetFields(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.DeclaredOnly))
+                    {
+                        w.Key(t.Name + "." + f.Name);
+                        object fv;
+                        try { fv = f.GetValue(v); } catch (Exception e) { Err(w, e); continue; }
+                        Value(w, fv, depth + 1, ctx);
+                    }
+                w.End('}');
+            }
+            finally { if (tracked) ctx.Path.Remove(v); }
         }
 
-        static void Floats(JsonOut w, params float[] f) { w.Begin('['); foreach (var x in f) { w.Next(); w.Num(x); } w.End(']'); }
-    }
-
-    // Minimal streaming JSON writer; floats are written with round-trip format and
-    // their exact IEEE bits when not finite.
-    internal sealed class JsonOut
-    {
-        readonly StringBuilder _sb = new StringBuilder(1 << 22);
-        readonly Stack<bool> _first = new Stack<bool>();
-        bool _afterKey;
-
-        public void Begin(char c) { Sep(); _sb.Append(c); _first.Push(true); }
-        public void End(char c) { _sb.Append(c); _first.Pop(); }
-        public void Next() { }
-        public void Key(string k) { Sep(); _sb.Append(FramePairProbe.Json(k)).Append(':'); _afterKey = true; }
-        public void Raw(string s) { Sep(); _sb.Append(s); }
-        public void Str(string s) { Sep(); _sb.Append(FramePairProbe.Json(s)); }
-        public void Num(float f)
-        {
-            Sep();
-            if (float.IsNaN(f) || float.IsInfinity(f)) _sb.Append("{\"nonfinite_bits\":").Append(BitConverter.ToInt32(BitConverter.GetBytes(f), 0)).Append('}');
-            else _sb.Append(f.ToString("R", CultureInfo.InvariantCulture));
-        }
-
-        void Sep()
-        {
-            if (_afterKey) { _afterKey = false; return; }
-            if (_first.Count == 0) return;
-            if (_first.Peek()) { _first.Pop(); _first.Push(false); }
-            else _sb.Append(',');
-        }
-
-        public override string ToString() { return _sb.ToString(); }
+        static void Floats(JsonOut w, params float[] f) { w.Begin('['); foreach (var x in f) w.Num(x); w.End(']'); }
     }
 }

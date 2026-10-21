@@ -1,23 +1,34 @@
-// Same-frame source-state / RDC pairing probe (read-only with respect to the game).
+// Same-frame source-state / RDC pairing probe v5 (read-only with respect to the game,
+// except mode "renderstyle", which issues the bridge's own capture request).
 //
-// On an explicit request file it, for a short window of consecutive frames and
-// at Unity's end-of-frame point (after all Update/animation/LateUpdate writers and
-// the frame's CPU skinning/rendering, before PresentAfterDraw):
-//   * exports every transform of the single active ChaControl (local TRS, world
-//     position/rotation, float32 localToWorldMatrix bits) and every skinned
-//     renderer's blendshape weights, flags and bounds;
-//   * uploads a 64-byte marker texture holding magic + nonce + Time.frameCount,
-//     so the GPU command stream of that same frame names its export;
-//   * calls the already-loaded official RenderDoc 1.46 in-app API TriggerCapture
-//     once (a Present-boundary whole-frame capture; no Start/End scope).
-// Static mesh data (vertices, normals, tangents, bind poses, bone weights and all
-// blendshape frames) of the requested meshes is exported once. Nothing is set on
-// the character, no render is issued, no card is touched.
+// On an explicit request file (HS2_FramePairProbe.request.ini beside this DLL) it runs
+// one window of consecutive frames. At every end-of-frame point (WaitForEndOfFrame:
+// after all Update/animation/LateUpdate writers, every camera render and the frame's
+// CPU skinning, before PresentAfterDraw) it
+//   * writes the frame's per-render records (RenderRecorder, static Camera callbacks),
+//   * exports every transform of the single active ChaControl and every skinned
+//     renderer's blendshape weights and bounds (v4 frame_*.json, unchanged layout),
+//   * exports the full render-scene state (SceneState v5, scene_*.json),
+//   * uploads the 64-byte v01 marker (magic + nonce + Time.frameCount, unchanged).
+// Window plan (index t = TriggerIndex; RenderDoc 1.46 starts a Present-boundary capture
+// at the Present after TriggerCapture; the first attempt fails with "Uncapped
+// Map()/Unmap()" because Unity keeps maps open across Present, and RenderDoc's
+// automatic retry (d3d11_device.cpp 2450..2516) captures the next frame):
+//   end of t   : TriggerCapture            -> attempt covers frame t+1 (fails)
+//   end of t+1 : raw texel export (native readback on the render thread, inside the
+//                failed attempt) = contents at the start of frame t+2;
+//                mode renderstyle: block until the export is written, then POST the
+//                bridge capture and block until its action is queued in ThreadingHelper
+//   frame t+2  : captured frame (retry); mode renderstyle: the bridge's 16 renders run
+//                in its ThreadingHelper.Update, bracketed by HS2PAIRBRIDGEv05 markers.
+// Static mesh data of the requested meshes is exported once. The probe sets nothing on
+// the character, issues no render and touches no card.
 using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
+using System.Linq;
 using System.Runtime.InteropServices;
 using System.Security.Cryptography;
 using System.Text;
@@ -27,19 +38,23 @@ using UnityEngine;
 
 namespace HS2Codex.FramePairProbe
 {
-    [BepInPlugin("codex.hs2.framepairprobe", "HS2 Frame Pair Probe", "1.0.0")]
+    [BepInPlugin("codex.hs2.framepairprobe", "HS2 Frame Pair Probe", "5.0.0")]
     public class FramePairProbe : BaseUnityPlugin
     {
         const string Magic = "HS2PAIRMARKERv01";
+        const string BridgeMagic = "HS2PAIRBRIDGEv05";
         const string Tail = "HS2PAIRMARKEREND";
+        public const int BridgeBegin = 1, BridgeEnd = 2;
         string _requestPath;
         bool _busy;
-        Texture2D _marker;
+        Texture2D _marker, _bridgeBegin, _bridgeEnd;
+        RenderDocApi _rd;
+        int _expectedBridgeRenders;
 
         void Awake()
         {
             _requestPath = Path.Combine(Path.GetDirectoryName(Info.Location), "HS2_FramePairProbe.request.ini");
-            Logger.LogInfo("FramePairProbe ready; request path " + _requestPath);
+            Logger.LogInfo("FramePairProbe 5.0.0 ready; request path " + _requestPath);
         }
 
         void Update()
@@ -48,7 +63,7 @@ namespace HS2Codex.FramePairProbe
             Dictionary<string, string> req;
             try
             {
-                req = ParseIni(File.ReadAllText(_requestPath));
+                req = ProbeRequest.ParseIni(File.ReadAllText(_requestPath));
                 File.Delete(_requestPath);
             }
             catch (Exception e) { Logger.LogError("Request unreadable: " + e); return; }
@@ -56,32 +71,19 @@ namespace HS2Codex.FramePairProbe
             StartCoroutine(Run(req));
         }
 
-        static Dictionary<string, string> ParseIni(string text)
+        IEnumerator Run(Dictionary<string, string> raw)
         {
-            var d = new Dictionary<string, string>();
-            foreach (var raw in text.Split('\n'))
-            {
-                var line = raw.Trim();
-                if (line.Length == 0 || line.StartsWith("#")) continue;
-                int i = line.IndexOf('=');
-                if (i <= 0) throw new FormatException("Bad request line: " + line);
-                d[line.Substring(0, i).Trim()] = line.Substring(i + 1).Trim();
-            }
-            return d;
-        }
-
-        IEnumerator Run(Dictionary<string, string> req)
-        {
-            string outDir = req["OutDir"];
             var log = new List<string>();
+            string outDir = null;
             Exception failure = null;
             IEnumerator inner = null;
             try
             {
-                if (Directory.Exists(outDir)) throw new IOException("Fresh OutDir required: " + outDir);
+                var req = ProbeRequest.Parse(raw, p => Directory.Exists(p) || File.Exists(p));
+                outDir = req.OutDir;
                 Directory.CreateDirectory(Path.Combine(outDir, "frames"));
-                File.WriteAllText(Path.Combine(outDir, "request.ini"), string.Join("\n", Dict(req)));
-                inner = Window(req, outDir, log);
+                File.WriteAllText(Path.Combine(outDir, "request.ini"), string.Join("\n", raw.Select(kv => kv.Key + "=" + kv.Value).ToArray()));
+                inner = Window(req, log);
             }
             catch (Exception e) { failure = e; }
             while (failure == null)
@@ -92,131 +94,244 @@ namespace HS2Codex.FramePairProbe
                 if (!more) break;
                 yield return inner.Current;
             }
-            if (failure != null)
+            if (failure != null) { log.Add("FAILURE " + failure); Logger.LogError(failure.ToString()); }
+            try
             {
-                log.Add("FAILURE " + failure);
-                Logger.LogError(failure.ToString());
+                if (outDir != null && Directory.Exists(outDir)) File.WriteAllText(Path.Combine(outDir, "probe_log.txt"), string.Join("\n", log.ToArray()));
+                else Logger.LogError("Probe log (no OutDir): " + string.Join(" | ", log.ToArray()));
             }
-            try { File.WriteAllText(Path.Combine(outDir, "probe_log.txt"), string.Join("\n", log.ToArray())); }
             catch (Exception e) { Logger.LogError(e.ToString()); }
+            foreach (var t in new[] { _marker, _bridgeBegin, _bridgeEnd }) if (t != null) UnityEngine.Object.Destroy(t);
+            _marker = _bridgeBegin = _bridgeEnd = null;
+            _rd = null;
             _busy = false;
         }
 
-        static IEnumerable<string> Dict(Dictionary<string, string> d)
+        static Texture2D MarkerTexture(string name)
         {
-            foreach (var kv in d) yield return kv.Key + "=" + kv.Value;
+            var t = new Texture2D(16, 1, TextureFormat.RGBA32, false, true);
+            t.hideFlags = HideFlags.HideAndDontSave;
+            t.name = name;
+            return t;
         }
 
-        IEnumerator Window(Dictionary<string, string> req, string outDir, List<string> log)
+        IEnumerator Window(ProbeRequest req, List<string> log)
         {
-            byte[] nonce = Hex(req["Nonce"]);
-            if (nonce.Length != 16) throw new ArgumentException("Nonce must be 32 hex digits");
-            int frames = int.Parse(req["Frames"], CultureInfo.InvariantCulture);
-            int trigger = int.Parse(req["TriggerIndex"], CultureInfo.InvariantCulture);
-            float poll = float.Parse(req["PollSeconds"], CultureInfo.InvariantCulture);
-            if (frames < 2 || frames > 120 || trigger < 0 || trigger >= frames) throw new ArgumentException("Bad window");
-            var meshNames = new HashSet<string>(req["Meshes"].Split(','));
-
+            string outDir = req.OutDir;
             var charas = UnityEngine.Object.FindObjectsOfType<ChaControl>();
             if (charas.Length != 1) throw new InvalidOperationException("Exactly one active ChaControl required, found " + charas.Length);
             var cha = charas[0];
+            var main = Camera.main;
+            if (main == null) throw new InvalidOperationException("Camera.main is null");
             var transforms = cha.transform.GetComponentsInChildren<Transform>(true);
             var smrs = cha.transform.GetComponentsInChildren<SkinnedMeshRenderer>(true);
             var index = new Dictionary<Transform, int>();
             for (int i = 0; i < transforms.Length; i++) index[transforms[i]] = i;
 
-            var rd = new RenderDocApi(req["ExpectedRenderDocSha256"], log);
-            string oldTemplate = rd.GetTemplate();
-            uint capturesBefore = rd.NumCaptures();
-            rd.SetTemplate(req["CapturePrefix"]);
-            log.Add("renderdoc " + rd.Describe() + " captures_before=" + capturesBefore + " old_template=" + oldTemplate);
+            // Everything that can refuse runs before TriggerCapture.
+            var native = UnityNative.Open(req.ExpectedUnityPlayerSha256);
+            native.ValidateWithScene();
+            foreach (var v in native.Validation) log.Add("native " + v);
+            if (!native.Valid) throw new InvalidOperationException("Native layout validation failed; no capture triggered");
+            var raw = new RawTextures(req.ReadbackDll, req.ExpectedReadbackSha256);
+            var manifest = ShaderManifest.Load(req.ShaderManifest);
+            log.Add("shader manifest " + manifest.Path + " sha256=" + manifest.Sha256 + " shaders=" + manifest.Properties.Count);
+            BridgeCapture bridge = req.Mode == "renderstyle" ? BridgeCapture.Prepare(req) : null;
+            _expectedBridgeRenders = 0;
+            _rd = new RenderDocApi(req.ExpectedRenderDocSha256, log);
+            string oldTemplate = _rd.GetTemplate();
+            uint capturesBefore = _rd.NumCaptures();
+            _rd.SetTemplate(req.CapturePrefix);
+            log.Add("renderdoc " + _rd.Describe() + " captures_before=" + capturesBefore + " old_template=" + oldTemplate);
 
-            WriteStatic(Path.Combine(outDir, "static.json"), cha, transforms, smrs, index, meshNames, outDir, req);
-            string manifestPath;
-            req.TryGetValue("ShaderManifest", out manifestPath);
-            var manifest = ShaderManifest.Load(manifestPath);
-            string sceneEvery;
-            bool scene = req.TryGetValue("SceneState", out sceneEvery) && sceneEvery == "1";
-
-            _marker = new Texture2D(16, 1, TextureFormat.RGBA32, false, true);
-            _marker.hideFlags = HideFlags.HideAndDontSave;
-            _marker.name = "HS2_FramePairProbe_marker";
+            var ctx = new ExportContext(native, manifest);
+            WriteStatic(Path.Combine(outDir, "static.json"), cha, transforms, smrs, index, new HashSet<string>(req.Meshes.Split(',')), outDir, native);
+            var recorder = new RenderRecorder(ctx, log);
+            _marker = MarkerTexture("HS2_FramePairProbe_marker");
+            _bridgeBegin = MarkerTexture("HS2_FramePairProbe_bridge_begin");
+            _bridgeEnd = MarkerTexture("HS2_FramePairProbe_bridge_end");
+            var markersWritten = new List<string>();
+            recorder.OnBridgeBegin = (fc, ord) => { WriteMarker(_bridgeBegin, BridgeMagic, req.Nonce, fc, BridgeBegin, ord); markersWritten.Add("bridge_begin frame " + fc + " before render ordinal " + ord); };
+            recorder.OnBridgeEnd = (fc, ord) => { WriteMarker(_bridgeEnd, BridgeMagic, req.Nonce, fc, BridgeEnd, ord); markersWritten.Add("bridge_end frame " + fc + " after render ordinal " + ord); };
             var eof = new WaitForEndOfFrame();
-            int triggeredFrame = -1;
-            for (int k = 0; k < frames; k++)
+            var frameCounts = new int[req.Frames];
+            var capturing = new List<string>();
+            int triggeredFrame = -1, rawFrame = -1;
+            bool triggered = false, aborted = false;
+            recorder.Attach();
+            try
             {
-                yield return eof;
-                int fc = Time.frameCount;
-                WriteFrame(Path.Combine(outDir, "frames", "frame_" + k.ToString("D3") + ".json"), k, transforms, smrs);
-                if (scene)
+                for (int k = 0; k < req.Frames && !aborted; k++)
                 {
-                    // Same end-of-frame point as the transform export; recorded per frame
-                    // because jitter/noise counters and effect history advance every frame.
-                    try { SceneState.Write(Path.Combine(outDir, "frames", "scene_" + k.ToString("D3") + ".json"), manifest, k); }
-                    catch (Exception e) { log.Add("scene state failed at index " + k + ": " + e); }
-                }
-                WriteMarker(nonce, fc, k);
-                string auditPath;
-                if (k == trigger && req.TryGetValue("RenderAuditDll", out auditPath) && auditPath.Length > 0)
-                {
-                    // Existing read-only helper: materials/SH/probes/effects plus raw native texture jobs.
-                    try
+                    yield return eof;
+                    int fc = Time.frameCount;
+                    frameCounts[k] = fc;
+                    if (triggered) capturing.Add("end of frame " + fc + " IsFrameCapturing=" + _rd.IsFrameCapturing() + " captures=" + _rd.NumCaptures());
+                    bool rawFailed = false;
+                    foreach (var action in req.ActionsAt(k))
                     {
-                        var asm = System.Reflection.Assembly.LoadFrom(auditPath);
-                        var type = asm.GetType("HS2_RenderAudit.RenderAudit", true);
-                        var result = type.GetMethod("Capture").Invoke(null, null);
-                        SceneState.WriteObject(Path.Combine(outDir, "render_audit_" + k.ToString("D3") + ".json"), result);
-                        log.Add("RenderAudit.Capture at frame " + fc);
+                        if (action == "bridge_post_until_queued" && rawFailed) { log.Add("bridge not posted: the raw export of this frame failed"); continue; }
+                        string error = Step(action, k, fc, req, ctx, recorder, raw, bridge, main, transforms, smrs, outDir, log);
+                        if (action.StartsWith("raw_export")) { rawFrame = fc; rawFailed = error != null; }
+                        if (action == "renderdoc_trigger" && error == null) { triggered = true; triggeredFrame = fc; }
+                        if (error == null) continue;
+                        log.Add("step " + action + " failed at index " + k + " frame " + fc + ": " + error);
+                        // Before the trigger any failure aborts: no capture is taken without its inputs.
+                        // After it, the remaining exports and the marker still run so the capture stays paired.
+                        if (!triggered) { aborted = true; log.Add("window aborted before TriggerCapture; nothing was captured"); break; }
                     }
-                    catch (Exception e) { log.Add("RenderAudit failed: " + e); }
-                }
-                if (k == trigger)
-                {
-                    rd.Trigger();
-                    triggeredFrame = fc;
-                    log.Add("TriggerCapture called at end of frame " + fc + " (index " + k + ")");
+                    recorder.Refresh();
                 }
             }
-            float deadline = Time.realtimeSinceStartup + poll;
-            uint after = rd.NumCaptures();
-            while (after == capturesBefore && Time.realtimeSinceStartup < deadline)
+            finally { recorder.Detach(); }
+
+            float deadline = Time.realtimeSinceStartup + req.PollSeconds;
+            uint after = _rd.NumCaptures();
+            while (triggered && after == capturesBefore && Time.realtimeSinceStartup < deadline) { yield return null; after = _rd.NumCaptures(); }
+            deadline = Time.realtimeSinceStartup + req.RawTimeoutSeconds;
+            while (raw.Jobs.Count > 0 && raw.Pending() > 0 && Time.realtimeSinceStartup < deadline) yield return null;
+            if (bridge != null)
             {
-                yield return null;
-                after = rd.NumCaptures();
+                deadline = Time.realtimeSinceStartup + req.BridgeTimeoutSeconds;
+                while (bridge.PostFrame >= 0 && !bridge.Done && Time.realtimeSinceStartup < deadline) yield return null;
             }
-            var sb = new StringBuilder();
-            sb.Append("{\"schema_version\":1,\"nonce\":\"").Append(req["Nonce"]).Append("\",\"triggered_frame\":").Append(triggeredFrame)
-              .Append(",\"captures_before\":").Append(capturesBefore).Append(",\"captures_after\":").Append(after)
-              .Append(",\"renderdoc\":").Append(Json(rd.Describe())).Append(",\"captures\":[");
+            _rd.SetTemplate(oldTemplate);
+
+            var w = new JsonOut();
+            w.Begin('{');
+            w.Key("schema_version"); w.Raw("5");
+            w.Key("probe"); w.Str("HS2_FramePairProbe 5.0.0");
+            w.Key("mode"); w.Str(req.Mode);
+            w.Key("nonce"); w.Str(req.NonceHex);
+            w.Key("frame_counts_by_index"); w.Begin('['); foreach (var f in frameCounts) w.Int(f); w.End(']');
+            w.Key("trigger_index"); w.Int(req.TriggerIndex);
+            w.Key("triggered_frame"); w.Int(triggeredFrame);
+            w.Key("raw_export_frame"); w.Int(rawFrame);
+            w.Key("expected_capture_index"); w.Int(req.ExpectedCaptureIndex);
+            w.Key("expected_capture_frame"); w.Int(req.ExpectedCaptureIndex < frameCounts.Length && frameCounts[req.ExpectedCaptureIndex] != 0 ? frameCounts[req.ExpectedCaptureIndex] : -1);
+            w.Key("expected_capture_rule"); w.Str("TriggerCapture at end of frame T -> attempt T+1 fails (Uncapped Map/Unmap) -> retry captures T+2; verify with the in-frame v01 marker");
+            w.Key("aborted_before_trigger"); w.Bool(aborted);
+            w.Key("captures_before"); w.Int(capturesBefore);
+            w.Key("captures_after"); w.Int(after);
+            w.Key("renderdoc"); w.Str(_rd.Describe());
+            w.Key("captures"); w.Begin('[');
             for (uint i = capturesBefore; i < after; i++)
             {
                 string path; ulong ts;
-                rd.GetCapture(i, out path, out ts);
-                if (i > capturesBefore) sb.Append(',');
-                sb.Append("{\"index\":").Append(i).Append(",\"path\":").Append(Json(path)).Append(",\"timestamp\":").Append(ts).Append('}');
+                _rd.GetCapture(i, out path, out ts);
+                w.Begin('{'); w.Key("index"); w.Int(i); w.Key("path"); w.Str(path); w.Key("timestamp"); w.Raw(ts.ToString(CultureInfo.InvariantCulture)); w.End('}');
             }
-            sb.Append("],\"end_frame\":").Append(Time.frameCount).Append('}');
-            rd.SetTemplate(oldTemplate);
-            File.WriteAllText(Path.Combine(outDir, "capture_receipt.json"), sb.ToString());
-            UnityEngine.Object.Destroy(_marker);
-            _marker = null;
+            w.End(']');
+            w.Key("is_frame_capturing_samples"); SceneState.Names(w, capturing);
+            w.Key("markers_written"); SceneState.Names(w, markersWritten);
+            w.Key("recorder_errors"); w.Int(recorder.Errors);
+            w.Key("bridge_expected_renders"); w.Int(_expectedBridgeRenders);
+            w.Key("bridge_expected_renders_rule"); w.Str("MakerRenderStyleService.Capture: 16 when an enabled CTAA_PC is on Camera.main, else 1; evaluated at the post");
+            w.Key("bridge_renders"); w.Begin('[');
+            foreach (var b in recorder.BridgeRenders)
+            { w.Begin('{'); w.Key("frame_count"); w.Int(b.FrameCount); w.Key("render_id"); w.Int(b.RenderId); w.Key("ordinal"); w.Int(b.Ordinal); w.Key("target"); w.Int(b.TargetId); w.End('}'); }
+            w.End(']');
+            w.Key("bridge"); if (bridge == null) w.Raw("null"); else bridge.Write(w);
+            w.Key("raw_textures_summary"); w.Begin('{');
+            w.Key("out_dir"); w.Str(req.RawOutDir); w.Key("jobs"); w.Int(raw.Jobs.Count);
+            foreach (var g in raw.Jobs.GroupBy(j => j.Status ?? "unknown")) { w.Key(g.Key); w.Int(g.Count()); }
+            w.End('}');
+            w.Key("end_frame"); w.Int(Time.frameCount);
+            w.End('}');
+            File.WriteAllText(Path.Combine(outDir, "capture_receipt.json"), w.ToString());
+            var rw = new JsonOut(); raw.Write(rw);
+            File.WriteAllText(Path.Combine(outDir, "raw_textures.json"), rw.ToString());
             log.Add("done; captures " + capturesBefore + " -> " + after);
         }
 
-        void WriteMarker(byte[] nonce, int frameCount, int k)
+        // One end-of-frame action; returns null on success or the failure text.
+        string Step(string action, int k, int fc, ProbeRequest req, ExportContext ctx, RenderRecorder recorder, RawTextures raw, BridgeCapture bridge,
+                    Camera main, Transform[] transforms, SkinnedMeshRenderer[] smrs, string outDir, List<string> log)
+        {
+            try
+            {
+                switch (action)
+                {
+                    case "export_frame":
+                        recorder.Flush(Path.Combine(outDir, "frames", "renders_" + k.ToString("D3") + ".json"), k);
+                        WriteFrame(Path.Combine(outDir, "frames", "frame_" + k.ToString("D3") + ".json"), k, transforms, smrs);
+                        break;
+                    case "export_scene":
+                        SceneState.Write(Path.Combine(outDir, "frames", "scene_" + k.ToString("D3") + ".json"), ctx, k);
+                        break;
+                    case "write_marker":
+                        WriteMarker(_marker, Magic, req.Nonce, fc, k, Time.renderedFrameCount);
+                        break;
+                    case "raw_export":
+                    case "raw_export_blocking":
+                        raw.Queue(RawSelection(ctx), req.RawOutDir, req.RawMinFreeBytes, ctx.Native);
+                        log.Add("raw export queued at end of frame " + fc + ": " + raw.Jobs.Count + " textures; " + raw.FreeSpaceCheck);
+                        if (action == "raw_export_blocking")
+                        {
+                            if (!raw.WaitAll(req.RawTimeoutSeconds)) return "raw export not written within " + req.RawTimeoutSeconds + " s; bridge not posted";
+                            log.Add("raw export written before the bridge post");
+                        }
+                        break;
+                    case "bridge_post_until_queued":
+                        var preexisting = new HashSet<int>(Resources.FindObjectsOfTypeAll<RenderTexture>().Select(t => t.GetInstanceID()));
+                        _expectedBridgeRenders = BridgeCapture.ExpectedRenders(main);
+                        // Armed before the post: the renders cannot start before the next frame's Update anyway.
+                        recorder.ArmBridge(fc + 1, main, bridge.Body.Width, bridge.Body.Height, _expectedBridgeRenders, preexisting);
+                        if (!bridge.PostAndWaitQueued(10f)) return "bridge action was not queued";
+                        log.Add("bridge posted at end of frame " + fc + "; its renders are expected in frame " + (fc + 1));
+                        break;
+                    case "renderdoc_trigger":
+                        _rd.Trigger();
+                        log.Add("TriggerCapture called at end of frame " + fc + " (index " + k + ")");
+                        break;
+                    default: throw new InvalidOperationException("Unknown action " + action);
+                }
+                return null;
+            }
+            catch (Exception e) { return e.ToString(); }
+        }
+
+        // Every texture referenced by the scene export (materials, effect components,
+        // probes, RenderSettings, the character's composed textures), every texture whose
+        // native TextureID is bound in a material sheet or in the global sheet at any
+        // recorded callback, and every RenderTexture object.
+        static Dictionary<Texture, HashSet<string>> RawSelection(ExportContext ctx)
+        {
+            var sel = new Dictionary<Texture, HashSet<string>>();
+            Action<Texture, string> add = (t, why) =>
+            {
+                if (t == null) return;
+                HashSet<string> set;
+                if (!sel.TryGetValue(t, out set)) sel[t] = set = new HashSet<string>();
+                set.Add(why);
+            };
+            foreach (var t in ctx.Textures.Values) add(t, "scene_export_reference");
+            foreach (var t in Resources.FindObjectsOfTypeAll<RenderTexture>()) add(t, "render_texture_object");
+            foreach (var t in Resources.FindObjectsOfTypeAll<Texture>())
+            {
+                int id;
+                try { id = ctx.Native.TextureId(t); } catch { continue; }
+                if (id == 0) continue;
+                if (ctx.SheetTextureIds.Contains(id)) add(t, "material_sheet_texture_id");
+                if (ctx.GlobalTextureIds.Contains(id)) add(t, "global_sheet_texture_id");
+            }
+            return sel;
+        }
+
+        static void WriteMarker(Texture2D tex, string magic, byte[] nonce, int frameCount, int word36, int word40)
         {
             var bytes = new byte[64];
-            Encoding.ASCII.GetBytes(Magic, 0, 16, bytes, 0);
+            Encoding.ASCII.GetBytes(magic, 0, 16, bytes, 0);
             Buffer.BlockCopy(nonce, 0, bytes, 16, 16);
             Buffer.BlockCopy(BitConverter.GetBytes(frameCount), 0, bytes, 32, 4);
-            Buffer.BlockCopy(BitConverter.GetBytes(k), 0, bytes, 36, 4);
-            Buffer.BlockCopy(BitConverter.GetBytes(Time.renderedFrameCount), 0, bytes, 40, 4);
+            Buffer.BlockCopy(BitConverter.GetBytes(word36), 0, bytes, 36, 4);
+            Buffer.BlockCopy(BitConverter.GetBytes(word40), 0, bytes, 40, 4);
             Buffer.BlockCopy(BitConverter.GetBytes(~frameCount), 0, bytes, 44, 4);
             Encoding.ASCII.GetBytes(Tail, 0, 16, bytes, 48);
             var px = new Color32[16];
             for (int i = 0; i < 16; i++) px[i] = new Color32(bytes[4 * i], bytes[4 * i + 1], bytes[4 * i + 2], bytes[4 * i + 3]);
-            _marker.SetPixels32(px);
-            _marker.Apply(false, false);
+            tex.SetPixels32(px);
+            tex.Apply(false, false);
         }
 
         static void WriteFrame(string path, int k, Transform[] transforms, SkinnedMeshRenderer[] smrs)
@@ -262,10 +377,16 @@ namespace HS2Codex.FramePairProbe
         }
 
         static void WriteStatic(string path, ChaControl cha, Transform[] transforms, SkinnedMeshRenderer[] smrs,
-            Dictionary<Transform, int> index, HashSet<string> meshNames, string outDir, Dictionary<string, string> req)
+            Dictionary<Transform, int> index, HashSet<string> meshNames, string outDir, UnityNative native)
         {
             var sb = new StringBuilder(1 << 20);
-            sb.Append("{\"schema_version\":1,\"unity_version\":").Append(Json(Application.unityVersion))
+            var nw = new JsonOut();
+            nw.Begin('{');
+            nw.Key("identity"); native.WriteIdentity(nw);
+            nw.Key("property_names"); nw.Begin('['); foreach (var n in native.PropertyNames) nw.Str(n); nw.End(']');
+            nw.Key("keywords"); nw.Begin('{'); foreach (var kv in native.KeywordNames) { nw.Key(kv.Key.ToString(CultureInfo.InvariantCulture)); nw.Str(kv.Value); } nw.End('}');
+            nw.End('}');
+            sb.Append("{\"schema_version\":5,\"native_tables\":").Append(nw.ToString()).Append(",\"unity_version\":").Append(Json(Application.unityVersion))
               .Append(",\"frame_count\":").Append(Time.frameCount).Append(",\"chara_transform_id\":").Append(cha.transform.GetInstanceID())
               .Append(",\"chara_name\":").Append(Json(cha.name)).Append(",\"quality_blend_weights\":").Append(Json(QualitySettings.blendWeights.ToString()))
               .Append(",\"transforms\":[");
@@ -395,7 +516,8 @@ namespace HS2Codex.FramePairProbe
     }
 
     // Official in-app API of the renderdoc.dll already loaded by the audited early
-    // bootstrap. Never loads a library; table offsets per renderdoc_app.h v1.6.0.
+    // bootstrap. Never loads a library; table offsets per renderdoc_app.h v1.6.0
+    // (0 GetAPIVersion .. 13 GetNumCaptures, 14 GetCapture, 15 TriggerCapture, 20 IsFrameCapturing).
     internal sealed class RenderDocApi
     {
         [DllImport("kernel32.dll", CharSet = CharSet.Unicode)] static extern IntPtr GetModuleHandleW(string name);
@@ -408,10 +530,11 @@ namespace HS2Codex.FramePairProbe
         [UnmanagedFunctionPointer(CallingConvention.Cdecl)] delegate uint NumFn();
         [UnmanagedFunctionPointer(CallingConvention.Cdecl)] delegate uint GetCaptureFn(uint idx, byte[] name, ref uint len, ref ulong ts);
         [UnmanagedFunctionPointer(CallingConvention.Cdecl)] delegate void TriggerFn();
+        [UnmanagedFunctionPointer(CallingConvention.Cdecl)] delegate uint IsCapturingFn();
 
         readonly string _path, _sha;
         readonly int _major, _minor, _patch;
-        readonly SetTemplateFn _set; readonly GetTemplateFn _get; readonly NumFn _num; readonly GetCaptureFn _cap; readonly TriggerFn _trigger;
+        readonly SetTemplateFn _set; readonly GetTemplateFn _get; readonly NumFn _num; readonly GetCaptureFn _cap; readonly TriggerFn _trigger; readonly IsCapturingFn _capturing;
 
         public RenderDocApi(string expectedSha, List<string> log)
         {
@@ -440,6 +563,7 @@ namespace HS2Codex.FramePairProbe
             _num = (NumFn)fn(13, typeof(NumFn));
             _cap = (GetCaptureFn)fn(14, typeof(GetCaptureFn));
             _trigger = (TriggerFn)fn(15, typeof(TriggerFn));
+            _capturing = (IsCapturingFn)fn(20, typeof(IsCapturingFn));   // IsFrameCapturing (diagnostic only: core counter, see present_retry_lifecycle_failure.md)
             log.Add("renderdoc module " + _path);
         }
 
@@ -448,6 +572,7 @@ namespace HS2Codex.FramePairProbe
         public void SetTemplate(string t) { _set(t); }
         public uint NumCaptures() { return _num(); }
         public void Trigger() { _trigger(); }
+        public uint IsFrameCapturing() { return _capturing(); }
 
         public void GetCapture(uint idx, out string path, out ulong ts)
         {
