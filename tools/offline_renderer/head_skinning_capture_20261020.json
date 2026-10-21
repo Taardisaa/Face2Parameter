@@ -1,0 +1,1409 @@
+{
+ "schema_version": 1,
+ "date": "2026-10-20",
+ "scope": "Static head-skinning data path of the existing unaccepted retry RDC; plus three official drawinputs replays. No game, capture, injection, card change or candidate render.",
+ "rdc_sha256": "eb5743bce38bdaa7a4b5d7e96ca09d3d7cfd88eac306510667afd0f2245b6403",
+ "xml_sha256": "def868db2e9e51f6faa4022477d096176972c09ddc96487f5e95e070f9251fac",
+ "zip_sha256": "494b7e7470b5298930d288b55f52fe5ceb89e8f8da8ab9ad26e40484b2e55fc1",
+ "tools": {
+  "analysis": "tools/offline_renderer/analyze_head_skinning.py",
+  "module": "src/render/gpu_skin_inputs.py",
+  "evidence_json_sha256": "3002b4b8403a1102bf5945138fabd6a9922085f62810575410dd43929b37788f",
+  "replay_exe_sha256": "354c4868629a4266ce3cd2e100eeddf97db35e486f608a0909c02285e952cbec",
+  "renderdoc_dll_sha256": "809da38e3867d9fd09cc5c30dd5310500dee75e999166d7a14ad1ef6e9eca65d"
+ },
+ "compute_shaders": [
+  {
+   "debug_name": "MultiScaleVORender.MultiScaleVORender_interleaved",
+   "bytecode_sha256": "c126ddd0543c9b9ec1ee7ab5f206ed64c887dd0f9c65d0f8f8600341a775b170",
+   "dispatch_count": 68,
+   "buffer_resources": []
+  },
+  {
+   "debug_name": "Lut3DBaker.KGenLut3D_AcesTonemap",
+   "bytecode_sha256": "1687501a162288aab656cead4adbe6be53b2553b10256588a8408d0fce1ddb0d",
+   "dispatch_count": 17,
+   "buffer_resources": []
+  },
+  {
+   "debug_name": "MultiScaleVODownsample1.MultiScaleVODownsample1",
+   "bytecode_sha256": "5264a8b71b7e1aaf668f701781e272e358e3273d6b97d3eb6ec81f361c974c60",
+   "dispatch_count": 17,
+   "buffer_resources": []
+  },
+  {
+   "debug_name": "MultiScaleVOUpsample.MultiScaleVOUpSample",
+   "bytecode_sha256": "5a6bfa4a419f203c72106847fa14e5e23b3a78384e94ef9da3a8321f377b94a6",
+   "dispatch_count": 17,
+   "buffer_resources": []
+  },
+  {
+   "debug_name": "MultiScaleVOUpsample.MultiScaleVOUpSample_blendout",
+   "bytecode_sha256": "7e394d9a580bf0b1a7efd1bff8c53f28bd2a1d755325979331bac58c6e96a0cd",
+   "dispatch_count": 51,
+   "buffer_resources": []
+  },
+  {
+   "debug_name": "MultiScaleVODownsample2.MultiScaleVODownsample2",
+   "bytecode_sha256": "86506b81d1e98e3cc6bdf451a7597cb04c503a13e9384bcfdfe6b15f83528c04",
+   "dispatch_count": 17,
+   "buffer_resources": []
+  }
+ ],
+ "total_dispatches": 187,
+ "buffer_uavs": 0,
+ "stream_out_used": false,
+ "beginning_of_capture_chunk": 2343,
+ "target_readback_chunk": 37429,
+ "in_frame_skin_unmap_chunks": [
+  37541,
+  37547,
+  37548,
+  37549,
+  37551,
+  37552,
+  37553,
+  37554
+ ],
+ "head_draws": 1003,
+ "head_draws_before_target": 944,
+ "poses": {
+  "pose0": [
+   [
+    0.9998153448104858,
+    0.018652573227882385,
+    0.0046165394596755505,
+    0.10195086151361465
+   ],
+   [
+    -0.018553756177425385,
+    0.9996157288551331,
+    -0.020594850182533264,
+    14.449875831604004
+   ],
+   [
+    -0.0049989125691354275,
+    0.020505394786596298,
+    0.9997772574424744,
+    -0.061223167926073074
+   ],
+   [
+    0.0,
+    0.0,
+    0.0,
+    1.0
+   ]
+  ],
+  "pose1": [
+   [
+    0.9997536540031433,
+    0.007574889808893204,
+    0.020863400772213936,
+    0.11105901002883911
+   ],
+   [
+    -0.0075446004047989845,
+    0.9999703764915466,
+    -0.001530139590613544,
+    14.443648338317871
+   ],
+   [
+    -0.020874371752142906,
+    0.0013723565498366952,
+    0.9997811913490295,
+    -0.11970194429159164
+   ],
+   [
+    0.0,
+    0.0,
+    0.0,
+    1.0
+   ]
+  ]
+ },
+ "upload_point_summary": [
+  {
+   "role": "motion_vector_previous_matrix",
+   "write_kind": "unmap",
+   "pose": "pose1",
+   "world_to_object": "",
+   "count": 102
+  },
+  {
+   "role": "per_draw_object_matrices",
+   "write_kind": "unmap",
+   "pose": "pose0",
+   "world_to_object": "identity",
+   "count": 32
+  },
+  {
+   "role": "per_draw_object_matrices",
+   "write_kind": "unmap",
+   "pose": "pose0",
+   "world_to_object": "inverse:pose0",
+   "count": 304
+  },
+  {
+   "role": "per_draw_object_matrices",
+   "write_kind": "unmap",
+   "pose": "pose0",
+   "world_to_object": "inverse:pose1",
+   "count": 1
+  },
+  {
+   "role": "per_draw_object_matrices",
+   "write_kind": "unmap",
+   "pose": "pose1",
+   "world_to_object": "identity",
+   "count": 2
+  },
+  {
+   "role": "per_draw_object_matrices",
+   "write_kind": "unmap",
+   "pose": "pose1",
+   "world_to_object": "inverse:pose0",
+   "count": 1
+  },
+  {
+   "role": "per_draw_object_matrices",
+   "write_kind": "unmap",
+   "pose": "pose1",
+   "world_to_object": "inverse:pose1",
+   "count": 19
+  },
+  {
+   "role": "skinned_vertices_current",
+   "write_kind": "capture_start_contents",
+   "pose": "pose0",
+   "world_to_object": "",
+   "count": 8
+  },
+  {
+   "role": "skinned_vertices_current",
+   "write_kind": "unmap",
+   "pose": "pose1",
+   "world_to_object": "",
+   "count": 8
+  },
+  {
+   "role": "skinned_vertices_previous",
+   "write_kind": "capture_start_contents",
+   "pose": "pose1",
+   "world_to_object": "",
+   "count": 6
+  }
+ ],
+ "w2o_bit_exact_vs_numpy_inverse": {
+  "checked": 325,
+  "bit_exact": 0
+ },
+ "export_root": {
+  "export_root_bone": "cf_J_FaceUp_ty",
+  "export_root_noscale": [
+   [
+    0.9996917247772217,
+    0.0009412666549906135,
+    0.024809977039694786,
+    0.10977842658758163
+   ],
+   [
+    -0.0016227018786594272,
+    0.999621570110321,
+    0.027460385113954544,
+    14.443612098693848
+   ],
+   [
+    -0.024774739518761635,
+    -0.027492180466651917,
+    0.9993149638175964,
+    -0.17543716728687286
+   ],
+   [
+    0.0,
+    0.0,
+    0.0,
+    1.0
+   ]
+  ],
+  "unity_rotation_vs_normalized_world_columns_max": 2.5253828097064265e-08,
+  "capture_poses": {
+   "pose0": [
+    [
+     0.9998153448104858,
+     0.018652573227882385,
+     0.0046165394596755505,
+     0.10195086151361465
+    ],
+    [
+     -0.018553756177425385,
+     0.9996157288551331,
+     -0.020594850182533264,
+     14.449875831604004
+    ],
+    [
+     -0.0049989125691354275,
+     0.020505394786596298,
+     0.9997772574424744,
+     -0.061223167926073074
+    ],
+    [
+     0.0,
+     0.0,
+     0.0,
+     1.0
+    ]
+   ],
+   "pose1": [
+    [
+     0.9997536540031433,
+     0.007574889808893204,
+     0.020863400772213936,
+     0.11105901002883911
+    ],
+    [
+     -0.0075446004047989845,
+     0.9999703764915466,
+     -0.001530139590613544,
+     14.443648338317871
+    ],
+    [
+     -0.020874371752142906,
+     0.0013723565498366952,
+     0.9997811913490295,
+     -0.11970194429159164
+    ],
+    [
+     0.0,
+     0.0,
+     0.0,
+     1.0
+    ]
+   ]
+  },
+  "export_root_vs_capture_pose_max_abs": {
+   "pose0": 0.11421399936079979,
+   "pose1": 0.05573522299528122
+  }
+ },
+ "surfaces": [
+  {
+   "mesh_name": "o_eyebase_L",
+   "renderer_path": "/CharaCustom[0]/CustomControl[0]/chaF_001[20]/BodyTop[0]/p_cf_anim[0]/cf_J_Root[0]/cf_N_height[0]/cf_J_Hips[0]/cf_J_Spine01[1]/cf_J_Spine02[1]/cf_J_Spine03[1]/cf_J_Neck[1]/cf_J_Head[0]/cf_J_Head_s[0]/p_cf_head_bone[7]/ct_head[1]/n_head_cf2_c1[0]/o_eyebase_L[0]",
+   "status": "bound",
+   "skinned_vb": 29875,
+   "static_streams": [
+    30206,
+    30207
+   ],
+   "index_buffer": 30050,
+   "static_evidence": {
+    "index_count": 813,
+    "source_index_count": 813,
+    "index_buffer_equal": true,
+    "uv0_equal": true,
+    "skin_stream_stride": 32,
+    "skin_stream_weights_equal": true,
+    "skin_stream_indices_equal_where_weighted": true,
+    "skin_stream_referenced_by_input_layout": false
+   },
+   "vertex_uploads": [
+    {
+     "role": "skinned_vertices_previous",
+     "resource_id": 29862,
+     "write": "capture_start_contents",
+     "chunk_index": 1307,
+     "buffer_ordinal": 0,
+     "blob": 1637,
+     "bytes": 5920,
+     "pose": "pose1",
+     "head_draws": 17,
+     "head_draws_before_target": 16
+    },
+    {
+     "role": "skinned_vertices_current",
+     "resource_id": 29875,
+     "write": "capture_start_contents",
+     "chunk_index": 1329,
+     "buffer_ordinal": 0,
+     "blob": 1648,
+     "bytes": 5920,
+     "pose": "pose0",
+     "head_draws": 160,
+     "head_draws_before_target": 160
+    },
+    {
+     "role": "skinned_vertices_current",
+     "resource_id": 29875,
+     "write": "unmap",
+     "chunk_index": 37551,
+     "buffer_ordinal": 0,
+     "blob": 5547,
+     "bytes": 5920,
+     "pose": "pose1",
+     "head_draws": 10,
+     "head_draws_before_target": 0
+    }
+   ],
+   "cb_writes": {
+    "per_draw_object_matrices|ConstantBuffer-179-176|pose0|inverse:pose1": 1,
+    "per_draw_object_matrices|ConstantBuffer-179-176|pose0|inverse:pose0": 143,
+    "per_draw_object_matrices|ConstantBuffer-179-176|pose0|identity": 16,
+    "motion_vector_previous_matrix|ConstantBuffer-186-240|pose1|": 17,
+    "per_draw_object_matrices|ConstantBuffer-179-176|pose1|inverse:pose0": 1,
+    "per_draw_object_matrices|ConstantBuffer-179-176|pose1|inverse:pose1": 8,
+    "per_draw_object_matrices|ConstantBuffer-179-176|pose1|identity": 1
+   },
+   "baseline_vs_export_frame13378": {
+    "skinned_vertices_previous@1307": {
+     "bit_exact": false,
+     "bit_exact_vertices": 0,
+     "position_max": 0.0019180814351249607,
+     "vertices_position_gt_1e-5": 147,
+     "normal_max_abs": 0.012310728430747986,
+     "tangent_xyz_max_abs": 0.012326352298259735,
+     "tangent_w_equal": true,
+     "top_bones": [
+      {
+       "bone": "cf_J_eye_rs_L",
+       "vertices_over_threshold": 147
+      },
+      {
+       "bone": "cf_J_eye_rs_R",
+       "vertices_over_threshold": 86
+      }
+     ]
+    },
+    "skinned_vertices_current@1329": {
+     "bit_exact": false,
+     "bit_exact_vertices": 0,
+     "position_max": 4.931227711386657e-06,
+     "vertices_position_gt_1e-5": 0,
+     "normal_max_abs": 3.0182301998138428e-05,
+     "tangent_xyz_max_abs": 2.8330832719802856e-05,
+     "tangent_w_equal": true,
+     "top_bones": []
+    },
+    "skinned_vertices_current@37551": {
+     "bit_exact": false,
+     "bit_exact_vertices": 0,
+     "position_max": 0.0019180814351249607,
+     "vertices_position_gt_1e-5": 147,
+     "normal_max_abs": 0.012310728430747986,
+     "tangent_xyz_max_abs": 0.012326352298259735,
+     "tangent_w_equal": true,
+     "top_bones": [
+      {
+       "bone": "cf_J_eye_rs_L",
+       "vertices_over_threshold": 147
+      },
+      {
+       "bone": "cf_J_eye_rs_R",
+       "vertices_over_threshold": 86
+      }
+     ]
+    }
+   },
+   "internal_consistency": {
+    "mesh_name": "o_eyebase_L",
+    "previous_start_vs_in_frame_skin": {
+     "bytes": 5920,
+     "bit_exact": true,
+     "float_words": 1480,
+     "equal_words": 1480,
+     "max_abs_diff": 0.0
+    },
+    "current_start_vs_in_frame_skin": {
+     "bytes": 5920,
+     "bit_exact": false,
+     "float_words": 1480,
+     "equal_words": 149,
+     "max_abs_diff": 0.012354683130979538
+    }
+   }
+  },
+  {
+   "mesh_name": "o_eyebase_R",
+   "renderer_path": "/CharaCustom[0]/CustomControl[0]/chaF_001[20]/BodyTop[0]/p_cf_anim[0]/cf_J_Root[0]/cf_N_height[0]/cf_J_Hips[0]/cf_J_Spine01[1]/cf_J_Spine02[1]/cf_J_Spine03[1]/cf_J_Neck[1]/cf_J_Head[0]/cf_J_Head_s[0]/p_cf_head_bone[7]/ct_head[1]/n_head_cf2_c1[0]/o_eyebase_R[1]",
+   "status": "bound",
+   "skinned_vb": 29870,
+   "static_streams": [
+    30209,
+    30210
+   ],
+   "index_buffer": 30054,
+   "static_evidence": {
+    "index_count": 813,
+    "source_index_count": 813,
+    "index_buffer_equal": true,
+    "uv0_equal": true,
+    "skin_stream_stride": 32,
+    "skin_stream_weights_equal": true,
+    "skin_stream_indices_equal_where_weighted": true,
+    "skin_stream_referenced_by_input_layout": false
+   },
+   "vertex_uploads": [
+    {
+     "role": "skinned_vertices_previous",
+     "resource_id": 29863,
+     "write": "capture_start_contents",
+     "chunk_index": 1309,
+     "buffer_ordinal": 0,
+     "blob": 1638,
+     "bytes": 5920,
+     "pose": "pose1",
+     "head_draws": 17,
+     "head_draws_before_target": 16
+    },
+    {
+     "role": "skinned_vertices_current",
+     "resource_id": 29870,
+     "write": "capture_start_contents",
+     "chunk_index": 1319,
+     "buffer_ordinal": 0,
+     "blob": 1643,
+     "bytes": 5920,
+     "pose": "pose0",
+     "head_draws": 160,
+     "head_draws_before_target": 160
+    },
+    {
+     "role": "skinned_vertices_current",
+     "resource_id": 29870,
+     "write": "unmap",
+     "chunk_index": 37552,
+     "buffer_ordinal": 0,
+     "blob": 5548,
+     "bytes": 5920,
+     "pose": "pose1",
+     "head_draws": 10,
+     "head_draws_before_target": 0
+    }
+   ],
+   "cb_writes": {
+    "per_draw_object_matrices|ConstantBuffer-179-176|pose0|inverse:pose1": 1,
+    "per_draw_object_matrices|ConstantBuffer-179-176|pose0|inverse:pose0": 143,
+    "per_draw_object_matrices|ConstantBuffer-179-176|pose0|identity": 16,
+    "motion_vector_previous_matrix|ConstantBuffer-186-240|pose1|": 17,
+    "per_draw_object_matrices|ConstantBuffer-179-176|pose1|inverse:pose0": 1,
+    "per_draw_object_matrices|ConstantBuffer-179-176|pose1|inverse:pose1": 8,
+    "per_draw_object_matrices|ConstantBuffer-179-176|pose1|identity": 1
+   },
+   "baseline_vs_export_frame13378": {
+    "skinned_vertices_previous@1309": {
+     "bit_exact": false,
+     "bit_exact_vertices": 0,
+     "position_max": 0.0019160592605602707,
+     "vertices_position_gt_1e-5": 147,
+     "normal_max_abs": 0.012287907302379608,
+     "tangent_xyz_max_abs": 0.012314755469560623,
+     "tangent_w_equal": true,
+     "top_bones": [
+      {
+       "bone": "cf_J_eye_rs_R",
+       "vertices_over_threshold": 147
+      },
+      {
+       "bone": "cf_J_eye_rs_L",
+       "vertices_over_threshold": 86
+      }
+     ]
+    },
+    "skinned_vertices_current@1319": {
+     "bit_exact": false,
+     "bit_exact_vertices": 0,
+     "position_max": 4.852001842965478e-06,
+     "vertices_position_gt_1e-5": 0,
+     "normal_max_abs": 3.030523657798767e-05,
+     "tangent_xyz_max_abs": 2.8438866138458252e-05,
+     "tangent_w_equal": true,
+     "top_bones": []
+    },
+    "skinned_vertices_current@37552": {
+     "bit_exact": false,
+     "bit_exact_vertices": 0,
+     "position_max": 0.0019160592605602707,
+     "vertices_position_gt_1e-5": 147,
+     "normal_max_abs": 0.012287907302379608,
+     "tangent_xyz_max_abs": 0.012314755469560623,
+     "tangent_w_equal": true,
+     "top_bones": [
+      {
+       "bone": "cf_J_eye_rs_R",
+       "vertices_over_threshold": 147
+      },
+      {
+       "bone": "cf_J_eye_rs_L",
+       "vertices_over_threshold": 86
+      }
+     ]
+    }
+   },
+   "internal_consistency": {
+    "mesh_name": "o_eyebase_R",
+    "previous_start_vs_in_frame_skin": {
+     "bytes": 5920,
+     "bit_exact": true,
+     "float_words": 1480,
+     "equal_words": 1480,
+     "max_abs_diff": 0.0
+    },
+    "current_start_vs_in_frame_skin": {
+     "bytes": 5920,
+     "bit_exact": false,
+     "float_words": 1480,
+     "equal_words": 149,
+     "max_abs_diff": 0.012343194335699081
+    }
+   }
+  },
+  {
+   "mesh_name": "o_eyelashes",
+   "renderer_path": "/CharaCustom[0]/CustomControl[0]/chaF_001[20]/BodyTop[0]/p_cf_anim[0]/cf_J_Root[0]/cf_N_height[0]/cf_J_Hips[0]/cf_J_Spine01[1]/cf_J_Spine02[1]/cf_J_Spine03[1]/cf_J_Neck[1]/cf_J_Head[0]/cf_J_Head_s[0]/p_cf_head_bone[7]/ct_head[1]/n_head_cf2_c1[0]/o_eyelashes[2]",
+   "status": "bound",
+   "skinned_vb": 29869,
+   "static_streams": [
+    30176,
+    30177
+   ],
+   "index_buffer": 30058,
+   "static_evidence": {
+    "index_count": 1740,
+    "source_index_count": 1740,
+    "index_buffer_equal": true,
+    "uv0_equal": true,
+    "skin_stream_stride": 32,
+    "skin_stream_weights_equal": true,
+    "skin_stream_indices_equal_where_weighted": true,
+    "skin_stream_referenced_by_input_layout": false
+   },
+   "vertex_uploads": [
+    {
+     "role": "skinned_vertices_current",
+     "resource_id": 29869,
+     "write": "capture_start_contents",
+     "chunk_index": 1317,
+     "buffer_ordinal": 0,
+     "blob": 1642,
+     "bytes": 15920,
+     "pose": "pose0",
+     "head_draws": 48,
+     "head_draws_before_target": 48
+    },
+    {
+     "role": "skinned_vertices_current",
+     "resource_id": 29869,
+     "write": "unmap",
+     "chunk_index": 37541,
+     "buffer_ordinal": 0,
+     "blob": 5537,
+     "bytes": 15920,
+     "pose": "pose1",
+     "head_draws": 3,
+     "head_draws_before_target": 0
+    }
+   ],
+   "cb_writes": {
+    "per_draw_object_matrices|ConstantBuffer-179-176|pose0|inverse:pose0": 48,
+    "per_draw_object_matrices|ConstantBuffer-179-176|pose1|inverse:pose1": 3
+   },
+   "baseline_vs_export_frame13378": {
+    "skinned_vertices_current@1317": {
+     "bit_exact": false,
+     "bit_exact_vertices": 0,
+     "position_max": 3.6214727100859085e-06,
+     "vertices_position_gt_1e-5": 0,
+     "normal_max_abs": 2.980232238769531e-07,
+     "tangent_xyz_max_abs": 2.980232238769531e-07,
+     "tangent_w_equal": true,
+     "top_bones": []
+    },
+    "skinned_vertices_current@37541": {
+     "bit_exact": false,
+     "bit_exact_vertices": 0,
+     "position_max": 2.7424614597147324e-06,
+     "vertices_position_gt_1e-5": 0,
+     "normal_max_abs": 2.384185791015625e-07,
+     "tangent_xyz_max_abs": 2.384185791015625e-07,
+     "tangent_w_equal": true,
+     "top_bones": []
+    }
+   },
+   "counterfactual_without_blendshapes_position_max": 0.0009729520140623994,
+   "internal_consistency": {
+    "mesh_name": "o_eyelashes",
+    "current_start_vs_in_frame_skin": {
+     "bytes": 15920,
+     "bit_exact": false,
+     "float_words": 3980,
+     "equal_words": 1186,
+     "max_abs_diff": 1.519918441772461e-06
+    }
+   }
+  },
+  {
+   "mesh_name": "o_eyeshadow",
+   "renderer_path": "/CharaCustom[0]/CustomControl[0]/chaF_001[20]/BodyTop[0]/p_cf_anim[0]/cf_J_Root[0]/cf_N_height[0]/cf_J_Hips[0]/cf_J_Spine01[1]/cf_J_Spine02[1]/cf_J_Spine03[1]/cf_J_Neck[1]/cf_J_Head[0]/cf_J_Head_s[0]/p_cf_head_bone[7]/ct_head[1]/n_head_cf2_c1[0]/o_eyeshadow[3]",
+   "status": "bound",
+   "skinned_vb": 29873,
+   "static_streams": [
+    30212,
+    30213
+   ],
+   "index_buffer": 30062,
+   "static_evidence": {
+    "index_count": 1626,
+    "source_index_count": 1626,
+    "index_buffer_equal": true,
+    "uv0_equal": true,
+    "skin_stream_stride": 32,
+    "skin_stream_weights_equal": true,
+    "skin_stream_indices_equal_where_weighted": true,
+    "skin_stream_referenced_by_input_layout": false
+   },
+   "vertex_uploads": [
+    {
+     "role": "skinned_vertices_previous",
+     "resource_id": 29864,
+     "write": "capture_start_contents",
+     "chunk_index": 1311,
+     "buffer_ordinal": 0,
+     "blob": 1639,
+     "bytes": 11840,
+     "pose": "pose1",
+     "head_draws": 17,
+     "head_draws_before_target": 16
+    },
+    {
+     "role": "skinned_vertices_current",
+     "resource_id": 29873,
+     "write": "capture_start_contents",
+     "chunk_index": 1325,
+     "buffer_ordinal": 0,
+     "blob": 1646,
+     "bytes": 11840,
+     "pose": "pose0",
+     "head_draws": 112,
+     "head_draws_before_target": 112
+    },
+    {
+     "role": "skinned_vertices_current",
+     "resource_id": 29873,
+     "write": "unmap",
+     "chunk_index": 37553,
+     "buffer_ordinal": 0,
+     "blob": 5549,
+     "bytes": 11840,
+     "pose": "pose1",
+     "head_draws": 7,
+     "head_draws_before_target": 0
+    }
+   ],
+   "cb_writes": {
+    "per_draw_object_matrices|ConstantBuffer-179-176|pose0|inverse:pose1": 1,
+    "per_draw_object_matrices|ConstantBuffer-179-176|pose0|inverse:pose0": 95,
+    "motion_vector_previous_matrix|ConstantBuffer-186-240|pose1|": 17,
+    "per_draw_object_matrices|ConstantBuffer-179-176|pose0|identity": 16,
+    "per_draw_object_matrices|ConstantBuffer-179-176|pose1|inverse:pose0": 1,
+    "per_draw_object_matrices|ConstantBuffer-179-176|pose1|inverse:pose1": 5,
+    "per_draw_object_matrices|ConstantBuffer-179-176|pose1|identity": 1
+   },
+   "baseline_vs_export_frame13378": {
+    "skinned_vertices_previous@1311": {
+     "bit_exact": false,
+     "bit_exact_vertices": 0,
+     "position_max": 2.9385528140446177e-06,
+     "vertices_position_gt_1e-5": 0,
+     "normal_max_abs": 2.384185791015625e-07,
+     "tangent_xyz_max_abs": 2.980232238769531e-07,
+     "tangent_w_equal": true,
+     "top_bones": []
+    },
+    "skinned_vertices_current@1325": {
+     "bit_exact": false,
+     "bit_exact_vertices": 0,
+     "position_max": 3.298310684835039e-06,
+     "vertices_position_gt_1e-5": 0,
+     "normal_max_abs": 2.980232238769531e-07,
+     "tangent_xyz_max_abs": 3.5762786865234375e-07,
+     "tangent_w_equal": true,
+     "top_bones": []
+    },
+    "skinned_vertices_current@37553": {
+     "bit_exact": false,
+     "bit_exact_vertices": 0,
+     "position_max": 2.9385528140446177e-06,
+     "vertices_position_gt_1e-5": 0,
+     "normal_max_abs": 2.384185791015625e-07,
+     "tangent_xyz_max_abs": 2.980232238769531e-07,
+     "tangent_w_equal": true,
+     "top_bones": []
+    }
+   },
+   "internal_consistency": {
+    "mesh_name": "o_eyeshadow",
+    "previous_start_vs_in_frame_skin": {
+     "bytes": 11840,
+     "bit_exact": true,
+     "float_words": 2960,
+     "equal_words": 2960,
+     "max_abs_diff": 0.0
+    },
+    "current_start_vs_in_frame_skin": {
+     "bytes": 11840,
+     "bit_exact": false,
+     "float_words": 2960,
+     "equal_words": 776,
+     "max_abs_diff": 1.4901161193847656e-06
+    }
+   }
+  },
+  {
+   "mesh_name": "o_head",
+   "renderer_path": "/CharaCustom[0]/CustomControl[0]/chaF_001[20]/BodyTop[0]/p_cf_anim[0]/cf_J_Root[0]/cf_N_height[0]/cf_J_Hips[0]/cf_J_Spine01[1]/cf_J_Spine02[1]/cf_J_Spine03[1]/cf_J_Neck[1]/cf_J_Head[0]/cf_J_Head_s[0]/p_cf_head_bone[7]/ct_head[1]/n_head_cf2_c1[0]/o_head[4]",
+   "status": "bound",
+   "skinned_vb": 29868,
+   "static_streams": [
+    30200,
+    30201
+   ],
+   "index_buffer": 30066,
+   "static_evidence": {
+    "index_count": 25548,
+    "source_index_count": 25548,
+    "index_buffer_equal": true,
+    "uv0_equal": true,
+    "uv1_equal": true,
+    "skin_stream_stride": 32,
+    "skin_stream_weights_equal": true,
+    "skin_stream_indices_equal_where_weighted": true,
+    "skin_stream_referenced_by_input_layout": false
+   },
+   "vertex_uploads": [
+    {
+     "role": "skinned_vertices_previous",
+     "resource_id": 29861,
+     "write": "capture_start_contents",
+     "chunk_index": 1305,
+     "buffer_ordinal": 0,
+     "blob": 1636,
+     "bytes": 177560,
+     "pose": "pose1",
+     "head_draws": 17,
+     "head_draws_before_target": 16
+    },
+    {
+     "role": "skinned_vertices_current",
+     "resource_id": 29868,
+     "write": "capture_start_contents",
+     "chunk_index": 1315,
+     "buffer_ordinal": 0,
+     "blob": 1641,
+     "bytes": 177560,
+     "pose": "pose0",
+     "head_draws": 128,
+     "head_draws_before_target": 128
+    },
+    {
+     "role": "skinned_vertices_current",
+     "resource_id": 29868,
+     "write": "unmap",
+     "chunk_index": 37549,
+     "buffer_ordinal": 0,
+     "blob": 5545,
+     "bytes": 177560,
+     "pose": "pose1",
+     "head_draws": 8,
+     "head_draws_before_target": 0
+    }
+   ],
+   "cb_writes": {
+    "per_draw_object_matrices|ConstantBuffer-179-176|pose0|inverse:pose0": 112,
+    "per_draw_object_matrices|ConstantBuffer-179-176|pose0|identity": 16,
+    "motion_vector_previous_matrix|ConstantBuffer-186-240|pose1|": 17,
+    "per_draw_object_matrices|ConstantBuffer-179-176|pose1|inverse:pose1": 7,
+    "per_draw_object_matrices|ConstantBuffer-179-176|pose1|identity": 1
+   },
+   "baseline_vs_export_frame13378": {
+    "skinned_vertices_previous@1305": {
+     "bit_exact": false,
+     "bit_exact_vertices": 0,
+     "position_max": 0.000390232129416739,
+     "vertices_position_gt_1e-5": 548,
+     "normal_max_abs": 0.0016109943389892578,
+     "tangent_xyz_max_abs": 0.0029502511024475098,
+     "tangent_w_equal": true,
+     "top_bones": [
+      {
+       "bone": "cf_J_MouthBase_s",
+       "vertices_over_threshold": 526
+      },
+      {
+       "bone": "cf_J_FaceLow_s",
+       "vertices_over_threshold": 314
+      },
+      {
+       "bone": "cf_J_MouthLow",
+       "vertices_over_threshold": 298
+      },
+      {
+       "bone": "cf_J_Mouthup",
+       "vertices_over_threshold": 274
+      }
+     ]
+    },
+    "skinned_vertices_current@1315": {
+     "bit_exact": false,
+     "bit_exact_vertices": 0,
+     "position_max": 0.0003902787387894191,
+     "vertices_position_gt_1e-5": 548,
+     "normal_max_abs": 0.0016109347343444824,
+     "tangent_xyz_max_abs": 0.0029500722885131836,
+     "tangent_w_equal": true,
+     "top_bones": [
+      {
+       "bone": "cf_J_MouthBase_s",
+       "vertices_over_threshold": 526
+      },
+      {
+       "bone": "cf_J_FaceLow_s",
+       "vertices_over_threshold": 314
+      },
+      {
+       "bone": "cf_J_MouthLow",
+       "vertices_over_threshold": 298
+      },
+      {
+       "bone": "cf_J_Mouthup",
+       "vertices_over_threshold": 274
+      }
+     ]
+    },
+    "skinned_vertices_current@37549": {
+     "bit_exact": false,
+     "bit_exact_vertices": 0,
+     "position_max": 0.000390232129416739,
+     "vertices_position_gt_1e-5": 548,
+     "normal_max_abs": 0.0016109943389892578,
+     "tangent_xyz_max_abs": 0.0029502511024475098,
+     "tangent_w_equal": true,
+     "top_bones": [
+      {
+       "bone": "cf_J_MouthBase_s",
+       "vertices_over_threshold": 526
+      },
+      {
+       "bone": "cf_J_FaceLow_s",
+       "vertices_over_threshold": 314
+      },
+      {
+       "bone": "cf_J_MouthLow",
+       "vertices_over_threshold": 298
+      },
+      {
+       "bone": "cf_J_Mouthup",
+       "vertices_over_threshold": 274
+      }
+     ]
+    }
+   },
+   "counterfactual_without_blendshapes_position_max": 0.0044669807802154085,
+   "internal_consistency": {
+    "mesh_name": "o_head",
+    "previous_start_vs_in_frame_skin": {
+     "bytes": 177560,
+     "bit_exact": true,
+     "float_words": 44390,
+     "equal_words": 44390,
+     "max_abs_diff": 0.0
+    },
+    "current_start_vs_in_frame_skin": {
+     "bytes": 177560,
+     "bit_exact": false,
+     "float_words": 44390,
+     "equal_words": 12278,
+     "max_abs_diff": 1.5795230865478516e-06
+    }
+   }
+  },
+  {
+   "mesh_name": "o_namida",
+   "renderer_path": "/CharaCustom[0]/CustomControl[0]/chaF_001[20]/BodyTop[0]/p_cf_anim[0]/cf_J_Root[0]/cf_N_height[0]/cf_J_Hips[0]/cf_J_Spine01[1]/cf_J_Spine02[1]/cf_J_Spine03[1]/cf_J_Neck[1]/cf_J_Head[0]/cf_J_Head_s[0]/p_cf_head_bone[7]/ct_head[1]/n_head_cf2_c1[0]/o_namida[5]",
+   "status": "bound",
+   "skinned_vb": 29874,
+   "static_streams": [
+    30194,
+    30195
+   ],
+   "index_buffer": 30070,
+   "static_evidence": {
+    "index_count": 4548,
+    "source_index_count": 4548,
+    "index_buffer_equal": true,
+    "uv0_equal": true,
+    "uv1_equal": true,
+    "skin_stream_stride": 32,
+    "skin_stream_weights_equal": true,
+    "skin_stream_indices_equal_where_weighted": true,
+    "skin_stream_referenced_by_input_layout": false
+   },
+   "vertex_uploads": [
+    {
+     "role": "skinned_vertices_current",
+     "resource_id": 29874,
+     "write": "capture_start_contents",
+     "chunk_index": 1327,
+     "buffer_ordinal": 0,
+     "blob": 1647,
+     "bytes": 33520,
+     "pose": "pose0",
+     "head_draws": 48,
+     "head_draws_before_target": 48
+    },
+    {
+     "role": "skinned_vertices_current",
+     "resource_id": 29874,
+     "write": "unmap",
+     "chunk_index": 37547,
+     "buffer_ordinal": 0,
+     "blob": 5543,
+     "bytes": 33520,
+     "pose": "pose1",
+     "head_draws": 3,
+     "head_draws_before_target": 0
+    }
+   ],
+   "cb_writes": {
+    "per_draw_object_matrices|ConstantBuffer-179-176|pose0|inverse:pose0": 48,
+    "per_draw_object_matrices|ConstantBuffer-179-176|pose1|inverse:pose1": 3
+   },
+   "baseline_vs_export_frame13378": {
+    "skinned_vertices_current@1327": {
+     "bit_exact": false,
+     "bit_exact_vertices": 0,
+     "position_max": 1.594335116809631e-05,
+     "vertices_position_gt_1e-5": 4,
+     "normal_max_abs": 2.759695053100586e-05,
+     "tangent_xyz_max_abs": 8.255243301391602e-06,
+     "tangent_w_equal": true,
+     "top_bones": [
+      {
+       "bone": "cf_J_Chin_rs",
+       "vertices_over_threshold": 4
+      },
+      {
+       "bone": "cf_J_FaceLow_s",
+       "vertices_over_threshold": 4
+      },
+      {
+       "bone": "cf_J_CheekLow_L",
+       "vertices_over_threshold": 2
+      },
+      {
+       "bone": "cf_J_Mouth_L",
+       "vertices_over_threshold": 2
+      }
+     ]
+    },
+    "skinned_vertices_current@37547": {
+     "bit_exact": false,
+     "bit_exact_vertices": 0,
+     "position_max": 1.569906461170817e-05,
+     "vertices_position_gt_1e-5": 4,
+     "normal_max_abs": 2.759695053100586e-05,
+     "tangent_xyz_max_abs": 8.225440979003906e-06,
+     "tangent_w_equal": true,
+     "top_bones": [
+      {
+       "bone": "cf_J_Chin_rs",
+       "vertices_over_threshold": 4
+      },
+      {
+       "bone": "cf_J_FaceLow_s",
+       "vertices_over_threshold": 4
+      },
+      {
+       "bone": "cf_J_CheekLow_L",
+       "vertices_over_threshold": 2
+      },
+      {
+       "bone": "cf_J_Mouth_L",
+       "vertices_over_threshold": 2
+      }
+     ]
+    }
+   },
+   "counterfactual_without_blendshapes_position_max": 0.008044306347498524,
+   "internal_consistency": {
+    "mesh_name": "o_namida",
+    "current_start_vs_in_frame_skin": {
+     "bytes": 33520,
+     "bit_exact": false,
+     "float_words": 8380,
+     "equal_words": 2414,
+     "max_abs_diff": 1.5497207641601562e-06
+    }
+   }
+  },
+  {
+   "mesh_name": "o_tang",
+   "renderer_path": "/CharaCustom[0]/CustomControl[0]/chaF_001[20]/BodyTop[0]/p_cf_anim[0]/cf_J_Root[0]/cf_N_height[0]/cf_J_Hips[0]/cf_J_Spine01[1]/cf_J_Spine02[1]/cf_J_Spine03[1]/cf_J_Neck[1]/cf_J_Head[0]/cf_J_Head_s[0]/p_cf_head_bone[7]/ct_head[1]/n_head_cf2_c1[0]/o_tang[6]",
+   "status": "bound",
+   "skinned_vb": 29872,
+   "static_streams": [
+    30197,
+    30198
+   ],
+   "index_buffer": 30074,
+   "static_evidence": {
+    "index_count": 3522,
+    "source_index_count": 3522,
+    "index_buffer_equal": true,
+    "uv0_equal": true,
+    "skin_stream_stride": 32,
+    "skin_stream_weights_equal": true,
+    "skin_stream_indices_equal_where_weighted": true,
+    "skin_stream_referenced_by_input_layout": false
+   },
+   "vertex_uploads": [
+    {
+     "role": "skinned_vertices_previous",
+     "resource_id": 29860,
+     "write": "capture_start_contents",
+     "chunk_index": 1303,
+     "buffer_ordinal": 0,
+     "blob": 1635,
+     "bytes": 26120,
+     "pose": "pose1",
+     "head_draws": 17,
+     "head_draws_before_target": 16
+    },
+    {
+     "role": "skinned_vertices_current",
+     "resource_id": 29872,
+     "write": "capture_start_contents",
+     "chunk_index": 1323,
+     "buffer_ordinal": 0,
+     "blob": 1645,
+     "bytes": 26120,
+     "pose": "pose0",
+     "head_draws": 160,
+     "head_draws_before_target": 160
+    },
+    {
+     "role": "skinned_vertices_current",
+     "resource_id": 29872,
+     "write": "unmap",
+     "chunk_index": 37548,
+     "buffer_ordinal": 0,
+     "blob": 5544,
+     "bytes": 26120,
+     "pose": "pose1",
+     "head_draws": 10,
+     "head_draws_before_target": 0
+    }
+   ],
+   "cb_writes": {
+    "per_draw_object_matrices|ConstantBuffer-179-176|pose0|inverse:pose1": 1,
+    "per_draw_object_matrices|ConstantBuffer-179-176|pose0|inverse:pose0": 95,
+    "per_draw_object_matrices|ConstantBuffer-179-160|pose0|inverse:pose0": 1,
+    "motion_vector_previous_matrix|ConstantBuffer-186-240|pose1|": 17,
+    "per_draw_object_matrices|ConstantBuffer-179-176|pose0|identity": 16,
+    "per_draw_object_matrices|ConstantBuffer-179-176|pose1|inverse:pose0": 1,
+    "per_draw_object_matrices|ConstantBuffer-179-176|pose1|inverse:pose1": 5,
+    "per_draw_object_matrices|ConstantBuffer-179-160|pose1|inverse:pose1": 1,
+    "per_draw_object_matrices|ConstantBuffer-179-176|pose1|identity": 1
+   },
+   "baseline_vs_export_frame13378": {
+    "skinned_vertices_previous@1303": {
+     "bit_exact": false,
+     "bit_exact_vertices": 0,
+     "position_max": 5.221788724641571e-07,
+     "vertices_position_gt_1e-5": 0,
+     "normal_max_abs": 2.384185791015625e-07,
+     "tangent_xyz_max_abs": 2.384185791015625e-07,
+     "tangent_w_equal": true,
+     "top_bones": []
+    },
+    "skinned_vertices_current@1323": {
+     "bit_exact": false,
+     "bit_exact_vertices": 0,
+     "position_max": 1.0190218215130218e-06,
+     "vertices_position_gt_1e-5": 0,
+     "normal_max_abs": 2.980232238769531e-07,
+     "tangent_xyz_max_abs": 2.980232238769531e-07,
+     "tangent_w_equal": true,
+     "top_bones": []
+    },
+    "skinned_vertices_current@37548": {
+     "bit_exact": false,
+     "bit_exact_vertices": 0,
+     "position_max": 5.221788724641571e-07,
+     "vertices_position_gt_1e-5": 0,
+     "normal_max_abs": 2.384185791015625e-07,
+     "tangent_xyz_max_abs": 2.384185791015625e-07,
+     "tangent_w_equal": true,
+     "top_bones": []
+    }
+   },
+   "counterfactual_without_blendshapes_position_max": 5.221788724641571e-07,
+   "internal_consistency": {
+    "mesh_name": "o_tang",
+    "previous_start_vs_in_frame_skin": {
+     "bytes": 26120,
+     "bit_exact": true,
+     "float_words": 6530,
+     "equal_words": 6530,
+     "max_abs_diff": 0.0
+    },
+    "current_start_vs_in_frame_skin": {
+     "bytes": 26120,
+     "bit_exact": false,
+     "float_words": 6530,
+     "equal_words": 1426,
+     "max_abs_diff": 1.4603137969970703e-06
+    }
+   }
+  },
+  {
+   "mesh_name": "o_tooth",
+   "renderer_path": "/CharaCustom[0]/CustomControl[0]/chaF_001[20]/BodyTop[0]/p_cf_anim[0]/cf_J_Root[0]/cf_N_height[0]/cf_J_Hips[0]/cf_J_Spine01[1]/cf_J_Spine02[1]/cf_J_Spine03[1]/cf_J_Neck[1]/cf_J_Head[0]/cf_J_Head_s[0]/p_cf_head_bone[7]/ct_head[1]/n_head_cf2_c1[0]/o_tooth[7]",
+   "status": "bound",
+   "skinned_vb": 29871,
+   "static_streams": [
+    30215,
+    30216
+   ],
+   "index_buffer": 30078,
+   "static_evidence": {
+    "index_count": 2916,
+    "source_index_count": 2916,
+    "index_buffer_equal": true,
+    "uv0_equal": true,
+    "skin_stream_stride": 32,
+    "skin_stream_weights_equal": true,
+    "skin_stream_indices_equal_where_weighted": true,
+    "skin_stream_referenced_by_input_layout": false
+   },
+   "vertex_uploads": [
+    {
+     "role": "skinned_vertices_previous",
+     "resource_id": 29865,
+     "write": "capture_start_contents",
+     "chunk_index": 1313,
+     "buffer_ordinal": 0,
+     "blob": 1640,
+     "bytes": 22560,
+     "pose": "pose1",
+     "head_draws": 17,
+     "head_draws_before_target": 16
+    },
+    {
+     "role": "skinned_vertices_current",
+     "resource_id": 29871,
+     "write": "capture_start_contents",
+     "chunk_index": 1321,
+     "buffer_ordinal": 0,
+     "blob": 1644,
+     "bytes": 22560,
+     "pose": "pose0",
+     "head_draws": 128,
+     "head_draws_before_target": 128
+    },
+    {
+     "role": "skinned_vertices_current",
+     "resource_id": 29871,
+     "write": "unmap",
+     "chunk_index": 37554,
+     "buffer_ordinal": 0,
+     "blob": 5550,
+     "bytes": 22560,
+     "pose": "pose1",
+     "head_draws": 8,
+     "head_draws_before_target": 0
+    }
+   ],
+   "cb_writes": {
+    "per_draw_object_matrices|ConstantBuffer-179-176|pose0|inverse:pose1": 1,
+    "per_draw_object_matrices|ConstantBuffer-179-176|pose0|inverse:pose0": 111,
+    "per_draw_object_matrices|ConstantBuffer-179-176|pose0|identity": 16,
+    "motion_vector_previous_matrix|ConstantBuffer-186-240|pose1|": 17,
+    "per_draw_object_matrices|ConstantBuffer-179-176|pose1|inverse:pose0": 1,
+    "per_draw_object_matrices|ConstantBuffer-179-176|pose1|inverse:pose1": 6,
+    "per_draw_object_matrices|ConstantBuffer-179-176|pose1|identity": 1
+   },
+   "baseline_vs_export_frame13378": {
+    "skinned_vertices_previous@1313": {
+     "bit_exact": false,
+     "bit_exact_vertices": 0,
+     "position_max": 5.308244565295242e-07,
+     "vertices_position_gt_1e-5": 0,
+     "normal_max_abs": 2.384185791015625e-07,
+     "tangent_xyz_max_abs": 1.7881393432617188e-07,
+     "tangent_w_equal": true,
+     "top_bones": []
+    },
+    "skinned_vertices_current@1321": {
+     "bit_exact": false,
+     "bit_exact_vertices": 0,
+     "position_max": 1.0154679439902795e-06,
+     "vertices_position_gt_1e-5": 0,
+     "normal_max_abs": 2.980232238769531e-07,
+     "tangent_xyz_max_abs": 2.384185791015625e-07,
+     "tangent_w_equal": true,
+     "top_bones": []
+    },
+    "skinned_vertices_current@37554": {
+     "bit_exact": false,
+     "bit_exact_vertices": 0,
+     "position_max": 5.308244565295242e-07,
+     "vertices_position_gt_1e-5": 0,
+     "normal_max_abs": 2.384185791015625e-07,
+     "tangent_xyz_max_abs": 1.7881393432617188e-07,
+     "tangent_w_equal": true,
+     "top_bones": []
+    }
+   },
+   "counterfactual_without_blendshapes_position_max": 5.308244565295242e-07,
+   "internal_consistency": {
+    "mesh_name": "o_tooth",
+    "previous_start_vs_in_frame_skin": {
+     "bytes": 22560,
+     "bit_exact": true,
+     "float_words": 5640,
+     "equal_words": 5640,
+     "max_abs_diff": 0.0
+    },
+    "current_start_vs_in_frame_skin": {
+     "bytes": 22560,
+     "bit_exact": false,
+     "float_words": 5640,
+     "equal_words": 1280,
+     "max_abs_diff": 1.430511474609375e-06
+    }
+   }
+  },
+  {
+   "mesh_name": "o_tang",
+   "renderer_path": "/CharaCustom[0]/CustomControl[0]/chaF_001[20]/BodyTop[0]/p_cf_body_00[1]/n_o_root[0]/n_body_base[0]/N_mnpbset[1]/N_tang[1]/o_tang[0]",
+   "status": "inactive_no_gpu_upload"
+  },
+  {
+   "mesh_name": "o_tang",
+   "renderer_path": "/CharaCustom[0]/CustomControl[0]/chaF_001[20]/BodyTop[0]/p_cf_body_silhouette[2]/n_o_root[0]/n_body_base[0]/o_silhouette_cf[0]/N_mnpbset[0]/N_tang[2]/o_tang[0]",
+   "status": "inactive_no_gpu_upload"
+  }
+ ],
+ "drawinputs_confirmation": [
+  {
+   "event_dir": "event_717",
+   "file": "buffer_29868.bin",
+   "xml_blob_index": 1641,
+   "bytes": 177560,
+   "bit_exact_vs_xml_blob": true,
+   "sha256": "6565e576f86bfbf33497219c5aa595754acf7c88a274f50b8ddda5b59c0b4c4a"
+  },
+  {
+   "event_dir": "event_1615",
+   "file": "buffer_29868.bin",
+   "xml_blob_index": 1641,
+   "bytes": 177560,
+   "bit_exact_vs_xml_blob": true,
+   "sha256": "6565e576f86bfbf33497219c5aa595754acf7c88a274f50b8ddda5b59c0b4c4a"
+  },
+  {
+   "event_dir": "event_1615",
+   "file": "buffer_29861.bin",
+   "xml_blob_index": 1636,
+   "bytes": 177560,
+   "bit_exact_vs_xml_blob": true,
+   "sha256": "5cab041a76d6d580403ada80b70c3f8a6c42cf2777a247f3d022e9f12333ed3b"
+  },
+  {
+   "event_dir": "event_35341",
+   "file": "buffer_29868.bin",
+   "xml_blob_index": 5545,
+   "bytes": 177560,
+   "bit_exact_vs_xml_blob": true,
+   "sha256": "5cab041a76d6d580403ada80b70c3f8a6c42cf2777a247f3d022e9f12333ed3b"
+  }
+ ],
+ "forward_integration_zero_patch": {
+  "o_eyebase_L#0": {
+   "position_max": 0.005449558616936181,
+   "vertices_position_gt_1e-5": 147,
+   "top_bones": [
+    {
+     "bone": "cf_J_eye_rs_L",
+     "vertices_over_threshold": 147
+    },
+    {
+     "bone": "cf_J_eye_rs_R",
+     "vertices_over_threshold": 86
+    }
+   ]
+  },
+  "o_eyebase_R#1": {
+   "position_max": 0.0028304662253081764,
+   "vertices_position_gt_1e-5": 147,
+   "top_bones": [
+    {
+     "bone": "cf_J_eye_rs_R",
+     "vertices_over_threshold": 147
+    },
+    {
+     "bone": "cf_J_eye_rs_L",
+     "vertices_over_threshold": 86
+    }
+   ]
+  },
+  "o_eyelashes#2": {
+   "position_max": 3.230926471900257e-06,
+   "vertices_position_gt_1e-5": 0,
+   "top_bones": []
+  },
+  "o_eyeshadow#3": {
+   "position_max": 3.398020232533431e-06,
+   "vertices_position_gt_1e-5": 0,
+   "top_bones": []
+  },
+  "o_head#4": {
+   "position_max": 0.01246681973446335,
+   "vertices_position_gt_1e-5": 375,
+   "top_bones": [
+    {
+     "bone": "cf_J_Chin_rs",
+     "vertices_over_threshold": 375
+    },
+    {
+     "bone": "cf_J_FaceLow_s",
+     "vertices_over_threshold": 361
+    },
+    {
+     "bone": "cf_J_ChinLow",
+     "vertices_over_threshold": 289
+    }
+   ]
+  },
+  "o_namida#5": {
+   "position_max": 3.3230925862420058e-06,
+   "vertices_position_gt_1e-5": 0,
+   "top_bones": []
+  },
+  "o_tang#6": {
+   "position_max": 1.1941865328042406e-06,
+   "vertices_position_gt_1e-5": 0,
+   "top_bones": []
+  },
+  "o_tooth#7": {
+   "position_max": 1.1939540877348262e-06,
+   "vertices_position_gt_1e-5": 0,
+   "top_bones": []
+  }
+ },
+ "forward_integration_note": "source3d_v1 context/geometry is a different ABMX card state (a04f...) than the capture (46de...); chin-bone differences are expected; not a baseline acceptance.",
+ "accepted": {
+  "bit_exact_baseline": false,
+  "candidate_render": false,
+  "full_renderer": false
+ }
+}

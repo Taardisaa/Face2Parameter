@@ -328,4 +328,4 @@ class CapturedHeadForward:
                 surface['attribute_scope']='Positions only: loaded API normal/tangent frames not captured; RGB shading unavailable.'
             surfaces.append(surface)
         return {'surfaces':surfaces,'branches':branches,'effect_decisions':self.effect_decisions,
-                'modifiers':serialized(modifiers),'bone_world':world}
+                'modifiers':serialized(modifiers),'bone_world':world,'bone_local':local}

@@ -1,0 +1,118 @@
+"""CPU checks for the same-frame pairing analyzer (synthetic data only)."""
+from __future__ import annotations
+
+import base64
+import json
+import sys
+import tempfile
+import unittest
+from pathlib import Path
+
+import numpy as np
+from scipy.spatial.transform import Rotation
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
+from src.render import gpu_skin_inputs as g  # noqa: E402
+from src.render import paired_skin as ps  # noqa: E402
+from tools.offline_renderer.test_gpu_skin_inputs import Builder, rid, u  # noqa: E402
+
+CTX = 7
+
+
+def enc(a, dtype=np.float32):
+    return base64.b64encode(np.ascontiguousarray(a, dtype).tobytes()).decode()
+
+
+def make_window(root: Path, rng):
+    n = 5
+    tri = np.array([0, 1, 2, 2, 3, 4], np.int32)
+    w = np.array([[0.6, 0.4, 0, 0]] * n, np.float32)
+    bi = np.array([[0, 1, 0, 0]] * n, np.int32)
+    bind = np.stack([np.eye(4), np.eye(4)]).astype(np.float32)
+    bind[1, :3, 3] = [0.01, -0.02, 0.03]
+    mesh = {'name': 'o_test', 'id': 77, 'vertex_count': n, 'vertices_f32': enc(rng.random((n, 3))),
+            'normals_f32': enc(rng.random((n, 3))), 'tangents_f32': enc(np.c_[rng.random((n, 3)), np.ones(n)]),
+            'uv_f32': enc(rng.random((n, 2))), 'uv2_f32': enc(np.zeros((0, 2))), 'triangles_i32': enc(tri, np.int32),
+            'bindposes_f32_rowmajor': enc(bind), 'bone_weights_f32': enc(w), 'bone_indices_i32': enc(bi, np.int32),
+            'blendshapes': [{'name': 'x.e00', 'frames': [{'weight': 100.0, 'dv_f32': enc(rng.random((n, 3)) * 1e-3),
+                                                          'dn_f32': enc(np.zeros((n, 3))), 'dt_f32': enc(np.zeros((n, 3)))}]}]}
+    (root / 'frames').mkdir(parents=True)
+    (root / 'mesh_00_o_test.json').write_text(json.dumps(mesh))
+    static = {'transforms': [{'i': i, 'id': 100 + i, 'name': f't{i}', 'parent': i - 1} for i in range(3)],
+              'renderers': [{'id': 9, 'name': 'o_test', 'transform': 0, 'root_bone': 1, 'bones': [1, 2],
+                             'mesh': {'id': 77, 'name': 'o_test', 'vertex_count': n, 'data_file': 'mesh_00_o_test.json'}}]}
+    (root / 'static.json').write_text(json.dumps(static))
+    for k, fc in enumerate((500, 501)):
+        T = np.zeros((3, 33), np.float32)
+        for i in range(3):
+            q = Rotation.random(random_state=k * 10 + i).as_quat()
+            p = rng.random(3) + [0, 14, 0]
+            M = np.eye(4)
+            M[:3, :3] = Rotation.from_quat(q).as_matrix() * 0.9
+            M[:3, 3] = p
+            T[i, 10:13] = p
+            T[i, 13:17] = q
+            T[i, 17:33] = M.ravel()
+        row = {'index': k, 'frame_count': fc, 'transforms_f32': enc(T),
+               'renderers': [{'id': 9, 'weights_f32': enc([100.0])}]}
+        (root / 'frames' / f'frame_{k:03d}.json').write_text(json.dumps(row))
+    return ps.ProbeWindow(root)
+
+
+class PairedSkinTests(unittest.TestCase):
+    def test_float32_helpers(self):
+        rng = np.random.default_rng(0)
+        a, b = rng.random((4, 4)), rng.random((4, 4))
+        self.assertLess(np.abs(ps.matmul_f32(a, b) - a @ b).max(), 1e-6)
+        q = Rotation.random(random_state=4).as_quat()
+        p = [0.1, 14.4, -0.2]
+        inv = ps.trs_inverse_f32(p, q).astype(float)
+        self.assertLess(np.abs(inv @ ps._trs(p, q) - np.eye(4)).max(), 5e-6)
+
+    def test_variants_agree_with_reference_and_detect_exactness(self):
+        rng = np.random.default_rng(1)
+        with tempfile.TemporaryDirectory() as tmp:
+            win = make_window(Path(tmp), rng)
+            fr = win.by_frame[501]
+            r = win.static['renderers'][0]
+            mats = ps.frame_matrices(win, fr, r)
+            variants = ps.skin_variants(win.meshes[9], mats, fr['W'][9])
+            ref = np.frombuffer(variants['f64_reference'], np.float32)
+            for name, data in variants.items():
+                self.assertLess(np.abs(np.frombuffer(data, np.float32) - ref).max(), 1e-4, name)
+            exact = ps.compare_words(variants['f32_paletteA_blend_matrix'], variants['f32_paletteA_blend_matrix'])
+            self.assertTrue(exact['bit_exact'])
+            self.assertEqual(exact['max_ulp'], 0)
+            other = win.by_frame[500]
+            moved = ps.skin_variants(win.meshes[9], ps.frame_matrices(win, other, r), other['W'][9])
+            self.assertFalse(ps.compare_words(variants['f32_paletteA_blend_matrix'], moved['f32_paletteA_blend_matrix'])['bit_exact'])
+
+    def test_marker_found_only_inside_frame(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            nonce = bytes(range(16))
+            rec = bytearray(64)
+            rec[0:16] = ps.MAGIC
+            rec[16:32] = nonce
+            rec[32:36] = (501).to_bytes(4, 'little', signed=True)
+            rec[36:40] = (3).to_bytes(4, 'little', signed=True)
+            rec[44:48] = (~501).to_bytes(4, 'little', signed=True)
+            rec[48:64] = ps.TAIL
+            b = Builder()
+            b.chunk('Internal::DeviceInitialisation', rid('ImmediateContext', CTX))
+            stale = bytearray(rec)
+            stale[32:36] = (499).to_bytes(4, 'little', signed=True)
+            stale[44:48] = (~499).to_bytes(4, 'little', signed=True)
+            b.chunk('ID3D11Device::CreateTexture2D', b.buf('SubresourceContents', bytes(stale)) + rid('pTexture', 5))
+            state = ('<struct name="state"><struct name="IA"><ResourceId name="Layout">0</ResourceId></struct></struct>')
+            b.chunk('Internal::Beginning of Capture', state + u('numAnnotations', 0))
+            b.chunk('ID3D11DeviceContext::UpdateSubresource', rid('Context', CTX) + rid('pDstResource', 5) + b.buf('pSrcData', bytes(rec)))
+            index = g.CaptureIndex(b.write(Path(tmp)))
+            try:
+                rows = ps.find_markers(index, nonce)
+            finally:
+                index.close()
+            self.assertEqual([(r['frame_count'], r['nonce_ok'], r['window_index']) for r in rows], [(501, True, 3)])
+
+
+if __name__ == '__main__':
+    unittest.main()
