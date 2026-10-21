@@ -1,0 +1,46 @@
+{
+ "schema_version": 1,
+ "provenance": {
+  "frame_graph": "C:\\Users\\13666\\Workspace\\Face2Parameter\\outputs\\offline_renderer_frame_graph_20261020\\frame_graph_v2",
+  "captured_cbuffers": "C:\\Users\\13666\\Workspace\\Face2Parameter\\outputs\\offline_renderer_unity_forward_20261020\\captured_cbuffers_v1.json",
+  "captured_cbuffers_sha256": "306bf22d8225b2ee476e9b2d5055032fde43cc940736352aee518d4fc72e76ed",
+  "runtime_fields": "C:\\Users\\13666\\Workspace\\HS2Mod\\artifacts\\chenger_reference_fit_20261012\\runtime_audit_hook_v3\\runtime_fields_completion.json",
+  "runtime_fields_sha256": "24c59ae2a615f9f2666bb45a9095ce9473616603851a20c0e68c1f6a128db30c",
+  "runtime_fields_scope": "other frame and process (runtime_audit_hook_v3); component fields assumed unchanged at capture",
+  "manifests": [
+   "C:\\Users\\13666\\Workspace\\Face2Parameter\\outputs\\offline_renderer_repair_20261012\\sss_shader_programs_v2\\manifest.json",
+   "C:\\Users\\13666\\Workspace\\Face2Parameter\\outputs\\offline_renderer_frame_graph_20261020\\shader_exports\\hs2_betteraa_ctaa\\manifest.json",
+   "C:\\Users\\13666\\Workspace\\Face2Parameter\\outputs\\offline_renderer_repair_20261012\\body_shader_programs_v1\\manifest.json",
+   "C:\\Users\\13666\\Workspace\\Face2Parameter\\outputs\\offline_renderer_repair_20261012\\shader_programs_v2\\manifest.json"
+  ],
+  "tool_sha256": "7645d05cfa893a898bd7bd8e2e2ef9b1c77327cd0b6d64e346168a0d8de3ab30",
+  "generators_sha256": {
+   "capture_loop.py": "a5ee7d23cc6419f6b3ba12623573885b0fdd44b9ca86266dc552b6d0201ed317",
+   "ctaa.py": "2bfafed506189c04bdc05e81db251b9c8b5ff9552250d9d1461781b47a6c23f1",
+   "dhh_sss.py": "ebd96016786cc23c49c0ecdf937c844df296bea7d5c13c5d9c6ca9bdaa2d4b90",
+   "liquid.py": "bc73fcb3077a073240e60964be2c1f2ca67ca7bd8951a8d2bcaa62c7865da011",
+   "plugin_common.py": "134c5acd068219cb3cfde48b47594bf3cba752026cf4566431b3b0cfe3d945c9"
+  }
+ },
+ "summary": {
+  "sss_blur_cbuffers": true,
+  "ctaa_cbuffers": true,
+  "ctaa_jitter_vp": true,
+  "rt_descriptors": true,
+  "pass_order_identity": true,
+  "grab_order": true,
+  "blit_constants": true,
+  "sampler_keys": true,
+  "sss_lighting_view_vs_main_nonjittered": true
+ },
+ "counts": {
+  "blur_draws": 64,
+  "ctaa_draws": 32,
+  "jitter_iterations": 16,
+  "blit_vs_constants": 161,
+  "descriptors": 11,
+  "sampler_slots": 8
+ },
+ "sss_lighting_vp_equals_main_nonjittered_vp": true,
+ "report": "C:\\Users\\13666\\Workspace\\Face2Parameter\\outputs\\offline_renderer_plugins_20261020\\validation_v3\\report.json"
+}
