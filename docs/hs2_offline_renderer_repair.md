@@ -727,3 +727,20 @@ Source evidence and required independent D3D11 lifecycle/API extension are in
 [present_retry_lifecycle_failure.md](../tools/offline_renderer/native_audit/present_retry_lifecycle_failure.md).
 This is a safety/provenance fix; recording lifecycle remains unaccepted and no
 additional graphical attempt was executed.
+
+### Patched-capture replay pipeline (2026-10-20)
+
+The generic patch → capture → official replay → image layer is documented in
+[hs2_offline_replay_pipeline.md](hs2_offline_replay_pipeline.md). Two results
+come from existing captures only:
+
+- The official zip.xml roundtrip reproduces the HS2 frame section byte for
+  byte.
+- A fast exact route (an official structured offset index, plus an LZ4 page
+  splice using the pinned v1.46 `lz4.c`, plus official OpenCapture) renders a
+  patched candidate in about 2 s instead of about 39 s. On HS2 and on the
+  independent fixture it is byte-equivalent to the official route for both
+  identity and diagnostic plans.
+
+Choosing the head bytes and covering their dependencies remain separate,
+unaccepted work.

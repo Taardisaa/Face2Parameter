@@ -1,0 +1,319 @@
+{
+  "schema_version": 1,
+  "date": "2026-10-20",
+  "scope": "patch->capture->official replay pipeline acceptance on existing captures only; diagnostic patches are not HS2 fitting; no game launch/injection/new capture",
+  "tool": {
+    "exe": "C:\\Users\\13666\\Workspace\\Face2Parameter\\outputs\\offline_renderer_pipeline_20261020\\replay_msvc_v2\\renderdoc_replay_msvc.exe",
+    "exe_sha256": "2f7fcf97bcfd735418e147f5321472b2a2e6fb6b6d94699e0a911306ca55cebf",
+    "build_receipt": "C:\\Users\\13666\\Workspace\\Face2Parameter\\outputs\\offline_renderer_pipeline_20261020\\replay_msvc_v2\\build_receipt.json",
+    "renderdoc_dll": "C:\\Users\\13666\\Workspace\\Face2Parameter\\outputs\\offline_renderer_repair_20261012\\renderdoc_portable_1_46\\extracted\\RenderDoc_1.46_64\\renderdoc.dll",
+    "renderdoc_dll_sha256": "809da38e3867d9fd09cc5c30dd5310500dee75e999166d7a14ad1ef6e9eca65d",
+    "pinned_commit": "e4bd23b671d3d5a747ff5221dbe08a63eb6ca200 (checked by the tool before any replay call)"
+  },
+  "hs2_capture": {
+    "rdc": "C:\\Users\\13666\\Workspace\\HS2Mod\\artifacts\\chenger_reference_fit_20261012\\native_present_session_v1\\unaccepted_retry_frame17675.rdc",
+    "rdc_sha256": "eb5743bce38bdaa7a4b5d7e96ca09d3d7cfd88eac306510667afd0f2245b6403",
+    "frame_section_sha256": "f7122a76ebff5e2aa3309f7fe2aa726d1555f8c72b8f8e0336bf52d015c47ceb",
+    "index": {
+      "path": "C:\\Users\\13666\\Workspace\\Face2Parameter\\outputs\\offline_renderer_pipeline_20261020\\hs2_retry_frame17675_v1\\index.json",
+      "sha256": "f515c547103b5357b36b806d59b903faf78692277850acdda4fa92ee5f4dad40",
+      "chunks": 40492,
+      "buffers_verified": 5835,
+      "chunks_walk_exact_length": 40395,
+      "chunks_with_length_slack": 97,
+      "timing_ms": {
+        "read_and_pinned_lz4_decode": 1303.7,
+        "official_section_contents": 746.728,
+        "official_structured_data": 1903.06,
+        "total": 6097.37
+      }
+    }
+  },
+  "official_identity_roundtrip_before": {
+    "receipt": "outputs/offline_renderer_pipeline_20261020/baseline_official_roundtrip_v1/timing_receipt.json",
+    "stages": [
+      {
+        "stage": "convert_zipxml_to_rdc",
+        "seconds": 10.728917700005695,
+        "status": "pass",
+        "returncode": 0
+      },
+      {
+        "stage": "replay_identity",
+        "seconds": 2.269167099992046,
+        "status": "pass",
+        "returncode": 0
+      },
+      {
+        "stage": "replay_original_again",
+        "seconds": 1.7976936000050046,
+        "status": "pass",
+        "returncode": 0
+      }
+    ],
+    "export_rdc_to_zip_xml_s_2026_10_13": 8.36,
+    "identity_bin_equals_original_target_bin": true,
+    "identity_rdc_frame_section_sha256": "f7122a76ebff5e2aa3309f7fe2aa726d1555f8c72b8f8e0336bf52d015c47ceb"
+  },
+  "acceptance": {
+    "scope": "pipeline acceptance on the existing unaccepted retry RDC; diagnostic patch is not HS2 fitting",
+    "rdc": "C:\\Users\\13666\\Workspace\\HS2Mod\\artifacts\\chenger_reference_fit_20261012\\native_present_session_v1\\unaccepted_retry_frame17675.rdc",
+    "rdc_sha256": "eb5743bce38bdaa7a4b5d7e96ca09d3d7cfd88eac306510667afd0f2245b6403",
+    "index": "C:\\Users\\13666\\Workspace\\Face2Parameter\\outputs\\offline_renderer_pipeline_20261020\\hs2_retry_frame17675_v1\\index.json",
+    "index_sha256": "f515c547103b5357b36b806d59b903faf78692277850acdda4fa92ee5f4dad40",
+    "cases": {
+      "identity": {
+        "receipt": "C:\\Users\\13666\\Workspace\\Face2Parameter\\outputs\\offline_renderer_pipeline_20261020\\hs2_retry_frame17675_v1\\acceptance_v1\\identity\\receipt.json",
+        "camera_raw_equals_previous_exact_replay": true,
+        "reference_bin_sha256": "da5e176eacd80c1d3fe7fb6aa4043a88dca59b2d560af9273f684fbcf3674757",
+        "camera_topdown_equals_native_png_rgba": true,
+        "written_png_pixels_equal_topdown": true,
+        "timing": {
+          "tool_ms": {
+            "official_open_capture": 1247.69,
+            "official_open_file": 0.5587,
+            "readback": 46.0674,
+            "set_frame_event": 50.4059,
+            "shutdown": 102.191,
+            "verify": 0.0648,
+            "write_targets": 2.1774,
+            "total": 1455.34
+          },
+          "python_resolve_s": 0.0018723999965004623,
+          "python_roundtrip_s": 1.455995800002711,
+          "python_postprocess_s": 2.031663000001572,
+          "python_total_s": 3.489644999994198
+        }
+      },
+      "diagnostic": {
+        "receipt": "C:\\Users\\13666\\Workspace\\Face2Parameter\\outputs\\offline_renderer_pipeline_20261020\\hs2_retry_frame17675_v1\\acceptance_v1\\diagnostic\\receipt.json",
+        "curves_texture_bytes": 2048,
+        "curves_equals_predicted_exact_bytes": true,
+        "curves_changed_byte_range": [
+          3,
+          1024
+        ],
+        "camera_changed_pixels": 1571443,
+        "camera_pixels": 1572528,
+        "camera_max_channel_delta": 105,
+        "candidate": {
+          "rdc": "C:\\Users\\13666\\Workspace\\Face2Parameter\\outputs\\offline_renderer_pipeline_20261020\\hs2_retry_frame17675_v1\\acceptance_v1\\diagnostic\\candidate.rdc",
+          "written": true,
+          "sha256": "8727d71b3e3b311c027f162481f5d48a7a2664efb20cad261281729ff6c8edda",
+          "bytes": 259623503,
+          "retained": true,
+          "changed_lz4_pages": 1,
+          "reencoded_lz4_pages": 2
+        },
+        "timing": {
+          "tool_ms": {
+            "official_open_capture": 2473.02,
+            "official_open_file": 12.5541,
+            "patch_and_reencode": 9.9277,
+            "readback": 47.191,
+            "set_frame_event": 41.7738,
+            "shutdown": 106.769,
+            "verify": 0.9866,
+            "write_candidate_rdc": 624.825,
+            "write_targets": 3.6826,
+            "total": 3326.77
+          },
+          "python_resolve_s": 0.015299499995307997,
+          "python_roundtrip_s": 3.3276943000091705,
+          "python_postprocess_s": 0.4619407999998657,
+          "python_total_s": 3.8065706999914255
+        }
+      },
+      "rejection": {
+        "error": "Original selected byte range SHA256 mismatch",
+        "rejected": true,
+        "files": [
+          "receipt.json"
+        ]
+      },
+      "identity_after": {
+        "equal_to_identity": true
+      },
+      "equivalence_identity": {
+        "equivalence": {
+          "frame_section_fast": "f7122a76ebff5e2aa3309f7fe2aa726d1555f8c72b8f8e0336bf52d015c47ceb",
+          "frame_section_official": "f7122a76ebff5e2aa3309f7fe2aa726d1555f8c72b8f8e0336bf52d015c47ceb",
+          "frame_section_equal": true,
+          "targets": {
+            "camera": {
+              "fast": "da5e176eacd80c1d3fe7fb6aa4043a88dca59b2d560af9273f684fbcf3674757",
+              "official": "da5e176eacd80c1d3fe7fb6aa4043a88dca59b2d560af9273f684fbcf3674757",
+              "equal": true
+            },
+            "curves": {
+              "fast": "e29034475dc9ea982af6bb499e376206623cabb76ad5f11b1aaebd7b93cb216f",
+              "official": "e29034475dc9ea982af6bb499e376206623cabb76ad5f11b1aaebd7b93cb216f",
+              "equal": true
+            }
+          },
+          "all_equal": true
+        },
+        "official_timing_s": {
+          "mutate_capture_s": 0.00021050000214017928,
+          "official_convert_s": 11.282101799995871,
+          "official_sections_s": 1.8328597999934573,
+          "official_replay_s": 4.5552261999982875
+        },
+        "both_wall_s": 22.101415500001167
+      },
+      "equivalence_diagnostic": {
+        "equivalence": {
+          "frame_section_fast": "50e5f94b05d658d8929a6253ca208903cc204f336a9bff0e6a880adb185f46df",
+          "frame_section_official": "50e5f94b05d658d8929a6253ca208903cc204f336a9bff0e6a880adb185f46df",
+          "frame_section_equal": true,
+          "targets": {
+            "camera": {
+              "fast": "adacecce85e840b87ff82d3ef00e85d51472bc142fa2ec676f5f3a2318f1a26f",
+              "official": "adacecce85e840b87ff82d3ef00e85d51472bc142fa2ec676f5f3a2318f1a26f",
+              "equal": true
+            },
+            "curves": {
+              "fast": "5337f1b87af895c6ff80c1d29ff4e19122fabfaa7376b0d21d717eb8e4766c92",
+              "official": "5337f1b87af895c6ff80c1d29ff4e19122fabfaa7376b0d21d717eb8e4766c92",
+              "equal": true
+            }
+          },
+          "all_equal": true
+        },
+        "official_timing_s": {
+          "mutate_capture_s": 25.4805606000009,
+          "official_convert_s": 8.929746699999669,
+          "official_sections_s": 1.816499600012321,
+          "official_replay_s": 4.626934199986863
+        },
+        "both_wall_s": 46.37234879999596
+      }
+    },
+    "timings": {
+      "session_start_s": 1.5377085000072839,
+      "repeated_diagnostic_camera_only": [
+        {
+          "python_total_s": 2.662196999997832,
+          "tool_ms": {
+            "delete_candidate": 24.123,
+            "official_open_capture": 1543.57,
+            "official_open_file": 12.7457,
+            "patch_and_reencode": 4.0332,
+            "readback": 43.2927,
+            "set_frame_event": 31.8808,
+            "shutdown": 172.146,
+            "verify": 0.5143,
+            "write_candidate_rdc": 290.129,
+            "write_targets": 1.8816,
+            "total": 2131.98
+          },
+          "camera_sha256": "adacecce85e840b87ff82d3ef00e85d51472bc142fa2ec676f5f3a2318f1a26f"
+        },
+        {
+          "python_total_s": 2.5896207000041613,
+          "tool_ms": {
+            "delete_candidate": 21.2188,
+            "official_open_capture": 1417.54,
+            "official_open_file": 18.2874,
+            "patch_and_reencode": 3.975,
+            "readback": 47.1083,
+            "set_frame_event": 41.3308,
+            "shutdown": 220.302,
+            "verify": 0.5524,
+            "write_candidate_rdc": 300.38,
+            "write_targets": 2.2364,
+            "total": 2079.16
+          },
+          "camera_sha256": "adacecce85e840b87ff82d3ef00e85d51472bc142fa2ec676f5f3a2318f1a26f"
+        },
+        {
+          "python_total_s": 2.420800699997926,
+          "tool_ms": {
+            "delete_candidate": 23.2797,
+            "official_open_capture": 1352.61,
+            "official_open_file": 9.8165,
+            "patch_and_reencode": 3.9634,
+            "readback": 35.6188,
+            "set_frame_event": 51.0342,
+            "shutdown": 139.828,
+            "verify": 0.5172,
+            "write_candidate_rdc": 296.908,
+            "write_targets": 1.6847,
+            "total": 1922.31
+          },
+          "camera_sha256": "adacecce85e840b87ff82d3ef00e85d51472bc142fa2ec676f5f3a2318f1a26f"
+        }
+      ],
+      "repeat_camera_deterministic": true
+    },
+    "session_ready": {
+      "event": "ready",
+      "rdc_sha256": "eb5743bce38bdaa7a4b5d7e96ca09d3d7cfd88eac306510667afd0f2245b6403",
+      "frame_section_sha256": "f7122a76ebff5e2aa3309f7fe2aa726d1555f8c72b8f8e0336bf52d015c47ceb",
+      "lz4": true,
+      "replay_only": false,
+      "pages": 1577,
+      "timing_ms": {
+        "read": 179.62,
+        "sha256": 104.483,
+        "decode_and_history_cache": 890.053
+      }
+    },
+    "pipeline_acceptance_passed": true,
+    "candidate_geometry_complete": false,
+    "full_renderer_accepted": false,
+    "chin_accepted": false
+  },
+  "fixture_equivalence": {
+    "diagnostic": {
+      "frame_section_fast": "23f2d47b6fa2a8c3fa2e5b99cdad639030ba9981c3bcddc761402de992f4a3a9",
+      "frame_section_official": "23f2d47b6fa2a8c3fa2e5b99cdad639030ba9981c3bcddc761402de992f4a3a9",
+      "frame_section_equal": true,
+      "targets": {
+        "rt": {
+          "fast": "6ee331cb8ae7fa20f586c9fc57685e4e0e6872df31d40356a5c02511f19bf512",
+          "official": "6ee331cb8ae7fa20f586c9fc57685e4e0e6872df31d40356a5c02511f19bf512",
+          "equal": true
+        },
+        "vb": {
+          "fast": "6766f57a58d26797c0148c1eb162ef6b459f68f64b5a4f04a87baef501aeaef2",
+          "official": "6766f57a58d26797c0148c1eb162ef6b459f68f64b5a4f04a87baef501aeaef2",
+          "equal": true
+        },
+        "copy": {
+          "fast": "6ee331cb8ae7fa20f586c9fc57685e4e0e6872df31d40356a5c02511f19bf512",
+          "official": "6ee331cb8ae7fa20f586c9fc57685e4e0e6872df31d40356a5c02511f19bf512",
+          "equal": true
+        }
+      },
+      "all_equal": true
+    },
+    "identity": {
+      "frame_section_fast": "d6ae1ddea26b9ba887ce6403c3f5445e5cd0f009513495a4feeea82681dbdc77",
+      "frame_section_official": "d6ae1ddea26b9ba887ce6403c3f5445e5cd0f009513495a4feeea82681dbdc77",
+      "frame_section_equal": true,
+      "targets": {
+        "rt": {
+          "fast": "92eba9cfd94c6956ae9503f76e02f8056eec96f70521a3ab50b2b6e07a919f51",
+          "official": "92eba9cfd94c6956ae9503f76e02f8056eec96f70521a3ab50b2b6e07a919f51",
+          "equal": true
+        },
+        "vb": {
+          "fast": "c170cc840cc8b9f9ee7de29aad104ac12dec0e7e034a1209c82ed4500e201a31",
+          "official": "c170cc840cc8b9f9ee7de29aad104ac12dec0e7e034a1209c82ed4500e201a31",
+          "equal": true
+        },
+        "copy": {
+          "fast": "92eba9cfd94c6956ae9503f76e02f8056eec96f70521a3ab50b2b6e07a919f51",
+          "official": "92eba9cfd94c6956ae9503f76e02f8056eec96f70521a3ab50b2b6e07a919f51",
+          "equal": true
+        }
+      },
+      "all_equal": true
+    },
+    "capture": "outputs/offline_renderer_repair_20261012/renderdoc_analytic/capture_capture.rdc (independent analytic 32x32, not HS2)"
+  },
+  "candidate_geometry_complete": false,
+  "full_renderer_accepted": false,
+  "chin_accepted": false
+}
