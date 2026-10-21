@@ -325,11 +325,11 @@ class PlanTests(unittest.TestCase):
         o2w_only = sl.CBufferLayout('UnityPerDraw', 176, [sl.Variable('unity_ObjectToWorld', 0, 'float', 4, 4, 0, True)], slot=1)
         copies = {}
         r1 = {'object_to_world': [float(x) for x in um.from_bytes(bytes.fromhex(CAP_O2W))]}
-        d1 = up.PlannedDraw('opaque', r1, 0, {}, 'FORWARDBASE', (), uf.per_draw_values(r1))
+        d1 = up.PlannedDraw('opaque', r1, 0, {}, 'X', 0, 'FORWARDBASE', (), builtin=uf.per_draw_values(r1))
         out1, miss1 = up.draw_cbuffers(d1, {}, [full], copies, sl.pack_cbuffer)
         self.assertEqual(out1[1]['bytes'][64:128].hex(), CAP_W2O)
         r2 = {'object_to_world': [float(x) for x in um.identity()]}
-        d2 = up.PlannedDraw('opaque', r2, 0, {}, 'FORWARDBASE', (), uf.per_draw_values(r2))
+        d2 = up.PlannedDraw('opaque', r2, 0, {}, 'X', 0, 'FORWARDBASE', (), builtin=uf.per_draw_values(r2))
         out2, _ = up.draw_cbuffers(d2, {}, [o2w_only], copies, sl.pack_cbuffer)
         # Only O2W is written; the previous draw's W2O stays in the shared copy
         # (the "stale W2O" bytes of the capture).

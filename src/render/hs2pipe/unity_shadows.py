@@ -289,9 +289,10 @@ def directional_cascade(inp, cascade_index, width, height):
     wy = ((cy * L[5] + cx * L[1]) + cz * L[9]) + L[13]
     wz = ((cy * L[6] + cx * L[2]) + cz * L[10]) + L[14]
     d_x = (float(X[1]) * float(wy) + float(X[0]) * float(wx)) + float(X[2]) * float(wz)
-    snap_x = F(math.fmod(d_x, float(tex_x)))
+    from .unity_crt import fmod as crt_fmod
+    snap_x = F(crt_fmod(d_x, float(tex_x)))
     d_y = (float(Y[0]) * float(wx) + float(Y[1]) * float(wy)) + float(Y[2]) * float(wz)
-    snap_y = F(math.fmod(d_y, float(tex_y)))
+    snap_y = F(crt_fmod(d_y, float(tex_y)))
     half_x = ex * F(0.5)
     half_z = ez * F(0.5)
     half_y = ey * F(0.5)

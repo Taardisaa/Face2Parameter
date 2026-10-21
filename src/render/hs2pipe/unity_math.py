@@ -10,10 +10,8 @@ machine code; SSE scalar/packed single operations are IEEE binary32 with
 round-to-nearest, reproduced with numpy ``float32`` scalars (no FMA exists in
 the recovered code).  Two exceptions are explicit:
 
-* ``cosf``/``sinf`` are CRT calls inside UnityPlayer (RVA 0x1171520/0x1174df0).
-  Their implementation is not transcribed; ``_crt_cosf``/``_crt_sinf`` use the
-  correctly rounded double result.  This is an *assumption*, recorded as gap
-  ``crt_trig`` and checked against captured projections.
+* ``cosf``/``sinf`` are CRT calls inside UnityPlayer (RVA 0x1171520/0x1174df0);
+  they are executed from the installed binary by ``unity_crt``.
 * Matrices use Unity's memory layout: 16 floats, column-major
   (``m[col*4 + row]``), which is also the byte layout of a ``float4x4`` in the
   compiled HLSL constant buffers (column_major packing).
@@ -38,12 +36,14 @@ def f32(x):
 
 
 def _crt_cosf(x):
-    # Assumption (gap crt_trig): MSVC CRT cosf returns the correctly rounded value.
-    return F(math.cos(float(F(x))))
+    """Installed CRT cosf executed by ``unity_crt`` (Unicorn, original instructions)."""
+    from .unity_crt import cosf
+    return cosf(x)
 
 
 def _crt_sinf(x):
-    return F(math.sin(float(F(x))))
+    from .unity_crt import sinf
+    return sinf(x)
 
 
 def identity():

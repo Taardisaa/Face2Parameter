@@ -119,13 +119,64 @@ def extract(graph, passes, segments):
     return rows
 
 
-def run_extract(xml, zip_path, inspect, manifests, out, boundary_resource):
+class InstalledLibraryNames:
+    """frame_graph.ShaderLibrary-compatible names/layouts from ``shader_library``
+    (installed shader library, all 106 captured programs).  Copies of one DXBC
+    hash must agree on slot names and layouts; otherwise no names are given."""
+
+    def __init__(self, roots):
+        from src.render.hs2pipe import shader_library as sl
+        self.lib = sl.ShaderLibrary(roots)
+        self.index = {}
+        for name, copies in self.lib._shaders.items():
+            for shader in copies:
+                for sub in shader.subshaders:
+                    for p in sub.passes:
+                        for stage in p.stages():
+                            for sp in p.subprograms(stage):
+                                if sp.dxbc_sha256:
+                                    self.index.setdefault(sp.dxbc_sha256, []).append(sp)
+        self.sources = [{'shader_library': [str(r) for r in roots]}]
+
+    def _names(self, sp):
+        cbs = sp.constant_buffers()
+        res = sp.resources()
+        return {'cb': {c.slot: c.name for c in cbs if c.slot is not None},
+                'srv': {t['srv']: t['name'] for t in res['textures'] + res['buffers']},
+                'uav': {t['uav']: t['name'] for t in res['uavs']},
+                'cb_layouts': {c.name: {'size': c.size, 'variables': [
+                    {'name': v.name, 'offset': v.offset,
+                     'size': (64 * (v.array_size or 1) if v.matrix else
+                              (16 * ((v.array_size or 1) - 1) + 4 * v.columns))} for v in c.variables]}
+                    for c in cbs}}
+
+    def match(self, sha):
+        return [{'shader': sp.shader.name, 'subshader': sp.subshader, 'pass': sp.pass_index, 'pass_name': None,
+                 'stage': sp.stage, 'keywords': sorted(sp.keywords), 'dxbc': sha, 'source': sp.shader.source_label}
+                for sp in self.index.get(sha, [])]
+
+    def names(self, sha):
+        rows = self.index.get(sha, [])
+        if not rows:
+            return None, []
+        first = self._names(rows[0])
+        key = json.dumps(first, sort_keys=True, default=str)
+        conflicts = [r.shader.source_label for r in rows[1:]
+                     if json.dumps(self._names(r), sort_keys=True, default=str) != key]
+        return (None if conflicts else first), conflicts
+
+    def asm_check(self, sha, declarations):
+        return None
+
+
+def run_extract(xml, zip_path, inspect, manifests, out, boundary_resource, library_roots=None):
     out = Path(out)
     if out.exists():
         raise FileExistsError('Fresh output path required: %s' % out)
     chunks = fg.load_chunks(xml)
     listing = fg.load_driver_listing(inspect) if inspect else None
-    graph = fg.FrameGraph(chunks, listing, fg.Blobs(zip_path), fg.ShaderLibrary(manifests)).build()
+    library = InstalledLibraryNames(library_roots) if library_roots else fg.ShaderLibrary(manifests)
+    graph = fg.FrameGraph(chunks, listing, fg.Blobs(zip_path), library).build()
     validation = graph.validate_events()
     passes = fg.group_passes(graph)
     segments = fg.segment_passes(passes, graph, boundary_resource)
@@ -134,6 +185,7 @@ def run_extract(xml, zip_path, inspect, manifests, out, boundary_resource):
            'provenance': {'xml': str(Path(xml).resolve()), 'xml_sha256': fg.digest(Path(xml).read_bytes()),
                           'zip': str(Path(zip_path).resolve()), 'inspect': str(Path(inspect).resolve()) if inspect else None,
                           'shader_manifests': [str(Path(m).resolve()) for m in manifests],
+                          'shader_library': [str(Path(r).resolve()) for r in (library_roots or [])],
                           'frame_graph_tool_sha256': fg.digest(Path(fg.__file__).read_bytes()),
                           'tool_sha256': fg.digest(Path(__file__).read_bytes())},
            'event_validation': validation,
@@ -602,6 +654,7 @@ def main(argv=None):
     e.add_argument('--inspect', type=Path)
     e.add_argument('--shader-manifest', type=Path, action='append', default=[])
     e.add_argument('--segment-boundary-resource', type=int)
+    e.add_argument('--library', action='append', help='installed shader_library extraction dir (replaces manifests)')
     e.add_argument('--out', type=Path, required=True)
     c = sub.add_parser('compare')
     c.add_argument('--generated', type=Path, required=True)
@@ -623,7 +676,7 @@ def main(argv=None):
         return
     if args.cmd == 'extract':
         doc = run_extract(args.xml, args.zip or args.xml.with_suffix(''), args.inspect, args.shader_manifest, args.out,
-                          args.segment_boundary_resource)
+                          args.segment_boundary_resource, args.library)
         print(json.dumps({'draws': len(doc['draws']), 'passes': len(doc['passes'])}))
     else:
         if args.out.exists():

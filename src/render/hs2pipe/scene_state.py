@@ -175,6 +175,8 @@ def f32_value(v):
         if v in ('-inf', '-Infinity'):
             return np.float32(-np.inf)
         raise SceneStateError('Unknown float literal %r' % v)
+    if isinstance(v, np.floating):
+        return np.float32(v)
     if isinstance(v, bool) or not isinstance(v, (int, float)):
         raise SceneStateError('Float expected, got %r' % (v,))
     return np.float32(v)

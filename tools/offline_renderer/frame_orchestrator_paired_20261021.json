@@ -1,0 +1,228 @@
+{
+ "schema": "hs2_frame_orchestrator_receipt/1",
+ "date": "2026-10-21",
+ "capture": "paired 04d1 frame 26059 (capture_to_program --through-event 2210)",
+ "bulky_outputs": "E:/HS2_offline_renderer_data/orchestrator_20261020/",
+ "delivered_run": {
+  "dir": "E:/HS2_offline_renderer_data/orchestrator_20261020/frame_v15",
+  "summary": {
+   "vs": {
+    "equal": 68
+   },
+   "ps": {
+    "equal": 68
+   },
+   "blend": {
+    "equal": 68
+   },
+   "depth_stencil": {
+    "equal": 68
+   },
+   "raster": {
+    "equal": 68
+   },
+   "stencil_ref": {
+    "equal": 68
+   },
+   "cbuffers": {
+    "equal": 416,
+    "different_export_decimal_precision_only": 14
+   },
+   "cbuffer_variables": {
+    "generated": 1010,
+    "external": 409
+   }
+  },
+  "per_pass": {
+   "depth_texture": {
+    "draws": 14,
+    "draws_equal": 14,
+    "cbuffers": {
+     "equal": 78
+    }
+   },
+   "depth_normals": {
+    "draws": 22,
+    "draws_equal": 22,
+    "cbuffers": {
+     "equal": 100
+    }
+   },
+   "forward_opaque": {
+    "draws": 16,
+    "draws_equal": 9,
+    "cbuffers": {
+     "equal": 155,
+     "different_export_decimal_precision_only": 12
+    }
+   },
+   "motion_vectors": {
+    "draws": 12,
+    "draws_equal": 12,
+    "cbuffers": {
+     "equal": 48
+    }
+   },
+   "forward_transparent": {
+    "draws": 4,
+    "draws_equal": 3,
+    "cbuffers": {
+     "equal": 35,
+     "different_export_decimal_precision_only": 2
+    }
+   }
+  },
+  "execution": {
+   "checkpoints": 58,
+   "equal": 38
+  },
+  "execution_mismatches": [
+   "p13_forward_scene_r8342",
+   "p14_motion_vectors_r8414",
+   "p26_ambient_occlusion_msvo_r8342",
+   "p28_forward_scene_r8342",
+   "p30_forward_scene_r8342",
+   "p31_post_copy_std_r8635",
+   "p33_post_depth_of_field_r8651",
+   "p34_post_depth_of_field_r8655",
+   "p35_post_depth_of_field_r8651",
+   "p36_post_depth_of_field_r8643",
+   "p38_post_uber_r8639",
+   "p41_post_smaa_r8643",
+   "p42_post_final_pass_r8342",
+   "p43_blit_copy_r8731",
+   "p44_blit_copy_r11503",
+   "p45_temporal_aa_ctaa_r8739",
+   "p46_temporal_aa_ctaa_r8749",
+   "p47_blit_copy_r8755",
+   "p48_blit_copy_r780",
+   "p49_ui_r780"
+  ],
+  "motion_vectors": {
+   "generated_order": [
+    "o_tooth",
+    "o_tang",
+    "o_eyebase_R",
+    "o_eyebase_L",
+    "o_head",
+    "o_body_cf",
+    "o_eyeshadow",
+    "o_shoes_bones",
+    "o_shorts_a",
+    "o_bra_a",
+    "o_bot_pantshot1_a",
+    "o_top_camisole2_a"
+   ],
+   "captured_order": [
+    "o_tang",
+    "o_eyebase_L",
+    "o_eyebase_R",
+    "o_tooth",
+    "o_head",
+    "o_body_cf",
+    "o_eyeshadow",
+    "o_bot_pantshot1_a",
+    "o_shoes_bones",
+    "o_shorts_a",
+    "o_bra_a",
+    "o_top_camisole2_a"
+   ],
+   "candidates": 15,
+   "included_external": 12
+  },
+  "spliced_commands": 310,
+  "generated_draws": 68
+ },
+ "diagnostic_runs": {
+  "captured_material_colours (forward+depth, before MV generation)": {
+   "dir": "E:/HS2_offline_renderer_data/orchestrator_20261020/frame_v8_diag_colours",
+   "cbuffers": {
+    "equal": 204
+   },
+   "execution": {
+    "checkpoints": 58,
+    "equal": 58
+   }
+  },
+  "captured_material_colours + captured_mv_order": {
+   "dir": "E:/HS2_offline_renderer_data/orchestrator_20261020/frame_v14_diag",
+   "cbuffers": {
+    "equal": 430
+   },
+   "execution": {
+    "checkpoints": 58,
+    "equal": 58
+   }
+  }
+ },
+ "external_variables": {
+  "_WorldSpaceLightPos0": 30,
+  "_Cutoff": 22,
+  "unity_LightShadowBias": 14,
+  "_HasLastPositionData": 12,
+  "_MotionVectorDepthBias": 12,
+  "_ExGloss": 10,
+  "_AlphaEx": 10,
+  "_alpha_d": 10,
+  "_alpha_a": 10,
+  "_alpha_b": 10,
+  "_alpha_c": 10,
+  "_TreeInstanceScale": 10,
+  "_TerrainEngineBendTree": 10,
+  "_SquashPlaneNormal": 10,
+  "_SquashAmount": 10,
+  "unity_ObjectToWorld": 7,
+  "unity_WorldToObject": 6,
+  "_texcoord_ST": 6,
+  "_UVScalePattern": 6,
+  "_WeatheringUV": 6,
+  "_WeatheringRange1": 6,
+  "_WeatheringRange2": 6,
+  "_WeatheringRange3": 6,
+  "_WeatheringRange4": 6,
+  "_WeatheringRange5": 6,
+  "_WeatheringRange6": 6,
+  "_WeatheringAll": 6,
+  "_texcoord2_ST": 5,
+  "_Float0": 5,
+  "_DetailUV": 5,
+  "_DetailUVRotator": 5,
+  "_DetailNormalMapScale": 5,
+  "_DetailUV2": 5,
+  "_DetailUV2Rotator": 5,
+  "_DetailNormalMapScale2": 5,
+  "_BaseColor": 5,
+  "_CarvatureStrength": 5,
+  "_EmissionColor": 5,
+  "_EmissionStrength": 5,
+  "_FresnelSetting": 5,
+  "_OcculusionStrength": 5,
+  "_DetailOcculusionScale": 5,
+  "_DetailOcculusionScale2": 5,
+  "_BitangentRim": 5,
+  "_DetailMainTex_ST": 5,
+  "_DetailGlossScale": 5,
+  "_DetailGlossScale2": 5,
+  "_DetailMetallicScale": 5,
+  "_DetailMetallicScale2": 5,
+  "_TransmissionStrength": 5,
+  "_Translucency": 5,
+  "_TransNormalDistortion": 5,
+  "_TransScattering": 5,
+  "_TransDirect": 5,
+  "_TransAmbient": 5,
+  "_TransShadow": 5,
+  "_ChromaticAberration": 1
+ },
+ "gaps": [
+  "camera_implicit_flags",
+  "camera_transform_position",
+  "clothes_shader_bundle",
+  "depth_key_mesh_fields",
+  "depth_normals_shader_source",
+  "motion_vector_inclusion",
+  "scene_node_lists",
+  "shader_copy_layout_size"
+ ],
+ "oracle": "capture program executed with identical read-backs (frame_v7/exec_oracle); executor build_v3 accepted bit-exact vs RenderDoc replay"
+}

@@ -60,16 +60,19 @@ def pack_int(values):
 
 # --------------------------------------------------------------- utilities
 def gamma_to_linear_space(v):
-    """``GammaToLinearSpace(float)`` (RVA 0x27cae0).  powf is the CRT call
-    (gap ``crt_pow``: assumed correctly rounded)."""
+    """``GammaToLinearSpace(float)`` (RVA 0x27cae0); the same arithmetic is used
+    per channel by GammaToLinearSpace(Color) 0x27c970 and the material colour
+    conversion 0x83cde0.  ``powf`` is the installed CRT routine executed by
+    ``unity_crt`` (not correctly rounded: 1-ulp differences in the capture)."""
+    from .unity_crt import powf
     v = F(v)
     if F(0.04045) >= v:
         return v / F(12.92)
     if F(1.0) > v:
-        return F(math.pow(float((v + F(0.055)) / F(1.055)), float(F(2.4))))
+        return powf((v + F(0.055)) / F(1.055), F(2.4))
     if v == F(1.0):
         return F(1.0)
-    return F(math.pow(float(v), float(F(2.2))))
+    return powf(v, F(2.2))
 
 
 def sh_add_weighted(dst, src, w):
@@ -298,6 +301,7 @@ def time_shader_props(time):
     _Time = (t*0.05, t, t+t, t*3); _SinTime/_CosTime = sinf/cosf(t/8, t/4, t/2, t)
     (CRT trig: gap ``crt_trig``); unity_DeltaTime = (dt, 1/dt, sdt, 1/sdt) with
     dt clamped: 0.005 if 0.005 > dt else min(0.2, dt) (minss semantics)."""
+    from .unity_crt import sinf as crt_sinf, cosf as crt_cosf
     t = f32_value(time['shader_time'])
 
     def clamp(v):
@@ -310,8 +314,8 @@ def time_shader_props(time):
     q = (t * F(0.125), t * F(0.25), t * F(0.5), t)
     return {
         '_Time': [t * F(0.05), t, t + t, t * F(3.0)],
-        '_SinTime': [F(math.sin(float(v))) for v in q],
-        '_CosTime': [F(math.cos(float(v))) for v in q],
+        '_SinTime': [crt_sinf(v) for v in q],
+        '_CosTime': [crt_cosf(v) for v in q],
         'unity_DeltaTime': [dt, F(1.0) / dt, sdt, F(1.0) / sdt],
     }
 
@@ -386,25 +390,110 @@ def object_sh_values(state, renderer):
     return sh_shader_constants(sh)
 
 
-def reflection_probe_defaults(state):
-    """UnityReflectionProbes values when no reflection probe affects the
-    renderer (capture_observed values; the engine source is not yet
-    transcribed: gap ``reflection_probe_blend``)."""
-    inf, ninf = F(np.inf), F(-np.inf)
-    rs = state.section('render_settings').get('default_reflection') or {}
-    hdr = f32_list(rs['default_texture_hdr_decode'], 4) if 'default_texture_hdr_decode' in rs else None
-    if hdr is None:
-        raise GeneratorGap('default reflection HDR decode not exported')
-    return {
-        'unity_SpecCube0_BoxMax': [inf, inf, inf, F(1.0)],
-        'unity_SpecCube0_BoxMin': [ninf, ninf, ninf, F(0.0)],
-        'unity_SpecCube0_ProbePosition': [F(0.0)] * 4,
-        'unity_SpecCube0_HDR': hdr,
-        'unity_SpecCube1_BoxMax': [inf, inf, inf, F(1.0)],
-        'unity_SpecCube1_BoxMin': [ninf, ninf, ninf, F(1.0)],
-        'unity_SpecCube1_ProbePosition': [F(0.0)] * 4,
-        'unity_SpecCube1_HDR': hdr,
-    }
+def texture_decode_values(usage, texture_linear):
+    """``GetTextureDecodeValues(TextureUsageMode, TextureColorSpace)`` (RVA 0x7569d0,
+    jump table 0x756a8c indexed by usage-1)."""
+    x, y, z, w = F(1.0), F(1.0), F(0.0), F(1.0)
+    u = int(usage)
+    if u in (1, 7):
+        x = F(2.0)
+        if texture_linear:
+            x = gamma_to_linear_space(x)
+        w = F(0.0)
+    elif u in (2, 5, 9):
+        x = F(5.0)
+        if texture_linear:
+            from .unity_crt import powf
+            y = F(2.2)
+            x = powf(F(5.0), y)
+    elif u == 4:
+        x, z, w = F(2.0), F(-1.0), F(0.0)
+    else:
+        w = F(0.0)
+    return [x, y, z, w]
+
+
+def texture_decode_values_with_intensity(usage, texture_linear, active_linear, intensity):
+    """``GetTextureDecodeValuesWithIntensity`` (RVA 0x756ab0, jump table 0x756c4c)."""
+    from .unity_crt import powf
+    i = F(intensity)
+    x0 = gamma_to_linear_space(i) if active_linear else i
+    x, y, z, w = F(1.0), F(1.0), F(0.0), F(0.0)
+    u = int(usage)
+    if u == 0:
+        x = x0
+    elif u in (1, 7):
+        x = i + i
+        if texture_linear:
+            x = gamma_to_linear_space(x)
+    elif u in (2, 5, 9):
+        w = F(1.0)
+        if not texture_linear:
+            x = x0 * F(5.0)
+        else:
+            y = F(2.2)
+            # inline GammaToLinearSpace(intensity) (0x756b74..0x756bdf) times powf(5, 2.2)
+            x = powf(F(5.0), y) * gamma_to_linear_space(i)
+    elif u == 4:
+        x, z = F(2.0), F(-1.0)
+    return [x, y, z, w]
+
+
+def default_reflection_texture(render_settings):
+    """``RenderSettings::UpdateDefaultReflection`` (RVA 0x6a5db0): mode != Skybox
+    (RenderSettings+0x198) hands ``customReflection`` (+0x1a4) to
+    ``ReflectionProbes::SetDefaultTexture`` (0x6802c0), Skybox mode the generated
+    cubemap (+0x1a8); the intensity is ``reflectionIntensity`` (+0x194).
+    Returns ``None`` for a null texture, otherwise the texture's export record."""
+    mode = str(render_settings['defaultReflectionMode'])
+    if mode.endswith('=1') or mode.endswith('Custom'):
+        return render_settings.get('customReflection')
+    raise GeneratorGap('default_reflection_skybox: generated skybox cubemap (RenderSettings+0x1a8) '
+                       'usage/colour space not exported')
+
+
+def default_reflection_sample(render_settings, active_linear=True):
+    """``ReflectionProbes::GenerateDefaultSample`` (RVA 0x67d5d0): memset 0x7c, then
+    for both probes (stride 0x3c) centre = Vector3f::zero, extents =
+    Vector3f::infinityVec, texture = default (black cube when null), HDR decode =
+    ``GetTextureDecodeValues(0, 0)`` for a null texture else
+    ``GetTextureDecodeValuesWithIntensity(usage, texCS if linear else 0, activeCS,
+    intensity)``, probe position = 0; the blend weight (+0x78) stays 0."""
+    tex = default_reflection_texture(render_settings)
+    if tex is None:
+        hdr = texture_decode_values(0, False)
+    else:
+        if 'usage_mode' not in tex or 'color_space_linear' not in tex:
+            raise GeneratorGap('default_reflection_texture_usage: Texture+0x60/+0x64 not exported')
+        hdr = texture_decode_values_with_intensity(tex['usage_mode'], bool(tex['color_space_linear']) and active_linear,
+                                                   active_linear, render_settings['reflectionIntensity'])
+    probe = {'center': [F(0.0)] * 3, 'extents': [F(np.inf)] * 3, 'hdr': hdr, 'position': [F(0.0)] * 4}
+    return {'probes': [dict(probe), dict(probe)], 'blend': F(0.0), 'texture_null': tex is None}
+
+
+def reflection_probe_constants(sample):
+    """``SetReflections`` (RVA 0x6c11e0): builtin vector params 0x64..0x6b (name
+    table 0x14b89c0): HDR = sample+0x1c, BoxMax = (c+e, 1), BoxMin = (c-e, blend)
+    for probe 0 and (c-e, 1) for probe 1, ProbePosition = sample+0x2c."""
+    out = {}
+    for k, p in enumerate(sample['probes']):
+        c, e = p['center'], p['extents']
+        out['unity_SpecCube%d_HDR' % k] = list(p['hdr'])
+        out['unity_SpecCube%d_BoxMax' % k] = [c[0] + e[0], c[1] + e[1], c[2] + e[2], F(1.0)]
+        out['unity_SpecCube%d_BoxMin' % k] = [c[0] - e[0], c[1] - e[1], c[2] - e[2],
+                                              sample['blend'] if k == 0 else F(1.0)]
+        out['unity_SpecCube%d_ProbePosition' % k] = list(p['position'])
+    return out
+
+
+def renderer_reflection_sample(render_settings, renderer, active_probes, active_linear=True):
+    """``GetReflectionSample`` (RVA 0x6512d0): a renderer without probe usage flags
+    (RenderNode+0xe8 & 0x6000), or with no per-object probes
+    (``SamplePerObjectReflectionProbes`` 0x6696d0, count 0), gets the context's
+    default sample.  Per-object probe blending is not transcribed."""
+    if active_probes:
+        raise GeneratorGap('reflection_probe_blend: SamplePerObjectReflectionProbes with probes not transcribed')
+    return default_reflection_sample(render_settings, active_linear)
 
 
 def probe_volume_disabled():
