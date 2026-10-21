@@ -350,11 +350,295 @@ SHA. They now reject their older frozen artifacts, which were produced by the
 previous inexact model. Re-freezing those is a decision for their owner.
 
 Gaps:
-- Per-frame drivers are frame inputs from the probe: animation pose, eye look,
-  mouth width and blendshape weights. Their own source chains are not ported here.
+- Per-frame drivers (animation pose, eye look, mouth width, FBS weights): see
+  section 9.
 - SliderUnlocker's out-of-range extrapolation (`SliderMath`) is not ported;
   it raises.
 - Signed zeros in bridge JSON baselines are unrecoverable, because .NET
   Framework's "R" format drops -0.
 - The sparse blendshape rows are rebuilt from API dense frames. This matters
   only for -0.0 source components.
+
+## 9 Per-frame drivers (2026-10-20, offline)
+
+Receipt: `tools/offline_renderer/frame_drivers_acceptance_20261020.json`.
+Bulky outputs: `E:/HS2_offline_renderer_data/skinning_20261020/drivers/`.
+Tests: `tools/offline_renderer/test_frame_drivers.py`.
+
+### 9.1 How the drivers are executed: the game's own code
+
+The drivers are managed code in the installed `IL.dll`. Their float results
+depend on HS2's Mono JIT: double evaluation, rounding at stores, and register
+allocation across basic blocks. They are therefore not transcribed.
+`src/render/hs2_hosted_runtime.py` embeds the installed
+`MonoBleedingEdge/EmbedRuntime/mono-2.0-bdwgc.dll` and loads the installed
+`IL.dll` and `UnityEngine.CoreModule.dll`, so the game's IL is compiled by the
+game's JIT.
+
+- **Mono init**: identical to `InitializeMonoFromMain`:
+  `mono_set_defaults(0, mono_parse_default_optimizations(NULL))` (UnityPlayer
+  RVA 0x8e99d5).
+- **Native calls** are UnityPlayer.dll's own code, loaded in-process:
+  - The Quaternion, Vector3 and Random bindings are registered directly as the
+    Mono internal calls.
+  - Transform internal calls use a scene model. It runs UnityPlayer's
+    `CalculateGlobalPositionAndRotation`, `TransformPoint`,
+    `InverseTransformPosition` and `InverseTransformRotation` on a
+    TransformHierarchy built from the TRS records, plus the validated `SetLocalR`
+    normalization.
+  - SSE operands are 16-byte aligned.
+  - `GetScriptingRand()` returns the `Rand*` stored at RVA 0x1551860. The host
+    points that slot at its own `RandState`.
+- **Harmony patches in the installed plugin set**: none patches the driver
+  arithmetic in the Maker.
+  - Hooah prefixes `EyeLookController.LateUpdate` and
+    `NeckLookControllerVer2.LateUpdate`. They act only for Studio
+    `HijackLook`/`HijackNeck` gimmicks.
+  - PovX prefixes `NeckLookControllerVer2.LateUpdate`, only with PoV enabled.
+  - BetterHScenes postfixes `FaceBlendShape.OnLateUpdate`, only in an H scene.
+  - No preloader patcher targets `IL.dll` or `CoreModule`.
+
+The installed MonoScript execution orders (`globalgamemanagers.assets`) fix the
+LateUpdate sequence:
+
+| Order | Writer |
+|---:|---|
+| -16000 | UniRx `MainThreadDispatcher` → `FaceBlendShape.OnLateUpdate` |
+| -45 | `Manager.Character` → `ChaControl.LateUpdateForce` |
+| 0 | ABMX `BoneController`, `CameraControl_Ver2` |
+| 9996–10001 | FinalIK |
+| 10050 | `NeckLookControllerVer2` |
+| 10800 | `EyeLookController` |
+| 12400 | `CorrectLightAngle` |
+| 13100 | `DynamicBone` |
+
+`CharaUtils.Expression` (12000) exists only in Studio. In the Update phase,
+`Manager.Character` (-45) runs `ChaControl.UpdateForce` →
+`UpdateBlendShapeVoice`.
+
+### 9.2 Eye look: ported and accepted bit-exact
+
+The eye look runs on `p_cf_head_bone` (`oo_base.unity3d`).
+
+- **Init**: `EyeLookCalc.Awake → Init` runs inside `CommonLib.LoadAsset`'s
+  Instantiate, before parenting and before `InitShapeFace`. The reference state
+  is therefore prefab-only, and the hosted Init gives:
+  - `referenceLookDir = +Z` and `referenceUpDir = +Y`;
+  - `origRotation = (0,-0,-0,1)`.
+- **Inputs in the Maker**:
+  - `ptnNo = 1` (TARGET, leapSpeed 10). This comes from
+    `CustomControl.Initialize` and `CustomBase._eyelook = 0`.
+  - `target = Camera.main.transform`.
+- **Candidate dependence**: `EyeUpdateCalc` reads the world TRS of
+  `rootNode = cf_J_FaceUp_tz` and of the eye parents `cf_J_EyePos_rz_L/R`. Both
+  move with face sliders and ABMX, so the eye look depends on the candidate and
+  must be recomputed.
+- **Outputs**: `cf_J_look_L/R`.
+- **Hidden state**: `angleH`, `angleV`, `dirUp` per eye.
+
+**Acceptance** (`tools/offline_renderer/eye_look_acceptance.py`). For each probe
+frame F, the installed `EyeLookController.LateUpdate` runs with:
+- frame F's exported local TRS for all 907 character transforms;
+- Time.deltaTime of F;
+- Camera.main's position;
+- the hidden state from the hosted run of F-1.
+
+The hosted world TRS of the eye ancestors and `chaF_001` equal the exported
+world TRS bit for bit on every frame. Probe v4 does not export the window-start
+hidden state. It is seeded by decomposing the first frame's look rotation, and
+every frame is rerun with two deliberately different seeds:
+- the Init state;
+- the reconstruction with dirUp tilted by 1e-3 rad.
+
+A frame is **accepted** when all seeds give the same bits and they equal the
+export:
+
+| Window | Accepted (bit-exact, seed-invariant) | Seed-dependent |
+|---|---|---|
+| 04d1e76f (marker 26060) | 26057–26062, both eyes (12/12) | 26056 (exact with the reconstructed seed) |
+| 625aa0f2 (marker 12741) | 12741–12750 both eyes; L 12739–12740 (22) | 12736–12740 R and 12736–12738 L |
+
+- **No seed-invariant frame differs.** The one inexact seed-dependent frame
+  (12738 R: 16 and 32768 ulp in x/z, about 1e-9 absolute) is exact with the tilted seed.
+  This proves the residual is the unexported dirUp state, not the logic.
+- **Seeds stop mattering** once dt·leapSpeed ≥ 1 (Lerp clamps) and Vector3.Slerp's
+  dirUp converges.
+- **Camera source**: the window-2 scene export has a single enabled,
+  MainCamera-tagged camera. Its `cameraToWorldMatrix` translation is
+  (1.9058167e-6, 14, 21.8000011), constant over the window.
+  - Window 1 has no scene export. The same position reproduces all its
+    seed-invariant frames bit-exactly, so the camera did not move between the
+    windows.
+  - This translation is not proven to be `Transform.position` bit for bit.
+    `_WorldSpaceCameraPos` is not either: it is the translation of
+    `InvertMatrix4x4_Full(worldToCamera)` (`Camera::ExtractCameraRenderingParams`).
+    v5 must export it.
+- **Candidate path**: run the hosted driver over the probe window from its start.
+  Hold an output as exact only when it is seed-invariant under the same test,
+  or seed from v5-exported state.
+
+### 9.3 FBS (blink, eyes, eyebrows, mouth)
+
+FBS uses `p_cf_head_02`'s FaceBlendShape (`fo_head_38.unity3d`).
+
+- **Targets**:
+  - EyebrowCtrl: `o_head`;
+  - EyesCtrl: `o_head`, `o_eyelashes`, `o_namida`;
+  - MouthCtrl: `o_head`, `o_tooth`, `o_tang`, `o_namida`.
+- **Eye-look link**: `FaceBlendShape.EyeLookController` is serialized null and
+  never assigned, so the eye-look open correction is off.
+- **Write order**: each controller writes every Close/Open index of its PtnSet.
+  The mouth (last) rewrites index 0 of `o_head` and `o_namida` as 100. This is
+  why `head.e00_defo` stays 100 while `e01_close` blinks.
+- **Candidate dependence**: none. FBS reads timers, Random and the expression
+  state, never geometry.
+
+**Composition check** (`fbs_composition_check.py`). The hosted `OnLateUpdate`
+ran in the two steady blink states the source defines:
+- open: mode 0, openRate 1;
+- closed: mode 1 past blinkTime, openRate 0.
+
+Every FBS-written weight of all 24 probe frames equals exactly one of the two
+hosted compositions. Window 2's sequence is open, open, closed×3, open×3.
+
+This verifies the controllers, mappings and overwrite order. It is **not** a
+blink-timing acceptance. Which frame blinks depends on
+`FBSBlinkControl.blinkTime/blinkMode/calcSpeed/count` and on
+`UnityEngine.Random.state` (xorshift128, consumed by
+`SetForceClose`/`SetFrequency` and the mouth's `TimeProgressCtrlRandom`). Probe
+v4 exports none of these.
+
+### 9.4 Mouth width
+
+`UpdateBlendShapeVoice` (Update) sets
+`trfMouthAdjustWidth = cf_J_MouthMove` (CmpBoneHead.targetEtc) to
+`localScale.x = mouthCtrl.GetAdjustWidthScale()`.
+- With no playing voice, voiceValue = 0. Then `AdjustWidthScale` keeps
+  `adjustWidthScale = 1`, because `0.2 < openRate` is false. The hosted run
+  returns exactly 1.0.
+- It still consumes Random when its timer wraps.
+- ABMX `LateUpdate` writes the final `cf_J_MouthMove` scale (section 8). The
+  driver input is constant (1.0) and does not depend on the candidate.
+
+### 9.5 Neck look and animation pose
+
+- **Active neck mode is ptn 3 (ANIMATION)**. `CustomBase._necklook = 1` gives
+  `ChangeLookNeckPtn(3)`.
+  - In this branch `NeckUpdateCalc` sets
+    `neckBone.localRotation = Slerp(fixAngleBackup, animatorLocal, curve(timer))`
+    on `cf_J_Neck` and `cf_J_Head`. It reads no position or target.
+  - The exported neck/head rotations are raw clip-like values, for example
+    (-0.0163, 0.00046, 0.00166, 0.99987). FORWARD (≈identity) and TARGET
+    (computed) cannot produce them.
+  - Native `Quaternion.Slerp(x, b, 1)` returns b bit-exactly for all 48 exported
+    neck/head rotations, both for x = 0 (default `fixAngleBackup` when lookType
+    never changed) and for x = identity.
+  - The neck look is not executed hosted: `AnimationCurve.Evaluate` needs a
+    native curve object. `curve(1)` is a v5 export item.
+  - TARGET mode would also depend only on body transforms
+    (`transformAim`, `boneCalcAngle`).
+- **Animation (Mecanim + FinalIK)** writes Hips/Spine/Neck/Head from clip, time
+  and body effectors. No face bone is an input, so a head-shape candidate cannot
+  change it.
+  - Holding the probe's frame-F values is legitimate for a candidate rendered at
+    frame F. This holds while the candidate does not modify `cf_J_Neck`,
+    `cf_J_Head` or their ancestors.
+  - The Mecanim evaluation itself (clip sampling, state machine, FinalIK
+    solve) is not ported. It is needed only to produce poses at times the probe
+    did not export, such as the renderstyle freeze at normalizedTime 0.
+
+### 9.6 What the bridge's renderstyle capture freezes (source)
+
+`/maker/renderstyle/capture` runs synchronously in BepInEx `ThreadingHelper`
+Update (via `KoikatuAPI.SynchronizedInvoke`) and calls `Camera.Render`.
+
+- `PoseFreeze.Apply` sets the animator speed to 0, then
+  `Play(fullPathHash, 0, 0)` and `Animator.Update(0)`. This writes the
+  normalizedTime-0 sample of the current state to the **transforms** at once.
+- `ChangeEyesBlinkFlag(false)` sets `fixedFlags` and the open-rate fields. They
+  act only at the next `FaceBlendShape.OnLateUpdate`, which does not run inside
+  the call.
+- No LateUpdate runs inside the call, so eye look, neck look, ABMX and FBS keep
+  their previous-frame results.
+- **The rendered vertices are not re-skinned.**
+  - `SkinnedMeshRenderer::AddAsRenderNode` (RVA 0x77abe0) skins only when one of
+    these holds: the dirty byte (renderer+0x2c4, set only by
+    `RendererBecameVisible`) is set, no skin buffer exists, or
+    `forceMatrixRecalculationPerRender` (renderer+0x28e) is set.
+  - Otherwise it draws the buffer produced by the player-loop callback that
+    `SkinnedMeshRenderer::InitializeClass` registers. That callback, 0x784330,
+    tail-calls `SkinnedMeshRendererManager::UpdateAllSkinnedMeshes` in
+    PostLateUpdate.
+  - The renderstyle capture does not set `forceMatrixRecalculationPerRender`.
+- **The capture image therefore shows the previous frame's natural state**:
+  unfrozen animation time, eye look, blink and mouth.
+- **Its BakeMesh outputs show the frozen bone pose**: `face_surfaces` and
+  `paired_geometry` with actor transforms. The previous frame's weights apply to
+  them as well.
+- **No driver is source-proven frozen in the rendered pixels.** The candidate
+  path may hold a frozen value only for BakeMesh/transform outputs, and there
+  only for the animated bones (normalizedTime 0).
+- Open item: whether the renderer's root-bone matrix (`TransformInfo`) is
+  refreshed inside `Camera.Render`. `SkinnedMeshRenderer::UpdateTransformInfo`
+  is called from the manager's per-frame update; its trigger inside
+  `Camera.Render` is not traced.
+
+### 9.7 v5 probe requirements (exact list)
+
+Capture each item at the stated hook, with float32 bits and the Unity frameCount.
+
+**Eye look**: prefix and postfix on `EyeLookCalc.EyeUpdateCalc`.
+- EyeUpdateCalc arguments (target, ptnNo).
+- Per `eyeObjs[i]`: `angleH`, `angleV`, `dirUp`, `referenceLookDir`,
+  `referenceUpDir`, `origRotation`.
+- EyeLookCalc: `nowPtnNo`, `initEnd`, `targetPos`, `fixAngle[2]`,
+  `angleHRate[2]`, `angleVRate`, and static `isEnabled`.
+- `Time.deltaTime`.
+- `EyeLookController.ptnNo`.
+- Identity and `position` of `target`.
+- Count of `HooahComponents.HijackLook._updatePositions`.
+
+**Camera**: Camera.main identity and `transform.position`, plus local TRS of its
+ancestors (CharaCustom/CustomControl/CharaCamera) and of `chaF_001`'s ancestors.
+
+**Neck look**: prefix and postfix on `NeckLookControllerVer2.LateUpdate`.
+- `ptnNo`, `rate`, target identity/position.
+- NeckLookCalcVer2: `isEnabled`, `skipCalc`, `calcLerp`, private `lookType`,
+  `changeTypeTimer`, `nowPtnNo`, `backupPos`, `nowAngle`.
+- `changeTypeLerpCurve.Evaluate(InverseLerp(0, changeTypeLeapTime, changeTypeTimer))`.
+- Per `aBones[i]`: `fixAngle`, `fixAngleBackup`, `backupLocalRotaionByTarget`,
+  `angleH`, `angleV`.
+- The neck/head `localRotation` at entry, which is the animator output.
+- `neckTypeStates[ptn].isLimitBreakBackup`.
+
+**FBS**: prefix and postfix on `FaceBlendShape.OnLateUpdate`.
+- FBSBlinkControl: `fixedFlags`, `BlinkFrequency`, `blinkMode`, `BaseSpeed`,
+  `calcSpeed`, `blinkTime`, `count`, `openRate`; and whether BlinkCtrlEx is
+  present.
+- `voiceValue`.
+- Each controller: `openRate`, `OpenMin`, `OpenMax`, `FixedRate`,
+  `correctOpenMax`, `dictBackFace`, `dictNowFace`, and `blendTimeCtrl`
+  (count, rate, progressTime).
+- Mouth: `useAjustWidthScale`, `tpcRand` (count, rate, progressTime, minTime,
+  maxTime), `sclNow/sclStart/sclEnd`, `adjustWidthScale`.
+- `UnityEngine.Random.state`, `Time.time`, `Time.deltaTime`.
+
+**Mouth width**: whether `asVoice` is non-null and playing, plus
+`fileStatus.mouthAdjustWidth`. Export `cf_J_MouthMove.localScale` after
+`UpdateForce` and after the ABMX LateUpdate.
+
+**Animation**: snapshot at the `FaceBlendShape.OnLateUpdate` prefix. It is the
+first LateUpdate, after the animation phase.
+- Animated-bone local TRS.
+- For each Animator:
+  - controller identity, `speed`, `updateMode`, `cullingMode`, `applyRootMotion`;
+  - avatar (generic or human);
+  - layer-0 current and next state: hash, normalizedTime, length,
+    speedMultiplier;
+  - `IsInTransition`.
+- FinalIK `FullBodyBipedIK.enabled`, solver weights, and the Maker `MotionIK`
+  data.
+
+**Order certificate**: a per-frame sequence counter at the hooks above and at
+`ChaControl.LateUpdateForce` and ABMX `BoneController.LateUpdate`. It confirms
+the MonoScript order in effect.

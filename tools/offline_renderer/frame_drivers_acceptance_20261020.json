@@ -1,0 +1,630 @@
+{
+ "schema": "hs2_frame_drivers_acceptance_v1",
+ "date": "2026-10-20",
+ "inputs_sha256": {
+  "UnityPlayer.dll": "5034cdc2bff71dc8d9e038cb71059f8965d0d879f8098af0f3c726ea06e13923",
+  "mono-2.0-bdwgc.dll": "03b19e8553a1131a6da78961d54e2b1647945113d49ce81d321a7298b36cde81",
+  "IL.dll": "2034ec89ec868feb44c161d71f06cac67b276853a71ba5dc0d0b8b1964c9f680",
+  "UnityEngine.CoreModule.dll": "1dbc6ba5ecaf6c5f890ad12aa677f7897fd62356b6ace27c1c3fda73de16ae11",
+  "oo_base.unity3d": "9fc9f9cdea1067005fbbbb81a9b2a920c834f5721b1d267eea3f0c3c4a6e56c0",
+  "fo_head_38.unity3d": "66ba2ef7f95fa4d79ad87b3d1e11e90e8f1f78ed79e0dc7cb1e4e2969f100edf",
+  "globalgamemanagers.assets": "f17b13e9c0c21b9aba6cd2c011a455489f557d09383a3afa0a57a53e5fddbfed"
+ },
+ "execution": "installed managed IL on the installed Mono JIT (mono_set_defaults(0, mono_parse_default_optimizations(NULL)) as UnityPlayer InitializeMonoFromMain RVA 0x8e99d5); native calls are UnityPlayer.dll routines (direct icall registration or TransformAccess routines)",
+ "eye_look": {
+  "seeds": [
+   "reconstructed",
+   "init_state",
+   "reconstructed_up_tilted"
+  ],
+  "init_state": [
+   {
+    "angleH": 0.0,
+    "angleV": 0.0,
+    "dirUp": [
+     0.0,
+     1.0,
+     0.0
+    ],
+    "referenceLookDir": [
+     0.0,
+     0.0,
+     1.0
+    ],
+    "referenceUpDir": [
+     0.0,
+     1.0,
+     0.0
+    ],
+    "origRotation": [
+     0.0,
+     -0.0,
+     -0.0,
+     1.0
+    ]
+   },
+   {
+    "angleH": 0.0,
+    "angleV": 0.0,
+    "dirUp": [
+     0.0,
+     1.0,
+     0.0
+    ],
+    "referenceLookDir": [
+     0.0,
+     0.0,
+     1.0
+    ],
+    "referenceUpDir": [
+     0.0,
+     1.0,
+     0.0
+    ],
+    "origRotation": [
+     0.0,
+     -0.0,
+     -0.0,
+     1.0
+    ]
+   }
+  ],
+  "camera_main_path": "/CharaCustom[0]/CustomControl[0]/CharaCamera[1]/Main Camera[0]",
+  "camera_position_used": [
+   1.9058167026742012e-06,
+   14.0,
+   21.80000114440918
+  ],
+  "windows": {
+   "04d1e76f": {
+    "seed_frame": 26055,
+    "frames": [
+     {
+      "frame": 26056,
+      "delta_time": 0.333333343,
+      "camera_source": "scene_export_cameraToWorld_translation",
+      "world_chain_bit_equal": true,
+      "cf_J_look_L": {
+       "bit_equal": true,
+       "seed_invariant": false
+      },
+      "cf_J_look_R": {
+       "bit_equal": true,
+       "seed_invariant": false
+      }
+     },
+     {
+      "frame": 26057,
+      "delta_time": 0.281057,
+      "camera_source": "scene_export_cameraToWorld_translation",
+      "world_chain_bit_equal": true,
+      "cf_J_look_L": {
+       "bit_equal": true,
+       "seed_invariant": true
+      },
+      "cf_J_look_R": {
+       "bit_equal": true,
+       "seed_invariant": true
+      }
+     },
+     {
+      "frame": 26058,
+      "delta_time": 0.1977158,
+      "camera_source": "scene_export_cameraToWorld_translation",
+      "world_chain_bit_equal": true,
+      "cf_J_look_L": {
+       "bit_equal": true,
+       "seed_invariant": true
+      },
+      "cf_J_look_R": {
+       "bit_equal": true,
+       "seed_invariant": true
+      }
+     },
+     {
+      "frame": 26059,
+      "delta_time": 0.1939667,
+      "camera_source": "scene_export_cameraToWorld_translation",
+      "world_chain_bit_equal": true,
+      "cf_J_look_L": {
+       "bit_equal": true,
+       "seed_invariant": true
+      },
+      "cf_J_look_R": {
+       "bit_equal": true,
+       "seed_invariant": true
+      }
+     },
+     {
+      "frame": 26060,
+      "delta_time": 0.333333343,
+      "camera_source": "scene_export_cameraToWorld_translation",
+      "world_chain_bit_equal": true,
+      "cf_J_look_L": {
+       "bit_equal": true,
+       "seed_invariant": true
+      },
+      "cf_J_look_R": {
+       "bit_equal": true,
+       "seed_invariant": true
+      }
+     },
+     {
+      "frame": 26061,
+      "delta_time": 0.333333343,
+      "camera_source": "scene_export_cameraToWorld_translation",
+      "world_chain_bit_equal": true,
+      "cf_J_look_L": {
+       "bit_equal": true,
+       "seed_invariant": true
+      },
+      "cf_J_look_R": {
+       "bit_equal": true,
+       "seed_invariant": true
+      }
+     },
+     {
+      "frame": 26062,
+      "delta_time": 0.333333343,
+      "camera_source": "scene_export_cameraToWorld_translation",
+      "world_chain_bit_equal": true,
+      "cf_J_look_L": {
+       "bit_equal": true,
+       "seed_invariant": true
+      },
+      "cf_J_look_R": {
+       "bit_equal": true,
+       "seed_invariant": true
+      }
+     }
+    ],
+    "accepted_seed_invariant_bit_exact": 12,
+    "seed_dependent": [
+     {
+      "frame": 26056,
+      "bone": "cf_J_look_L",
+      "bit_equal_with_reconstructed_seed": true
+     },
+     {
+      "frame": 26056,
+      "bone": "cf_J_look_R",
+      "bit_equal_with_reconstructed_seed": true
+     }
+    ],
+    "non_bit_equal_seed_invariant": []
+   },
+   "625aa0f2": {
+    "seed_frame": 12735,
+    "frames": [
+     {
+      "frame": 12736,
+      "delta_time": 0.333333343,
+      "camera_source": "window2_scene_export_camera",
+      "world_chain_bit_equal": true,
+      "cf_J_look_L": {
+       "bit_equal": true,
+       "seed_invariant": false
+      },
+      "cf_J_look_R": {
+       "bit_equal": true,
+       "seed_invariant": false
+      }
+     },
+     {
+      "frame": 12737,
+      "delta_time": 0.0165686,
+      "camera_source": "window2_scene_export_camera",
+      "world_chain_bit_equal": true,
+      "cf_J_look_L": {
+       "bit_equal": true,
+       "seed_invariant": false
+      },
+      "cf_J_look_R": {
+       "bit_equal": true,
+       "seed_invariant": false
+      }
+     },
+     {
+      "frame": 12738,
+      "delta_time": 0.0171623,
+      "camera_source": "window2_scene_export_camera",
+      "world_chain_bit_equal": true,
+      "cf_J_look_L": {
+       "bit_equal": true,
+       "seed_invariant": false
+      },
+      "cf_J_look_R": {
+       "bit_equal": false,
+       "seed_invariant": false
+      }
+     },
+     {
+      "frame": 12739,
+      "delta_time": 0.0166263,
+      "camera_source": "window2_scene_export_camera",
+      "world_chain_bit_equal": true,
+      "cf_J_look_L": {
+       "bit_equal": true,
+       "seed_invariant": true
+      },
+      "cf_J_look_R": {
+       "bit_equal": true,
+       "seed_invariant": false
+      }
+     },
+     {
+      "frame": 12740,
+      "delta_time": 0.0160126,
+      "camera_source": "window2_scene_export_camera",
+      "world_chain_bit_equal": true,
+      "cf_J_look_L": {
+       "bit_equal": true,
+       "seed_invariant": true
+      },
+      "cf_J_look_R": {
+       "bit_equal": true,
+       "seed_invariant": false
+      }
+     },
+     {
+      "frame": 12741,
+      "delta_time": 0.270077,
+      "camera_source": "window2_scene_export_camera",
+      "world_chain_bit_equal": true,
+      "cf_J_look_L": {
+       "bit_equal": true,
+       "seed_invariant": true
+      },
+      "cf_J_look_R": {
+       "bit_equal": true,
+       "seed_invariant": true
+      }
+     },
+     {
+      "frame": 12742,
+      "delta_time": 0.333333343,
+      "camera_source": "window2_scene_export_camera",
+      "world_chain_bit_equal": true,
+      "cf_J_look_L": {
+       "bit_equal": true,
+       "seed_invariant": true
+      },
+      "cf_J_look_R": {
+       "bit_equal": true,
+       "seed_invariant": true
+      }
+     },
+     {
+      "frame": 12743,
+      "delta_time": 0.333333343,
+      "camera_source": "window2_scene_export_camera",
+      "world_chain_bit_equal": true,
+      "cf_J_look_L": {
+       "bit_equal": true,
+       "seed_invariant": true
+      },
+      "cf_J_look_R": {
+       "bit_equal": true,
+       "seed_invariant": true
+      }
+     },
+     {
+      "frame": 12744,
+      "delta_time": 0.017394,
+      "camera_source": "window2_scene_export_camera",
+      "world_chain_bit_equal": true,
+      "cf_J_look_L": {
+       "bit_equal": true,
+       "seed_invariant": true
+      },
+      "cf_J_look_R": {
+       "bit_equal": true,
+       "seed_invariant": true
+      }
+     },
+     {
+      "frame": 12745,
+      "delta_time": 0.0160578,
+      "camera_source": "window2_scene_export_camera",
+      "world_chain_bit_equal": true,
+      "cf_J_look_L": {
+       "bit_equal": true,
+       "seed_invariant": true
+      },
+      "cf_J_look_R": {
+       "bit_equal": true,
+       "seed_invariant": true
+      }
+     },
+     {
+      "frame": 12746,
+      "delta_time": 0.0162508,
+      "camera_source": "window2_scene_export_camera",
+      "world_chain_bit_equal": true,
+      "cf_J_look_L": {
+       "bit_equal": true,
+       "seed_invariant": true
+      },
+      "cf_J_look_R": {
+       "bit_equal": true,
+       "seed_invariant": true
+      }
+     },
+     {
+      "frame": 12747,
+      "delta_time": 0.0165665,
+      "camera_source": "window2_scene_export_camera",
+      "world_chain_bit_equal": true,
+      "cf_J_look_L": {
+       "bit_equal": true,
+       "seed_invariant": true
+      },
+      "cf_J_look_R": {
+       "bit_equal": true,
+       "seed_invariant": true
+      }
+     },
+     {
+      "frame": 12748,
+      "delta_time": 0.0173104,
+      "camera_source": "window2_scene_export_camera",
+      "world_chain_bit_equal": true,
+      "cf_J_look_L": {
+       "bit_equal": true,
+       "seed_invariant": true
+      },
+      "cf_J_look_R": {
+       "bit_equal": true,
+       "seed_invariant": true
+      }
+     },
+     {
+      "frame": 12749,
+      "delta_time": 0.0158265,
+      "camera_source": "window2_scene_export_camera",
+      "world_chain_bit_equal": true,
+      "cf_J_look_L": {
+       "bit_equal": true,
+       "seed_invariant": true
+      },
+      "cf_J_look_R": {
+       "bit_equal": true,
+       "seed_invariant": true
+      }
+     },
+     {
+      "frame": 12750,
+      "delta_time": 0.0165632,
+      "camera_source": "window2_scene_export_camera",
+      "world_chain_bit_equal": true,
+      "cf_J_look_L": {
+       "bit_equal": true,
+       "seed_invariant": true
+      },
+      "cf_J_look_R": {
+       "bit_equal": true,
+       "seed_invariant": true
+      }
+     }
+    ],
+    "accepted_seed_invariant_bit_exact": 22,
+    "seed_dependent": [
+     {
+      "frame": 12736,
+      "bone": "cf_J_look_L",
+      "bit_equal_with_reconstructed_seed": true
+     },
+     {
+      "frame": 12736,
+      "bone": "cf_J_look_R",
+      "bit_equal_with_reconstructed_seed": true
+     },
+     {
+      "frame": 12737,
+      "bone": "cf_J_look_L",
+      "bit_equal_with_reconstructed_seed": true
+     },
+     {
+      "frame": 12737,
+      "bone": "cf_J_look_R",
+      "bit_equal_with_reconstructed_seed": true
+     },
+     {
+      "frame": 12738,
+      "bone": "cf_J_look_L",
+      "bit_equal_with_reconstructed_seed": true
+     },
+     {
+      "frame": 12738,
+      "bone": "cf_J_look_R",
+      "bit_equal_with_reconstructed_seed": false
+     },
+     {
+      "frame": 12739,
+      "bone": "cf_J_look_R",
+      "bit_equal_with_reconstructed_seed": true
+     },
+     {
+      "frame": 12740,
+      "bone": "cf_J_look_R",
+      "bit_equal_with_reconstructed_seed": true
+     }
+    ],
+    "non_bit_equal_seed_invariant": []
+   }
+  }
+ },
+ "fbs_composition": {
+  "expression_state": {
+   "eyes_ptn": 0,
+   "eyebrow_ptn": 0,
+   "mouth_ptn": 0,
+   "eyes_blink": true,
+   "eyes_open_max": 1.0,
+   "mouth_open_max": 1.0,
+   "mouth_open_min": 0.0,
+   "mouth_fixed": false,
+   "mouth_adjust_width": true,
+   "eyes_look_pattern": 1
+  },
+  "mouth_adjust_width_scale": {
+   "open": 1.0,
+   "closed": 1.0
+  },
+  "windows": {
+   "625aa0f2": [
+    {
+     "frame": 12735,
+     "matches": [
+      "open"
+     ]
+    },
+    {
+     "frame": 12736,
+     "matches": [
+      "open"
+     ]
+    },
+    {
+     "frame": 12737,
+     "matches": [
+      "open"
+     ]
+    },
+    {
+     "frame": 12738,
+     "matches": [
+      "open"
+     ]
+    },
+    {
+     "frame": 12739,
+     "matches": [
+      "open"
+     ]
+    },
+    {
+     "frame": 12740,
+     "matches": [
+      "open"
+     ]
+    },
+    {
+     "frame": 12741,
+     "matches": [
+      "open"
+     ]
+    },
+    {
+     "frame": 12742,
+     "matches": [
+      "open"
+     ]
+    },
+    {
+     "frame": 12743,
+     "matches": [
+      "open"
+     ]
+    },
+    {
+     "frame": 12744,
+     "matches": [
+      "open"
+     ]
+    },
+    {
+     "frame": 12745,
+     "matches": [
+      "open"
+     ]
+    },
+    {
+     "frame": 12746,
+     "matches": [
+      "open"
+     ]
+    },
+    {
+     "frame": 12747,
+     "matches": [
+      "open"
+     ]
+    },
+    {
+     "frame": 12748,
+     "matches": [
+      "open"
+     ]
+    },
+    {
+     "frame": 12749,
+     "matches": [
+      "open"
+     ]
+    },
+    {
+     "frame": 12750,
+     "matches": [
+      "open"
+     ]
+    }
+   ],
+   "04d1e76f": [
+    {
+     "frame": 26055,
+     "matches": [
+      "open"
+     ]
+    },
+    {
+     "frame": 26056,
+     "matches": [
+      "open"
+     ]
+    },
+    {
+     "frame": 26057,
+     "matches": [
+      "closed"
+     ]
+    },
+    {
+     "frame": 26058,
+     "matches": [
+      "closed"
+     ]
+    },
+    {
+     "frame": 26059,
+     "matches": [
+      "closed"
+     ]
+    },
+    {
+     "frame": 26060,
+     "matches": [
+      "open"
+     ]
+    },
+    {
+     "frame": 26061,
+     "matches": [
+      "open"
+     ]
+    },
+    {
+     "frame": 26062,
+     "matches": [
+      "open"
+     ]
+    }
+   ]
+  },
+  "every_frame_matches_exactly_one_steady_state": true
+ },
+ "bulky_outputs": {
+  "eye_look": "E:\\HS2_offline_renderer_data\\skinning_20261020\\drivers\\eye_look_v2.json",
+  "fbs": "E:\\HS2_offline_renderer_data\\skinning_20261020\\drivers\\fbs_composition_v1.json"
+ }
+}
