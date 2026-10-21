@@ -1659,5 +1659,322 @@
     }
    ]
   }
+ ],
+ "additional_captures": [
+  {
+   "capture": {
+    "rdc": "C:\\Users\\13666\\Workspace\\HS2Mod\\artifacts\\chenger_reference_fit_20261012\\paired_capture_session_20261020\\rdc_625aa0f2a0b44eb498f711d82b74dd9f_frame12740.rdc",
+    "rdc_sha256": "3b96ed5a1ec81e5f1b46e4bbf0e1f23d9819f197b5eab9d2021194400617832b",
+    "frame": 12740,
+    "kind": "ordinary Maker frame, 3200x1800, deferred reflections + forward + MSVO + PPv2 + CTAA + UI, ends in Present",
+    "zip_xml": "C:\\Users\\13666\\Workspace\\HS2Mod\\artifacts\\chenger_reference_fit_20261012\\paired_capture_session_20261020\\parse_625aa0f2\\capture.zip.xml",
+    "zip_xml_sha256": "4bc1c28993fb4c30994f9d632fdb49c7ef446dd2f9ef03549a6e51df96270a2c"
+   },
+   "program": {
+    "through_event": 2210,
+    "present_event": 2211,
+    "program_json_sha256": "4bfcc2d92c7ea8ab5c9461f38f10da8254f7ab1ad430409407d84db0a86366a3",
+    "commands": 378,
+    "ops": {
+     "update_subresource": 1,
+     "clear_rtv": 8,
+     "clear_dsv": 6,
+     "copy_resource": 1,
+     "map_write": 166,
+     "draw_indexed": 180,
+     "copy_subresource_region": 4,
+     "draw": 1,
+     "dispatch": 11
+    },
+    "initial_state_classes": {
+     "capture_start_createbuffer_record": 128,
+     "creation_data": 104,
+     "pre_capture_full_update": 1,
+     "initial_contents_chunk": 85,
+     "undefined_at_creation_listed_copy_of_live": 2
+    },
+    "hazard_resolutions": 0,
+    "skipped_without_gpu_effect": {
+     "event_query_End": 1,
+     "Unmap_empty_range": 18
+    },
+    "frame_graph_crosscheck": {
+     "checked": 377,
+     "mismatched": 0
+    },
+    "undefined_content_dependencies": [
+     {
+      "resource": 35424,
+      "first_op": "map_write",
+      "first_event": 63,
+      "undefined_bytes_kept": [
+       [
+        0,
+        1
+       ]
+      ],
+      "fully_defined_by_first_write": false
+     },
+     {
+      "resource": 35425,
+      "first_op": "map_write",
+      "first_event": 2206,
+      "undefined_bytes_kept": [],
+      "fully_defined_by_first_write": true
+     }
+    ]
+   },
+   "executor": {
+    "sha256": "496477cb90d9db05e1fea30b32c0daa625e17a8b9bd083f07cd6e9b7fa6d2ed9",
+    "hash_only": true,
+    "adapter": {
+     "driver_type": "hardware",
+     "selection": "matches capture VendorId/DeviceId",
+     "description": "NVIDIA GeForce RTX 4080 Laptop GPU",
+     "vendor_id": 4318,
+     "device_id": 10208,
+     "subsys_id": 556601411,
+     "revision": 161,
+     "luid": "0:77383",
+     "feature_level": "0x0000B100",
+     "umd_version": "32.0.16.1714",
+     "debug_layer": false
+    },
+    "timing_ms": {
+     "create_device_ms": 186.617,
+     "create_resources_ms": 6946.08,
+     "create_views_shaders_states_ms": 116.263,
+     "execute_commands_ms": 1404.15,
+     "parse_program_ms": 25.3917,
+     "readbacks_ms_included": 734.9
+    },
+    "repeat_timing_ms": {
+     "create_device_ms": 159.816,
+     "create_resources_ms": 2519.53,
+     "create_views_shaders_states_ms": 18.5565,
+     "execute_commands_ms": 678.574,
+     "parse_program_ms": 12.1652,
+     "readbacks_ms_included": 604.955
+    }
+   },
+   "oracle": {
+    "route": "render_patched_capture identity plan, one session",
+    "receipt": "C:\\Users\\13666\\Workspace\\Face2Parameter\\outputs\\offline_renderer_executor_20261020\\frame12740_v1\\oracle\\receipt.json",
+    "tool_ms": {
+     "official_open_capture": 1709.04,
+     "official_open_file": 1.8046,
+     "readback": 324.742,
+     "set_frame_event": 70.9251,
+     "shutdown": 144.154,
+     "verify": 0.6644,
+     "write_targets": 376.851,
+     "total": 2913.56
+    },
+    "raw_files_kept": [
+     "present_source.raw.bin"
+    ],
+    "note": "other oracle raws and duplicate top-down copies deleted after hashing (disk)"
+   },
+   "checkpoints": [
+    {
+     "name": "deferred_reflections",
+     "event": 58,
+     "resource": 8342,
+     "format": 9,
+     "extent": [
+      3200,
+      1800,
+      1
+     ],
+     "executor_sha256": "6f4dd7db11c1a99aae413783048d9ecad6fce43c3bcfc36ab7031953d073242e",
+     "oracle_sha256": "6f4dd7db11c1a99aae413783048d9ecad6fce43c3bcfc36ab7031953d073242e",
+     "bit_exact": true,
+     "repeat_identical": true
+    },
+    {
+     "name": "depth_prepass",
+     "event": 260,
+     "resource": 8383,
+     "format": 19,
+     "extent": [
+      3200,
+      1800,
+      1
+     ],
+     "executor_sha256": "0236554a209a36685f80d11a46e2730af196684bad8252b40a3633526cda6343",
+     "oracle_sha256": "0236554a209a36685f80d11a46e2730af196684bad8252b40a3633526cda6343",
+     "bit_exact": true,
+     "repeat_identical": true
+    },
+    {
+     "name": "shadow_map",
+     "event": 548,
+     "resource": 11448,
+     "format": 53,
+     "extent": [
+      4096,
+      4096,
+      1
+     ],
+     "executor_sha256": "9204f6c0707d8a3fb422912f25d83009b675806e2d0ea24b89cebee1be5d5ede",
+     "oracle_sha256": "9204f6c0707d8a3fb422912f25d83009b675806e2d0ea24b89cebee1be5d5ede",
+     "bit_exact": true,
+     "repeat_identical": true
+    },
+    {
+     "name": "screenspace_shadows",
+     "event": 581,
+     "resource": 11544,
+     "format": 27,
+     "extent": [
+      3200,
+      1800,
+      1
+     ],
+     "executor_sha256": "bbff88504a4a5ad167e60a89a0e2b6f294c939f41a44e0f672b812b36d0b06a1",
+     "oracle_sha256": "bbff88504a4a5ad167e60a89a0e2b6f294c939f41a44e0f672b812b36d0b06a1",
+     "bit_exact": true,
+     "repeat_identical": true
+    },
+    {
+     "name": "forward_opaque",
+     "event": 982,
+     "resource": 8342,
+     "format": 9,
+     "extent": [
+      3200,
+      1800,
+      1
+     ],
+     "executor_sha256": "721e3cf6baa81930b281d7c9c5614d29347b53adceb7491faea30940b20e9b02",
+     "oracle_sha256": "721e3cf6baa81930b281d7c9c5614d29347b53adceb7491faea30940b20e9b02",
+     "bit_exact": true,
+     "repeat_identical": true
+    },
+    {
+     "name": "motion_vectors",
+     "event": 1083,
+     "resource": 8414,
+     "format": 33,
+     "extent": [
+      3200,
+      1800,
+      1
+     ],
+     "executor_sha256": "6e1d443ce234f7a19a16322cea125de8bddfed0b461670b46e0033974d70e713",
+     "oracle_sha256": "6e1d443ce234f7a19a16322cea125de8bddfed0b461670b46e0033974d70e713",
+     "bit_exact": true,
+     "repeat_identical": true
+    },
+    {
+     "name": "msvo",
+     "event": 1268,
+     "resource": 8370,
+     "format": 60,
+     "extent": [
+      3200,
+      1800,
+      1
+     ],
+     "executor_sha256": "084041c12fa440e8515ff86d2a8c060cc6be54750d8dbb8a14ae9d8266959b7e",
+     "oracle_sha256": "084041c12fa440e8515ff86d2a8c060cc6be54750d8dbb8a14ae9d8266959b7e",
+     "bit_exact": true,
+     "repeat_identical": true
+    },
+    {
+     "name": "forward_transparent",
+     "event": 1377,
+     "resource": 8342,
+     "format": 9,
+     "extent": [
+      3200,
+      1800,
+      1
+     ],
+     "executor_sha256": "82fbc90d148b182bc01434796f3ac57638859639e5394aa269cdfbb4eb6117d2",
+     "oracle_sha256": "82fbc90d148b182bc01434796f3ac57638859639e5394aa269cdfbb4eb6117d2",
+     "bit_exact": true,
+     "repeat_identical": true
+    },
+    {
+     "name": "post_uber",
+     "event": 1493,
+     "resource": 8639,
+     "format": 9,
+     "extent": [
+      3200,
+      1800,
+      1
+     ],
+     "executor_sha256": "ce5e879174842ee5750335b646eed3a0875dec235baf02db62a83898340b0c9b",
+     "oracle_sha256": "ce5e879174842ee5750335b646eed3a0875dec235baf02db62a83898340b0c9b",
+     "bit_exact": true,
+     "repeat_identical": true
+    },
+    {
+     "name": "post_final_pass",
+     "event": 1549,
+     "resource": 8342,
+     "format": 9,
+     "extent": [
+      3200,
+      1800,
+      1
+     ],
+     "executor_sha256": "8e434b66931366e1d3cbb210d6bc02442322804898bcd561d9c101dc6dcda33c",
+     "oracle_sha256": "8e434b66931366e1d3cbb210d6bc02442322804898bcd561d9c101dc6dcda33c",
+     "bit_exact": true,
+     "repeat_identical": true
+    },
+    {
+     "name": "ctaa_pc",
+     "event": 1628,
+     "resource": 8745,
+     "format": 9,
+     "extent": [
+      3200,
+      1800,
+      1
+     ],
+     "executor_sha256": "8a4ac144f1aa637f51b95e5884f9d1043d4c09bbd21a480cc9e1c90c28b8deae",
+     "oracle_sha256": "8a4ac144f1aa637f51b95e5884f9d1043d4c09bbd21a480cc9e1c90c28b8deae",
+     "bit_exact": true,
+     "repeat_identical": true
+    },
+    {
+     "name": "backbuffer_scene",
+     "event": 1664,
+     "resource": 780,
+     "format": 29,
+     "extent": [
+      3200,
+      1800,
+      1
+     ],
+     "executor_sha256": "feeb447bf6ff0b3343b5b0880cbb3d51091bf7ecbd4a2f6392c146ad0149947d",
+     "oracle_sha256": "feeb447bf6ff0b3343b5b0880cbb3d51091bf7ecbd4a2f6392c146ad0149947d",
+     "bit_exact": true,
+     "repeat_identical": true
+    },
+    {
+     "name": "present_source",
+     "event": 2210,
+     "resource": 780,
+     "format": 29,
+     "extent": [
+      3200,
+      1800,
+      1
+     ],
+     "executor_sha256": "39b3c823905661622a868b80fda78b68124066778e1161e90a76ba64bbd16e6b",
+     "oracle_sha256": "39b3c823905661622a868b80fda78b68124066778e1161e90a76ba64bbd16e6b",
+     "bit_exact": true,
+     "repeat_identical": true
+    }
+   ],
+   "all_bit_exact": true,
+   "all_repeat_identical": true,
+   "out": "C:\\Users\\13666\\Workspace\\Face2Parameter\\outputs\\offline_renderer_executor_20261020\\frame12740_v1"
+  }
  ]
 }

@@ -7,7 +7,7 @@ is accepted (ladder step 1).
 
 **Result:** the whole retry frame (`unaccepted_retry_frame17675.rdc`, events 1–35086, all
 16 capture renders) was converted and executed on the capture GPU. It equals the official
-RenderDoc 1.46 replay **bit for bit at all 70 checkpoints**. The final target's top-down
+RenderDoc 1.46 replay **bit for bit at all 70 checkpoints**; a second, ordinary Maker capture (frame 12740) is also bit-exact at 13 checkpoints including the Present source. The final target's top-down
 bytes equal every RGBA pixel of the native `actual_main_camera.png`.
 
 The executor does not use RenderDoc at runtime. No game was launched, nothing was injected and
@@ -220,6 +220,40 @@ Execution cost, warm, full frame:
 
 The first run after the blobs are written is about 11 s slower, from cold reads of
 newly written files.
+
+### Second capture: paired Maker frame 12740
+
+`paired_capture_session_20261020/rdc_625aa0f2…_frame12740.rdc` is an ordinary 3200×1800
+Maker frame. Its pass mix differs from the bridge capture:
+
+- deferred GBuffer clears, the Deferred Depth `CopyResource` and deferred reflections;
+- one camera render with forward, MSVO, PPv2 and CTAA;
+- the blit to the swapchain backbuffer, UI draws, and a staging upload.
+
+The run used the official zip.xml (`parse_625aa0f2/`), a fresh official driver listing and
+offset index, and this capture's own frame graph (52 passes, 0 event mismatches). All of
+these are in `outputs/offline_renderer_executor_20261020/frame12740_v1/`.
+
+It was converted up to event 2210, the last event before Present 2211: 378 commands,
+including the first non-indexed `draw` and the first `copy_resource`. It was executed twice
+with `--hash-only` and compared with an identity-plan oracle session. **All 13 checkpoints
+are bit-exact, and the repeat run is identical.** The checkpoints are:
+
+- deferred reflections, depth prepass, shadow map, screen-space shadows;
+- forward opaque, motion vectors, MSVO, forward transparent;
+- Uber, FinalPass, CTAA_PC;
+- backbuffer 780 after the scene blit, and the **Present source** (backbuffer 780 at event
+  2210, after the UI).
+
+Notes on this capture:
+
+- There are no hazard resolutions and no RenderDoc start-of-frame clears; every listed
+  target has an initial-contents chunk.
+- The same undefined byte 0 occurs in the curves staging upload (resource 35424).
+
+The receipt is `additional_captures[0]` in `frame_executor_acceptance_20261020.json`. Only
+the Present-source oracle raw file was kept; the other oracle raws and the duplicate
+top-down copies were deleted after hashing.
 
 Observations from read-back hashes (identical on both sides; the mechanism is not analysed here):
 
