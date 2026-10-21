@@ -297,6 +297,7 @@ namespace HS2Codex.FramePairProbe
         // recorded callback, and every RenderTexture object.
         static Dictionary<Texture, HashSet<string>> RawSelection(ExportContext ctx)
         {
+            ctx.PruneDestroyed();
             var sel = new Dictionary<Texture, HashSet<string>>();
             Action<Texture, string> add = (t, why) =>
             {

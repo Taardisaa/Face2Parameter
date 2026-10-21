@@ -443,3 +443,40 @@ The C# core test builds the fake native structures and covers:
 
 The Python suite covers the manifest builder (whole library, type conflicts) and the verifier
 (accepting and rejecting synthetic captures).
+
+## 7 Session 2 run 1 (2026-10-20): v5.0 aborted fail-closed; v5.0.1 fix
+
+Two mode-`frame` windows (`574f36ad…`, `0d79f6fc…`) ran with v5.0 (`b720c453…`). Both aborted
+before TriggerCapture at window index 2. All native validations passed: 38 pool entries, 1769
+material and 204 global sheet values compared bit-exact, plus the built-ins and keywords.
+
+| item | result |
+|---|---|
+| captured | nothing |
+| raw jobs queued | none |
+| cards | none saved |
+| Maker state | snapshot, ABMX, expression and renderstyle unchanged, before and after each window |
+
+**Cause, from the installed source.** In the installed `Unity.Postprocessing.Runtime.dll`,
+`PostProcessLayer.SetupContext` calls `RuntimeUtilities.UpdateResources(m_Resources)`
+unconditionally. That call `Object.Destroy`s `s_CopyStdMaterial` and the other copy materials,
+and the getters recreate them. So every PPv2 frame has a new "PostProcess - CopyStd" Material:
+−311456 in frame 7995 became −311458 in frame 7996, and the old one was gone in frame 7997. This
+churn is itself an input fact for the PPv2 generator.
+
+v5.0 kept materials collected in earlier frames in `ExportContext`. `Material.name` on the
+destroyed instance threw, so v5.0 can never complete a window.
+
+**v5.0.1** prunes destroyed materials/textures at every scene export and raw selection, and reports
+their ids in `destroyed_references_dropped`. It keys the emission loops by instance id.
+
+| build | SHA-256 |
+|---|---|
+| `outputs/offline_renderer_probe_v5_20261020/build_v5_1/HS2_FramePairProbe.dll` | `c07ff77dc93b7d5b6246f1a16010887b161db87b607e994d87434584b7503443` (deterministic) |
+
+**Bridge target for the planned mode b.** The target was derived from this card's live geometry:
+`o_head` baked-vertex AABB centre with renderer rotation and position (BakeMesh output already
+scaled) = `[0.0753083, 14.6787434, -0.0980170]`. For comparison, `cf_J_Head` world =
+`[0.0770864, 14.110878, -0.248491]`. The native_present_session_v1 target belonged to another
+card and was not reused. Keep `ortho_size` 1.42995071 and 1086×1448. Evidence:
+`E:/HS2_offline_renderer_data/paired_session_v5_20261020/prepare_geometry_actor.json`.

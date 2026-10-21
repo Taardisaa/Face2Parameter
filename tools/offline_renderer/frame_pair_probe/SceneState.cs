@@ -116,6 +116,22 @@ namespace HS2Codex.FramePairProbe
 
         public void Add(Texture t) { if (t != null) Textures[t.GetInstanceID()] = t; }
         public void Add(Material m) { if (m != null) Materials[m.GetInstanceID()] = m; }
+
+        // Materials/textures are collected across frames (renderers, effect fields, the
+        // recorder). Some are runtime instances that plugins destroy and recreate (session 2
+        // window 574f36ad: a material referenced in frames 0-1 was destroyed before frame 2;
+        // PPv2 held two 'PostProcess - CopyStd' instances). A destroyed object must never be
+        // dereferenced (Object.name throws) and is no longer part of the scene: drop it and
+        // report its id. Keyed by instance id, so a dropped id is never re-added.
+        public readonly List<int> DroppedDestroyed = new List<int>();
+        public List<int> PruneDestroyed()
+        {
+            var dropped = new List<int>();
+            foreach (var kv in Materials.ToArray()) if (kv.Value == null) { Materials.Remove(kv.Key); dropped.Add(kv.Key); }
+            foreach (var kv in Textures.ToArray()) if (kv.Value == null) { Textures.Remove(kv.Key); dropped.Add(kv.Key); }
+            DroppedDestroyed.AddRange(dropped);
+            return dropped;
+        }
     }
 
     internal static class SceneState
@@ -154,6 +170,7 @@ namespace HS2Codex.FramePairProbe
         {
             ctx.Path.Clear();
             ctx.RefreshNames();
+            var dropped = ctx.PruneDestroyed();
             var w = new JsonOut(1 << 22);
             w.Begin('{');
             w.Key("schema_version"); w.Raw("5");
@@ -259,22 +276,23 @@ namespace HS2Codex.FramePairProbe
             foreach (var rt in Resources.FindObjectsOfTypeAll<RenderTexture>()) { ctx.Add(rt); w.Int(rt.GetInstanceID()); }
             w.End(']');
 
+            w.Key("destroyed_references_dropped"); w.Begin('['); foreach (var id in dropped) w.Int(id); w.End(']');
             w.Key("materials"); w.Begin('[');
             var done = new HashSet<int>();
             while (true)
             {
-                var pending = ctx.Materials.Where(kv => !done.Contains(kv.Key)).Select(kv => kv.Value).ToArray();
+                var pending = ctx.Materials.Where(kv => !done.Contains(kv.Key)).ToArray();
                 if (pending.Length == 0) break;
-                foreach (var m in pending) { done.Add(m.GetInstanceID()); MaterialRow(w, m, ctx); }
+                foreach (var kv in pending) { done.Add(kv.Key); if (kv.Value != null) MaterialRow(w, kv.Value, ctx); }
             }
             w.End(']');
             w.Key("textures"); w.Begin('[');
             var texDone = new HashSet<int>();
             while (true)
             {
-                var pending = ctx.Textures.Where(kv => !texDone.Contains(kv.Key)).Select(kv => kv.Value).ToArray();
+                var pending = ctx.Textures.Where(kv => !texDone.Contains(kv.Key)).ToArray();
                 if (pending.Length == 0) break;
-                foreach (var t in pending) { texDone.Add(t.GetInstanceID()); TextureRow(w, t, ctx); }
+                foreach (var kv in pending) { texDone.Add(kv.Key); if (kv.Value != null) TextureRow(w, kv.Value, ctx); }
             }
             w.End(']');
             w.End('}');

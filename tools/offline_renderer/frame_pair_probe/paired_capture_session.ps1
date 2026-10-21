@@ -5,7 +5,7 @@ probe requests, and remove the probe afterwards. Every deployed/original file is
 hash-pinned; any mismatch stops before changing anything further.
 
 Bulky data (scene exports, raw texels, RDCs, bridge PNG) goes to the fresh
-E:\HS2_offline_renderer_data\paired_session_v5_20261020 (outside the game root,
+E:\HS2_offline_renderer_data\paired_session_v5_1_20261021 (outside the game root,
 user decision 2026-10-20); small receipts go to the HS2Mod session directory.
 
   .\paired_capture_session.ps1 launch          # deploy probe + early-bootstrap launch
@@ -26,9 +26,9 @@ $ErrorActionPreference = 'Stop'
 $Game      = 'E:\HoneySelect2_ArcticFox'
 $F2P       = 'C:\Users\13666\Workspace\Face2Parameter'
 $Scope     = 'C:\Users\13666\Workspace\HS2Mod\artifacts\chenger_reference_fit_20261012'
-$Session   = "$Scope\paired_capture_session_v5_20261020"
-$Bulk      = 'E:\HS2_offline_renderer_data\paired_session_v5_20261020'
-$ProbeSrc  = "$F2P\outputs\offline_renderer_probe_v5_20261020\build_v5\HS2_FramePairProbe.dll"
+$Session   = "$Scope\paired_capture_session_v5_1_20261021"
+$Bulk      = 'E:\HS2_offline_renderer_data\paired_session_v5_1_20261021'
+$ProbeSrc  = "$F2P\outputs\offline_renderer_probe_v5_20261020\build_v5_1\HS2_FramePairProbe.dll"
 $ManifestSrc = "$F2P\outputs\offline_renderer_probe_v5_20261020\shader_manifest_v5.tsv"
 $ProbeDir  = "$Game\BepInEx\plugins\HS2_FramePairProbe"
 $Bootstrap = "$F2P\outputs\offline_renderer_repair_20261012\early_bootstrap_cpu_v2\HS2_RenderDocBootstrap.dll"
@@ -40,7 +40,7 @@ $UnityPlayer = "$Game\UnityPlayer.dll"
 $MinFreeGB = 100
 
 $Pinned = @{
-    Probe       = 'b720c453c83ff5776d207e164f632bebd85339424cf427ee2e67a0125b413172'
+    Probe       = 'c07ff77dc93b7d5b6246f1a16010887b161db87b607e994d87434584b7503443'
     Manifest    = 'e403c5ad5524ece1d362329716777cf8f20d774a8d9d6e9e827459daf5ff2036'
     Bootstrap   = 'fa4927883805f3473205ccd54ecc4f5d80f5d05f02778133447013b8c4197391'
     RenderDoc   = '809da38e3867d9fd09cc5c30dd5310500dee75e999166d7a14ad1ef6e9eca65d'

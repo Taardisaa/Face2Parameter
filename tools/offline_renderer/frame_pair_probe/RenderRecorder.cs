@@ -157,7 +157,7 @@ namespace HS2Codex.FramePairProbe
                     w.Key("material_sheets_changed"); w.Begin('[');
                     foreach (var m in _ctx.Materials.Values.ToArray())
                     {
-                        if (m == null) continue;
+                        if (m == null) continue;   // destroyed since it was collected (pruned at the next scene export)
                         w.Begin('{'); w.Key("material"); w.Int(m.GetInstanceID());
                         w.Guard("sheet", s =>
                         {
