@@ -791,6 +791,11 @@ class SurfaceState:
     tangent_handedness: np.ndarray
     root_world_matrix: np.ndarray
     root_world_rotation_xyzw: np.ndarray
+    # Unity-exact payloads from src.render.unity_skin_emu.skin_from_locals (original
+    # UnityPlayer instructions); when present they replace the float64 path.
+    vertex_bytes: bytes | None = None
+    object_to_world: bytes | None = None
+    world_to_object: bytes | None = None
 
 
 def generate_patches(index, writes, points, states, out_dir: Path):
@@ -821,6 +826,15 @@ def generate_patches(index, writes, points, states, out_dir: Path):
                         'source_witness': witness, 'head_draws': point['head_draws'],
                         'unchanged_original_range': payload == original[offset:offset + len(payload)]})
 
+    def exact_for(pose, surfaces, field):
+        frame = states.get(pose) or {}
+        vals = [getattr(frame.get(si), field, None) if frame.get(si) is not None else None for si in surfaces]
+        if any(v is None for v in vals):
+            return None
+        if any(v != vals[0] for v in vals[1:]):
+            raise SkinPathError('Surfaces sharing one per-draw write disagree on ' + field)
+        return vals[0]
+
     def roots_for(pose, surfaces):
         frame = states.get(pose) or {}
         mats = []
@@ -828,7 +842,10 @@ def generate_patches(index, writes, points, states, out_dir: Path):
             st = frame.get(si)
             if st is None:
                 return None
-            mats.append(root_frame(st.root_world_matrix, st.root_world_rotation_xyzw))
+            if st.object_to_world is not None:
+                mats.append(np.frombuffer(st.object_to_world, np.float32).reshape(4, 4).T.astype(float))
+            else:
+                mats.append(root_frame(st.root_world_matrix, st.root_world_rotation_xyzw))
         if any(not np.array_equal(m, mats[0]) for m in mats[1:]):
             raise SkinPathError('Surfaces sharing one per-draw write disagree on their root frame')
         return mats[0]
@@ -850,9 +867,12 @@ def generate_patches(index, writes, points, states, out_dir: Path):
                 gaps.append({'write': point['write_id'], 'role': point['role'], 'pose': pose, 'surface': si,
                              'reason': 'source state for this recorded pose/surface not supplied'})
                 continue
-            root = root_frame(st.root_world_matrix, st.root_world_rotation_xyzw)
-            payload = skinned_vb_bytes(st.world_vertices, st.world_normals, st.world_tangents,
-                                       st.tangent_handedness, root)
+            if st.vertex_bytes is not None:
+                payload = st.vertex_bytes
+            else:
+                root = root_frame(st.root_world_matrix, st.root_world_rotation_xyzw)
+                payload = skinned_vb_bytes(st.world_vertices, st.world_normals, st.world_tangents,
+                                           st.tangent_handedness, root)
             if len(payload) != point['byte_range'][1] - point['byte_range'][0] or point['byte_range'][0] != 0:
                 raise SkinPathError('Generated VB size differs from captured write')
             emit(point, 0, payload, f'{point["role"]}:{pose}', f'source skin state {pose}, surface {si}')
@@ -863,7 +883,8 @@ def generate_patches(index, writes, points, states, out_dir: Path):
                 gaps.append({'write': point['write_id'], 'role': point['role'], 'pose': pose,
                              'reason': 'source root for recorded previous pose not supplied'})
                 continue
-            emit(point, point['extra']['matrix_byte_offset'][0], matrix_bytes(root),
+            exact = exact_for(pose, point['surfaces'], 'object_to_world')
+            emit(point, point['extra']['matrix_byte_offset'][0], exact if exact is not None else matrix_bytes(root),
                  f'_PreviousM:{pose}', f'root TRS without scale of {pose}')
         elif point['role'] == 'per_draw_object_matrices':
             pose = point['object_pose']
@@ -872,7 +893,9 @@ def generate_patches(index, writes, points, states, out_dir: Path):
                 gaps.append({'write': point['write_id'], 'role': point['role'], 'pose': pose,
                              'reason': 'source root for recorded object pose not supplied'})
                 continue
-            emit(point, 0, matrix_bytes(root), f'unity_ObjectToWorld:{pose}', f'root TRS without scale of {pose}')
+            exact = exact_for(pose, point['surfaces'], 'object_to_world')
+            emit(point, 0, exact if exact is not None else matrix_bytes(root), f'unity_ObjectToWorld:{pose}',
+                 f'root TRS without scale of {pose}')
             cls = point['world_to_object']
             if cls == 'identity':
                 continue
@@ -885,7 +908,9 @@ def generate_patches(index, writes, points, states, out_dir: Path):
                 gaps.append({'write': point['write_id'], 'role': 'unity_WorldToObject', 'pose': inv_pose,
                              'reason': 'recorded W2O is the inverse of a pose whose source root is not supplied'})
                 continue
-            emit(point, 64, matrix_bytes(np.linalg.inv(inv_root)), f'unity_WorldToObject:inverse:{inv_pose}',
+            exact = exact_for(inv_pose, point['surfaces'], 'world_to_object')
+            emit(point, 64, exact if exact is not None else matrix_bytes(np.linalg.inv(inv_root)),
+                 f'unity_WorldToObject:inverse:{inv_pose}',
                  f'inverse root TRS of {inv_pose} (recorded engine W2O source)')
         else:
             raise SkinPathError('Unknown upload role ' + point['role'])

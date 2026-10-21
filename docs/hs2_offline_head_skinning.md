@@ -196,61 +196,76 @@ whole-head pose does not enter; matrices do.
 6. Material per-draw `$Globals`, texture and shadow-map dependencies are outside
    this skinning path.
 
-## 7 Same-frame paired capture: method (prepared, not yet run)
+## 7 Same-frame paired capture and Unity-exact skinning (2026-10-20, done)
 
-Status 2026-10-20: tools built and CPU-tested. **No game session was run.**
-Deploying the probe into `BepInEx/plugins` and the Doorstop early-loader
-switch were refused by the permission system and need the user's explicit
-approval.
+Session: `HS2Mod/artifacts/chenger_reference_fit_20261012/paired_capture_session_20261020/`.
+The receipt is `paired_capture_receipt.json`; its compact copy is
+`tools/offline_renderer/paired_skin_capture_20261020.json`.
 
-**Why a Present-boundary TriggerCapture works** (pinned v1.46 source):
-`TriggerCapture` starts a non-app-controlled capture at the next Present
-(`d3d11_device.cpp` Present → `ShouldTriggerCapture` → `StartFrameCapture`).
-Unity keeps DYNAMIC/NO_OVERWRITE particle and batch buffers mapped across
-Present. In background mode, maps of high-traffic or dirty resources go
-direct and skip `m_OpenMaps` (`d3d11_context_wrap.cpp` Map). The first
-captured frame therefore meets Unmaps with no recorded Map
-(`CaptureFailed_UncappedUnmap`, Unmap at line 8183). Because the capture is
-not app-controlled and failures ≤5, `EndFrameCapture` immediately
-re-attempts (`AttemptCapture`). Maps made during the failed attempt are
-tracked, so the next frame succeeds. This is the 17674 → 17675 pattern in the
-preserved log: frame 17675 itself has exactly 6 Unmaps whose Maps fell in
-17674. The saved RDC is always a complete single frame. The in-app Start/End
-scope fails instead, because `m_AppControlledCapture` disables the retry.
+The DINOv2 v1 baseline card (`74d2625f…`) was loaded read-only. Snapshot, raw
+ABMX, expression and renderstyle were recorded and unchanged at the end; no
+card was saved. Two Present-boundary captures were taken with the probe.
+Each time the RenderDoc log shows the predicted "Uncapped Map/Unmap" failure,
+then the automatic retry capturing the next frame. The in-frame probe marker
+names the exported frame: 12741 and 26060 (`Time.frameCount`). Window 2 also
+contains the full render-scene state for every frame: 8 cameras, 5 lights,
+82 renderers, 63 materials, 217 textures and 18 effect components.
 
-**Binding by evidence.** `tools/offline_renderer/frame_pair_probe/` is a
-BepInEx plugin, read-only toward the character. For N consecutive frames it
-does the following at the end-of-frame point (`WaitForEndOfFrame`: after
-Update, animation, all LateUpdate writers and PostLateUpdate CPU skinning
-and rendering, before PresentAfterDraw):
+**Result: every head upload is bit-exact in both captures.**
 
-- exports every ChaControl transform as float32 bits, with blendshape
-  weights, flags and bounds;
-- optionally exports the full render scene state (`SceneState.cs`) and calls
-  the existing `HS2_RenderAudit.Capture()`;
-- uploads a 64-byte marker texture: `HS2PAIRMARKERv01`, nonce,
-  `Time.frameCount`, and a check word.
+| Upload | Source | Result |
+|---|---|---|
+| in-frame skinned VB (8 surfaces) | frame F export | 8/8 bit-exact |
+| previous-position VB (6 MV surfaces) | frame F-1 export | 6/6 bit-exact |
+| `unity_ObjectToWorld` (16 writes) | float32 TRS(root.position, root.rotation, 1) | 16/16 |
+| `unity_WorldToObject` (14 writes) | `InvertMatrix4x4_General3D(O2W)` | 14/14 (2 MV-pass writes identity) |
+| `_PreviousM` (6 writes) | O2W of frame F-1 | 6/6 |
 
-At window index `TriggerIndex` it calls the already-loaded official
-`renderdoc.dll` `TriggerCapture` (API table slot 15, SHA checked). Static mesh
-arrays (vertices, normals, tangents, UVs, triangles, bind poses, weights, all
-blendshape frames) are exported once.
+The generator (`generate_patches` with Unity-exact states) reproduces all 50
+captured upload ranges of capture 2 with zero changed bytes and no gaps.
 
-`src/render/paired_skin.py` and `tools/offline_renderer/pair_skin_capture.py`
-locate the single in-frame marker in the new RDC and select that frame's
-export. They recompute all 8 surfaces and compare every skinned VB write and
-O2W word for word against each window frame. Variants: the float64 generator
-plus four declared float32 orders — palette `(R⁻¹·L2W)·B` or `R⁻¹·(L2W·B)`,
-times matrix-blend or vertex-blend.
+**How exactness was obtained (source, not fitting).** The matched UnityPlayer
+PDB (GUID `BFA91A8C…`, age 1) names the routines. `src/render/unity_skin_emu.py`
+runs their original instructions under Unicorn:
 
-Source order audit: ChaControl `UpdateForce` → `UpdateBlendShapeVoice`
-(mouth-width ScaleX), eye/neck look controllers, FBS and ABMX `BoneController`
-all run in Update/LateUpdate. No Assembly-CSharp render callback
-(`OnPreRender`/`OnWillRenderObject`/`onPreCull`) writes character bones. The
-render-callback users are water, mirror and post effects. Of the plugins,
-DHH, Hooah, Aura2 and Lividity contain such callbacks but were not audited
-for bone writes. The VB byte cross-check is the acceptance for the export
-point.
+- `CalculateGlobalPositionAndRotation`: the root's world position/rotation
+  (130/130 sampled transforms bit-equal to `Transform.position/rotation`).
+- `GetWorldToLocalMatrixNoScale` (`CalculateInverseGlobalMatrixNoScale`): the
+  root inverse.
+- `SkinnedMeshRendererManager::CalculateSkinningMatrices`, prepared-renderer
+  path: pose = base·TRS(top)·…·TRS(bone) built from **local** TRS by SIMD,
+  then times the bindpose.
+- `SkinVerticesGenericCPU<4,1,1>`: column-wise matrix blend
+  `((w0M0+w1M1)+w2M2)+w3M3`, then `((x·c0+y·c1)+z·c2)+c3`; tangent.w copied.
+- `InvertMatrix4x4_General3D`, called from `GfxDeviceD3D11Base::BeforeDrawCall`,
+  for `unity_WorldToObject`. Its lazy dirty flag explains the stale W2O seen
+  in frame 17675.
 
-CPU tests: `python -m unittest tools.offline_renderer.test_paired_skin`
-(3 pass), together with `test_gpu_skin_inputs` (8).
+The fallback path (`Transform.localToWorldMatrix` · bindpose) and all four
+declared float32 orders reach only about 25–28% word equality. The difference
+is that Unity rebuilds the bone matrices from local TRS through the prepared
+hierarchy chain. `skin_from_locals` needs only local TRS (for example
+`CapturedHeadForward.evaluate(...)['bone_local']`) and reproduced capture 2
+bit-exactly from locals alone.
+
+**Remaining gaps**
+- This card's only active blendshapes are `*.e00_defo=100` (k=1.0), so the
+  float32 blend order (shape-index sequential `v + d·(w/frameWeight)`) is
+  verified only for that case. `ApplyBlendShapes`/`ApplyBlendShapesToVertices`
+  must be emulated or disassembled before expression candidates.
+- Bone locals from `CapturedHeadForward` have not yet been compared with the
+  probe's same-frame float32 locals. Unity-exact candidate bytes require the
+  ABMX/native replay to produce Unity's exact float32 local TRS.
+- Typed material properties exist only for the 37 shaders in the manifest;
+  other materials export keywords, textures, queue and tags. Raw texels were
+  not exported: `HS2_RenderAudit`'s config points at an old output directory,
+  so it was not invoked.
+- Why the 2 MV-pass W2O writes are identity (signed zeros) is recorded, not
+  traced. The current VB's capture-start contents are never consumed by a draw
+  and were not matched.
+- Bounds/culling invariance under candidates, and CTAA temporal history, as
+  before.
+
+CPU tests: `python -m unittest tools.offline_renderer.test_paired_skin
+tools.offline_renderer.test_gpu_skin_inputs` (14 pass; the emulator tests run
+the installed UnityPlayer.dll).

@@ -1,0 +1,953 @@
+{
+ "schema_version": 1,
+ "date": "2026-10-20",
+ "session": "C:\\Users\\13666\\Workspace\\HS2Mod\\artifacts\\chenger_reference_fit_20261012\\paired_capture_session_20261020",
+ "game": {
+  "pid": 20680,
+  "launch": "early bootstrap (main agent, user-approved)",
+  "doorstop_restored_by_main": true,
+  "exit": "CloseMainWindow did not exit within 30 s (in-game confirmation); verified owned PID then Stop-Process; exited, no HS2/RenderDoc process left"
+ },
+ "card": {
+  "path": "E:/HoneySelect2_ArcticFox/UserData/chara/female/Codex/Chenger_chin_baseline_DINOv2_v1_20261011.png",
+  "sha256_before_after": "74d2625fb58b56172608faa34901b80e7b471f5d1643f4303743e1ddbbcb5052",
+  "load": "native_full_card, read-only",
+  "saved_cards": []
+ },
+ "state_files": [
+  "prepare/loaded_state.json",
+  "prepare/geometry_frames.json",
+  "final_state_before_quit.json",
+  "final_check.json"
+ ],
+ "probe": {
+  "dll_sha256": "d7e87bd55ed3b88fa17354da4f900187580acc3a7db92746c765c54704e633e1",
+  "source": "tools/offline_renderer/frame_pair_probe/"
+ },
+ "shader_manifest": {
+  "path": "shader_manifest.tsv",
+  "sha256": "a24581f4ee3168f44264efb753c362c505114ff29ee25587916ad8220bdc53e6"
+ },
+ "captures": [
+  {
+   "nonce": "625aa0f2a0b44eb498f711d82b74dd9f",
+   "rdc": "rdc_625aa0f2a0b44eb498f711d82b74dd9f_frame12740.rdc",
+   "rdc_sha256": "3b96ed5a1ec81e5f1b46e4bbf0e1f23d9819f197b5eab9d2021194400617832b",
+   "renderdoc_log": "Failed (Uncapped Map/Unmap) then automatic retry captured the next frame",
+   "scene_state": false,
+   "marker": {
+    "chunk_index": 3737,
+    "chunk_name": "ID3D11DeviceContext::Unmap",
+    "nonce_ok": true,
+    "frame_count": 12741,
+    "window_index": 6,
+    "rendered_frame_count": 12741
+   },
+   "skin": [
+    {
+     "surface": "o_tang",
+     "role": "skinned_vertices_previous",
+     "chunk_index": 1240,
+     "frame": 12740,
+     "bit_exact": true,
+     "declared_f32_orders_equal_words": {
+      "f64_reference": 1695,
+      "f32_paletteA_blend_matrix": 1589,
+      "f32_paletteA_blend_vertices": 1589,
+      "f32_paletteB_blend_matrix": 1562,
+      "f32_paletteB_blend_vertices": 1562,
+      "unity_emulated_prepared": 6530
+     },
+     "words": 6530
+    },
+    {
+     "surface": "o_head",
+     "role": "skinned_vertices_previous",
+     "chunk_index": 1242,
+     "frame": 12740,
+     "bit_exact": true,
+     "declared_f32_orders_equal_words": {
+      "f64_reference": 13364,
+      "f32_paletteA_blend_matrix": 14826,
+      "f32_paletteA_blend_vertices": 12987,
+      "f32_paletteB_blend_matrix": 14699,
+      "f32_paletteB_blend_vertices": 13060,
+      "unity_emulated_prepared": 44390
+     },
+     "words": 44390
+    },
+    {
+     "surface": "o_eyebase_L",
+     "role": "skinned_vertices_previous",
+     "chunk_index": 1244,
+     "frame": 12740,
+     "bit_exact": true,
+     "declared_f32_orders_equal_words": {
+      "f64_reference": 378,
+      "f32_paletteA_blend_matrix": 248,
+      "f32_paletteA_blend_vertices": 284,
+      "f32_paletteB_blend_matrix": 248,
+      "f32_paletteB_blend_vertices": 283,
+      "unity_emulated_prepared": 1480
+     },
+     "words": 1480
+    },
+    {
+     "surface": "o_eyebase_R",
+     "role": "skinned_vertices_previous",
+     "chunk_index": 1246,
+     "frame": 12740,
+     "bit_exact": true,
+     "declared_f32_orders_equal_words": {
+      "f64_reference": 221,
+      "f32_paletteA_blend_matrix": 269,
+      "f32_paletteA_blend_vertices": 291,
+      "f32_paletteB_blend_matrix": 293,
+      "f32_paletteB_blend_vertices": 313,
+      "unity_emulated_prepared": 1480
+     },
+     "words": 1480
+    },
+    {
+     "surface": "o_eyeshadow",
+     "role": "skinned_vertices_previous",
+     "chunk_index": 1248,
+     "frame": 12740,
+     "bit_exact": true,
+     "declared_f32_orders_equal_words": {
+      "f64_reference": 861,
+      "f32_paletteA_blend_matrix": 928,
+      "f32_paletteA_blend_vertices": 825,
+      "f32_paletteB_blend_matrix": 986,
+      "f32_paletteB_blend_vertices": 861,
+      "unity_emulated_prepared": 2960
+     },
+     "words": 2960
+    },
+    {
+     "surface": "o_tooth",
+     "role": "skinned_vertices_previous",
+     "chunk_index": 1250,
+     "frame": 12740,
+     "bit_exact": true,
+     "declared_f32_orders_equal_words": {
+      "f64_reference": 1614,
+      "f32_paletteA_blend_matrix": 1197,
+      "f32_paletteA_blend_vertices": 1197,
+      "f32_paletteB_blend_matrix": 1096,
+      "f32_paletteB_blend_vertices": 1096,
+      "unity_emulated_prepared": 5640
+     },
+     "words": 5640
+    },
+    {
+     "surface": "o_eyelashes",
+     "role": "skinned_vertices_current",
+     "chunk_index": 1596,
+     "frame": 12741,
+     "bit_exact": true,
+     "declared_f32_orders_equal_words": {
+      "f64_reference": 970,
+      "f32_paletteA_blend_matrix": 965,
+      "f32_paletteA_blend_vertices": 918,
+      "f32_paletteB_blend_matrix": 1055,
+      "f32_paletteB_blend_vertices": 972,
+      "unity_emulated_prepared": 3980
+     },
+     "words": 3980
+    },
+    {
+     "surface": "o_namida",
+     "role": "skinned_vertices_current",
+     "chunk_index": 1602,
+     "frame": 12741,
+     "bit_exact": true,
+     "declared_f32_orders_equal_words": {
+      "f64_reference": 1954,
+      "f32_paletteA_blend_matrix": 2080,
+      "f32_paletteA_blend_vertices": 2002,
+      "f32_paletteB_blend_matrix": 2128,
+      "f32_paletteB_blend_vertices": 2043,
+      "unity_emulated_prepared": 8380
+     },
+     "words": 8380
+    },
+    {
+     "surface": "o_tang",
+     "role": "skinned_vertices_current",
+     "chunk_index": 1603,
+     "frame": 12741,
+     "bit_exact": true,
+     "declared_f32_orders_equal_words": {
+      "f64_reference": 859,
+      "f32_paletteA_blend_matrix": 758,
+      "f32_paletteA_blend_vertices": 758,
+      "f32_paletteB_blend_matrix": 769,
+      "f32_paletteB_blend_vertices": 769,
+      "unity_emulated_prepared": 6530
+     },
+     "words": 6530
+    },
+    {
+     "surface": "o_head",
+     "role": "skinned_vertices_current",
+     "chunk_index": 1604,
+     "frame": 12741,
+     "bit_exact": true,
+     "declared_f32_orders_equal_words": {
+      "f64_reference": 9883,
+      "f32_paletteA_blend_matrix": 9964,
+      "f32_paletteA_blend_vertices": 9633,
+      "f32_paletteB_blend_matrix": 9994,
+      "f32_paletteB_blend_vertices": 9605,
+      "unity_emulated_prepared": 44390
+     },
+     "words": 44390
+    },
+    {
+     "surface": "o_eyebase_L",
+     "role": "skinned_vertices_current",
+     "chunk_index": 1606,
+     "frame": 12741,
+     "bit_exact": true,
+     "declared_f32_orders_equal_words": {
+      "f64_reference": 247,
+      "f32_paletteA_blend_matrix": 279,
+      "f32_paletteA_blend_vertices": 303,
+      "f32_paletteB_blend_matrix": 279,
+      "f32_paletteB_blend_vertices": 303,
+      "unity_emulated_prepared": 1480
+     },
+     "words": 1480
+    },
+    {
+     "surface": "o_eyebase_R",
+     "role": "skinned_vertices_current",
+     "chunk_index": 1607,
+     "frame": 12741,
+     "bit_exact": true,
+     "declared_f32_orders_equal_words": {
+      "f64_reference": 164,
+      "f32_paletteA_blend_matrix": 207,
+      "f32_paletteA_blend_vertices": 240,
+      "f32_paletteB_blend_matrix": 207,
+      "f32_paletteB_blend_vertices": 239,
+      "unity_emulated_prepared": 1480
+     },
+     "words": 1480
+    },
+    {
+     "surface": "o_eyeshadow",
+     "role": "skinned_vertices_current",
+     "chunk_index": 1608,
+     "frame": 12741,
+     "bit_exact": true,
+     "declared_f32_orders_equal_words": {
+      "f64_reference": 682,
+      "f32_paletteA_blend_matrix": 691,
+      "f32_paletteA_blend_vertices": 648,
+      "f32_paletteB_blend_matrix": 706,
+      "f32_paletteB_blend_vertices": 690,
+      "unity_emulated_prepared": 2960
+     },
+     "words": 2960
+    },
+    {
+     "surface": "o_tooth",
+     "role": "skinned_vertices_current",
+     "chunk_index": 1609,
+     "frame": 12741,
+     "bit_exact": true,
+     "declared_f32_orders_equal_words": {
+      "f64_reference": 999,
+      "f32_paletteA_blend_matrix": 616,
+      "f32_paletteA_blend_vertices": 616,
+      "f32_paletteB_blend_matrix": 762,
+      "f32_paletteB_blend_vertices": 762,
+      "unity_emulated_prepared": 5640
+     },
+     "words": 5640
+    }
+   ],
+   "object_matrices": [
+    {
+     "chunk_index": 1646,
+     "pose": "pose0",
+     "o2w_bit_exact_frames": [
+      12741
+     ],
+     "w2o_bit_exact_frames": [
+      12741
+     ],
+     "w2o_identity": false
+    },
+    {
+     "chunk_index": 1679,
+     "pose": "pose0",
+     "o2w_bit_exact_frames": [
+      12741
+     ],
+     "w2o_bit_exact_frames": [
+      12741
+     ],
+     "w2o_identity": false
+    },
+    {
+     "chunk_index": 1735,
+     "pose": "pose0",
+     "o2w_bit_exact_frames": [
+      12741
+     ],
+     "w2o_bit_exact_frames": [
+      12741
+     ],
+     "w2o_identity": false
+    },
+    {
+     "chunk_index": 1744,
+     "pose": "pose0",
+     "o2w_bit_exact_frames": [
+      12741
+     ],
+     "w2o_bit_exact_frames": [
+      12741
+     ],
+     "w2o_identity": false
+    },
+    {
+     "chunk_index": 1766,
+     "pose": "pose0",
+     "o2w_bit_exact_frames": [
+      12741
+     ],
+     "w2o_bit_exact_frames": [
+      12741
+     ],
+     "w2o_identity": false
+    },
+    {
+     "chunk_index": 1804,
+     "pose": "pose0",
+     "o2w_bit_exact_frames": [
+      12741
+     ],
+     "w2o_bit_exact_frames": [
+      12741
+     ],
+     "w2o_identity": false
+    },
+    {
+     "chunk_index": 1844,
+     "pose": "pose0",
+     "o2w_bit_exact_frames": [
+      12741
+     ],
+     "w2o_bit_exact_frames": [
+      12741
+     ],
+     "w2o_identity": false
+    },
+    {
+     "chunk_index": 1862,
+     "pose": "pose0",
+     "o2w_bit_exact_frames": [
+      12741
+     ],
+     "w2o_bit_exact_frames": [
+      12741
+     ],
+     "w2o_identity": false
+    },
+    {
+     "chunk_index": 2039,
+     "pose": "pose0",
+     "o2w_bit_exact_frames": [
+      12741
+     ],
+     "w2o_bit_exact_frames": [
+      12741
+     ],
+     "w2o_identity": false
+    },
+    {
+     "chunk_index": 2076,
+     "pose": "pose0",
+     "o2w_bit_exact_frames": [
+      12741
+     ],
+     "w2o_bit_exact_frames": [
+      12741
+     ],
+     "w2o_identity": false
+    },
+    {
+     "chunk_index": 2185,
+     "pose": "pose0",
+     "o2w_bit_exact_frames": [
+      12741
+     ],
+     "w2o_bit_exact_frames": [
+      12741
+     ],
+     "w2o_identity": false
+    },
+    {
+     "chunk_index": 2277,
+     "pose": "pose0",
+     "o2w_bit_exact_frames": [
+      12741
+     ],
+     "w2o_bit_exact_frames": [
+      12741
+     ],
+     "w2o_identity": false
+    },
+    {
+     "chunk_index": 2329,
+     "pose": "pose0",
+     "o2w_bit_exact_frames": [
+      12741
+     ],
+     "w2o_bit_exact_frames": [
+      12741
+     ],
+     "w2o_identity": false
+    },
+    {
+     "chunk_index": 2549,
+     "pose": "pose0",
+     "o2w_bit_exact_frames": [
+      12741
+     ],
+     "w2o_bit_exact_frames": [],
+     "w2o_identity": false
+    },
+    {
+     "chunk_index": 2585,
+     "pose": "pose0",
+     "o2w_bit_exact_frames": [
+      12741
+     ],
+     "w2o_bit_exact_frames": [],
+     "w2o_identity": false
+    },
+    {
+     "chunk_index": 2864,
+     "pose": "pose0",
+     "o2w_bit_exact_frames": [
+      12741
+     ],
+     "w2o_bit_exact_frames": [
+      12741
+     ],
+     "w2o_identity": false
+    },
+    {
+     "chunk_index": 2546,
+     "role": "_PreviousM",
+     "o2w_bit_exact_frames": [
+      12740
+     ]
+    },
+    {
+     "chunk_index": 2556,
+     "role": "_PreviousM",
+     "o2w_bit_exact_frames": [
+      12740
+     ]
+    },
+    {
+     "chunk_index": 2561,
+     "role": "_PreviousM",
+     "o2w_bit_exact_frames": [
+      12740
+     ]
+    },
+    {
+     "chunk_index": 2566,
+     "role": "_PreviousM",
+     "o2w_bit_exact_frames": [
+      12740
+     ]
+    },
+    {
+     "chunk_index": 2571,
+     "role": "_PreviousM",
+     "o2w_bit_exact_frames": [
+      12740
+     ]
+    },
+    {
+     "chunk_index": 2583,
+     "role": "_PreviousM",
+     "o2w_bit_exact_frames": [
+      12740
+     ]
+    }
+   ]
+  },
+  {
+   "nonce": "04d1e76fdad14c11bbc6fe439b228e77",
+   "rdc": "rdc_04d1e76fdad14c11bbc6fe439b228e77_frame26059.rdc",
+   "rdc_sha256": "d461ae0633ef033fc87a55eba7fb59440690e6180c7b64fbbd8158297d8d3f7b",
+   "renderdoc_log": "Failed (Uncapped Map/Unmap) then automatic retry captured the next frame",
+   "scene_state": true,
+   "marker": {
+    "chunk_index": 3739,
+    "chunk_name": "ID3D11DeviceContext::Unmap",
+    "nonce_ok": true,
+    "frame_count": 26060,
+    "window_index": 5,
+    "rendered_frame_count": 26060
+   },
+   "skin": [
+    {
+     "surface": "o_head",
+     "role": "skinned_vertices_previous",
+     "chunk_index": 1258,
+     "frame": 26059,
+     "bit_exact": true,
+     "declared_f32_orders_equal_words": {
+      "f64_reference": 11386,
+      "f32_paletteA_blend_matrix": 11991,
+      "f32_paletteA_blend_vertices": 11268,
+      "f32_paletteB_blend_matrix": 12178,
+      "f32_paletteB_blend_vertices": 11410,
+      "unity_emulated_prepared": 44390
+     },
+     "words": 44390
+    },
+    {
+     "surface": "o_eyebase_R",
+     "role": "skinned_vertices_previous",
+     "chunk_index": 1260,
+     "frame": 26059,
+     "bit_exact": true,
+     "declared_f32_orders_equal_words": {
+      "f64_reference": 262,
+      "f32_paletteA_blend_matrix": 253,
+      "f32_paletteA_blend_vertices": 256,
+      "f32_paletteB_blend_matrix": 208,
+      "f32_paletteB_blend_vertices": 213,
+      "unity_emulated_prepared": 1480
+     },
+     "words": 1480
+    },
+    {
+     "surface": "o_tooth",
+     "role": "skinned_vertices_previous",
+     "chunk_index": 1262,
+     "frame": 26059,
+     "bit_exact": true,
+     "declared_f32_orders_equal_words": {
+      "f64_reference": 625,
+      "f32_paletteA_blend_matrix": 698,
+      "f32_paletteA_blend_vertices": 698,
+      "f32_paletteB_blend_matrix": 821,
+      "f32_paletteB_blend_vertices": 821,
+      "unity_emulated_prepared": 5640
+     },
+     "words": 5640
+    },
+    {
+     "surface": "o_tang",
+     "role": "skinned_vertices_previous",
+     "chunk_index": 1264,
+     "frame": 26059,
+     "bit_exact": true,
+     "declared_f32_orders_equal_words": {
+      "f64_reference": 821,
+      "f32_paletteA_blend_matrix": 859,
+      "f32_paletteA_blend_vertices": 859,
+      "f32_paletteB_blend_matrix": 987,
+      "f32_paletteB_blend_vertices": 987,
+      "unity_emulated_prepared": 6530
+     },
+     "words": 6530
+    },
+    {
+     "surface": "o_eyeshadow",
+     "role": "skinned_vertices_previous",
+     "chunk_index": 1266,
+     "frame": 26059,
+     "bit_exact": true,
+     "declared_f32_orders_equal_words": {
+      "f64_reference": 735,
+      "f32_paletteA_blend_matrix": 725,
+      "f32_paletteA_blend_vertices": 669,
+      "f32_paletteB_blend_matrix": 772,
+      "f32_paletteB_blend_vertices": 722,
+      "unity_emulated_prepared": 2960
+     },
+     "words": 2960
+    },
+    {
+     "surface": "o_eyebase_L",
+     "role": "skinned_vertices_previous",
+     "chunk_index": 1268,
+     "frame": 26059,
+     "bit_exact": true,
+     "declared_f32_orders_equal_words": {
+      "f64_reference": 178,
+      "f32_paletteA_blend_matrix": 189,
+      "f32_paletteA_blend_vertices": 198,
+      "f32_paletteB_blend_matrix": 205,
+      "f32_paletteB_blend_vertices": 216,
+      "unity_emulated_prepared": 1480
+     },
+     "words": 1480
+    },
+    {
+     "surface": "o_eyelashes",
+     "role": "skinned_vertices_current",
+     "chunk_index": 1598,
+     "frame": 26060,
+     "bit_exact": true,
+     "declared_f32_orders_equal_words": {
+      "f64_reference": 969,
+      "f32_paletteA_blend_matrix": 941,
+      "f32_paletteA_blend_vertices": 964,
+      "f32_paletteB_blend_matrix": 913,
+      "f32_paletteB_blend_vertices": 953,
+      "unity_emulated_prepared": 3980
+     },
+     "words": 3980
+    },
+    {
+     "surface": "o_namida",
+     "role": "skinned_vertices_current",
+     "chunk_index": 1604,
+     "frame": 26060,
+     "bit_exact": true,
+     "declared_f32_orders_equal_words": {
+      "f64_reference": 2387,
+      "f32_paletteA_blend_matrix": 2628,
+      "f32_paletteA_blend_vertices": 2309,
+      "f32_paletteB_blend_matrix": 2550,
+      "f32_paletteB_blend_vertices": 2299,
+      "unity_emulated_prepared": 8380
+     },
+     "words": 8380
+    },
+    {
+     "surface": "o_tang",
+     "role": "skinned_vertices_current",
+     "chunk_index": 1605,
+     "frame": 26060,
+     "bit_exact": true,
+     "declared_f32_orders_equal_words": {
+      "f64_reference": 1551,
+      "f32_paletteA_blend_matrix": 1585,
+      "f32_paletteA_blend_vertices": 1585,
+      "f32_paletteB_blend_matrix": 1447,
+      "f32_paletteB_blend_vertices": 1447,
+      "unity_emulated_prepared": 6530
+     },
+     "words": 6530
+    },
+    {
+     "surface": "o_head",
+     "role": "skinned_vertices_current",
+     "chunk_index": 1606,
+     "frame": 26060,
+     "bit_exact": true,
+     "declared_f32_orders_equal_words": {
+      "f64_reference": 13835,
+      "f32_paletteA_blend_matrix": 15182,
+      "f32_paletteA_blend_vertices": 13586,
+      "f32_paletteB_blend_matrix": 15150,
+      "f32_paletteB_blend_vertices": 13673,
+      "unity_emulated_prepared": 44390
+     },
+     "words": 44390
+    },
+    {
+     "surface": "o_eyebase_L",
+     "role": "skinned_vertices_current",
+     "chunk_index": 1608,
+     "frame": 26060,
+     "bit_exact": true,
+     "declared_f32_orders_equal_words": {
+      "f64_reference": 286,
+      "f32_paletteA_blend_matrix": 264,
+      "f32_paletteA_blend_vertices": 266,
+      "f32_paletteB_blend_matrix": 275,
+      "f32_paletteB_blend_vertices": 279,
+      "unity_emulated_prepared": 1480
+     },
+     "words": 1480
+    },
+    {
+     "surface": "o_eyebase_R",
+     "role": "skinned_vertices_current",
+     "chunk_index": 1609,
+     "frame": 26060,
+     "bit_exact": true,
+     "declared_f32_orders_equal_words": {
+      "f64_reference": 431,
+      "f32_paletteA_blend_matrix": 288,
+      "f32_paletteA_blend_vertices": 298,
+      "f32_paletteB_blend_matrix": 292,
+      "f32_paletteB_blend_vertices": 303,
+      "unity_emulated_prepared": 1480
+     },
+     "words": 1480
+    },
+    {
+     "surface": "o_eyeshadow",
+     "role": "skinned_vertices_current",
+     "chunk_index": 1610,
+     "frame": 26060,
+     "bit_exact": true,
+     "declared_f32_orders_equal_words": {
+      "f64_reference": 788,
+      "f32_paletteA_blend_matrix": 799,
+      "f32_paletteA_blend_vertices": 739,
+      "f32_paletteB_blend_matrix": 746,
+      "f32_paletteB_blend_vertices": 730,
+      "unity_emulated_prepared": 2960
+     },
+     "words": 2960
+    },
+    {
+     "surface": "o_tooth",
+     "role": "skinned_vertices_current",
+     "chunk_index": 1611,
+     "frame": 26060,
+     "bit_exact": true,
+     "declared_f32_orders_equal_words": {
+      "f64_reference": 1428,
+      "f32_paletteA_blend_matrix": 1646,
+      "f32_paletteA_blend_vertices": 1646,
+      "f32_paletteB_blend_matrix": 1506,
+      "f32_paletteB_blend_vertices": 1506,
+      "unity_emulated_prepared": 5640
+     },
+     "words": 5640
+    }
+   ],
+   "object_matrices": [
+    {
+     "chunk_index": 1648,
+     "pose": "pose0",
+     "o2w_bit_exact_frames": [
+      26060
+     ],
+     "w2o_bit_exact_frames": [
+      26060
+     ],
+     "w2o_identity": false
+    },
+    {
+     "chunk_index": 1681,
+     "pose": "pose0",
+     "o2w_bit_exact_frames": [
+      26060
+     ],
+     "w2o_bit_exact_frames": [
+      26060
+     ],
+     "w2o_identity": false
+    },
+    {
+     "chunk_index": 1737,
+     "pose": "pose0",
+     "o2w_bit_exact_frames": [
+      26060
+     ],
+     "w2o_bit_exact_frames": [
+      26060
+     ],
+     "w2o_identity": false
+    },
+    {
+     "chunk_index": 1746,
+     "pose": "pose0",
+     "o2w_bit_exact_frames": [
+      26060
+     ],
+     "w2o_bit_exact_frames": [
+      26060
+     ],
+     "w2o_identity": false
+    },
+    {
+     "chunk_index": 1768,
+     "pose": "pose0",
+     "o2w_bit_exact_frames": [
+      26060
+     ],
+     "w2o_bit_exact_frames": [
+      26060
+     ],
+     "w2o_identity": false
+    },
+    {
+     "chunk_index": 1806,
+     "pose": "pose0",
+     "o2w_bit_exact_frames": [
+      26060
+     ],
+     "w2o_bit_exact_frames": [
+      26060
+     ],
+     "w2o_identity": false
+    },
+    {
+     "chunk_index": 1846,
+     "pose": "pose0",
+     "o2w_bit_exact_frames": [
+      26060
+     ],
+     "w2o_bit_exact_frames": [
+      26060
+     ],
+     "w2o_identity": false
+    },
+    {
+     "chunk_index": 1864,
+     "pose": "pose0",
+     "o2w_bit_exact_frames": [
+      26060
+     ],
+     "w2o_bit_exact_frames": [
+      26060
+     ],
+     "w2o_identity": false
+    },
+    {
+     "chunk_index": 2041,
+     "pose": "pose0",
+     "o2w_bit_exact_frames": [
+      26060
+     ],
+     "w2o_bit_exact_frames": [
+      26060
+     ],
+     "w2o_identity": false
+    },
+    {
+     "chunk_index": 2078,
+     "pose": "pose0",
+     "o2w_bit_exact_frames": [
+      26060
+     ],
+     "w2o_bit_exact_frames": [
+      26060
+     ],
+     "w2o_identity": false
+    },
+    {
+     "chunk_index": 2187,
+     "pose": "pose0",
+     "o2w_bit_exact_frames": [
+      26060
+     ],
+     "w2o_bit_exact_frames": [
+      26060
+     ],
+     "w2o_identity": false
+    },
+    {
+     "chunk_index": 2279,
+     "pose": "pose0",
+     "o2w_bit_exact_frames": [
+      26060
+     ],
+     "w2o_bit_exact_frames": [
+      26060
+     ],
+     "w2o_identity": false
+    },
+    {
+     "chunk_index": 2331,
+     "pose": "pose0",
+     "o2w_bit_exact_frames": [
+      26060
+     ],
+     "w2o_bit_exact_frames": [
+      26060
+     ],
+     "w2o_identity": false
+    },
+    {
+     "chunk_index": 2551,
+     "pose": "pose0",
+     "o2w_bit_exact_frames": [
+      26060
+     ],
+     "w2o_bit_exact_frames": [],
+     "w2o_identity": false
+    },
+    {
+     "chunk_index": 2587,
+     "pose": "pose0",
+     "o2w_bit_exact_frames": [
+      26060
+     ],
+     "w2o_bit_exact_frames": [],
+     "w2o_identity": false
+    },
+    {
+     "chunk_index": 2866,
+     "pose": "pose0",
+     "o2w_bit_exact_frames": [
+      26060
+     ],
+     "w2o_bit_exact_frames": [
+      26060
+     ],
+     "w2o_identity": false
+    },
+    {
+     "chunk_index": 2548,
+     "role": "_PreviousM",
+     "o2w_bit_exact_frames": [
+      26059
+     ]
+    },
+    {
+     "chunk_index": 2558,
+     "role": "_PreviousM",
+     "o2w_bit_exact_frames": [
+      26059
+     ]
+    },
+    {
+     "chunk_index": 2563,
+     "role": "_PreviousM",
+     "o2w_bit_exact_frames": [
+      26059
+     ]
+    },
+    {
+     "chunk_index": 2568,
+     "role": "_PreviousM",
+     "o2w_bit_exact_frames": [
+      26059
+     ]
+    },
+    {
+     "chunk_index": 2573,
+     "role": "_PreviousM",
+     "o2w_bit_exact_frames": [
+      26059
+     ]
+    },
+    {
+     "chunk_index": 2585,
+     "role": "_PreviousM",
+     "o2w_bit_exact_frames": [
+      26059
+     ]
+    }
+   ]
+  }
+ ],
+ "generator_end_to_end": {
+  "capture": "04d1e76f",
+  "changed_patches": 0,
+  "unchanged_ranges_reproduced": 50,
+  "gaps": 0
+ }
+}

@@ -245,3 +245,57 @@ def compare_words(original: bytes, generated: bytes):
     return {'bit_exact': original == generated, 'equal_words': int((a == b).sum()), 'words': int(a.size),
             'max_abs_diff': float(np.abs(fa - fb).max()),
             'max_ulp': int(np.abs(a.view(np.int32).astype(np.int64) - b.view(np.int32).astype(np.int64)).max())}
+
+
+# ---------------------------------------------------------------- Unity-exact path
+
+def chain_entries(win: ProbeWindow, frame, bones, ancestors):
+    """Prepared-renderer hierarchy entries (parents first) for the given bones.
+
+    ``ancestors``: local (t, q, s) of the transforms above the exported
+    ChaControl root, top first (from the same session's bridge export).
+    """
+    tf = win.static['transforms']
+    T = frame['T']
+    order, pos = [], {}
+
+    def add(i):
+        if i in pos:
+            return
+        p = tf[i]['parent']
+        if p >= 0:
+            add(p)
+        order.append(i)
+        pos[i] = len(order)
+    for b in bones:
+        add(b)
+    entries = [(k, t, q, s) for k, (t, q, s) in enumerate(ancestors)]
+    shift = len(ancestors)
+    for i in order:
+        p = tf[i]['parent']
+        entries.append(((pos[p] + shift) if p >= 0 else shift, T[i, 0:3], T[i, 3:7], T[i, 7:10]))
+    return entries, {i: pos[i] + shift for i in order}
+
+
+def unity_exact_vertices(emu, win: ProbeWindow, frame, renderer, mesh, ancestors):
+    """Original UnityPlayer arithmetic: root W2L-no-scale, prepared TRS chain,
+    MultiplyMatrix bindposes, float32 blendshapes, SkinVerticesGenericCPU<4,1,1>."""
+    from .unity_skin_emu import prepared_palette
+    mats = frame_matrices(win, frame, renderer)
+    base, _ = emu.world_to_local_noscale(mats['root_pos'], mats['root_rot'])
+    entries, where = chain_entries(win, frame, renderer['bones'], ancestors)
+    palette = prepared_palette(emu, base, entries, [where[b] for b in renderer['bones']], list(mesh['bind']))
+    v, n, t = blend_f32(mesh, frame['W'][renderer['id']])
+    src = np.concatenate([v, n, t, mesh['t'][:, 3:4]], 1).astype(F)
+    return emu.skin_vertices4(src, palette, mesh['w'], mesh['bi'])
+
+
+def unity_object_matrices(emu, win: ProbeWindow, frame, renderer):
+    """unity_ObjectToWorld = TRS(root.position, root.rotation, 1) (float32,
+    UnityCsReference order) and unity_WorldToObject = InvertMatrix4x4_General3D."""
+    from .unity_skin_emu import invert_general3d
+    mats = frame_matrices(win, frame, renderer)
+    o2w = np.eye(4, dtype=F)
+    o2w[:3, :3] = g.unity_rotation_matrix(mats['root_rot'])
+    o2w[:3, 3] = mats['root_pos']
+    return g.matrix_bytes(o2w), g.matrix_bytes(invert_general3d(emu, o2w))

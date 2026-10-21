@@ -116,3 +116,48 @@ class PairedSkinTests(unittest.TestCase):
 
 if __name__ == '__main__':
     unittest.main()
+
+
+DLL = Path('E:/HoneySelect2_ArcticFox/UnityPlayer.dll')
+
+
+@unittest.skipUnless(DLL.exists(), 'installed UnityPlayer.dll required')
+class UnityEmuTests(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        from src.render.unity_skin_emu import UnityPlayerEmu
+        cls.emu = UnityPlayerEmu()
+
+    def test_multiply_with_base_order(self):
+        rng = np.random.default_rng(5)
+        base = rng.random((4, 4)).astype(np.float32)
+        a = [rng.random((4, 4)).astype(np.float32) for _ in range(3)]
+        b = [rng.random((4, 4)).astype(np.float32) for _ in range(3)]
+        got = self.emu.multiply_with_base(base, a, b)
+        for i in range(3):
+            # Disassembly: res = base . (a . b), each column ((c0x + c1y) + c2z) + c3w.
+            self.assertTrue(np.array_equal(got[i], ps.matmul_f32(base, ps.matmul_f32(a[i], b[i]))))
+
+    def test_vertex_kernel_matches_declared_matrix_blend(self):
+        rng = np.random.default_rng(6)
+        n = 7
+        src = np.c_[rng.random((n, 9)), np.sign(rng.random(n) - .5)].astype(np.float32)
+        pal = [rng.random((4, 4)).astype(np.float32) for _ in range(5)]
+        for m in pal:
+            m[3] = [0, 0, 0, 1]
+        w = rng.random((n, 4)).astype(np.float32)
+        bi = rng.integers(0, 5, (n, 4)).astype(np.int32)
+        got = self.emu.skin_vertices4(src, pal, w, bi)
+        P = np.stack(pal)[bi]
+        M = (P[:, 0] * w[:, 0, None, None]).astype(np.float32)
+        for k in range(1, 4):
+            M = (M + (P[:, k] * w[:, k, None, None]).astype(np.float32)).astype(np.float32)
+        expected = ps._apply(M, src[:, 0:3], src[:, 3:6], src[:, 6:9], src[:, 9])
+        self.assertEqual(got, expected)
+
+    def test_global_position_of_single_transform(self):
+        from src.render.unity_skin_emu import global_position_rotation
+        q = Rotation.random(random_state=3).as_quat().astype(np.float32)
+        p, r = global_position_rotation(self.emu, [([0.5, 1.0, -2.0], q, [1, 1, 1])])
+        self.assertTrue(np.array_equal(p, np.float32([0.5, 1.0, -2.0])))
+        self.assertTrue(np.array_equal(r, q))
