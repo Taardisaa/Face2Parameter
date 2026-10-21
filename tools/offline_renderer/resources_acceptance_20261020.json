@@ -1,0 +1,3585 @@
+{
+ "schema": "hs2pipe.resources_acceptance/1",
+ "generator": "hs2pipe.resources/1",
+ "date": "2026-10-20",
+ "capture": "paired frame 26059 (rdc_04d1e76f...), official zip.xml export",
+ "inputs": {
+  "xml": "C:/Users/13666/Workspace/HS2Mod/artifacts/chenger_reference_fit_20261012/paired_capture_session_20261020/parse_04d1e76f/capture.zip.xml",
+  "xml_sha256": "283a7bbf384b6d79048a937f85ee202d3e8e92144afab4613d28aa1aa89d8621",
+  "zip": "C:\\Users\\13666\\Workspace\\HS2Mod\\artifacts\\chenger_reference_fit_20261012\\paired_capture_session_20261020\\parse_04d1e76f\\capture.zip",
+  "zip_sha256": "1909d82c435703ef882ce5c43686956bac046b1908e166c5b0bdfb5b3c87cbd9",
+  "scene_state": "C:/Users/13666/Workspace/HS2Mod/artifacts/chenger_reference_fit_20261012/paired_capture_session_20261020/window_04d1e76fdad14c11bbc6fe439b228e77/frames/scene_005.json",
+  "scene_state_sha256": "86e41462c93da4e38037a84dcf6e67b8b8e4efc3b35f8be5333f5e9d72a306dd",
+  "source_index": "E:/HS2_offline_renderer_data/resources_20261020/source_index_v5.json",
+  "source_index_sha256": "92ccef46fb5277da7a41abe39938426782d58258eeeda9a11f0ac10771886594",
+  "source_index_files": 1104,
+  "sideloader_scan": "E:/HS2_offline_renderer_data/resources_20261020/sideloader_scan_v1.json",
+  "sideloader_scan_sha256": "686e43633d560e8fb38b5b30c55b8f45103b8ac0f20eb656e15cf3d31fc91ad4",
+  "sideloader_loaded_mods": 5346,
+  "sideloader_duplicates": 11,
+  "card_state": "C:/Users/13666/Workspace/HS2Mod/artifacts/chenger_reference_fit_20261012/paired_capture_session_20261020/state_after_04d1e76fdad14c11bbc6fe439b228e77.json",
+  "card_state_sha256": "9c01fe1131596b701438f84e2db40ec15a77dbc80ea2549ecffc69e6ab379088"
+ },
+ "installed_code_sha256": {
+  "UnityPlayer.dll": "5034cdc2bff71dc8d9e038cb71059f8965d0d879f8098af0f3c726ea06e13923",
+  "HoneySelect2_Data/Managed/Assembly-CSharp.dll": "d7e7e0d51403a0a3a71935a14487f063c6bf6f93f004b98b8f4b8b89047af770",
+  "HoneySelect2_Data/Managed/Unity.Postprocessing.Runtime.dll": "f18eac429f656764c3abb1ab905db18fd374c4bbacd475ac76d9bc2718e11a35",
+  "BepInEx/Plugins/HS2_BepisPlugins/HS2_Sideloader.dll": "9a9ece53cfe9ef2b6705653ef5a52dce46aa9018aa47a098165410a3522beb50",
+  "BepInEx/Plugins/HS2_Plugins/DeathWeasel1337/HS2_UncensorSelector.dll": "d3d994b275331df322c2a1110326bdfa3af5ec15a9894328c661fe7b5c8cb44c",
+  "BepInEx/Plugins/HS2_Plugins/ManlyMarco/HS2_OverlayMods.dll": "9a98a3f5e4737d94dc686dc821f66d3448524787a95d17eff42b21e73bc87f42",
+  "BepInEx/Plugins/HS2_Plugins/DeathWeasel1337/HS2_MaterialEditor.dll": "b56d43d379305c552bdcd2920563dcd72ebc18d8ffc29e7f46550ced648947d1",
+  "BepInEx/Plugins/XUnity.AutoTranslator/XUnity.AutoTranslator.Plugin.Core.dll": "c1ddbf2c2bede9ec3b7f3354197836f2d2b179c9d6a27b7c5ffb2f42c6a64b04"
+ },
+ "uncensor_body": {
+  "guid": "bp.sac_innie_v2",
+  "oo_base": "chara/oo_base_bpsacinnie_v2.unity3d",
+  "asset": "p_cf_body_00",
+  "source": "E:\\HoneySelect2_ArcticFox\\mods\\PersonalMods - Exclusive HS2\\Uncensor Selector\\[Female][HS2][BPV5]SAC_Innie.zipmod::abdata/chara/oo_base_bpsacinnie_v2.unity3d",
+  "evidence": {
+   "producer": "UncensorSelector 3.11.5 BodyData / GetDefaultOrRandomBody",
+   "dll": "BepInEx/Plugins/HS2_Plugins/DeathWeasel1337/HS2_UncensorSelector.dll",
+   "default_config": "Random",
+   "rule": "GetRandomBody",
+   "seed": 102,
+   "eligible": [
+    "bp.sac_innie_v2",
+    "bp.sac_meaty_v2",
+    "bp.sac_puffy_2_v2",
+    "bp.sac_puffy_v2",
+    "bp.sac_roastie_v2"
+   ],
+   "index": 0,
+   "bundle_registrations": [
+    "bp.sac_innie_v2"
+   ]
+  }
+ },
+ "counts": {
+  "frame_read_resources": 253,
+  "by_kind_status": {
+   "buffer/byte_exact": 36,
+   "buffer/runtime": 39,
+   "tex2d/byte_exact": 113,
+   "tex2d/mismatch": 2,
+   "tex2d/runtime": 42,
+   "tex2d/runtime_descriptor_equal": 14,
+   "tex2d/unresolved": 3,
+   "tex3d/byte_exact": 1,
+   "tex3d/runtime": 1,
+   "texcube/byte_exact": 2
+  },
+  "byte_exact_by_provenance_class": {
+   "computed": 13,
+   "asset_texture": 107,
+   "asset_mesh": 32
+  }
+ },
+ "byte_exact": [
+  {
+   "resource": 37,
+   "name": "Buffer-1-16",
+   "kind": "buffer",
+   "subresources": 1,
+   "content_sha256": "d6fd72e2e79ea0851bf806e96faf33c214aa59b3c5d82d286bd2db099399f72e",
+   "capture_content": "CreateBuffer.InitialData",
+   "provenance": {
+    "class": "computed",
+    "producer": "GfxDevice::CreateDefaultVertexBuffer (RVA 0x8cb000)"
+   }
+  },
+  {
+   "resource": 45,
+   "name": "UnityNormalMap",
+   "kind": "tex2d",
+   "subresources": 1,
+   "content_sha256": "33869922b91375cf2b77363e8858a3aee06bae988641ad07f99e817b272d2c35",
+   "capture_content": "creation SubresourceContents",
+   "provenance": {
+    "class": "computed",
+    "producer": "builtintex::GenerateBuiltinTextures (RVA 0x754620)",
+    "fill": "EmptyNormalMap@0x754220"
+   }
+  },
+  {
+   "resource": 47,
+   "name": "UnityWhite",
+   "kind": "tex2d",
+   "subresources": 1,
+   "content_sha256": "8667e718294e9e0df1d30600ba3eeb201f764aad2dad72748643e4a285e1d1f7",
+   "capture_content": "creation SubresourceContents",
+   "provenance": {
+    "class": "computed",
+    "producer": "builtintex::GenerateBuiltinTextures (RVA 0x754620)",
+    "fill": "White@0x75e620"
+   }
+  },
+  {
+   "resource": 49,
+   "name": "UnityBlack",
+   "kind": "tex2d",
+   "subresources": 1,
+   "content_sha256": "f5a5fd42d16a20302798ef6ed309979b43003d2320d9f0e8ea9831a92759fb4b",
+   "capture_content": "creation SubresourceContents",
+   "provenance": {
+    "class": "computed",
+    "producer": "builtintex::GenerateBuiltinTextures (RVA 0x754620)",
+    "fill": "Black@0x74f8b0"
+   }
+  },
+  {
+   "resource": 65,
+   "name": "UnityBlackCube",
+   "kind": "texcube",
+   "subresources": 6,
+   "content_sha256": "9d908ecfb6b256def8b49a7c504e6c889c4b0e41fe6ce3e01863dd7b61a20aa0",
+   "capture_content": "creation SubresourceContents",
+   "provenance": {
+    "class": "computed",
+    "producer": "builtintex::GenerateBuiltinTextures (RVA 0x754620)",
+    "fill": "cube builder 0x7504c0 color 0"
+   }
+  },
+  {
+   "resource": 69,
+   "name": "UnityDefault3D",
+   "kind": "tex3d",
+   "subresources": 1,
+   "content_sha256": "8d65a89d33fc69d31f85fd8ed396d6dd5672cd59f80bd2ced560d4bbaeb43222",
+   "capture_content": "pre-capture full UpdateSubresource",
+   "provenance": {
+    "class": "computed",
+    "producer": "builtintex::GenerateBuiltinTextures (RVA 0x754620)",
+    "fill": "Texture3D ClearImage 0x80808080"
+   }
+  },
+  {
+   "resource": 82,
+   "name": "UnityDefaultCube",
+   "kind": "texcube",
+   "subresources": 6,
+   "content_sha256": "f0f7c775cc67fa28506475b93aaa2af10a9ff92211f8014f35a6f642a6a8fe2e",
+   "capture_content": "creation SubresourceContents",
+   "provenance": {
+    "class": "computed",
+    "producer": "builtintex::GenerateBuiltinTextures (RVA 0x754620)",
+    "fill": "cube builder 0x7504c0 color 0x80808080"
+   }
+  },
+  {
+   "resource": 199,
+   "name": "Buffer-1-141120",
+   "kind": "buffer",
+   "subresources": 1,
+   "content_sha256": "b3eab359d2cd1c56136f1ef193153988ab27006f9ba14268b731bf63ea6080eb",
+   "capture_content": "CreateBuffer.InitialData",
+   "provenance": {
+    "class": "computed",
+    "producer": "SkyboxGenerator::GetCubemapSkyboxVB (RVA 0x641740; helpers 0x63d6e0, 0x63dbb0; base table RVA 0x1242710)"
+   }
+  },
+  {
+   "resource": 1604,
+   "name": "LDR_LLL1_61",
+   "kind": "tex2d",
+   "subresources": 1,
+   "content_sha256": "45fc103df0be89b16ea10d0282c6c1f383c5ded90292d3bbf4297fb57e4e5d59",
+   "capture_content": "creation SubresourceContents",
+   "provenance": {
+    "class": "asset",
+    "source": "E:\\HoneySelect2_ArcticFox\\HoneySelect2_Data\\sharedassets2.assets",
+    "path_id": 10,
+    "unity_type": "Texture2D",
+    "binding": "installed name index (no prefab material reference)"
+   }
+  },
+  {
+   "resource": 1666,
+   "name": "AreaTex",
+   "kind": "tex2d",
+   "subresources": 1,
+   "content_sha256": "d78a4be90c5e4b75fc2e6fe03c3f29d352bea3060363849c32db13282c44cde8",
+   "capture_content": "Internal::Initial Contents (RowPitch-normalized)",
+   "provenance": {
+    "class": "asset",
+    "source": "E:\\HoneySelect2_ArcticFox\\HoneySelect2_Data\\sharedassets2.assets",
+    "path_id": 42,
+    "unity_type": "Texture2D",
+    "binding": "installed name index (no prefab material reference)"
+   }
+  },
+  {
+   "resource": 1741,
+   "name": "SearchTex",
+   "kind": "tex2d",
+   "subresources": 1,
+   "content_sha256": "3694eae5e9d44b8ebb4415a13f8c7b94dc08a2fc86658434d771c4610fe5744d",
+   "capture_content": "creation SubresourceContents",
+   "provenance": {
+    "class": "asset",
+    "source": "E:\\HoneySelect2_ArcticFox\\HoneySelect2_Data\\sharedassets2.assets",
+    "path_id": 80,
+    "unity_type": "Texture2D",
+    "binding": "installed name index (no prefab material reference)"
+   }
+  },
+  {
+   "resource": 1880,
+   "name": "Fullscreen Triangle",
+   "kind": "buffer",
+   "subresources": 1,
+   "content_sha256": "213ae18f4bfff77e7a3c554fa99707b4c5a05d95c6926a9cbc6ff4078d77cf16",
+   "capture_content": "CreateBuffer.InitialData",
+   "provenance": {
+    "class": "computed",
+    "producer": "PPv2 RuntimeUtilities.fullscreenTriangle"
+   }
+  },
+  {
+   "resource": 1881,
+   "name": "Fullscreen Triangle",
+   "kind": "buffer",
+   "subresources": 1,
+   "content_sha256": "90c2698921ca9fd02950be353f721888760e33ab5095a21e50f1e4360b6de1a0",
+   "capture_content": "CreateBuffer.InitialData",
+   "provenance": {
+    "class": "computed",
+    "producer": "PPv2 RuntimeUtilities.fullscreenTriangle"
+   }
+  },
+  {
+   "resource": 1882,
+   "name": "White Texture",
+   "kind": "tex2d",
+   "subresources": 1,
+   "content_sha256": "ad95131bc0b799c0b1af477fb14fcf26a6a9f76079e48bf090acb7e8367bfd0e",
+   "capture_content": "Internal::Initial Contents (RowPitch-normalized)",
+   "provenance": {
+    "class": "computed",
+    "producer": "PPv2 RuntimeUtilities.whiteTexture"
+   }
+  },
+  {
+   "resource": 7976,
+   "name": "UIMask",
+   "kind": "tex2d",
+   "subresources": 6,
+   "content_sha256": "52d8df36212b2e03de8e57e9bf4e4e6a93fba45baecef270f17cc394d37be255",
+   "capture_content": "creation SubresourceContents",
+   "provenance": {
+    "class": "asset",
+    "source": "E:\\HoneySelect2_ArcticFox\\HoneySelect2_Data\\sharedassets3.assets",
+    "path_id": 19,
+    "unity_type": "Texture2D",
+    "binding": "texture identity request (not in the scene export)"
+   }
+  },
+  {
+   "resource": 7980,
+   "name": "sp_ai_make_04_00",
+   "kind": "tex2d",
+   "subresources": 1,
+   "content_sha256": "e89de7294af4b696e745e7dd75d120560b80687ebb6f8729ee75b946b8225ce6",
+   "capture_content": "creation SubresourceContents",
+   "provenance": {
+    "class": "asset",
+    "source": "E:\\HoneySelect2_ArcticFox\\HoneySelect2_Data\\sharedassets3.assets",
+    "path_id": 21,
+    "unity_type": "Texture2D",
+    "binding": "texture identity request (not in the scene export)"
+   }
+  },
+  {
+   "resource": 7984,
+   "name": "sp_ai_make_00_00",
+   "kind": "tex2d",
+   "subresources": 1,
+   "content_sha256": "93937dd6795804ddd651629210491a1282c663c2107b22aaf60ec7447084af62",
+   "capture_content": "creation SubresourceContents",
+   "provenance": {
+    "class": "asset",
+    "source": "E:\\HoneySelect2_ArcticFox\\HoneySelect2_Data\\sharedassets3.assets",
+    "path_id": 23,
+    "unity_type": "Texture2D",
+    "binding": "texture identity request (not in the scene export)"
+   }
+  },
+  {
+   "resource": 7986,
+   "name": "t_ai_mi_createBG03_00",
+   "kind": "tex2d",
+   "subresources": 9,
+   "content_sha256": "6a76c161028ee1c1a6f6af5aafc75f31a730e900d994beb46a5c4c25f785ceed",
+   "capture_content": "creation SubresourceContents",
+   "provenance": {
+    "class": "asset",
+    "source": "E:\\HoneySelect2_ArcticFox\\HoneySelect2_Data\\sharedassets3.assets",
+    "path_id": 24,
+    "unity_type": "Texture2D",
+    "binding": "installed name index (no prefab material reference)"
+   }
+  },
+  {
+   "resource": 7998,
+   "name": "sp_ai_make_31_00",
+   "kind": "tex2d",
+   "subresources": 1,
+   "content_sha256": "651d73e6e01ab0eb2e66dc61d5867abf545a07ab636b8b73f3b13e16fe6bab22",
+   "capture_content": "creation SubresourceContents",
+   "provenance": {
+    "class": "asset",
+    "source": "E:\\HoneySelect2_ArcticFox\\HoneySelect2_Data\\sharedassets3.assets",
+    "path_id": 30,
+    "unity_type": "Texture2D",
+    "binding": "texture identity request (not in the scene export)"
+   }
+  },
+  {
+   "resource": 8006,
+   "name": "sp_ai_make_26_00",
+   "kind": "tex2d",
+   "subresources": 1,
+   "content_sha256": "b921c6c11589ec090eba2060a958bbc753c72220a09222309910e0af0e554bc4",
+   "capture_content": "creation SubresourceContents",
+   "provenance": {
+    "class": "asset",
+    "source": "E:\\HoneySelect2_ArcticFox\\HoneySelect2_Data\\sharedassets3.assets",
+    "path_id": 34,
+    "unity_type": "Texture2D",
+    "binding": "texture identity request (not in the scene export)"
+   }
+  },
+  {
+   "resource": 8008,
+   "name": "sp_ai_make_22_00",
+   "kind": "tex2d",
+   "subresources": 1,
+   "content_sha256": "5778ced546d91df5ea0f73b24823a99ae33f85b015017f0310ab25385fe882bf",
+   "capture_content": "creation SubresourceContents",
+   "provenance": {
+    "class": "asset",
+    "source": "E:\\HoneySelect2_ArcticFox\\HoneySelect2_Data\\sharedassets3.assets",
+    "path_id": 35,
+    "unity_type": "Texture2D",
+    "binding": "texture identity request (not in the scene export)"
+   }
+  },
+  {
+   "resource": 8010,
+   "name": "sp_ai_housing_00_05",
+   "kind": "tex2d",
+   "subresources": 1,
+   "content_sha256": "a4e4b76cbe844813fea9092748e0edaab717f863eeefcca0ae13cb27ecf46355",
+   "capture_content": "creation SubresourceContents",
+   "provenance": {
+    "class": "asset",
+    "source": "E:\\HoneySelect2_ArcticFox\\HoneySelect2_Data\\sharedassets3.assets",
+    "path_id": 36,
+    "unity_type": "Texture2D",
+    "binding": "texture identity request (not in the scene export)"
+   }
+  },
+  {
+   "resource": 8016,
+   "name": "sp_ai_make_27_02",
+   "kind": "tex2d",
+   "subresources": 1,
+   "content_sha256": "1ca8289e194b3215949b46efffaf6f4c69dd684fcb616fb60599bf1dd915d5ca",
+   "capture_content": "creation SubresourceContents",
+   "provenance": {
+    "class": "asset",
+    "source": "E:\\HoneySelect2_ArcticFox\\HoneySelect2_Data\\sharedassets3.assets",
+    "path_id": 39,
+    "unity_type": "Texture2D",
+    "binding": "texture identity request (not in the scene export)"
+   }
+  },
+  {
+   "resource": 8018,
+   "name": "sp_ai_make_12_02",
+   "kind": "tex2d",
+   "subresources": 1,
+   "content_sha256": "986c0e5ccf9d2e874d599587fd1a3bbe862f47e951b3064a7fe196c1bced70e1",
+   "capture_content": "creation SubresourceContents",
+   "provenance": {
+    "class": "asset",
+    "source": "E:\\HoneySelect2_ArcticFox\\HoneySelect2_Data\\sharedassets3.assets",
+    "path_id": 40,
+    "unity_type": "Texture2D",
+    "binding": "texture identity request (not in the scene export)"
+   }
+  },
+  {
+   "resource": 8026,
+   "name": "sp_ai_make_25_00",
+   "kind": "tex2d",
+   "subresources": 1,
+   "content_sha256": "397534b0d265cc13698612592413302b7fe3ee02c1ccbd1b623b9e10ab8d9b36",
+   "capture_content": "Internal::Initial Contents (RowPitch-normalized)",
+   "provenance": {
+    "class": "asset",
+    "source": "E:\\HoneySelect2_ArcticFox\\HoneySelect2_Data\\sharedassets3.assets",
+    "path_id": 44,
+    "unity_type": "Texture2D",
+    "binding": "texture identity request (not in the scene export)"
+   }
+  },
+  {
+   "resource": 8031,
+   "name": "t_ai_mi_createBG00_00",
+   "kind": "tex2d",
+   "subresources": 13,
+   "content_sha256": "98b4a97d8a9ccc00e8003b6985df3111000f12b1164239fb3fe675e6dd535e66",
+   "capture_content": "Internal::Initial Contents (RowPitch-normalized)",
+   "provenance": {
+    "class": "asset",
+    "source": "E:\\HoneySelect2_ArcticFox\\HoneySelect2_Data\\sharedassets3.assets",
+    "path_id": 46,
+    "unity_type": "Texture2D",
+    "binding": "installed name index (no prefab material reference)"
+   }
+  },
+  {
+   "resource": 8048,
+   "name": "sp_ai_make_28_00",
+   "kind": "tex2d",
+   "subresources": 1,
+   "content_sha256": "bea4ea3b81f8b9182e26cd3416ce7e706b1edcc3bafb0d3eeba8680b3fb24280",
+   "capture_content": "creation SubresourceContents",
+   "provenance": {
+    "class": "asset",
+    "source": "E:\\HoneySelect2_ArcticFox\\HoneySelect2_Data\\sharedassets3.assets",
+    "path_id": 48,
+    "unity_type": "Texture2D",
+    "binding": "texture identity request (not in the scene export)"
+   }
+  },
+  {
+   "resource": 8050,
+   "name": "t_ai_mi_createBG01_00",
+   "kind": "tex2d",
+   "subresources": 8,
+   "content_sha256": "74cce9b49571c09623e215468832dfabbe53e656f242b543ed4af948061ccf90",
+   "capture_content": "creation SubresourceContents",
+   "provenance": {
+    "class": "asset",
+    "source": "E:\\HoneySelect2_ArcticFox\\HoneySelect2_Data\\sharedassets3.assets",
+    "path_id": 49,
+    "unity_type": "Texture2D",
+    "binding": "installed name index (no prefab material reference)"
+   }
+  },
+  {
+   "resource": 8052,
+   "name": "sp_ai_make_02_00",
+   "kind": "tex2d",
+   "subresources": 1,
+   "content_sha256": "88e68aff48375dd5fad0cfada2f5b97291fe50b11ba07dce6b2532da82443cf0",
+   "capture_content": "creation SubresourceContents",
+   "provenance": {
+    "class": "asset",
+    "source": "E:\\HoneySelect2_ArcticFox\\HoneySelect2_Data\\sharedassets3.assets",
+    "path_id": 50,
+    "unity_type": "Texture2D",
+    "binding": "texture identity request (not in the scene export)"
+   }
+  },
+  {
+   "resource": 8060,
+   "name": "sp_ai_make_03_00",
+   "kind": "tex2d",
+   "subresources": 1,
+   "content_sha256": "2dd984df0b9843a7c0b35db904b74e42a553afbaf382862908fa9b6510e7bd68",
+   "capture_content": "creation SubresourceContents",
+   "provenance": {
+    "class": "asset",
+    "source": "E:\\HoneySelect2_ArcticFox\\HoneySelect2_Data\\sharedassets3.assets",
+    "path_id": 54,
+    "unity_type": "Texture2D",
+    "binding": "texture identity request (not in the scene export)"
+   }
+  },
+  {
+   "resource": 8069,
+   "name": "sp_ai_make_05_00",
+   "kind": "tex2d",
+   "subresources": 1,
+   "content_sha256": "9323984122f7dee2bc2ac5c40fac29b23bd9f4b2641f7d167643ee987d02fdfe",
+   "capture_content": "creation SubresourceContents",
+   "provenance": {
+    "class": "asset",
+    "source": "E:\\HoneySelect2_ArcticFox\\HoneySelect2_Data\\sharedassets3.assets",
+    "path_id": 58,
+    "unity_type": "Texture2D",
+    "binding": "texture identity request (not in the scene export)"
+   }
+  },
+  {
+   "resource": 8076,
+   "name": "sp_ai_make_23_00",
+   "kind": "tex2d",
+   "subresources": 1,
+   "content_sha256": "ae2be3f583e20563dd367c7224d5d65323b097bd399adeb2b6aed9c161b05ff8",
+   "capture_content": "creation SubresourceContents",
+   "provenance": {
+    "class": "asset",
+    "source": "E:\\HoneySelect2_ArcticFox\\HoneySelect2_Data\\sharedassets3.assets",
+    "path_id": 61,
+    "unity_type": "Texture2D",
+    "binding": "texture identity request (not in the scene export)"
+   }
+  },
+  {
+   "resource": 8080,
+   "name": "sp_ai_make_29_00",
+   "kind": "tex2d",
+   "subresources": 1,
+   "content_sha256": "9a03661f6f8b0d1c81bda61bb2f85d2c902cec0b21d1f82e3ea88c1fe8564c87",
+   "capture_content": "creation SubresourceContents",
+   "provenance": {
+    "class": "asset",
+    "source": "E:\\HoneySelect2_ArcticFox\\HoneySelect2_Data\\sharedassets3.assets",
+    "path_id": 63,
+    "unity_type": "Texture2D",
+    "binding": "texture identity request (not in the scene export)"
+   }
+  },
+  {
+   "resource": 8086,
+   "name": "sp_ai_make_22_02",
+   "kind": "tex2d",
+   "subresources": 1,
+   "content_sha256": "6b762bd58961fbb7a9be49442b44ed1c67c79232e5c1f3c6ec7c583bee998872",
+   "capture_content": "creation SubresourceContents",
+   "provenance": {
+    "class": "asset",
+    "source": "E:\\HoneySelect2_ArcticFox\\HoneySelect2_Data\\sharedassets3.assets",
+    "path_id": 66,
+    "unity_type": "Texture2D",
+    "binding": "texture identity request (not in the scene export)"
+   }
+  },
+  {
+   "resource": 8100,
+   "name": "sp_ai_make_00_01",
+   "kind": "tex2d",
+   "subresources": 1,
+   "content_sha256": "ce06f619647576e6c76bd2522a8ce84cb71a339decab8c761315d48a12d55e87",
+   "capture_content": "creation SubresourceContents",
+   "provenance": {
+    "class": "asset",
+    "source": "E:\\HoneySelect2_ArcticFox\\HoneySelect2_Data\\sharedassets3.assets",
+    "path_id": 73,
+    "unity_type": "Texture2D",
+    "binding": "texture identity request (not in the scene export)"
+   }
+  },
+  {
+   "resource": 8108,
+   "name": "sp_ai_make_01_00",
+   "kind": "tex2d",
+   "subresources": 1,
+   "content_sha256": "1989bbbf3543d314adff978e4b328af5de4cb8d6cf7501248f232ef369f324fb",
+   "capture_content": "creation SubresourceContents",
+   "provenance": {
+    "class": "asset",
+    "source": "E:\\HoneySelect2_ArcticFox\\HoneySelect2_Data\\sharedassets3.assets",
+    "path_id": 77,
+    "unity_type": "Texture2D",
+    "binding": "texture identity request (not in the scene export)"
+   }
+  },
+  {
+   "resource": 8120,
+   "name": "sp_ai_make_27_00",
+   "kind": "tex2d",
+   "subresources": 1,
+   "content_sha256": "2ec12ba0d91a0e175664d926fe5958356229e93fd78076be4916b4fb62d6b09f",
+   "capture_content": "creation SubresourceContents",
+   "provenance": {
+    "class": "asset",
+    "source": "E:\\HoneySelect2_ArcticFox\\HoneySelect2_Data\\sharedassets3.assets",
+    "path_id": 83,
+    "unity_type": "Texture2D",
+    "binding": "texture identity request (not in the scene export)"
+   }
+  },
+  {
+   "resource": 8128,
+   "name": "o_ai_mi_createBG00_00",
+   "kind": "buffer",
+   "subresources": 1,
+   "content_sha256": "b3465efb262c4231a93d29db51ed2612ba0fc29966dbcddd76bc712eb8b934b4",
+   "capture_content": "CreateBuffer.InitialData",
+   "provenance": {
+    "class": "asset",
+    "source": "E:\\HoneySelect2_ArcticFox\\HoneySelect2_Data\\sharedassets3.assets",
+    "path_id": 87,
+    "unity_type": "Mesh",
+    "binding": "prefab_renderer/scene_file"
+   }
+  },
+  {
+   "resource": 8129,
+   "name": "o_ai_mi_createBG00_00",
+   "kind": "buffer",
+   "subresources": 1,
+   "content_sha256": "810fa393a0c4cb537d8f1b73a888a16890e62bb8948eee67fdb98f61e164da58",
+   "capture_content": "CreateBuffer.InitialData",
+   "provenance": {
+    "class": "asset",
+    "source": "E:\\HoneySelect2_ArcticFox\\HoneySelect2_Data\\sharedassets3.assets",
+    "path_id": 87,
+    "unity_type": "Mesh",
+    "binding": "prefab_renderer/scene_file"
+   }
+  },
+  {
+   "resource": 8141,
+   "name": "SpriteAtlasTexture-sp_ai_system (Group 0)-1024x2048-fmt4",
+   "kind": "tex2d",
+   "subresources": 1,
+   "content_sha256": "a083f86037b619c52f520ca1b4cad09d6b64b24488a8abd9a8598a39ebf6ed2e",
+   "capture_content": "Internal::Initial Contents (RowPitch-normalized)",
+   "provenance": {
+    "class": "computed",
+    "producer": "XUnity.AutoTranslator texture translation (LoadImage)",
+    "png": "E:\\HoneySelect2_ArcticFox\\BepInEx\\Translation\\zh-CN\\Texture\\UI\\SpriteAtlasTexture-sp_ai_system (Group 0)-1024x2048-fmt4 [738584A67C-144E74FF76].png",
+    "replaced_asset": {
+     "source": "E:\\HoneySelect2_ArcticFox\\HoneySelect2_Data\\sharedassets3.assets",
+     "path_id": 17
+    }
+   }
+  },
+  {
+   "resource": 8147,
+   "name": "SpriteAtlasTexture-sp_ai_pouch-1024x1024-fmt4",
+   "kind": "tex2d",
+   "subresources": 1,
+   "content_sha256": "b17147fb4acbdfd61ef7700ebee46a627d08cf994f8109037cc0cbc2884c75f2",
+   "capture_content": "Internal::Initial Contents (RowPitch-normalized)",
+   "provenance": {
+    "class": "computed",
+    "producer": "XUnity.AutoTranslator texture translation (LoadImage)",
+    "png": "E:\\HoneySelect2_ArcticFox\\BepInEx\\Translation\\zh-CN\\Texture\\UI\\SpriteAtlasTexture-sp_ai_pouch-1024x1024-fmt4 [4F5D94683E-D0AC8C6459].png",
+    "replaced_asset": {
+     "source": "E:\\HoneySelect2_ArcticFox\\HoneySelect2_Data\\sharedassets3.assets",
+     "path_id": 16
+    }
+   }
+  },
+  {
+   "resource": 8801,
+   "name": "cf_body_base_n",
+   "kind": "tex2d",
+   "subresources": 13,
+   "content_sha256": "dbd7cf9fbd867f03457e5d5e7f5aaf3b147ab95cc80ff9b34251e795ece77113",
+   "capture_content": "creation SubresourceContents",
+   "provenance": {
+    "class": "asset",
+    "source": "E:\\HoneySelect2_ArcticFox\\abdata\\chara\\00\\ft_detail_b_00.unity3d",
+    "path_id": -7643905910142908294,
+    "unity_type": "Texture2D",
+    "binding": "installed name index (no prefab material reference)"
+   }
+  },
+  {
+   "resource": 8803,
+   "name": "detail_skin_body_s",
+   "kind": "tex2d",
+   "subresources": 9,
+   "content_sha256": "973b698d83472644edfb50a3359be308553ba3ebb1150b32ba12d957e0724483",
+   "capture_content": "creation SubresourceContents",
+   "provenance": {
+    "class": "asset",
+    "source": "E:\\HoneySelect2_ArcticFox\\abdata\\chara\\00\\ao_face_00.unity3d",
+    "path_id": 5486390472832109222,
+    "unity_type": "Texture2D",
+    "equivalent_sources": 1,
+    "binding": "installed name index (no prefab material reference)"
+   }
+  },
+  {
+   "resource": 8805,
+   "name": "cf_body_00_mask",
+   "kind": "tex2d",
+   "subresources": 10,
+   "content_sha256": "02458f115da49ad613313e3ba7ffbc1a9936a8bf68ac62044a43473a2c3fdb6d",
+   "capture_content": "creation SubresourceContents",
+   "provenance": {
+    "class": "asset",
+    "source": "E:\\HoneySelect2_ArcticFox\\mods\\PersonalMods - Exclusive HS2\\Uncensor Selector\\[Female][HS2][BPV5]SAC_Innie.zipmod::abdata/chara/oo_base_bpsacinnie_v2.unity3d",
+    "path_id": 1096,
+    "unity_type": "Texture2D",
+    "binding": "prefab_material"
+   }
+  },
+  {
+   "resource": 8830,
+   "name": "cf_body_00_o",
+   "kind": "tex2d",
+   "subresources": 13,
+   "content_sha256": "9336ace3e2ce6e60ded14dd6336dc5c9727abb1a115e6e71fa079d3a55f86159",
+   "capture_content": "creation SubresourceContents",
+   "provenance": {
+    "class": "asset",
+    "source": "E:\\HoneySelect2_ArcticFox\\abdata\\chara\\00\\ft_detail_b_00.unity3d",
+    "path_id": -2640781460213964704,
+    "unity_type": "Texture2D",
+    "binding": "installed name index (no prefab material reference)"
+   }
+  },
+  {
+   "resource": 8832,
+   "name": "cf_body_00_n",
+   "kind": "tex2d",
+   "subresources": 12,
+   "content_sha256": "0c5617a6b9afd8828e4f86e7c950ce9a096f8ee024b51aebbcfd5e56b7d6a3a8",
+   "capture_content": "creation SubresourceContents",
+   "provenance": {
+    "class": "asset",
+    "source": "E:\\HoneySelect2_ArcticFox\\abdata\\chara\\00\\ft_detail_b_00.unity3d",
+    "path_id": 1824911018607574655,
+    "unity_type": "Texture2D",
+    "binding": "installed name index (no prefab material reference)"
+   }
+  },
+  {
+   "resource": 8883,
+   "name": "liquid_1_t",
+   "kind": "tex2d",
+   "subresources": 10,
+   "content_sha256": "0203354f5d2b2a41479818f0b57fffd8af3647fe9150b1a33beb51297fe52cd1",
+   "capture_content": "Internal::Initial Contents (RowPitch-normalized)",
+   "provenance": {
+    "class": "asset",
+    "source": "E:\\HoneySelect2_ArcticFox\\abdata\\chara\\00\\fo_shoes_00.unity3d",
+    "path_id": 85639053264376600,
+    "unity_type": "Texture2D",
+    "binding": "prefab_material"
+   }
+  },
+  {
+   "resource": 8903,
+   "name": "cf_body_00_ml",
+   "kind": "tex2d",
+   "subresources": 1,
+   "content_sha256": "6a5db35e2affd0605eeb928fb3d04e9bd26a8f7cc00e650d5c7c2b8ffea1ac25",
+   "capture_content": "creation SubresourceContents",
+   "provenance": {
+    "class": "asset",
+    "source": "E:\\HoneySelect2_ArcticFox\\abdata\\chara\\00\\fo_shoes_00.unity3d",
+    "path_id": 4247827894076388350,
+    "unity_type": "Texture2D",
+    "binding": "prefab_material"
+   }
+  },
+  {
+   "resource": 8913,
+   "name": "c_t_nip_00_00_00",
+   "kind": "tex2d",
+   "subresources": 10,
+   "content_sha256": "11fb2a48ab10bd15e287b7a1b18bc94e98027622f5990901335a4235b60265e6",
+   "capture_content": "creation SubresourceContents",
+   "provenance": {
+    "class": "asset",
+    "source": "E:\\HoneySelect2_ArcticFox\\abdata\\chara\\00\\st_nip_00.unity3d",
+    "path_id": -4196877809966506179,
+    "unity_type": "Texture2D",
+    "binding": "installed name index (no prefab material reference)"
+   }
+  },
+  {
+   "resource": 8981,
+   "name": "c_tooth_00_o",
+   "kind": "tex2d",
+   "subresources": 9,
+   "content_sha256": "c4799f67e385109b454a764044921323d3b0859952fb7bbe306e0ea531c57e47",
+   "capture_content": "creation SubresourceContents",
+   "provenance": {
+    "class": "asset",
+    "source": "E:\\HoneySelect2_ArcticFox\\abdata\\chara\\30\\fo_head_30.unity3d",
+    "path_id": -4429064235466869759,
+    "unity_type": "Texture2D",
+    "binding": "prefab_material"
+   }
+  },
+  {
+   "resource": 8983,
+   "name": "c_tang_n",
+   "kind": "tex2d",
+   "subresources": 10,
+   "content_sha256": "88bc0fa00bf93ca702824db80b812c7a9f14194b8d693ae14d29853a59601664",
+   "capture_content": "creation SubresourceContents",
+   "provenance": {
+    "class": "asset",
+    "source": "E:\\HoneySelect2_ArcticFox\\abdata\\chara\\30\\fo_head_30.unity3d",
+    "path_id": -3526231663181428974,
+    "unity_type": "Texture2D",
+    "binding": "prefab_material"
+   }
+  },
+  {
+   "resource": 8985,
+   "name": "c_t_eyeshadow_01",
+   "kind": "tex2d",
+   "subresources": 1,
+   "content_sha256": "708af330d83f5667c1af72b37a6f95ea38d5d799fd29f28353cf9fc7250e4bdc",
+   "capture_content": "creation SubresourceContents",
+   "provenance": {
+    "class": "asset",
+    "source": "E:\\HoneySelect2_ArcticFox\\abdata\\chara\\30\\fo_head_30.unity3d",
+    "path_id": -2494637230964546558,
+    "unity_type": "Texture2D",
+    "binding": "prefab_material"
+   }
+  },
+  {
+   "resource": 8987,
+   "name": "Default-Particle",
+   "kind": "tex2d",
+   "subresources": 7,
+   "content_sha256": "7120d29a22dd998b8d69f3bb0ca561ab7b595aacede42949bea06b5c0e523106",
+   "capture_content": "creation SubresourceContents",
+   "provenance": {
+    "class": "asset",
+    "source": "E:\\HoneySelect2_ArcticFox\\abdata\\chara\\30\\fo_head_30.unity3d",
+    "path_id": -1921856615950721517,
+    "unity_type": "Texture2D",
+    "equivalent_sources": 1,
+    "binding": "prefab_material"
+   }
+  },
+  {
+   "resource": 9005,
+   "name": "c_t_eye_white_01",
+   "kind": "tex2d",
+   "subresources": 10,
+   "content_sha256": "45e5c3b1ed1808c454e08d49b4653a5253052c1de2784937d92b63bc86f941fc",
+   "capture_content": "creation SubresourceContents",
+   "provenance": {
+    "class": "asset",
+    "source": "E:\\HoneySelect2_ArcticFox\\abdata\\chara\\30\\fo_head_30.unity3d",
+    "path_id": -315399466169413435,
+    "unity_type": "Texture2D",
+    "equivalent_sources": 1,
+    "binding": "prefab_material"
+   }
+  },
+  {
+   "resource": 9007,
+   "name": "detail_tang_t",
+   "kind": "tex2d",
+   "subresources": 10,
+   "content_sha256": "b017a131a3ad653ef9312681b5216180ac531ba2b4f044f701cc8f970642f318",
+   "capture_content": "creation SubresourceContents",
+   "provenance": {
+    "class": "asset",
+    "source": "E:\\HoneySelect2_ArcticFox\\abdata\\chara\\30\\fo_head_30.unity3d",
+    "path_id": 419567737307107855,
+    "unity_type": "Texture2D",
+    "binding": "prefab_material"
+   }
+  },
+  {
+   "resource": 9009,
+   "name": "c_tang_t",
+   "kind": "tex2d",
+   "subresources": 9,
+   "content_sha256": "dc592dcaadf30cd203d9929b766fadeb2260c99e669756d078aa6f1a26736b8e",
+   "capture_content": "creation SubresourceContents",
+   "provenance": {
+    "class": "asset",
+    "source": "E:\\HoneySelect2_ArcticFox\\abdata\\chara\\30\\fo_head_30.unity3d",
+    "path_id": 663957151455180861,
+    "unity_type": "Texture2D",
+    "binding": "prefab_material"
+   }
+  },
+  {
+   "resource": 9011,
+   "name": "c_tang_o",
+   "kind": "tex2d",
+   "subresources": 9,
+   "content_sha256": "23c38cac39c360e2dd4dc1d1340987f6a1b8758413c0d5461490e81329a3436b",
+   "capture_content": "creation SubresourceContents",
+   "provenance": {
+    "class": "asset",
+    "source": "E:\\HoneySelect2_ArcticFox\\abdata\\chara\\30\\fo_head_30.unity3d",
+    "path_id": 1381914213978153231,
+    "unity_type": "Texture2D",
+    "binding": "prefab_material"
+   }
+  },
+  {
+   "resource": 9013,
+   "name": "detail_skin_s",
+   "kind": "tex2d",
+   "subresources": 9,
+   "content_sha256": "52af35391bbb9847ed90b662ea2036dccc3715065a05fe211306fa46a0d26f91",
+   "capture_content": "creation SubresourceContents",
+   "provenance": {
+    "class": "asset",
+    "source": "E:\\HoneySelect2_ArcticFox\\abdata\\chara\\30\\fo_head_30.unity3d",
+    "path_id": 1617601246205844367,
+    "unity_type": "Texture2D",
+    "binding": "prefab_material"
+   }
+  },
+  {
+   "resource": 9015,
+   "name": "c_t_eye_o_01",
+   "kind": "tex2d",
+   "subresources": 10,
+   "content_sha256": "ae34a2749cc78aed7c39914a02e2c2c92337964ea0c3cbd713f2f71ddda0861c",
+   "capture_content": "creation SubresourceContents",
+   "provenance": {
+    "class": "asset",
+    "source": "E:\\HoneySelect2_ArcticFox\\abdata\\chara\\30\\fo_head_30.unity3d",
+    "path_id": 2033763788218685933,
+    "unity_type": "Texture2D",
+    "equivalent_sources": 1,
+    "binding": "prefab_material"
+   }
+  },
+  {
+   "resource": 9019,
+   "name": "c_t_eye_n",
+   "kind": "tex2d",
+   "subresources": 10,
+   "content_sha256": "6f5b243e01bac7f1898a74fb11ec7122b2914ef4431cdf1410fa8ac72a1ed7fd",
+   "capture_content": "creation SubresourceContents",
+   "provenance": {
+    "class": "asset",
+    "source": "E:\\HoneySelect2_ArcticFox\\abdata\\chara\\30\\fo_head_30.unity3d",
+    "path_id": 3829679425958399339,
+    "unity_type": "Texture2D",
+    "equivalent_sources": 1,
+    "binding": "prefab_material"
+   }
+  },
+  {
+   "resource": 9021,
+   "name": "cf_head_00_mask",
+   "kind": "tex2d",
+   "subresources": 10,
+   "content_sha256": "0ae9ad46038e03dcdb1ab4d7c8f7a262ce8a85b9966ee923b7b6fbae85f0c16a",
+   "capture_content": "creation SubresourceContents",
+   "provenance": {
+    "class": "asset",
+    "source": "E:\\HoneySelect2_ArcticFox\\abdata\\chara\\30\\fo_head_30.unity3d",
+    "path_id": 4695590382357532564,
+    "unity_type": "Texture2D",
+    "binding": "prefab_material"
+   }
+  },
+  {
+   "resource": 9025,
+   "name": "c_tooth_n",
+   "kind": "tex2d",
+   "subresources": 9,
+   "content_sha256": "685896d7338707ec1aac8133ee75325e7b653e38470b608895e1407784841733",
+   "capture_content": "creation SubresourceContents",
+   "provenance": {
+    "class": "asset",
+    "source": "E:\\HoneySelect2_ArcticFox\\abdata\\chara\\30\\fo_head_30.unity3d",
+    "path_id": 6655588441838372062,
+    "unity_type": "Texture2D",
+    "binding": "prefab_material"
+   }
+  },
+  {
+   "resource": 9029,
+   "name": "c_tooth_t",
+   "kind": "tex2d",
+   "subresources": 9,
+   "content_sha256": "d66c5dfc14519f1221779ea3634f94c741992b71d96ff793d4397bd9c45cfcdb",
+   "capture_content": "creation SubresourceContents",
+   "provenance": {
+    "class": "asset",
+    "source": "E:\\HoneySelect2_ArcticFox\\abdata\\chara\\30\\fo_head_30.unity3d",
+    "path_id": 7503651381647323245,
+    "unity_type": "Texture2D",
+    "binding": "prefab_material"
+   }
+  },
+  {
+   "resource": 9031,
+   "name": "namida_1_t",
+   "kind": "tex2d",
+   "subresources": 11,
+   "content_sha256": "ec2270e7b3151882bb6752dccc469b8722b42eaafff47b8682a435e463038e87",
+   "capture_content": "creation SubresourceContents",
+   "provenance": {
+    "class": "asset",
+    "source": "E:\\HoneySelect2_ArcticFox\\abdata\\chara\\30\\fo_head_30.unity3d",
+    "path_id": 8339229578842223254,
+    "unity_type": "Texture2D",
+    "binding": "prefab_material"
+   }
+  },
+  {
+   "resource": 9041,
+   "name": "liquid_1_t",
+   "kind": "tex2d",
+   "subresources": 10,
+   "content_sha256": "0203354f5d2b2a41479818f0b57fffd8af3647fe9150b1a33beb51297fe52cd1",
+   "capture_content": "Internal::Initial Contents (RowPitch-normalized)",
+   "provenance": {
+    "class": "asset",
+    "source": "E:\\HoneySelect2_ArcticFox\\abdata\\chara\\00\\fo_shoes_00.unity3d",
+    "path_id": 85639053264376600,
+    "unity_type": "Texture2D",
+    "binding": "prefab_material"
+   }
+  },
+  {
+   "resource": 9053,
+   "name": "cf_head_00_ml",
+   "kind": "tex2d",
+   "subresources": 9,
+   "content_sha256": "8b3a33e1633b780d6cc3bb4928b4856550daf346bf5ff7d0fa6022aaddf8ed4e",
+   "capture_content": "creation SubresourceContents",
+   "provenance": {
+    "class": "asset",
+    "source": "E:\\HoneySelect2_ArcticFox\\abdata\\chara\\00\\fo_head_00.unity3d",
+    "path_id": 7962975580370664510,
+    "unity_type": "Texture2D",
+    "equivalent_sources": 6,
+    "binding": "installed name index (no prefab material reference)"
+   }
+  },
+  {
+   "resource": 9063,
+   "name": "cf_head_02_00_o",
+   "kind": "tex2d",
+   "subresources": 12,
+   "content_sha256": "74b627512822b50eb40622f563810674cb740c16e96d6627427e4b4854b8b16b",
+   "capture_content": "creation SubresourceContents",
+   "provenance": {
+    "class": "asset",
+    "source": "E:\\HoneySelect2_ArcticFox\\abdata\\chara\\30\\ft_skin_f_30.unity3d",
+    "path_id": -7002700509391268585,
+    "unity_type": "Texture2D",
+    "binding": "installed name index (no prefab material reference)"
+   }
+  },
+  {
+   "resource": 9065,
+   "name": "cf_head_02_00_n",
+   "kind": "tex2d",
+   "subresources": 11,
+   "content_sha256": "3522de518723c586f1858bc178ad8ea81069785baa2c05dc76248fa7ad4f747f",
+   "capture_content": "creation SubresourceContents",
+   "provenance": {
+    "class": "asset",
+    "source": "E:\\HoneySelect2_ArcticFox\\abdata\\chara\\30\\ft_skin_f_30.unity3d",
+    "path_id": -2985967790795318585,
+    "unity_type": "Texture2D",
+    "binding": "installed name index (no prefab material reference)"
+   }
+  },
+  {
+   "resource": 9081,
+   "name": "c_t_eyebrow_17",
+   "kind": "tex2d",
+   "subresources": 11,
+   "content_sha256": "7c06785b0b247e721f66937a63376bb2e2535f3eae47acf3bafc294490e8e6e8",
+   "capture_content": "creation SubresourceContents",
+   "provenance": {
+    "class": "asset",
+    "source": "E:\\HoneySelect2_ArcticFox\\abdata\\chara\\30\\st_eyebrow_30.unity3d",
+    "path_id": -3617617255950448308,
+    "unity_type": "Texture2D",
+    "binding": "installed name index (no prefab material reference)"
+   }
+  },
+  {
+   "resource": 9083,
+   "name": "c_t_eye_23",
+   "kind": "tex2d",
+   "subresources": 10,
+   "content_sha256": "14a6d8b0d07543da8f70024344b2773717b0e737beda495310a5ca49c60020cb",
+   "capture_content": "creation SubresourceContents",
+   "provenance": {
+    "class": "asset",
+    "source": "E:\\HoneySelect2_ArcticFox\\abdata\\chara\\30\\st_eye_30.unity3d",
+    "path_id": -7392484943107778827,
+    "unity_type": "Texture2D",
+    "binding": "installed name index (no prefab material reference)"
+   }
+  },
+  {
+   "resource": 9085,
+   "name": "c_t_eyeblack_00",
+   "kind": "tex2d",
+   "subresources": 1,
+   "content_sha256": "f923e86ccb08b65b9f7a151efc7e90d05307be7fb53595248f54af3a7892d46c",
+   "capture_content": "creation SubresourceContents",
+   "provenance": {
+    "class": "asset",
+    "source": "E:\\HoneySelect2_ArcticFox\\abdata\\chara\\00\\st_eyeblack_00.unity3d",
+    "path_id": -4551918646590413380,
+    "unity_type": "Texture2D",
+    "equivalent_sources": 1,
+    "binding": "prefab_material"
+   }
+  },
+  {
+   "resource": 9087,
+   "name": "c_t_eyehigh_06",
+   "kind": "tex2d",
+   "subresources": 10,
+   "content_sha256": "adc540dfa3ffa0951fc61d334d0f8e8d74fdeff49ff8ed0ac9207d0c630ae906",
+   "capture_content": "creation SubresourceContents",
+   "provenance": {
+    "class": "asset",
+    "source": "E:\\HoneySelect2_ArcticFox\\abdata\\chara\\00\\st_eye_hl_00.unity3d",
+    "path_id": 4394957614891683038,
+    "unity_type": "Texture2D",
+    "binding": "installed name index (no prefab material reference)"
+   }
+  },
+  {
+   "resource": 9147,
+   "name": "detail_cloth_06",
+   "kind": "tex2d",
+   "subresources": 9,
+   "content_sha256": "7872b92410a388c404f712f34ea29e84d571bfe05854eca17a857855d90da62e",
+   "capture_content": "creation SubresourceContents",
+   "provenance": {
+    "class": "asset",
+    "source": "E:\\HoneySelect2_ArcticFox\\abdata\\chara\\00\\fo_top_00.unity3d",
+    "path_id": -7818047182524049589,
+    "unity_type": "Texture2D",
+    "equivalent_sources": 1,
+    "binding": "prefab_material"
+   }
+  },
+  {
+   "resource": 9149,
+   "name": "cf_top_camisole2_dm",
+   "kind": "tex2d",
+   "subresources": 11,
+   "content_sha256": "82a7d2e2fec8fdb685fa9d771a32a3e261491003bebddf1e667bf5b9c56d59ea",
+   "capture_content": "creation SubresourceContents",
+   "provenance": {
+    "class": "asset",
+    "source": "E:\\HoneySelect2_ArcticFox\\abdata\\chara\\00\\fo_top_00.unity3d",
+    "path_id": -6372321102909273317,
+    "unity_type": "Texture2D",
+    "equivalent_sources": 1,
+    "binding": "prefab_material"
+   }
+  },
+  {
+   "resource": 9151,
+   "name": "cf_top_camisole2_s",
+   "kind": "tex2d",
+   "subresources": 11,
+   "content_sha256": "6f266343a61fb4d16bb43829560cf27b43df3860c7a6286d780a53aea134a2f1",
+   "capture_content": "creation SubresourceContents",
+   "provenance": {
+    "class": "asset",
+    "source": "E:\\HoneySelect2_ArcticFox\\abdata\\chara\\00\\fo_top_00.unity3d",
+    "path_id": -4199520388254589998,
+    "unity_type": "Texture2D",
+    "equivalent_sources": 1,
+    "binding": "prefab_material"
+   }
+  },
+  {
+   "resource": 9153,
+   "name": "detail_cloth_09",
+   "kind": "tex2d",
+   "subresources": 9,
+   "content_sha256": "6529c1cffd2a84e9c237d2350c9889ed48e441697e72f52b32393adb879dc232",
+   "capture_content": "creation SubresourceContents",
+   "provenance": {
+    "class": "asset",
+    "source": "E:\\HoneySelect2_ArcticFox\\abdata\\chara\\00\\fo_top_00.unity3d",
+    "path_id": -1735549280899993584,
+    "unity_type": "Texture2D",
+    "equivalent_sources": 1,
+    "binding": "prefab_material"
+   }
+  },
+  {
+   "resource": 9155,
+   "name": "cf_top_camisole1_ml",
+   "kind": "tex2d",
+   "subresources": 9,
+   "content_sha256": "e5c065777ead66b4e9f7d76853ae52fb0177d9ba3a96dd36d4819163ee751f65",
+   "capture_content": "creation SubresourceContents",
+   "provenance": {
+    "class": "asset",
+    "source": "E:\\HoneySelect2_ArcticFox\\abdata\\chara\\00\\fo_top_00.unity3d",
+    "path_id": -1455197138186474924,
+    "unity_type": "Texture2D",
+    "equivalent_sources": 1,
+    "binding": "prefab_material"
+   }
+  },
+  {
+   "resource": 9157,
+   "name": "liquid_1_t",
+   "kind": "tex2d",
+   "subresources": 10,
+   "content_sha256": "0203354f5d2b2a41479818f0b57fffd8af3647fe9150b1a33beb51297fe52cd1",
+   "capture_content": "Internal::Initial Contents (RowPitch-normalized)",
+   "provenance": {
+    "class": "asset",
+    "source": "E:\\HoneySelect2_ArcticFox\\abdata\\chara\\00\\fo_shoes_00.unity3d",
+    "path_id": 85639053264376600,
+    "unity_type": "Texture2D",
+    "binding": "prefab_material"
+   }
+  },
+  {
+   "resource": 9169,
+   "name": "cf_top_camisole2_o",
+   "kind": "tex2d",
+   "subresources": 11,
+   "content_sha256": "6f3e821c8ab4195a51a2018c2ad5500257f16e4888e9c3263bb6b976442e2c66",
+   "capture_content": "creation SubresourceContents",
+   "provenance": {
+    "class": "asset",
+    "source": "E:\\HoneySelect2_ArcticFox\\abdata\\chara\\00\\fo_top_00.unity3d",
+    "path_id": 3725114114248917786,
+    "unity_type": "Texture2D",
+    "equivalent_sources": 1,
+    "binding": "prefab_material"
+   }
+  },
+  {
+   "resource": 9171,
+   "name": "cf_top_camisole2_n",
+   "kind": "tex2d",
+   "subresources": 11,
+   "content_sha256": "c0d4b7cfe826db6917888a78e6d8aa541c7b189725a029d737c3391898861c7d",
+   "capture_content": "creation SubresourceContents",
+   "provenance": {
+    "class": "asset",
+    "source": "E:\\HoneySelect2_ArcticFox\\abdata\\chara\\00\\fo_top_00.unity3d",
+    "path_id": 4846116992048483015,
+    "unity_type": "Texture2D",
+    "equivalent_sources": 1,
+    "binding": "prefab_material"
+   }
+  },
+  {
+   "resource": 9175,
+   "name": "cf_bodymask_04",
+   "kind": "tex2d",
+   "subresources": 1,
+   "content_sha256": "759c2d7bae80ee1aa5018c9a92ba0355ea55b07809bea83b0e7898e3f37952a8",
+   "capture_content": "creation SubresourceContents",
+   "provenance": {
+    "class": "asset",
+    "source": "E:\\HoneySelect2_ArcticFox\\abdata\\chara\\00\\ft_bodymask_00.unity3d",
+    "path_id": 3550735604823229412,
+    "unity_type": "Texture2D",
+    "binding": "installed name index (no prefab material reference)"
+   }
+  },
+  {
+   "resource": 9177,
+   "name": "cf_bramask_04",
+   "kind": "tex2d",
+   "subresources": 1,
+   "content_sha256": "1542d1f9ba96fd3669ac75afdcd8af7cf8b409a95da35b948f95c0868ab924a2",
+   "capture_content": "creation SubresourceContents",
+   "provenance": {
+    "class": "asset",
+    "source": "E:\\HoneySelect2_ArcticFox\\abdata\\chara\\00\\ft_bramask_00.unity3d",
+    "path_id": -1191496911261702214,
+    "unity_type": "Texture2D",
+    "binding": "installed name index (no prefab material reference)"
+   }
+  },
+  {
+   "resource": 9216,
+   "name": "cf_bot_pantshot1_n",
+   "kind": "tex2d",
+   "subresources": 11,
+   "content_sha256": "958d9be600a252119e17c209e4d607569d96a2f524ec27438238e2cb2b5035a9",
+   "capture_content": "creation SubresourceContents",
+   "provenance": {
+    "class": "asset",
+    "source": "E:\\HoneySelect2_ArcticFox\\abdata\\chara\\00\\fo_bot_00.unity3d",
+    "path_id": -6352660822297037285,
+    "unity_type": "Texture2D",
+    "equivalent_sources": 1,
+    "binding": "prefab_material"
+   }
+  },
+  {
+   "resource": 9218,
+   "name": "cf_bot_pantshot1_ml",
+   "kind": "tex2d",
+   "subresources": 10,
+   "content_sha256": "5f63e5fcf2be00b5208f404102e4d20c408f6a35b4a65ed975ad6801afbba905",
+   "capture_content": "creation SubresourceContents",
+   "provenance": {
+    "class": "asset",
+    "source": "E:\\HoneySelect2_ArcticFox\\abdata\\chara\\00\\fo_bot_00.unity3d",
+    "path_id": -5911306162768848111,
+    "unity_type": "Texture2D",
+    "equivalent_sources": 1,
+    "binding": "prefab_material"
+   }
+  },
+  {
+   "resource": 9220,
+   "name": "cf_bot_pantshot1_s",
+   "kind": "tex2d",
+   "subresources": 11,
+   "content_sha256": "ede5f3db626ca765d896f10e7d7e5414c766508cec4effcae2c6722e330b0249",
+   "capture_content": "creation SubresourceContents",
+   "provenance": {
+    "class": "asset",
+    "source": "E:\\HoneySelect2_ArcticFox\\abdata\\chara\\00\\fo_bot_00.unity3d",
+    "path_id": -2111615321085650576,
+    "unity_type": "Texture2D",
+    "equivalent_sources": 1,
+    "binding": "prefab_material"
+   }
+  },
+  {
+   "resource": 9222,
+   "name": "liquid_1_t",
+   "kind": "tex2d",
+   "subresources": 10,
+   "content_sha256": "0203354f5d2b2a41479818f0b57fffd8af3647fe9150b1a33beb51297fe52cd1",
+   "capture_content": "Internal::Initial Contents (RowPitch-normalized)",
+   "provenance": {
+    "class": "asset",
+    "source": "E:\\HoneySelect2_ArcticFox\\abdata\\chara\\00\\fo_shoes_00.unity3d",
+    "path_id": 85639053264376600,
+    "unity_type": "Texture2D",
+    "binding": "prefab_material"
+   }
+  },
+  {
+   "resource": 9234,
+   "name": "cf_bot_pantshot1_o",
+   "kind": "tex2d",
+   "subresources": 1,
+   "content_sha256": "77f2ff16d585b81a8a17f6446ff9ba1519ae055acb00233d1b4942008a74acca",
+   "capture_content": "creation SubresourceContents",
+   "provenance": {
+    "class": "asset",
+    "source": "E:\\HoneySelect2_ArcticFox\\abdata\\chara\\00\\fo_bot_00.unity3d",
+    "path_id": 4103278881014382597,
+    "unity_type": "Texture2D",
+    "equivalent_sources": 1,
+    "binding": "prefab_material"
+   }
+  },
+  {
+   "resource": 9236,
+   "name": "detail_cloth_denim1",
+   "kind": "tex2d",
+   "subresources": 9,
+   "content_sha256": "b4a8ff53656279f16534ff7f83c0205083eb1c02d035da5368689b0652cd3cda",
+   "capture_content": "creation SubresourceContents",
+   "provenance": {
+    "class": "asset",
+    "source": "E:\\HoneySelect2_ArcticFox\\abdata\\chara\\00\\fo_bot_00.unity3d",
+    "path_id": 6947926644252306956,
+    "unity_type": "Texture2D",
+    "equivalent_sources": 3,
+    "binding": "prefab_material"
+   }
+  },
+  {
+   "resource": 9238,
+   "name": "cf_bot_pantshot1_dm",
+   "kind": "tex2d",
+   "subresources": 11,
+   "content_sha256": "dfcae1fe93aec5587d92ea96683123f85d34d473489bc0558514ca1bdf28436e",
+   "capture_content": "creation SubresourceContents",
+   "provenance": {
+    "class": "asset",
+    "source": "E:\\HoneySelect2_ArcticFox\\abdata\\chara\\00\\fo_bot_00.unity3d",
+    "path_id": 8353715599215079850,
+    "unity_type": "Texture2D",
+    "equivalent_sources": 1,
+    "binding": "prefab_material"
+   }
+  },
+  {
+   "resource": 9290,
+   "name": "detail_cloth_02",
+   "kind": "tex2d",
+   "subresources": 9,
+   "content_sha256": "968e0c4dc2f835086dbbf8122171d9608653d379fc8b3f1cb55a98e8271dc344",
+   "capture_content": "creation SubresourceContents",
+   "provenance": {
+    "class": "asset",
+    "source": "E:\\HoneySelect2_ArcticFox\\abdata\\chara\\00\\fo_inner_b_00.unity3d",
+    "path_id": -1323823118922091473,
+    "unity_type": "Texture2D",
+    "equivalent_sources": 11,
+    "binding": "prefab_material"
+   }
+  },
+  {
+   "resource": 9292,
+   "name": "liquid_1_t",
+   "kind": "tex2d",
+   "subresources": 10,
+   "content_sha256": "0203354f5d2b2a41479818f0b57fffd8af3647fe9150b1a33beb51297fe52cd1",
+   "capture_content": "Internal::Initial Contents (RowPitch-normalized)",
+   "provenance": {
+    "class": "asset",
+    "source": "E:\\HoneySelect2_ArcticFox\\abdata\\chara\\00\\fo_shoes_00.unity3d",
+    "path_id": 85639053264376600,
+    "unity_type": "Texture2D",
+    "binding": "prefab_material"
+   }
+  },
+  {
+   "resource": 9304,
+   "name": "cf_bra_00_dm",
+   "kind": "tex2d",
+   "subresources": 1,
+   "content_sha256": "d83e0463228040e6cd8ef0801875f0f92bda9521d1d29cd272b1bfb21d4d1e41",
+   "capture_content": "Internal::Initial Contents (RowPitch-normalized)",
+   "provenance": {
+    "class": "asset",
+    "source": "E:\\HoneySelect2_ArcticFox\\abdata\\chara\\00\\fo_inner_t_00.unity3d",
+    "path_id": 1401166453011335775,
+    "unity_type": "Texture2D",
+    "equivalent_sources": 1,
+    "binding": "prefab_material"
+   }
+  },
+  {
+   "resource": 9307,
+   "name": "cf_bra_00_o",
+   "kind": "tex2d",
+   "subresources": 11,
+   "content_sha256": "d38d109a64d47ede5657355a578ee274ee078ba2fac8749b426eb8c39841d121",
+   "capture_content": "creation SubresourceContents",
+   "provenance": {
+    "class": "asset",
+    "source": "E:\\HoneySelect2_ArcticFox\\abdata\\chara\\00\\fo_inner_t_00.unity3d",
+    "path_id": 5231882645906376208,
+    "unity_type": "Texture2D",
+    "equivalent_sources": 1,
+    "binding": "prefab_material"
+   }
+  },
+  {
+   "resource": 9309,
+   "name": "detail_cloth_24_igusa",
+   "kind": "tex2d",
+   "subresources": 9,
+   "content_sha256": "5bc620d1b9caaff9eb41ea808b233c92da2fe7e49e7f1be0ccf67aa1fe9aaafe",
+   "capture_content": "creation SubresourceContents",
+   "provenance": {
+    "class": "asset",
+    "source": "E:\\HoneySelect2_ArcticFox\\abdata\\chara\\00\\fo_inner_t_00.unity3d",
+    "path_id": 6081953630589764355,
+    "unity_type": "Texture2D",
+    "equivalent_sources": 5,
+    "binding": "prefab_material"
+   }
+  },
+  {
+   "resource": 9311,
+   "name": "cf_bra_00_n",
+   "kind": "tex2d",
+   "subresources": 12,
+   "content_sha256": "317eb6cf082e58e4ef41f8aac92f17d2e588bc69f527aaab676632906e012b84",
+   "capture_content": "creation SubresourceContents",
+   "provenance": {
+    "class": "asset",
+    "source": "E:\\HoneySelect2_ArcticFox\\abdata\\chara\\00\\fo_inner_t_00.unity3d",
+    "path_id": 6528993742473505846,
+    "unity_type": "Texture2D",
+    "equivalent_sources": 1,
+    "binding": "prefab_material"
+   }
+  },
+  {
+   "resource": 9313,
+   "name": "cf_bra_00_ml",
+   "kind": "tex2d",
+   "subresources": 10,
+   "content_sha256": "ba1d4993ad4bca499d179cfba5c85f45053e0540f80387d6e12b50b24084c57e",
+   "capture_content": "creation SubresourceContents",
+   "provenance": {
+    "class": "asset",
+    "source": "E:\\HoneySelect2_ArcticFox\\abdata\\chara\\00\\fo_inner_t_00.unity3d",
+    "path_id": 7208181684601801251,
+    "unity_type": "Texture2D",
+    "equivalent_sources": 15,
+    "binding": "prefab_material"
+   }
+  },
+  {
+   "resource": 9349,
+   "name": "cf_shorts_00_n",
+   "kind": "tex2d",
+   "subresources": 11,
+   "content_sha256": "ab961733072db1b13b0a7ed68c5bba5642d9ce41f0cdcf321d49c25ec789d359",
+   "capture_content": "creation SubresourceContents",
+   "provenance": {
+    "class": "asset",
+    "source": "E:\\HoneySelect2_ArcticFox\\abdata\\chara\\00\\fo_inner_b_00.unity3d",
+    "path_id": -3220651038384733854,
+    "unity_type": "Texture2D",
+    "equivalent_sources": 1,
+    "binding": "prefab_material"
+   }
+  },
+  {
+   "resource": 9351,
+   "name": "detail_cloth_02",
+   "kind": "tex2d",
+   "subresources": 9,
+   "content_sha256": "968e0c4dc2f835086dbbf8122171d9608653d379fc8b3f1cb55a98e8271dc344",
+   "capture_content": "creation SubresourceContents",
+   "provenance": {
+    "class": "asset",
+    "source": "E:\\HoneySelect2_ArcticFox\\abdata\\chara\\00\\fo_inner_b_00.unity3d",
+    "path_id": -1323823118922091473,
+    "unity_type": "Texture2D",
+    "equivalent_sources": 11,
+    "binding": "prefab_material"
+   }
+  },
+  {
+   "resource": 9353,
+   "name": "liquid_1_t",
+   "kind": "tex2d",
+   "subresources": 10,
+   "content_sha256": "0203354f5d2b2a41479818f0b57fffd8af3647fe9150b1a33beb51297fe52cd1",
+   "capture_content": "Internal::Initial Contents (RowPitch-normalized)",
+   "provenance": {
+    "class": "asset",
+    "source": "E:\\HoneySelect2_ArcticFox\\abdata\\chara\\00\\fo_shoes_00.unity3d",
+    "path_id": 85639053264376600,
+    "unity_type": "Texture2D",
+    "binding": "prefab_material"
+   }
+  },
+  {
+   "resource": 9367,
+   "name": "cf_shorts_00_ml",
+   "kind": "tex2d",
+   "subresources": 10,
+   "content_sha256": "b9957a05e2eefc42e6463e2b4b28a977d5c9bf9434c9757420cfb7f97ac67e89",
+   "capture_content": "creation SubresourceContents",
+   "provenance": {
+    "class": "asset",
+    "source": "E:\\HoneySelect2_ArcticFox\\abdata\\chara\\00\\fo_inner_b_00.unity3d",
+    "path_id": 3602830050090388730,
+    "unity_type": "Texture2D",
+    "equivalent_sources": 17,
+    "binding": "prefab_material"
+   }
+  },
+  {
+   "resource": 9369,
+   "name": "cf_shorts_00_o",
+   "kind": "tex2d",
+   "subresources": 11,
+   "content_sha256": "981da62fa44fce8e93337ec593cf0c859a81350133e2d3d4f4aa3ca07e824969",
+   "capture_content": "creation SubresourceContents",
+   "provenance": {
+    "class": "asset",
+    "source": "E:\\HoneySelect2_ArcticFox\\abdata\\chara\\00\\fo_inner_b_00.unity3d",
+    "path_id": 4048360600286560275,
+    "unity_type": "Texture2D",
+    "equivalent_sources": 1,
+    "binding": "prefab_material"
+   }
+  },
+  {
+   "resource": 9371,
+   "name": "cf_shorts_00_dm",
+   "kind": "tex2d",
+   "subresources": 11,
+   "content_sha256": "d397f1834fad7487b61bb49756520c231d287de7e4cf653c60981371ccd9daf6",
+   "capture_content": "creation SubresourceContents",
+   "provenance": {
+    "class": "asset",
+    "source": "E:\\HoneySelect2_ArcticFox\\abdata\\chara\\00\\fo_inner_b_00.unity3d",
+    "path_id": 7294415489548161401,
+    "unity_type": "Texture2D",
+    "equivalent_sources": 1,
+    "binding": "prefab_material"
+   }
+  },
+  {
+   "resource": 9419,
+   "name": "cf_shoes_bones_o",
+   "kind": "tex2d",
+   "subresources": 10,
+   "content_sha256": "a1cc516a841d5c7760e7ce90ef80a725e43c1b5821d90668e458d2ef88de34d1",
+   "capture_content": "creation SubresourceContents",
+   "provenance": {
+    "class": "asset",
+    "source": "E:\\HoneySelect2_ArcticFox\\abdata\\chara\\00\\fo_shoes_00.unity3d",
+    "path_id": -6775448740736594725,
+    "unity_type": "Texture2D",
+    "binding": "prefab_material"
+   }
+  },
+  {
+   "resource": 9421,
+   "name": "liquid_1_t",
+   "kind": "tex2d",
+   "subresources": 10,
+   "content_sha256": "0203354f5d2b2a41479818f0b57fffd8af3647fe9150b1a33beb51297fe52cd1",
+   "capture_content": "Internal::Initial Contents (RowPitch-normalized)",
+   "provenance": {
+    "class": "asset",
+    "source": "E:\\HoneySelect2_ArcticFox\\abdata\\chara\\00\\fo_shoes_00.unity3d",
+    "path_id": 85639053264376600,
+    "unity_type": "Texture2D",
+    "binding": "prefab_material"
+   }
+  },
+  {
+   "resource": 9433,
+   "name": "detail_cloth_11_kawa2",
+   "kind": "tex2d",
+   "subresources": 9,
+   "content_sha256": "8dc872e418ce1f0c9efa017b29fed7e359e29aa2b7ec6d7b66088ceda3f86995",
+   "capture_content": "creation SubresourceContents",
+   "provenance": {
+    "class": "asset",
+    "source": "E:\\HoneySelect2_ArcticFox\\abdata\\chara\\00\\fo_shoes_00.unity3d",
+    "path_id": 347844062601733800,
+    "unity_type": "Texture2D",
+    "binding": "prefab_material"
+   }
+  },
+  {
+   "resource": 9435,
+   "name": "cf_shoes_bones_n",
+   "kind": "tex2d",
+   "subresources": 10,
+   "content_sha256": "5742503afc9beb44fec048e3600ae9e4fb4d450335c2ab7322b17c36e8ae38c8",
+   "capture_content": "creation SubresourceContents",
+   "provenance": {
+    "class": "asset",
+    "source": "E:\\HoneySelect2_ArcticFox\\abdata\\chara\\00\\fo_shoes_00.unity3d",
+    "path_id": 2844350604864573620,
+    "unity_type": "Texture2D",
+    "binding": "prefab_material"
+   }
+  },
+  {
+   "resource": 9437,
+   "name": "cf_shoes_bones_s",
+   "kind": "tex2d",
+   "subresources": 10,
+   "content_sha256": "c9c9e88c4aadc9c50df32c47d3563823012be864857410cff7ecb37f97707f9c",
+   "capture_content": "creation SubresourceContents",
+   "provenance": {
+    "class": "asset",
+    "source": "E:\\HoneySelect2_ArcticFox\\abdata\\chara\\00\\fo_shoes_00.unity3d",
+    "path_id": 3663864323897712232,
+    "unity_type": "Texture2D",
+    "binding": "prefab_material"
+   }
+  },
+  {
+   "resource": 9441,
+   "name": "cf_body_00_ml",
+   "kind": "tex2d",
+   "subresources": 1,
+   "content_sha256": "6a5db35e2affd0605eeb928fb3d04e9bd26a8f7cc00e650d5c7c2b8ffea1ac25",
+   "capture_content": "creation SubresourceContents",
+   "provenance": {
+    "class": "asset",
+    "source": "E:\\HoneySelect2_ArcticFox\\abdata\\chara\\00\\fo_shoes_00.unity3d",
+    "path_id": 4247827894076388350,
+    "unity_type": "Texture2D",
+    "binding": "prefab_material"
+   }
+  },
+  {
+   "resource": 9443,
+   "name": "cf_shoes_bones_dm",
+   "kind": "tex2d",
+   "subresources": 10,
+   "content_sha256": "ec2bc3a6bcc13dbc95f6cb1ec989478f93608ecc8b950021b1aa3f4d3e185b94",
+   "capture_content": "creation SubresourceContents",
+   "provenance": {
+    "class": "asset",
+    "source": "E:\\HoneySelect2_ArcticFox\\abdata\\chara\\00\\fo_shoes_00.unity3d",
+    "path_id": 5359841356225928141,
+    "unity_type": "Texture2D",
+    "binding": "prefab_material"
+   }
+  },
+  {
+   "resource": 10246,
+   "name": "p_cf_head_00",
+   "kind": "tex2d",
+   "subresources": 1,
+   "content_sha256": "61e9a270b62df8ca70475e817c413a3b1e30a942afa2f396f3e00fdedc67f458",
+   "capture_content": "Internal::Initial Contents (RowPitch-normalized)",
+   "provenance": {
+    "class": "asset",
+    "source": "E:\\HoneySelect2_ArcticFox\\abdata\\chara\\thumb\\00\\fo_head_00.unity3d",
+    "path_id": 503131683529175514,
+    "unity_type": "Texture2D",
+    "binding": "texture identity request (not in the scene export)"
+   }
+  },
+  {
+   "resource": 10249,
+   "name": "p_cf_head_01",
+   "kind": "tex2d",
+   "subresources": 1,
+   "content_sha256": "e2c769621c9c697030d76ce83d7ef5b928f837fb62235a9f5e432064fe5162c4",
+   "capture_content": "Internal::Initial Contents (RowPitch-normalized)",
+   "provenance": {
+    "class": "asset",
+    "source": "E:\\HoneySelect2_ArcticFox\\abdata\\chara\\thumb\\00\\fo_head_00.unity3d",
+    "path_id": 6577980758527219033,
+    "unity_type": "Texture2D",
+    "binding": "texture identity request (not in the scene export)"
+   }
+  },
+  {
+   "resource": 10252,
+   "name": "p_cf_head_02",
+   "kind": "tex2d",
+   "subresources": 1,
+   "content_sha256": "eec6643a8f89dd0aac89273a94222d5c484bc64868d98951accc416da32901ad",
+   "capture_content": "creation SubresourceContents",
+   "provenance": {
+    "class": "asset",
+    "source": "E:\\HoneySelect2_ArcticFox\\abdata\\chara\\thumb\\30\\fo_head_30.unity3d",
+    "path_id": 5070286781645777370,
+    "unity_type": "Texture2D",
+    "binding": "texture identity request (not in the scene export)"
+   }
+  },
+  {
+   "resource": 10254,
+   "name": "p_cf_head_03",
+   "kind": "tex2d",
+   "subresources": 1,
+   "content_sha256": "dc5125b9db09b45161aa986f0568c20ba604140d686abcca966502098ea0e7d2",
+   "capture_content": "creation SubresourceContents",
+   "provenance": {
+    "class": "asset",
+    "source": "E:\\HoneySelect2_ArcticFox\\abdata\\chara\\thumb\\50\\fo_head_50.unity3d",
+    "path_id": -864456444869174880,
+    "unity_type": "Texture2D",
+    "binding": "texture identity request (not in the scene export)"
+   }
+  },
+  {
+   "resource": 10262,
+   "name": "p_cf_head_02",
+   "kind": "tex2d",
+   "subresources": 9,
+   "content_sha256": "513ae05c706aac143e7a5fbe2c33d8a280e1e4cc8d89af65093ee2a83e5eab7c",
+   "capture_content": "creation SubresourceContents",
+   "provenance": {
+    "class": "asset",
+    "source": "E:\\HoneySelect2_ArcticFox\\mods\\PersonalMods - Head Mod\\Head - Exclusive HS2\\Garnetfanatico\\[Garnetfanatico][HS2]2B.zipmod::abdata/chara/00/Garnetfanatico_2b/2b_thumbs.unity3d",
+    "path_id": 2,
+    "unity_type": "Texture2D",
+    "binding": "texture identity request (not in the scene export)"
+   }
+  },
+  {
+   "resource": 10266,
+   "name": "preset_head_00",
+   "kind": "tex2d",
+   "subresources": 1,
+   "content_sha256": "f58c849c3877b8b554e0cb53439c69f1055729c7c0bdf2e5f1bfda5d683b38bb",
+   "capture_content": "Internal::Initial Contents (RowPitch-normalized)",
+   "provenance": {
+    "class": "asset",
+    "source": "E:\\HoneySelect2_ArcticFox\\abdata\\chara\\thumb\\00\\fo_head_00.unity3d",
+    "path_id": -1027926593527446443,
+    "unity_type": "Texture2D",
+    "binding": "texture identity request (not in the scene export)"
+   }
+  },
+  {
+   "resource": 10269,
+   "name": "preset_head_01",
+   "kind": "tex2d",
+   "subresources": 1,
+   "content_sha256": "30eeb4fd8f9cb58591eb3ddab131874aecb3efdd6f0ca109e7b62b76c91f4448",
+   "capture_content": "Internal::Initial Contents (RowPitch-normalized)",
+   "provenance": {
+    "class": "asset",
+    "source": "E:\\HoneySelect2_ArcticFox\\abdata\\chara\\thumb\\00\\fo_head_00.unity3d",
+    "path_id": 5157842031936459354,
+    "unity_type": "Texture2D",
+    "binding": "texture identity request (not in the scene export)"
+   }
+  },
+  {
+   "resource": 10272,
+   "name": "preset_head_02",
+   "kind": "tex2d",
+   "subresources": 1,
+   "content_sha256": "357a62ec58d5599fe0a372bcfe5cd1e0ceafe20a3a0981220c8aae45d8c46d69",
+   "capture_content": "creation SubresourceContents",
+   "provenance": {
+    "class": "asset",
+    "source": "E:\\HoneySelect2_ArcticFox\\abdata\\chara\\thumb\\30\\fo_head_30.unity3d",
+    "path_id": 2324000499454357418,
+    "unity_type": "Texture2D",
+    "equivalent_sources": 1,
+    "binding": "texture identity request (not in the scene export)"
+   }
+  },
+  {
+   "resource": 10274,
+   "name": "preset_head_03",
+   "kind": "tex2d",
+   "subresources": 1,
+   "content_sha256": "fcb5bc0acd8ef79a359758d56f5fbcced5f2c427f37c986d41fb5927941ea331",
+   "capture_content": "creation SubresourceContents",
+   "provenance": {
+    "class": "asset",
+    "source": "E:\\HoneySelect2_ArcticFox\\abdata\\chara\\thumb\\50\\fo_head_50.unity3d",
+    "path_id": 4108529072119472500,
+    "unity_type": "Texture2D",
+    "binding": "texture identity request (not in the scene export)"
+   }
+  },
+  {
+   "resource": 10276,
+   "name": "preset_head_02",
+   "kind": "tex2d",
+   "subresources": 9,
+   "content_sha256": "513ae05c706aac143e7a5fbe2c33d8a280e1e4cc8d89af65093ee2a83e5eab7c",
+   "capture_content": "creation SubresourceContents",
+   "provenance": {
+    "class": "asset",
+    "source": "E:\\HoneySelect2_ArcticFox\\mods\\PersonalMods - Head Mod\\Head - Exclusive HS2\\Garnetfanatico\\[Garnetfanatico][HS2]2B.zipmod::abdata/chara/00/Garnetfanatico_2b/2b_thumbs.unity3d",
+    "path_id": 3,
+    "unity_type": "Texture2D",
+    "binding": "texture identity request (not in the scene export)"
+   }
+  },
+  {
+   "resource": 15517,
+   "name": "c_t_eyelash_04",
+   "kind": "tex2d",
+   "subresources": 12,
+   "content_sha256": "0720c67c44daecc1eed29b30a7c1fdd300d67e7e91372b2f3029c549dfcb4efa",
+   "capture_content": "creation SubresourceContents",
+   "provenance": {
+    "class": "asset",
+    "source": "E:\\HoneySelect2_ArcticFox\\abdata\\chara\\00\\st_eyelash_00.unity3d",
+    "path_id": -4390442484589020673,
+    "unity_type": "Texture2D",
+    "binding": "installed name index (no prefab material reference)"
+   }
+  },
+  {
+   "resource": 15525,
+   "name": "faxian",
+   "kind": "tex2d",
+   "subresources": 11,
+   "content_sha256": "56e92bf1455817e82fe458bf8728d8646ce9ae0801f731d5879296088ef0e47d",
+   "capture_content": "creation SubresourceContents",
+   "provenance": {
+    "class": "asset",
+    "source": "E:\\HoneySelect2_ArcticFox\\mods\\PersonalMods\\NightCatZi\\ymz_anyi_hair.zipmod::abdata/chara/ymz_anyi_hair/ymz_anyi_hair.unity3d",
+    "path_id": 4434457406381136672,
+    "unity_type": "Texture2D",
+    "binding": "prefab_material"
+   }
+  },
+  {
+   "resource": 15527,
+   "name": "hair",
+   "kind": "tex2d",
+   "subresources": 9,
+   "content_sha256": "fd5405274a2e0bb03e78d6fa1c86910a212ed00c8f86c90ea86fff6df03e7bc0",
+   "capture_content": "creation SubresourceContents",
+   "provenance": {
+    "class": "asset",
+    "source": "E:\\HoneySelect2_ArcticFox\\mods\\PersonalMods\\NightCatZi\\ymz_anyi_hair.zipmod::abdata/chara/ymz_anyi_hair/ymz_anyi_hair.unity3d",
+    "path_id": 4434457406381136807,
+    "unity_type": "Texture2D",
+    "equivalent_sources": 2,
+    "binding": "prefab_material"
+   }
+  },
+  {
+   "resource": 15823,
+   "name": "Kamael_Valentine_Hair_03_HQ(Clone)",
+   "kind": "buffer",
+   "subresources": 1,
+   "content_sha256": "a6e9b5d36491db323659b0758c713728a577f5c34d504b725cc83186109bc884",
+   "capture_content": "CreateBuffer.InitialData",
+   "provenance": {
+    "class": "asset",
+    "source": "E:\\HoneySelect2_ArcticFox\\mods\\PersonalMods\\NightCatZi\\ymz_anyi_hair.zipmod::abdata/chara/ymz_anyi_hair/ymz_anyi_hair.unity3d",
+    "path_id": 4434457406381136806,
+    "unity_type": "Mesh",
+    "binding": "prefab_renderer"
+   }
+  },
+  {
+   "resource": 15827,
+   "name": "o_eyebase_L(Clone)",
+   "kind": "buffer",
+   "subresources": 1,
+   "content_sha256": "1180a6225ea3757ffda2c05a91cfc3c937942d48521637be76d17f8d21ea1691",
+   "capture_content": "CreateBuffer.InitialData",
+   "provenance": {
+    "class": "asset",
+    "source": "E:\\HoneySelect2_ArcticFox\\abdata\\chara\\30\\fo_head_30.unity3d",
+    "path_id": -4739386775600230674,
+    "unity_type": "Mesh",
+    "equivalent_sources": 1,
+    "binding": "prefab_renderer"
+   }
+  },
+  {
+   "resource": 15831,
+   "name": "o_eyebase_R(Clone)",
+   "kind": "buffer",
+   "subresources": 1,
+   "content_sha256": "fd8c2c26c95957964ca7dfe10ad4a054ed6d0f94fb1ba11e32b2b7641585d953",
+   "capture_content": "CreateBuffer.InitialData",
+   "provenance": {
+    "class": "asset",
+    "source": "E:\\HoneySelect2_ArcticFox\\abdata\\chara\\30\\fo_head_30.unity3d",
+    "path_id": -1595874648778434167,
+    "unity_type": "Mesh",
+    "equivalent_sources": 1,
+    "binding": "prefab_renderer"
+   }
+  },
+  {
+   "resource": 15835,
+   "name": "o_eyelashes(Clone)",
+   "kind": "buffer",
+   "subresources": 1,
+   "content_sha256": "0a3476402b9aefd9be72971b8de3ee5df2f2cb41f53dc416384e2409a1331f41",
+   "capture_content": "CreateBuffer.InitialData",
+   "provenance": {
+    "class": "asset",
+    "source": "E:\\HoneySelect2_ArcticFox\\abdata\\chara\\30\\fo_head_30.unity3d",
+    "path_id": -5877487127758475770,
+    "unity_type": "Mesh",
+    "equivalent_sources": 1,
+    "binding": "prefab_renderer"
+   }
+  },
+  {
+   "resource": 15839,
+   "name": "o_eyeshadow(Clone)",
+   "kind": "buffer",
+   "subresources": 1,
+   "content_sha256": "eafd8e2d24ec3316d8107f520e0b8617da8e72ae18e1c12609d7cded77ed3904",
+   "capture_content": "CreateBuffer.InitialData",
+   "provenance": {
+    "class": "asset",
+    "source": "E:\\HoneySelect2_ArcticFox\\abdata\\chara\\30\\fo_head_30.unity3d",
+    "path_id": -236115773118502070,
+    "unity_type": "Mesh",
+    "equivalent_sources": 1,
+    "binding": "prefab_renderer"
+   }
+  },
+  {
+   "resource": 15843,
+   "name": "o_head(Clone)",
+   "kind": "buffer",
+   "subresources": 1,
+   "content_sha256": "e0d81365e1e1abb7e49e1adfcd2debf9bd8bcd13cffd1e7bdd747b7d61076643",
+   "capture_content": "CreateBuffer.InitialData",
+   "provenance": {
+    "class": "asset",
+    "source": "E:\\HoneySelect2_ArcticFox\\abdata\\chara\\30\\fo_head_30.unity3d",
+    "path_id": 1210433472884616197,
+    "unity_type": "Mesh",
+    "equivalent_sources": 1,
+    "binding": "prefab_renderer"
+   }
+  },
+  {
+   "resource": 15847,
+   "name": "o_namida(Clone)",
+   "kind": "buffer",
+   "subresources": 1,
+   "content_sha256": "e8dcc95648ee51716bfcec00f89d04054e129653ede0cb1aec6172ef81f1c79a",
+   "capture_content": "CreateBuffer.InitialData",
+   "provenance": {
+    "class": "asset",
+    "source": "E:\\HoneySelect2_ArcticFox\\abdata\\chara\\30\\fo_head_30.unity3d",
+    "path_id": -4092391867061588781,
+    "unity_type": "Mesh",
+    "equivalent_sources": 1,
+    "binding": "prefab_renderer"
+   }
+  },
+  {
+   "resource": 15851,
+   "name": "o_tang(Clone)",
+   "kind": "buffer",
+   "subresources": 1,
+   "content_sha256": "f507b2e6ca068371ea542054f5d7681b1eb4cd1bfdd0935759b007a9dc52bb39",
+   "capture_content": "CreateBuffer.InitialData",
+   "provenance": {
+    "class": "asset",
+    "source": "E:\\HoneySelect2_ArcticFox\\abdata\\chara\\30\\fo_head_30.unity3d",
+    "path_id": 6512390401580986181,
+    "unity_type": "Mesh",
+    "equivalent_sources": 1,
+    "binding": "prefab_renderer"
+   }
+  },
+  {
+   "resource": 15855,
+   "name": "o_tooth(Clone)",
+   "kind": "buffer",
+   "subresources": 1,
+   "content_sha256": "1373157be2a85812a627978e7cd126e5fd3e7e092e55a33f87519a05dc13bc50",
+   "capture_content": "CreateBuffer.InitialData",
+   "provenance": {
+    "class": "asset",
+    "source": "E:\\HoneySelect2_ArcticFox\\abdata\\chara\\30\\fo_head_30.unity3d",
+    "path_id": -3688411053301717917,
+    "unity_type": "Mesh",
+    "equivalent_sources": 1,
+    "binding": "prefab_renderer"
+   }
+  },
+  {
+   "resource": 15859,
+   "name": "o_body_cf(Clone)",
+   "kind": "buffer",
+   "subresources": 1,
+   "content_sha256": "a7b42725bf02f58ec03c82d1733c7497d67e48b9358fc796d0448725c0853ae8",
+   "capture_content": "CreateBuffer.InitialData",
+   "provenance": {
+    "class": "asset",
+    "source": "E:\\HoneySelect2_ArcticFox\\mods\\PersonalMods - Exclusive HS2\\Uncensor Selector\\[Female][HS2][BPV5]SAC_Innie.zipmod::abdata/chara/oo_base_bpsacinnie_v2.unity3d",
+    "path_id": 1071,
+    "unity_type": "Mesh",
+    "binding": "prefab_renderer",
+    "plugin": "UncensorSelector ReloadCharacterBody/UpdateMeshRenderer"
+   }
+  },
+  {
+   "resource": 15907,
+   "name": "o_top_camisole2_a(Clone)",
+   "kind": "buffer",
+   "subresources": 1,
+   "content_sha256": "1a623b14d4eda1f11c6064ae80ed7ad3d23efb0ab7d9fe7818cf155c25799d55",
+   "capture_content": "CreateBuffer.InitialData",
+   "provenance": {
+    "class": "asset",
+    "source": "E:\\HoneySelect2_ArcticFox\\abdata\\chara\\00\\fo_top_00.unity3d",
+    "path_id": 2375744345690908024,
+    "unity_type": "Mesh",
+    "binding": "prefab_renderer"
+   }
+  },
+  {
+   "resource": 15915,
+   "name": "o_bot_pantshot1_a(Clone)",
+   "kind": "buffer",
+   "subresources": 1,
+   "content_sha256": "26eef114c5ca609f19910fab5714c60e9304564cb0421ab3e58903b5b1dc5fca",
+   "capture_content": "CreateBuffer.InitialData",
+   "provenance": {
+    "class": "asset",
+    "source": "E:\\HoneySelect2_ArcticFox\\abdata\\chara\\00\\fo_bot_00.unity3d",
+    "path_id": 261140558862101149,
+    "unity_type": "Mesh",
+    "binding": "prefab_renderer"
+   }
+  },
+  {
+   "resource": 15923,
+   "name": "o_bra_a(Clone)",
+   "kind": "buffer",
+   "subresources": 1,
+   "content_sha256": "805fec3e8f308b45891b367d839cc29b0fa79483aa0f8cf1a7c23f6a18e6f786",
+   "capture_content": "CreateBuffer.InitialData",
+   "provenance": {
+    "class": "asset",
+    "source": "E:\\HoneySelect2_ArcticFox\\abdata\\chara\\00\\fo_inner_t_00.unity3d",
+    "path_id": -3129993984668238330,
+    "unity_type": "Mesh",
+    "equivalent_sources": 1,
+    "binding": "prefab_renderer"
+   }
+  },
+  {
+   "resource": 15931,
+   "name": "o_shorts_a(Clone)",
+   "kind": "buffer",
+   "subresources": 1,
+   "content_sha256": "8efe9156069c9b61d8d78f478c2912b42d10953747743d6c0cacab09cea36a46",
+   "capture_content": "CreateBuffer.InitialData",
+   "provenance": {
+    "class": "asset",
+    "source": "E:\\HoneySelect2_ArcticFox\\abdata\\chara\\00\\fo_inner_b_00.unity3d",
+    "path_id": 3454991393800306992,
+    "unity_type": "Mesh",
+    "equivalent_sources": 7,
+    "binding": "prefab_renderer"
+   }
+  },
+  {
+   "resource": 15939,
+   "name": "o_shoes_bones(Clone)",
+   "kind": "buffer",
+   "subresources": 1,
+   "content_sha256": "f71cc90d6aee88eb00e862b95f5262d79909ee7fafc04633210ff4ed3323ee52",
+   "capture_content": "CreateBuffer.InitialData",
+   "provenance": {
+    "class": "asset",
+    "source": "E:\\HoneySelect2_ArcticFox\\abdata\\chara\\00\\fo_shoes_00.unity3d",
+    "path_id": -417060783509234697,
+    "unity_type": "Mesh",
+    "binding": "prefab_renderer"
+   }
+  },
+  {
+   "resource": 15953,
+   "name": "o_eyelashes",
+   "kind": "buffer",
+   "subresources": 1,
+   "content_sha256": "b7c87ea155e29516a0bc5c8d75577fdea948a817731b4b3559d52d9a19418a3f",
+   "capture_content": "CreateBuffer.InitialData",
+   "provenance": {
+    "class": "asset",
+    "source": "E:\\HoneySelect2_ArcticFox\\abdata\\chara\\30\\fo_head_30.unity3d",
+    "path_id": -5877487127758475770,
+    "unity_type": "Mesh",
+    "equivalent_sources": 1,
+    "binding": "prefab_renderer"
+   }
+  },
+  {
+   "resource": 15956,
+   "name": "o_body_cf",
+   "kind": "buffer",
+   "subresources": 1,
+   "content_sha256": "55c4941a8d3a23cf1ef320e63e54bd1b37752b23c38d729ea9ad82e6bf694a1c",
+   "capture_content": "CreateBuffer.InitialData",
+   "provenance": {
+    "class": "asset",
+    "source": "E:\\HoneySelect2_ArcticFox\\mods\\PersonalMods - Exclusive HS2\\Uncensor Selector\\[Female][HS2][BPV5]SAC_Innie.zipmod::abdata/chara/oo_base_bpsacinnie_v2.unity3d",
+    "path_id": 1071,
+    "unity_type": "Mesh",
+    "binding": "prefab_renderer",
+    "plugin": "UncensorSelector ReloadCharacterBody/UpdateMeshRenderer"
+   }
+  },
+  {
+   "resource": 15959,
+   "name": "o_bot_pantshot1_a",
+   "kind": "buffer",
+   "subresources": 1,
+   "content_sha256": "1b0c3cef876b781fdd9e4fd3786d6924d04243802767065a52256a59914b5805",
+   "capture_content": "CreateBuffer.InitialData",
+   "provenance": {
+    "class": "asset",
+    "source": "E:\\HoneySelect2_ArcticFox\\abdata\\chara\\00\\fo_bot_00.unity3d",
+    "path_id": 261140558862101149,
+    "unity_type": "Mesh",
+    "binding": "prefab_renderer"
+   }
+  },
+  {
+   "resource": 15962,
+   "name": "o_shoes_bones",
+   "kind": "buffer",
+   "subresources": 1,
+   "content_sha256": "03b458e4ea7d96eab15f597bfcd4db994361455168863fc905804fe74938d65b",
+   "capture_content": "CreateBuffer.InitialData",
+   "provenance": {
+    "class": "asset",
+    "source": "E:\\HoneySelect2_ArcticFox\\abdata\\chara\\00\\fo_shoes_00.unity3d",
+    "path_id": -417060783509234697,
+    "unity_type": "Mesh",
+    "binding": "prefab_renderer"
+   }
+  },
+  {
+   "resource": 15965,
+   "name": "o_shorts_a",
+   "kind": "buffer",
+   "subresources": 1,
+   "content_sha256": "7a38ff1e86d693fe4c884377235d2efa3f16514a2cdbc7a1355e9cb955cfe3d0",
+   "capture_content": "CreateBuffer.InitialData",
+   "provenance": {
+    "class": "asset",
+    "source": "E:\\HoneySelect2_ArcticFox\\abdata\\chara\\00\\fo_inner_b_00.unity3d",
+    "path_id": 3454991393800306992,
+    "unity_type": "Mesh",
+    "equivalent_sources": 7,
+    "binding": "prefab_renderer"
+   }
+  },
+  {
+   "resource": 15968,
+   "name": "o_bra_a",
+   "kind": "buffer",
+   "subresources": 1,
+   "content_sha256": "a69e5534457ee2c2afaf0f19026934db7f0f68f1e75e1a80968d2a78fc7fde25",
+   "capture_content": "CreateBuffer.InitialData",
+   "provenance": {
+    "class": "asset",
+    "source": "E:\\HoneySelect2_ArcticFox\\abdata\\chara\\00\\fo_inner_t_00.unity3d",
+    "path_id": -3129993984668238330,
+    "unity_type": "Mesh",
+    "equivalent_sources": 1,
+    "binding": "prefab_renderer"
+   }
+  },
+  {
+   "resource": 15971,
+   "name": "o_namida",
+   "kind": "buffer",
+   "subresources": 1,
+   "content_sha256": "6fb885df728cedf449ef254e19859e775c6b21e71fb4e28294c07643556b0a9b",
+   "capture_content": "CreateBuffer.InitialData",
+   "provenance": {
+    "class": "asset",
+    "source": "E:\\HoneySelect2_ArcticFox\\abdata\\chara\\30\\fo_head_30.unity3d",
+    "path_id": -4092391867061588781,
+    "unity_type": "Mesh",
+    "equivalent_sources": 1,
+    "binding": "prefab_renderer"
+   }
+  },
+  {
+   "resource": 15974,
+   "name": "o_tang",
+   "kind": "buffer",
+   "subresources": 1,
+   "content_sha256": "dade3afad538f754abc54b28573000e217d909ef5c17c6dbc06baa7cb4b916ed",
+   "capture_content": "CreateBuffer.InitialData",
+   "provenance": {
+    "class": "asset",
+    "source": "E:\\HoneySelect2_ArcticFox\\abdata\\chara\\30\\fo_head_30.unity3d",
+    "path_id": 6512390401580986181,
+    "unity_type": "Mesh",
+    "equivalent_sources": 1,
+    "binding": "prefab_renderer"
+   }
+  },
+  {
+   "resource": 15977,
+   "name": "o_head",
+   "kind": "buffer",
+   "subresources": 1,
+   "content_sha256": "0926891084ceeb9a88faa200ca2f893849b8758ecbba6afba11ecd686154f4e6",
+   "capture_content": "CreateBuffer.InitialData",
+   "provenance": {
+    "class": "asset",
+    "source": "E:\\HoneySelect2_ArcticFox\\abdata\\chara\\30\\fo_head_30.unity3d",
+    "path_id": 1210433472884616197,
+    "unity_type": "Mesh",
+    "equivalent_sources": 1,
+    "binding": "prefab_renderer"
+   }
+  },
+  {
+   "resource": 15980,
+   "name": "Kamael_Valentine_Hair_03_HQ",
+   "kind": "buffer",
+   "subresources": 1,
+   "content_sha256": "074876cc710e0cddb0ee68bca91671bab6b70d65385b401ca913a8e98c6a2d06",
+   "capture_content": "CreateBuffer.InitialData",
+   "provenance": {
+    "class": "asset",
+    "source": "E:\\HoneySelect2_ArcticFox\\mods\\PersonalMods\\NightCatZi\\ymz_anyi_hair.zipmod::abdata/chara/ymz_anyi_hair/ymz_anyi_hair.unity3d",
+    "path_id": 4434457406381136806,
+    "unity_type": "Mesh",
+    "binding": "prefab_renderer"
+   }
+  },
+  {
+   "resource": 15983,
+   "name": "o_eyebase_L",
+   "kind": "buffer",
+   "subresources": 1,
+   "content_sha256": "510c6c5fc0642e7d7245b8e559d44a59ca48afc1c520acecbbacb3073f299edf",
+   "capture_content": "CreateBuffer.InitialData",
+   "provenance": {
+    "class": "asset",
+    "source": "E:\\HoneySelect2_ArcticFox\\abdata\\chara\\30\\fo_head_30.unity3d",
+    "path_id": -4739386775600230674,
+    "unity_type": "Mesh",
+    "equivalent_sources": 1,
+    "binding": "prefab_renderer"
+   }
+  },
+  {
+   "resource": 15986,
+   "name": "o_eyebase_R",
+   "kind": "buffer",
+   "subresources": 1,
+   "content_sha256": "e2bfc96036ec4592408fc7f7c78c100e3cdc8de781681b915e43d60641e65d50",
+   "capture_content": "CreateBuffer.InitialData",
+   "provenance": {
+    "class": "asset",
+    "source": "E:\\HoneySelect2_ArcticFox\\abdata\\chara\\30\\fo_head_30.unity3d",
+    "path_id": -1595874648778434167,
+    "unity_type": "Mesh",
+    "equivalent_sources": 1,
+    "binding": "prefab_renderer"
+   }
+  },
+  {
+   "resource": 15989,
+   "name": "o_eyeshadow",
+   "kind": "buffer",
+   "subresources": 1,
+   "content_sha256": "47dcd18d6ac37610b4a1cb1f994b05f67f171a9a3d40c3ca584ab095869be059",
+   "capture_content": "CreateBuffer.InitialData",
+   "provenance": {
+    "class": "asset",
+    "source": "E:\\HoneySelect2_ArcticFox\\abdata\\chara\\30\\fo_head_30.unity3d",
+    "path_id": -236115773118502070,
+    "unity_type": "Mesh",
+    "equivalent_sources": 1,
+    "binding": "prefab_renderer"
+   }
+  },
+  {
+   "resource": 15992,
+   "name": "o_tooth",
+   "kind": "buffer",
+   "subresources": 1,
+   "content_sha256": "86f71479fe1b2b8166781f3844219d01bce7b6d837b6ac56315ad42e647fcd89",
+   "capture_content": "CreateBuffer.InitialData",
+   "provenance": {
+    "class": "asset",
+    "source": "E:\\HoneySelect2_ArcticFox\\abdata\\chara\\30\\fo_head_30.unity3d",
+    "path_id": -3688411053301717917,
+    "unity_type": "Mesh",
+    "equivalent_sources": 1,
+    "binding": "prefab_renderer"
+   }
+  },
+  {
+   "resource": 15995,
+   "name": "o_top_camisole2_a",
+   "kind": "buffer",
+   "subresources": 1,
+   "content_sha256": "6a115777009bef3f03f8467f5445779a678a851f84d34f55cd87e3832671e042",
+   "capture_content": "CreateBuffer.InitialData",
+   "provenance": {
+    "class": "asset",
+    "source": "E:\\HoneySelect2_ArcticFox\\abdata\\chara\\00\\fo_top_00.unity3d",
+    "path_id": 2375744345690908024,
+    "unity_type": "Mesh",
+    "binding": "prefab_renderer"
+   }
+  }
+ ],
+ "runtime": [
+  {
+   "resource": 225,
+   "name": "Buffer-1-1048576",
+   "kind": "buffer",
+   "status": "runtime",
+   "capture_start_read": true,
+   "producer": {
+    "kind": "unity_dynamic_vertex_ring",
+    "class": "a",
+    "producer": "GfxDevice dynamic VB/IB ring for immediate draws (Blit quads, deferred and screen-space quads); vertex bytes recovered by the generators (hs2pipe.ppv2 blit_quad), ring placement owned by them"
+   }
+  },
+  {
+   "resource": 226,
+   "name": "Buffer-2-131072",
+   "kind": "buffer",
+   "status": "runtime",
+   "capture_start_read": true,
+   "producer": {
+    "kind": "unity_dynamic_vertex_ring",
+    "class": "a",
+    "producer": "GfxDevice dynamic VB/IB ring for immediate draws (Blit quads, deferred and screen-space quads); vertex bytes recovered by the generators (hs2pipe.ppv2 blit_quad), ring placement owned by them"
+   }
+  },
+  {
+   "resource": 2979,
+   "name": "Buffer-2-8192",
+   "kind": "buffer",
+   "status": "runtime",
+   "capture_start_read": false,
+   "producer": {
+    "kind": "unity_dynamic_vertex_ring",
+    "class": "a",
+    "producer": "GfxDevice dynamic VB/IB ring for immediate draws (Blit quads, deferred and screen-space quads); vertex bytes recovered by the generators (hs2pipe.ppv2 blit_quad), ring placement owned by them"
+   }
+  },
+  {
+   "resource": 8330,
+   "name": "Buffer-1-50880",
+   "kind": "buffer",
+   "status": "runtime",
+   "capture_start_read": true,
+   "producer": {
+    "kind": "ui_canvas_geometry",
+    "class": "b",
+    "producer": "UnityEngine.UI Canvas batching (CanvasRenderer meshes); UI layout state is not in the scene export"
+   }
+  },
+  {
+   "resource": 8331,
+   "name": "Buffer-2-2544",
+   "kind": "buffer",
+   "status": "runtime",
+   "capture_start_read": true,
+   "producer": {
+    "kind": "ui_canvas_geometry",
+    "class": "b",
+    "producer": "UnityEngine.UI Canvas batching (CanvasRenderer meshes); UI layout state is not in the scene export"
+   }
+  },
+  {
+   "resource": 8342,
+   "name": "TempBuffer 100 3200x1800",
+   "kind": "tex2d",
+   "status": "runtime",
+   "capture_start_read": false,
+   "producer": {
+    "kind": "render_target_in_frame",
+    "class": "a",
+    "producer": "render target produced inside the frame by the frame generators"
+   }
+  },
+  {
+   "resource": 8366,
+   "name": "Deferred Reflections",
+   "kind": "tex2d",
+   "status": "runtime",
+   "capture_start_read": false,
+   "producer": {
+    "kind": "render_target_in_frame",
+    "class": "a",
+    "producer": "render target produced inside the frame by the frame generators"
+   }
+  },
+  {
+   "resource": 8370,
+   "name": "",
+   "kind": "tex2d",
+   "status": "runtime",
+   "capture_start_read": false,
+   "producer": {
+    "kind": "render_target_in_frame",
+    "class": "a",
+    "producer": "render target produced inside the frame by the frame generators"
+   }
+  },
+  {
+   "resource": 8379,
+   "name": "Internal Curves Texture",
+   "kind": "tex2d",
+   "status": "runtime",
+   "capture_start_read": false,
+   "producer": {
+    "kind": "script_texture",
+    "class": "b",
+    "producer": "Texture2D created at runtime by script (no installed asset of this identity)"
+   }
+  },
+  {
+   "resource": 8383,
+   "name": "Camera DepthTexture",
+   "kind": "tex2d",
+   "status": "runtime",
+   "capture_start_read": false,
+   "producer": {
+    "kind": "render_target_in_frame",
+    "class": "a",
+    "producer": "render target produced inside the frame by the frame generators"
+   }
+  },
+  {
+   "resource": 8414,
+   "name": "TempBuffer 108 3200x1800",
+   "kind": "tex2d",
+   "status": "runtime",
+   "capture_start_read": false,
+   "producer": {
+    "kind": "render_target_in_frame",
+    "class": "a",
+    "producer": "render target produced inside the frame by the frame generators"
+   }
+  },
+  {
+   "resource": 8421,
+   "name": "TempBuffer 109 3200x1800",
+   "kind": "tex2d",
+   "status": "runtime",
+   "capture_start_read": false,
+   "producer": {
+    "kind": "render_target_in_frame",
+    "class": "a",
+    "producer": "render target produced inside the frame by the frame generators"
+   }
+  },
+  {
+   "resource": 8426,
+   "name": "TempBuffer 110 1600x900",
+   "kind": "tex2d",
+   "status": "runtime",
+   "capture_start_read": false,
+   "producer": {
+    "kind": "render_target_in_frame",
+    "class": "a",
+    "producer": "render target produced inside the frame by the frame generators"
+   }
+  },
+  {
+   "resource": 8431,
+   "name": "TempBuffer 111 800x450",
+   "kind": "tex2d",
+   "status": "runtime",
+   "capture_start_read": false,
+   "producer": {
+    "kind": "render_target_in_frame",
+    "class": "a",
+    "producer": "render target produced inside the frame by the frame generators"
+   }
+  },
+  {
+   "resource": 8436,
+   "name": "TempBuffer 112 400x225",
+   "kind": "tex2d",
+   "status": "runtime",
+   "capture_start_read": false,
+   "producer": {
+    "kind": "render_target_in_frame",
+    "class": "a",
+    "producer": "render target produced inside the frame by the frame generators"
+   }
+  },
+  {
+   "resource": 8441,
+   "name": "TempBuffer 113 200x113",
+   "kind": "tex2d",
+   "status": "runtime",
+   "capture_start_read": false,
+   "producer": {
+    "kind": "render_target_in_frame",
+    "class": "a",
+    "producer": "render target produced inside the frame by the frame generators"
+   }
+  },
+  {
+   "resource": 8446,
+   "name": "TempBuffer 114 400x225",
+   "kind": "tex2d",
+   "status": "runtime",
+   "capture_start_read": false,
+   "producer": {
+    "kind": "render_target_in_frame",
+    "class": "a",
+    "producer": "render target produced inside the frame by the frame generators"
+   }
+  },
+  {
+   "resource": 8483,
+   "name": "TempBuffer 115 200x113",
+   "kind": "tex2d",
+   "status": "runtime",
+   "capture_start_read": false,
+   "producer": {
+    "kind": "render_target_in_frame",
+    "class": "a",
+    "producer": "render target produced inside the frame by the frame generators"
+   }
+  },
+  {
+   "resource": 8520,
+   "name": "TempBuffer 116 100x57",
+   "kind": "tex2d",
+   "status": "runtime",
+   "capture_start_read": false,
+   "producer": {
+    "kind": "render_target_in_frame",
+    "class": "a",
+    "producer": "render target produced inside the frame by the frame generators"
+   }
+  },
+  {
+   "resource": 8557,
+   "name": "TempBuffer 117 50x29",
+   "kind": "tex2d",
+   "status": "runtime",
+   "capture_start_read": false,
+   "producer": {
+    "kind": "render_target_in_frame",
+    "class": "a",
+    "producer": "render target produced inside the frame by the frame generators"
+   }
+  },
+  {
+   "resource": 8594,
+   "name": "TempBuffer 118 1600x900",
+   "kind": "tex2d",
+   "status": "runtime",
+   "capture_start_read": false,
+   "producer": {
+    "kind": "render_target_in_frame",
+    "class": "a",
+    "producer": "render target produced inside the frame by the frame generators"
+   }
+  },
+  {
+   "resource": 8599,
+   "name": "TempBuffer 119 800x450",
+   "kind": "tex2d",
+   "status": "runtime",
+   "capture_start_read": false,
+   "producer": {
+    "kind": "render_target_in_frame",
+    "class": "a",
+    "producer": "render target produced inside the frame by the frame generators"
+   }
+  },
+  {
+   "resource": 8604,
+   "name": "TempBuffer 120 400x225",
+   "kind": "tex2d",
+   "status": "runtime",
+   "capture_start_read": false,
+   "producer": {
+    "kind": "render_target_in_frame",
+    "class": "a",
+    "producer": "render target produced inside the frame by the frame generators"
+   }
+  },
+  {
+   "resource": 8609,
+   "name": "TempBuffer 121 200x113",
+   "kind": "tex2d",
+   "status": "runtime",
+   "capture_start_read": false,
+   "producer": {
+    "kind": "render_target_in_frame",
+    "class": "a",
+    "producer": "render target produced inside the frame by the frame generators"
+   }
+  },
+  {
+   "resource": 8614,
+   "name": "TempBuffer 122 1600x900",
+   "kind": "tex2d",
+   "status": "runtime",
+   "capture_start_read": false,
+   "producer": {
+    "kind": "render_target_in_frame",
+    "class": "a",
+    "producer": "render target produced inside the frame by the frame generators"
+   }
+  },
+  {
+   "resource": 8619,
+   "name": "TempBuffer 123 800x450",
+   "kind": "tex2d",
+   "status": "runtime",
+   "capture_start_read": false,
+   "producer": {
+    "kind": "render_target_in_frame",
+    "class": "a",
+    "producer": "render target produced inside the frame by the frame generators"
+   }
+  },
+  {
+   "resource": 8624,
+   "name": "TempBuffer 124 400x225",
+   "kind": "tex2d",
+   "status": "runtime",
+   "capture_start_read": false,
+   "producer": {
+    "kind": "render_target_in_frame",
+    "class": "a",
+    "producer": "render target produced inside the frame by the frame generators"
+   }
+  },
+  {
+   "resource": 8629,
+   "name": "TempBuffer 125 3200x1800",
+   "kind": "tex2d",
+   "status": "runtime",
+   "capture_start_read": false,
+   "producer": {
+    "kind": "render_target_in_frame",
+    "class": "a",
+    "producer": "render target produced inside the frame by the frame generators"
+   }
+  },
+  {
+   "resource": 8635,
+   "name": "TempBuffer 126 3200x1800",
+   "kind": "tex2d",
+   "status": "runtime",
+   "capture_start_read": false,
+   "producer": {
+    "kind": "render_target_in_frame",
+    "class": "a",
+    "producer": "render target produced inside the frame by the frame generators"
+   }
+  },
+  {
+   "resource": 8639,
+   "name": "TempBuffer 127 3200x1800",
+   "kind": "tex2d",
+   "status": "runtime",
+   "capture_start_read": false,
+   "producer": {
+    "kind": "render_target_in_frame",
+    "class": "a",
+    "producer": "render target produced inside the frame by the frame generators"
+   }
+  },
+  {
+   "resource": 8643,
+   "name": "TempBuffer 128 3200x1800",
+   "kind": "tex2d",
+   "status": "runtime",
+   "capture_start_read": false,
+   "producer": {
+    "kind": "render_target_in_frame",
+    "class": "a",
+    "producer": "render target produced inside the frame by the frame generators"
+   }
+  },
+  {
+   "resource": 8647,
+   "name": "TempBuffer 129 3200x1800",
+   "kind": "tex2d",
+   "status": "runtime",
+   "capture_start_read": false,
+   "producer": {
+    "kind": "render_target_in_frame",
+    "class": "a",
+    "producer": "render target produced inside the frame by the frame generators"
+   }
+  },
+  {
+   "resource": 8651,
+   "name": "TempBuffer 130 1600x900",
+   "kind": "tex2d",
+   "status": "runtime",
+   "capture_start_read": false,
+   "producer": {
+    "kind": "render_target_in_frame",
+    "class": "a",
+    "producer": "render target produced inside the frame by the frame generators"
+   }
+  },
+  {
+   "resource": 8655,
+   "name": "TempBuffer 131 1600x900",
+   "kind": "tex2d",
+   "status": "runtime",
+   "capture_start_read": false,
+   "producer": {
+    "kind": "render_target_in_frame",
+    "class": "a",
+    "producer": "render target produced inside the frame by the frame generators"
+   }
+  },
+  {
+   "resource": 8719,
+   "name": "TempBuffer 146 3200x1800",
+   "kind": "tex2d",
+   "status": "runtime",
+   "capture_start_read": false,
+   "producer": {
+    "kind": "render_target_in_frame",
+    "class": "a",
+    "producer": "render target produced inside the frame by the frame generators"
+   }
+  },
+  {
+   "resource": 8723,
+   "name": "TempBuffer 147 3200x1800",
+   "kind": "tex2d",
+   "status": "runtime",
+   "capture_start_read": false,
+   "producer": {
+    "kind": "render_target_in_frame",
+    "class": "a",
+    "producer": "render target produced inside the frame by the frame generators"
+   }
+  },
+  {
+   "resource": 8727,
+   "name": "GrabPass Temp",
+   "kind": "tex2d",
+   "status": "runtime",
+   "capture_start_read": false,
+   "producer": {
+    "kind": "render_target_in_frame",
+    "class": "a",
+    "producer": "render target produced inside the frame by the frame generators"
+   }
+  },
+  {
+   "resource": 8739,
+   "name": "",
+   "kind": "tex2d",
+   "status": "runtime",
+   "capture_start_read": false,
+   "producer": {
+    "kind": "render_target_in_frame",
+    "class": "a",
+    "producer": "render target produced inside the frame by the frame generators"
+   }
+  },
+  {
+   "resource": 8745,
+   "name": "",
+   "kind": "tex2d",
+   "status": "runtime",
+   "capture_start_read": true,
+   "producer": {
+    "kind": "render_target_previous_frame",
+    "class": "b",
+    "producer": "render target read before any write in this frame (temporal history)"
+   }
+  },
+  {
+   "resource": 8749,
+   "name": "",
+   "kind": "tex2d",
+   "status": "runtime",
+   "capture_start_read": false,
+   "producer": {
+    "kind": "render_target_in_frame",
+    "class": "a",
+    "producer": "render target produced inside the frame by the frame generators"
+   }
+  },
+  {
+   "resource": 8755,
+   "name": "",
+   "kind": "tex2d",
+   "status": "runtime",
+   "capture_start_read": false,
+   "producer": {
+    "kind": "render_target_in_frame",
+    "class": "a",
+    "producer": "render target produced inside the frame by the frame generators"
+   }
+  },
+  {
+   "resource": 8777,
+   "name": "Buffer-1-127834",
+   "kind": "buffer",
+   "status": "runtime",
+   "capture_start_read": false,
+   "producer": {
+    "kind": "unity_dynamic_vertex_ring",
+    "class": "a",
+    "producer": "GfxDevice dynamic VB/IB ring for immediate draws (Blit quads, deferred and screen-space quads); vertex bytes recovered by the generators (hs2pipe.ppv2 blit_quad), ring placement owned by them"
+   }
+  },
+  {
+   "resource": 11402,
+   "name": "Buffer-1-441320",
+   "kind": "buffer",
+   "status": "runtime",
+   "capture_start_read": true,
+   "producer": {
+    "kind": "previous_skinned_vertices",
+    "class": "a",
+    "producer": "Unity CPU skinning of the previous frame (SkinnedMeshRenderer motion-vector source); owned by the skinning generator (docs/hs2_offline_head_skinning.md)"
+   }
+  },
+  {
+   "resource": 11448,
+   "name": "Shadowmap",
+   "kind": "tex2d",
+   "status": "runtime",
+   "capture_start_read": false,
+   "producer": {
+    "kind": "render_target_in_frame",
+    "class": "a",
+    "producer": "render target produced inside the frame by the frame generators"
+   }
+  },
+  {
+   "resource": 11503,
+   "name": "ImageEffects Temp",
+   "kind": "tex2d",
+   "status": "runtime",
+   "capture_start_read": false,
+   "producer": {
+    "kind": "render_target_in_frame",
+    "class": "a",
+    "producer": "render target produced inside the frame by the frame generators"
+   }
+  },
+  {
+   "resource": 11522,
+   "name": "Buffer-1-441320",
+   "kind": "buffer",
+   "status": "runtime",
+   "capture_start_read": false,
+   "producer": {
+    "kind": "skinning_output",
+    "class": "a",
+    "producer": "Unity CPU skinning (SkinnedMeshRenderer) written by Map in the frame; skinning generator"
+   }
+  },
+  {
+   "resource": 11544,
+   "name": "Screenspace ShadowMap",
+   "kind": "tex2d",
+   "status": "runtime",
+   "capture_start_read": false,
+   "producer": {
+    "kind": "render_target_in_frame",
+    "class": "a",
+    "producer": "render target produced inside the frame by the frame generators"
+   }
+  },
+  {
+   "resource": 12135,
+   "name": "Color Grading Log Lut",
+   "kind": "tex3d",
+   "status": "runtime",
+   "capture_start_read": false,
+   "producer": {
+    "kind": "render_target_in_frame",
+    "class": "a",
+    "producer": "render target produced inside the frame by the frame generators"
+   }
+  },
+  {
+   "resource": 12287,
+   "name": "",
+   "kind": "tex2d",
+   "status": "runtime",
+   "capture_start_read": true,
+   "producer": {
+    "kind": "script_texture",
+    "class": "b",
+    "producer": "runtime Texture2D without an installed identity"
+   }
+  },
+  {
+   "resource": 12971,
+   "name": "Font Texture",
+   "kind": "tex2d",
+   "status": "runtime",
+   "capture_start_read": true,
+   "producer": {
+    "kind": "dynamic_font_atlas",
+    "class": "b",
+    "producer": "UnityEngine.Font dynamic glyph atlas: FreeType rasterization of every string requested since startup (TextGenerator); content depends on the UI text history"
+   }
+  },
+  {
+   "resource": 12973,
+   "name": "Font Texture",
+   "kind": "tex2d",
+   "status": "runtime",
+   "capture_start_read": true,
+   "producer": {
+    "kind": "dynamic_font_atlas",
+    "class": "b",
+    "producer": "UnityEngine.Font dynamic glyph atlas: FreeType rasterization of every string requested since startup (TextGenerator); content depends on the UI text history"
+   }
+  },
+  {
+   "resource": 12977,
+   "name": "Buffer-1-50160",
+   "kind": "buffer",
+   "status": "runtime",
+   "capture_start_read": true,
+   "producer": {
+    "kind": "ui_canvas_geometry",
+    "class": "b",
+    "producer": "UnityEngine.UI Canvas batching (CanvasRenderer meshes); UI layout state is not in the scene export"
+   }
+  },
+  {
+   "resource": 12978,
+   "name": "Buffer-2-2508",
+   "kind": "buffer",
+   "status": "runtime",
+   "capture_start_read": true,
+   "producer": {
+    "kind": "ui_canvas_geometry",
+    "class": "b",
+    "producer": "UnityEngine.UI Canvas batching (CanvasRenderer meshes); UI layout state is not in the scene export"
+   }
+  },
+  {
+   "resource": 15507,
+   "name": "",
+   "kind": "tex2d",
+   "status": "runtime_descriptor_equal",
+   "capture_start_read": true,
+   "producer": {
+    "kind": "chacontrol_face_composite",
+    "class": "a",
+    "producer": "ChaControl.CreateFaceTexture -> customTexCtrlFace.SetNewCreateTexture(0, SkinTex) -> CustomTextureCreate.RebuildTextureAndSetMaterial (KSOX OverlayBlit) -> Graphics.Blit(texMain, createTex, create_skin_face, 0) into RenderTexture(2048, 2048, 0, ARGB32){useMipMap}, GL.Clear(Color.clear) and sRGBWrite first; mips auto-generated"
+   }
+  },
+  {
+   "resource": 15512,
+   "name": "",
+   "kind": "tex2d",
+   "status": "runtime_descriptor_equal",
+   "capture_start_read": true,
+   "producer": {
+    "kind": "chacontrol_face_detail_composite",
+    "class": "a",
+    "producer": "ChaControl.CreateFaceTexture -> SetNewCreateTexture(1, SkinCreateDetailTex) -> Graphics.Blit(etc black2048, createTex, \"create_skin detail_face\", 0)"
+   }
+  },
+  {
+   "resource": 15626,
+   "name": "Buffer-1-168640",
+   "kind": "buffer",
+   "status": "runtime",
+   "capture_start_read": false,
+   "producer": {
+    "kind": "skinning_output",
+    "class": "a",
+    "producer": "Unity CPU skinning (SkinnedMeshRenderer) written by Map in the frame; skinning generator"
+   }
+  },
+  {
+   "resource": 15628,
+   "name": "Buffer-1-15920",
+   "kind": "buffer",
+   "status": "runtime",
+   "capture_start_read": false,
+   "producer": {
+    "kind": "skinning_output",
+    "class": "a",
+    "producer": "Unity CPU skinning (SkinnedMeshRenderer) written by Map in the frame; skinning generator"
+   }
+  },
+  {
+   "resource": 15636,
+   "name": "Buffer-1-33520",
+   "kind": "buffer",
+   "status": "runtime",
+   "capture_start_read": false,
+   "producer": {
+    "kind": "skinning_output",
+    "class": "a",
+    "producer": "Unity CPU skinning (SkinnedMeshRenderer) written by Map in the frame; skinning generator"
+   }
+  },
+  {
+   "resource": 15637,
+   "name": "Buffer-1-26120",
+   "kind": "buffer",
+   "status": "runtime",
+   "capture_start_read": false,
+   "producer": {
+    "kind": "skinning_output",
+    "class": "a",
+    "producer": "Unity CPU skinning (SkinnedMeshRenderer) written by Map in the frame; skinning generator"
+   }
+  },
+  {
+   "resource": 15638,
+   "name": "Buffer-1-177560",
+   "kind": "buffer",
+   "status": "runtime",
+   "capture_start_read": false,
+   "producer": {
+    "kind": "skinning_output",
+    "class": "a",
+    "producer": "Unity CPU skinning (SkinnedMeshRenderer) written by Map in the frame; skinning generator"
+   }
+  },
+  {
+   "resource": 15639,
+   "name": "Buffer-1-5920",
+   "kind": "buffer",
+   "status": "runtime",
+   "capture_start_read": false,
+   "producer": {
+    "kind": "skinning_output",
+    "class": "a",
+    "producer": "Unity CPU skinning (SkinnedMeshRenderer) written by Map in the frame; skinning generator"
+   }
+  },
+  {
+   "resource": 15640,
+   "name": "Buffer-1-5920",
+   "kind": "buffer",
+   "status": "runtime",
+   "capture_start_read": false,
+   "producer": {
+    "kind": "skinning_output",
+    "class": "a",
+    "producer": "Unity CPU skinning (SkinnedMeshRenderer) written by Map in the frame; skinning generator"
+   }
+  },
+  {
+   "resource": 15641,
+   "name": "Buffer-1-11840",
+   "kind": "buffer",
+   "status": "runtime",
+   "capture_start_read": false,
+   "producer": {
+    "kind": "skinning_output",
+    "class": "a",
+    "producer": "Unity CPU skinning (SkinnedMeshRenderer) written by Map in the frame; skinning generator"
+   }
+  },
+  {
+   "resource": 15642,
+   "name": "Buffer-1-22560",
+   "kind": "buffer",
+   "status": "runtime",
+   "capture_start_read": false,
+   "producer": {
+    "kind": "skinning_output",
+    "class": "a",
+    "producer": "Unity CPU skinning (SkinnedMeshRenderer) written by Map in the frame; skinning generator"
+   }
+  },
+  {
+   "resource": 15645,
+   "name": "Buffer-1-177560",
+   "kind": "buffer",
+   "status": "runtime",
+   "capture_start_read": true,
+   "producer": {
+    "kind": "previous_skinned_vertices",
+    "class": "a",
+    "producer": "Unity CPU skinning of the previous frame (SkinnedMeshRenderer motion-vector source); owned by the skinning generator (docs/hs2_offline_head_skinning.md)"
+   }
+  },
+  {
+   "resource": 15647,
+   "name": "Buffer-1-5920",
+   "kind": "buffer",
+   "status": "runtime",
+   "capture_start_read": true,
+   "producer": {
+    "kind": "previous_skinned_vertices",
+    "class": "a",
+    "producer": "Unity CPU skinning of the previous frame (SkinnedMeshRenderer motion-vector source); owned by the skinning generator (docs/hs2_offline_head_skinning.md)"
+   }
+  },
+  {
+   "resource": 15648,
+   "name": "Buffer-1-22560",
+   "kind": "buffer",
+   "status": "runtime",
+   "capture_start_read": true,
+   "producer": {
+    "kind": "previous_skinned_vertices",
+    "class": "a",
+    "producer": "Unity CPU skinning of the previous frame (SkinnedMeshRenderer motion-vector source); owned by the skinning generator (docs/hs2_offline_head_skinning.md)"
+   }
+  },
+  {
+   "resource": 15649,
+   "name": "Buffer-1-26120",
+   "kind": "buffer",
+   "status": "runtime",
+   "capture_start_read": true,
+   "producer": {
+    "kind": "previous_skinned_vertices",
+    "class": "a",
+    "producer": "Unity CPU skinning of the previous frame (SkinnedMeshRenderer motion-vector source); owned by the skinning generator (docs/hs2_offline_head_skinning.md)"
+   }
+  },
+  {
+   "resource": 15650,
+   "name": "Buffer-1-11840",
+   "kind": "buffer",
+   "status": "runtime",
+   "capture_start_read": true,
+   "producer": {
+    "kind": "previous_skinned_vertices",
+    "class": "a",
+    "producer": "Unity CPU skinning of the previous frame (SkinnedMeshRenderer motion-vector source); owned by the skinning generator (docs/hs2_offline_head_skinning.md)"
+   }
+  },
+  {
+   "resource": 15652,
+   "name": "Buffer-1-5920",
+   "kind": "buffer",
+   "status": "runtime",
+   "capture_start_read": true,
+   "producer": {
+    "kind": "previous_skinned_vertices",
+    "class": "a",
+    "producer": "Unity CPU skinning of the previous frame (SkinnedMeshRenderer motion-vector source); owned by the skinning generator (docs/hs2_offline_head_skinning.md)"
+   }
+  },
+  {
+   "resource": 15698,
+   "name": "",
+   "kind": "tex2d",
+   "status": "runtime_descriptor_equal",
+   "capture_start_read": true,
+   "producer": {
+    "kind": "chacontrol_body_composite",
+    "class": "a",
+    "producer": "ChaControl.CreateBodyTexture -> SetNewCreateTexture(0, SkinTex) -> KSOX OverlayBlit: underlay textures (UncensorSelector uncensorUnderlay) composited into a temporary first, overlays (uncensorOverlay) after the create-material Blit (KoiSkinOverlayController.ApplyOverlays)"
+   }
+  },
+  {
+   "resource": 15703,
+   "name": "",
+   "kind": "tex2d",
+   "status": "runtime_descriptor_equal",
+   "capture_start_read": true,
+   "producer": {
+    "kind": "chacontrol_body_detail_composite",
+    "class": "a",
+    "producer": "ChaControl.CreateBodyTexture -> SetNewCreateTexture(1, SkinCreateDetailTex)"
+   }
+  },
+  {
+   "resource": 15722,
+   "name": "",
+   "kind": "tex2d",
+   "status": "runtime_descriptor_equal",
+   "capture_start_read": true,
+   "producer": {
+    "kind": "chacontrol_clothes_composite",
+    "class": "a",
+    "producer": "ChaControl.ChangeCustomClothes -> CustomTextureCreate.RebuildTextureAndSetMaterial (clothes create material, colour-mask recolour; KCOX ChangeCustomClothes post-hook overlays)"
+   }
+  },
+  {
+   "resource": 15727,
+   "name": "",
+   "kind": "tex2d",
+   "status": "runtime_descriptor_equal",
+   "capture_start_read": true,
+   "producer": {
+    "kind": "chacontrol_clothes_detail_composite",
+    "class": "a",
+    "producer": "ChaControl.ChangeCustomClothes -> second CustomTextureCreate (detail/gloss)"
+   }
+  },
+  {
+   "resource": 15741,
+   "name": "",
+   "kind": "tex2d",
+   "status": "runtime_descriptor_equal",
+   "capture_start_read": true,
+   "producer": {
+    "kind": "chacontrol_clothes_composite",
+    "class": "a",
+    "producer": "ChaControl.ChangeCustomClothes -> CustomTextureCreate.RebuildTextureAndSetMaterial (clothes create material, colour-mask recolour; KCOX ChangeCustomClothes post-hook overlays)"
+   }
+  },
+  {
+   "resource": 15746,
+   "name": "",
+   "kind": "tex2d",
+   "status": "runtime_descriptor_equal",
+   "capture_start_read": true,
+   "producer": {
+    "kind": "chacontrol_clothes_detail_composite",
+    "class": "a",
+    "producer": "ChaControl.ChangeCustomClothes -> second CustomTextureCreate (detail/gloss)"
+   }
+  },
+  {
+   "resource": 15760,
+   "name": "",
+   "kind": "tex2d",
+   "status": "runtime_descriptor_equal",
+   "capture_start_read": true,
+   "producer": {
+    "kind": "chacontrol_clothes_composite",
+    "class": "a",
+    "producer": "ChaControl.ChangeCustomClothes -> CustomTextureCreate.RebuildTextureAndSetMaterial (clothes create material, colour-mask recolour; KCOX ChangeCustomClothes post-hook overlays)"
+   }
+  },
+  {
+   "resource": 15765,
+   "name": "",
+   "kind": "tex2d",
+   "status": "runtime_descriptor_equal",
+   "capture_start_read": true,
+   "producer": {
+    "kind": "chacontrol_clothes_detail_composite",
+    "class": "a",
+    "producer": "ChaControl.ChangeCustomClothes -> second CustomTextureCreate (detail/gloss)"
+   }
+  },
+  {
+   "resource": 15779,
+   "name": "",
+   "kind": "tex2d",
+   "status": "runtime_descriptor_equal",
+   "capture_start_read": true,
+   "producer": {
+    "kind": "chacontrol_clothes_composite",
+    "class": "a",
+    "producer": "ChaControl.ChangeCustomClothes -> CustomTextureCreate.RebuildTextureAndSetMaterial (clothes create material, colour-mask recolour; KCOX ChangeCustomClothes post-hook overlays)"
+   }
+  },
+  {
+   "resource": 15784,
+   "name": "",
+   "kind": "tex2d",
+   "status": "runtime_descriptor_equal",
+   "capture_start_read": true,
+   "producer": {
+    "kind": "chacontrol_clothes_detail_composite",
+    "class": "a",
+    "producer": "ChaControl.ChangeCustomClothes -> second CustomTextureCreate (detail/gloss)"
+   }
+  },
+  {
+   "resource": 15798,
+   "name": "",
+   "kind": "tex2d",
+   "status": "runtime_descriptor_equal",
+   "capture_start_read": true,
+   "producer": {
+    "kind": "chacontrol_clothes_composite",
+    "class": "a",
+    "producer": "ChaControl.ChangeCustomClothes -> CustomTextureCreate.RebuildTextureAndSetMaterial (clothes create material, colour-mask recolour; KCOX ChangeCustomClothes post-hook overlays)"
+   }
+  },
+  {
+   "resource": 15803,
+   "name": "",
+   "kind": "tex2d",
+   "status": "runtime_descriptor_equal",
+   "capture_start_read": true,
+   "producer": {
+    "kind": "chacontrol_clothes_detail_composite",
+    "class": "a",
+    "producer": "ChaControl.ChangeCustomClothes -> second CustomTextureCreate (detail/gloss)"
+   }
+  },
+  {
+   "resource": 15812,
+   "name": "Buffer-1-63880",
+   "kind": "buffer",
+   "status": "runtime",
+   "capture_start_read": false,
+   "producer": {
+    "kind": "skinning_output",
+    "class": "a",
+    "producer": "Unity CPU skinning (SkinnedMeshRenderer) written by Map in the frame; skinning generator"
+   }
+  },
+  {
+   "resource": 15813,
+   "name": "Buffer-1-87920",
+   "kind": "buffer",
+   "status": "runtime",
+   "capture_start_read": false,
+   "producer": {
+    "kind": "skinning_output",
+    "class": "a",
+    "producer": "Unity CPU skinning (SkinnedMeshRenderer) written by Map in the frame; skinning generator"
+   }
+  },
+  {
+   "resource": 15814,
+   "name": "Buffer-1-61680",
+   "kind": "buffer",
+   "status": "runtime",
+   "capture_start_read": false,
+   "producer": {
+    "kind": "skinning_output",
+    "class": "a",
+    "producer": "Unity CPU skinning (SkinnedMeshRenderer) written by Map in the frame; skinning generator"
+   }
+  },
+  {
+   "resource": 15815,
+   "name": "Buffer-1-99720",
+   "kind": "buffer",
+   "status": "runtime",
+   "capture_start_read": false,
+   "producer": {
+    "kind": "skinning_output",
+    "class": "a",
+    "producer": "Unity CPU skinning (SkinnedMeshRenderer) written by Map in the frame; skinning generator"
+   }
+  },
+  {
+   "resource": 15816,
+   "name": "Buffer-1-197040",
+   "kind": "buffer",
+   "status": "runtime",
+   "capture_start_read": false,
+   "producer": {
+    "kind": "skinning_output",
+    "class": "a",
+    "producer": "Unity CPU skinning (SkinnedMeshRenderer) written by Map in the frame; skinning generator"
+   }
+  },
+  {
+   "resource": 15946,
+   "name": "Buffer-1-197040",
+   "kind": "buffer",
+   "status": "runtime",
+   "capture_start_read": true,
+   "producer": {
+    "kind": "previous_skinned_vertices",
+    "class": "a",
+    "producer": "Unity CPU skinning of the previous frame (SkinnedMeshRenderer motion-vector source); owned by the skinning generator (docs/hs2_offline_head_skinning.md)"
+   }
+  },
+  {
+   "resource": 15947,
+   "name": "Buffer-1-63880",
+   "kind": "buffer",
+   "status": "runtime",
+   "capture_start_read": true,
+   "producer": {
+    "kind": "previous_skinned_vertices",
+    "class": "a",
+    "producer": "Unity CPU skinning of the previous frame (SkinnedMeshRenderer motion-vector source); owned by the skinning generator (docs/hs2_offline_head_skinning.md)"
+   }
+  },
+  {
+   "resource": 15948,
+   "name": "Buffer-1-99720",
+   "kind": "buffer",
+   "status": "runtime",
+   "capture_start_read": true,
+   "producer": {
+    "kind": "previous_skinned_vertices",
+    "class": "a",
+    "producer": "Unity CPU skinning of the previous frame (SkinnedMeshRenderer motion-vector source); owned by the skinning generator (docs/hs2_offline_head_skinning.md)"
+   }
+  },
+  {
+   "resource": 15949,
+   "name": "Buffer-1-61680",
+   "kind": "buffer",
+   "status": "runtime",
+   "capture_start_read": true,
+   "producer": {
+    "kind": "previous_skinned_vertices",
+    "class": "a",
+    "producer": "Unity CPU skinning of the previous frame (SkinnedMeshRenderer motion-vector source); owned by the skinning generator (docs/hs2_offline_head_skinning.md)"
+   }
+  },
+  {
+   "resource": 15950,
+   "name": "Buffer-1-87920",
+   "kind": "buffer",
+   "status": "runtime",
+   "capture_start_read": true,
+   "producer": {
+    "kind": "previous_skinned_vertices",
+    "class": "a",
+    "producer": "Unity CPU skinning of the previous frame (SkinnedMeshRenderer motion-vector source); owned by the skinning generator (docs/hs2_offline_head_skinning.md)"
+   }
+  },
+  {
+   "resource": 15998,
+   "name": "Buffer-1-3213120",
+   "kind": "buffer",
+   "status": "runtime",
+   "capture_start_read": false,
+   "producer": {
+    "kind": "ui_canvas_geometry",
+    "class": "b",
+    "producer": "UnityEngine.UI Canvas batching (CanvasRenderer meshes); UI layout state is not in the scene export"
+   }
+  },
+  {
+   "resource": 15999,
+   "name": "Buffer-2-378804",
+   "kind": "buffer",
+   "status": "runtime",
+   "capture_start_read": false,
+   "producer": {
+    "kind": "ui_canvas_geometry",
+    "class": "b",
+    "producer": "UnityEngine.UI Canvas batching (CanvasRenderer meshes); UI layout state is not in the scene export"
+   }
+  },
+  {
+   "resource": 16438,
+   "name": "Buffer-1-1423920",
+   "kind": "buffer",
+   "status": "runtime",
+   "capture_start_read": false,
+   "producer": {
+    "kind": "ui_canvas_geometry",
+    "class": "b",
+    "producer": "UnityEngine.UI Canvas batching (CanvasRenderer meshes); UI layout state is not in the scene export"
+   }
+  },
+  {
+   "resource": 16439,
+   "name": "Buffer-2-49284",
+   "kind": "buffer",
+   "status": "runtime",
+   "capture_start_read": false,
+   "producer": {
+    "kind": "ui_canvas_geometry",
+    "class": "b",
+    "producer": "UnityEngine.UI Canvas batching (CanvasRenderer meshes); UI layout state is not in the scene export"
+   }
+  }
+ ],
+ "unresolved": [
+  {
+   "resource": 10256,
+   "name": "p_cf_head_02",
+   "kind": "tex2d",
+   "reason": "UI list texture p_cf_head_02: texture identity p_cf_head_02 256x256 DXGI 78 mips 9: 33 different-content installed candidates {'128e338b493c': [('E:\\\\HoneySelect2_ArcticFox\\\\mods\\\\PersonalMods - Head Mod\\\\DBLin\\\\[DBLin] Face type02 MR.zipmod::abdata/chara/DBLin/fo_head_0.unity3d', 2324000499454357419)], '8b30d92c9d0b': [('E:\\\\HoneySelect2_ArcticFox\\\\mods\\\\PersonalMods - Head Mod\\\\DBLin\\\\[DBLin] Face type03 MR ver02.zipmod::abdata/chara/DBLin/fo_head_30.unity3d', 5070286781645777370)], '2e9853beff8c': [('E:\\\\HoneySelect2_ArcticFox\\\\mods\\\\PersonalMods - Head Mod\\\\DBLin\\\\[DBLin] Face type_Western"
+  },
+  {
+   "resource": 10258,
+   "name": "p_cf_head_02",
+   "kind": "tex2d",
+   "reason": "UI list texture p_cf_head_02: texture identity p_cf_head_02 256x256 DXGI 78 mips 9: 33 different-content installed candidates {'128e338b493c': [('E:\\\\HoneySelect2_ArcticFox\\\\mods\\\\PersonalMods - Head Mod\\\\DBLin\\\\[DBLin] Face type02 MR.zipmod::abdata/chara/DBLin/fo_head_0.unity3d', 2324000499454357419)], '8b30d92c9d0b': [('E:\\\\HoneySelect2_ArcticFox\\\\mods\\\\PersonalMods - Head Mod\\\\DBLin\\\\[DBLin] Face type03 MR ver02.zipmod::abdata/chara/DBLin/fo_head_30.unity3d', 5070286781645777370)], '2e9853beff8c': [('E:\\\\HoneySelect2_ArcticFox\\\\mods\\\\PersonalMods - Head Mod\\\\DBLin\\\\[DBLin] Face type_Western"
+  },
+  {
+   "resource": 10260,
+   "name": "p_cf_head_02",
+   "kind": "tex2d",
+   "reason": "UI list texture p_cf_head_02: texture identity p_cf_head_02 512x512 DXGI 78 mips 10: 18 different-content installed candidates {'7bb077773d5d': [('E:\\\\HoneySelect2_ArcticFox\\\\mods\\\\PersonalMods - Head Mod\\\\Head - Exclusive HS2\\\\DBLin\\\\[DBLin]Tifa ver02 Ver.Public.zipmod::abdata/chara/00/DBLin/Tifa/thumbs.unity3d', 2)], '104f30402bf5': [('E:\\\\HoneySelect2_ArcticFox\\\\mods\\\\PersonalMods - Head Mod\\\\Head - Exclusive HS2\\\\Darkruler\\\\[Darkruler][HS2]BaoSanniang.zipmod::abdata/chara/00/Darkruler_BaoSanniang/thumbs.unity3d', 6577980758527219033)], '9015f68ee88f': [('E:\\\\HoneySelect2_ArcticFox\\\\mods\\\\P"
+  }
+ ],
+ "mismatch": [
+  {
+   "resource": 10264,
+   "name": "p_cf_head_02",
+   "desc_equal": true,
+   "srv_desc_equal": true,
+   "subresources_equal": 0,
+   "subresources": 1
+  },
+  {
+   "resource": 10278,
+   "name": "preset_head_02",
+   "desc_equal": true,
+   "srv_desc_equal": true,
+   "subresources_equal": 0,
+   "subresources": 1
+  }
+ ],
+ "seconds": 342.7,
+ "bulky_table": "E:\\HS2_offline_renderer_data\\resources_20261020\\acceptance_trial5\\resources_table.json"
+}
