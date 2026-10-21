@@ -34,27 +34,46 @@ acceptance (per-pass diff vs official RenderDoc replay of a paired capture)
 A directory with `program.json` and a `blobs/` folder (content-addressed by
 SHA-256). All bytes are exact; nothing is decoded or converted implicitly.
 
+- `schema: "hs2_frame_program/1"`. Object ids are positive integers, unique across
+  all tables. Every table entry and command may carry an optional `provenance`
+  object (and resources/views a `name`); nothing else is optional or implicit.
 - `resources[]`: `{id, kind: buffer|tex1d|tex2d|tex3d|texcube, desc{...D3D11 desc
   fields verbatim: ByteWidth/Width/Height/Depth/MipLevels/ArraySize/Format(DXGI int)/
   SampleDesc/Usage/BindFlags/CPUAccessFlags/MiscFlags/StructureByteStride},
-  initial: [{subresource, blob, row_pitch, slice_pitch}] | null, name}`
-- `views[]`: `{id, kind: srv|rtv|dsv|uav, resource, desc{verbatim D3D11 view desc}}`
+  initial: [{subresource, blob, row_pitch, slice_pitch}] | null, name}`.
+  `initial` is the `D3D11_SUBRESOURCE_DATA` array (every subresource exactly once,
+  pitches as given) or `null` (no data: content undefined, as in D3D11).
+  `texcube` = a Texture2D desc with `MISC_TEXTURECUBE`.
+- `views[]`: `{id, kind: srv|rtv|dsv|uav, resource, desc{verbatim D3D11 view desc} | null}`
+  (`null` = the runtime's whole-resource default view).
 - `shaders[]`: `{id, stage: vs|ps|gs|hs|ds|cs, blob, source{shader, subshader,
   pass, keywords[], asset, path_id}}` — DXBC bytes from installed assets.
-- `input_layouts[]`, `blend_states[]`, `depth_states[]`, `raster_states[]`,
-  `samplers[]`: verbatim D3D11 descriptors.
+- `input_layouts[]`: `{id, elements[verbatim D3D11_INPUT_ELEMENT_DESC], signature_blob}`;
+  `blend_states[]`, `depth_states[]`, `raster_states[]`, `samplers[]`: `{id, desc}`
+  with verbatim D3D11 descriptors.
 - `commands[]` ordered; ops: `clear_rtv`, `clear_dsv`, `clear_uav_float|uint`,
-  `update_subresource` (blob + box), `copy_resource`, `copy_subresource_region`,
-  `resolve`, `generate_mips`, `draw`, `draw_indexed`, `draw_instanced`,
-  `draw_indexed_instanced`, `dispatch`. Each draw/dispatch carries its **complete
-  binding snapshot** (shaders, IA buffers/offsets/strides/topology/layout, CBs per
-  stage with blob or buffer+range, SRVs/samplers/UAVs per stage, RTVs/DSV,
-  viewports/scissors, blend factor/sample mask, stencil ref, all states). No
-  implicit inherited state.
-- `readbacks[]`: `{name, after_command, resource, subresource, orientation}`.
+  `update_subresource` (blob + box + row/depth pitch, optional `UpdateSubresource1`
+  copy flags), `map_write` (DYNAMIC/STAGING writes: map type/flags, exact
+  `[start,end)` range and bytes, executed like RenderDoc's `Serialise_Unmap` replay;
+  `UpdateSubresource` is invalid on DYNAMIC/STAGING resources), `copy_resource`,
+  `copy_subresource_region`, `resolve`, `generate_mips`, `draw`, `draw_indexed`,
+  `draw_instanced`, `draw_indexed_instanced`, `dispatch`. Each draw/dispatch carries
+  its **complete binding snapshot** (shaders, IA buffers/offsets/strides/topology/
+  layout, CBs per stage with blob or buffer+range, SRVs/samplers/UAVs per stage,
+  RTVs/DSV, viewports/scissors, blend factor/sample mask, stencil ref, all states).
+  Slot lists are sparse: an absent slot is explicitly unbound. The executor starts
+  every draw/dispatch from `ClearState`, so no state is inherited; a snapshot whose
+  inputs overlap its outputs is refused by the runtime and fails.
+- `readbacks[]`: `{name, after_command, resource, subresource, orientation}` (+ optional
+  `byte_offset`/`byte_length` for buffers). Output: `<name>.raw.bin` in D3D
+  subresource memory order, tightly packed (RenderDoc `GetTextureData` layout), plus
+  `<name>.topdown.bin` for `unity_texture_rows_bottom_up`, described in `execution.json`.
 - `provenance`: generator versions, scene-state hash, capture hash if converted.
 
-`src/render/frame_program.py` is the Python builder/validator for this schema.
+`src/render/frame_program.py` is the Python builder/validator for this schema;
+`tools/offline_renderer/frame_executor.cpp` executes it and
+`tools/offline_renderer/capture_to_program.py` converts real captures into it
+([executor](hs2_offline_frame_executor.md)). Ladder step 1 passed on 2026-10-20.
 
 ## Acceptance ladder
 
