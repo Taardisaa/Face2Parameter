@@ -1,0 +1,95 @@
+{
+ "provenance": {
+  "capture": "HS2Mod/artifacts/chenger_reference_fit_20261012/native_present_session_v1/unaccepted_retry_frame17675.rdc (sha eb5743bc...)",
+  "bridge_request": "native_present_session_v1/capture_v1/native_request.json (target, ortho_size, width 1086, height 1448)",
+  "bridge_code": "HS2Mod/plugins/HS2_McpBridge/MakerRenderStyleService.cs Capture(): distance = size / Mathf.Tan(fov*Deg2Rad*.5f); position = target + Euler(0,yaw,0)*(0,0,distance); cam.aspect=(float)w/h; renders into a RenderTexture",
+  "other_session": "runtime_audit_hook_v3/runtime_fields_completion.json (camera fov/near/far/ortho_size, ambient probe, ambient intensity/mode, Directional Light Key shadow_strength 0.8468087); a different process and frame",
+  "sss_camera": "DHH SSS camera renders at half size 543x724; fov/near/far equal to the main camera (other_session values) - input assumption checked by the comparison itself; its projection is implicit (no CTAA on the DHH SSS camera, which also shows no jitter)",
+  "capture_inputs": "unity_MatrixV, CTAA jitter (VP column 2), per-draw O2W, shadow distance 120 (from _LightShadowData.y = far/d)"
+ },
+ "cameras": {
+  "1086x1448": {
+   "pixel_width": 1086,
+   "pixel_height": 1448,
+   "fov": 23.0,
+   "near": 0.08,
+   "far": 1000.0,
+   "orthographic_size": 5.0,
+   "position": [
+    0.0930693969130516,
+    14.29138469696045,
+    7.689435958862305
+   ],
+   "implicit_projection": false
+  },
+  "543x724": {
+   "pixel_width": 543,
+   "pixel_height": 724,
+   "fov": 23.0,
+   "near": 0.08,
+   "far": 1000.0,
+   "orthographic_size": 5.0,
+   "position": [
+    0.0930693969130516,
+    14.29138469696045,
+    7.689435958862305
+   ],
+   "implicit_projection": true
+  }
+ },
+ "render_settings": {
+  "ambient_mode": "Skybox",
+  "has_skybox_material": true,
+  "ambient_intensity": 1.053189,
+  "ambient_probe": [
+   0.3317869,
+   6.339461e-10,
+   0.0,
+   -3.67333247e-11,
+   0.0,
+   1.12575727e-09,
+   6.33299351e-08,
+   0.0,
+   -6.494952e-08,
+   0.3317869,
+   6.339461e-10,
+   0.0,
+   -3.67333247e-11,
+   0.0,
+   1.12575727e-09,
+   6.33299351e-08,
+   0.0,
+   -6.494952e-08,
+   0.3317869,
+   6.339461e-10,
+   0.0,
+   -3.67333247e-11,
+   0.0,
+   1.12575727e-09,
+   6.33299351e-08,
+   0.0,
+   -6.494952e-08
+  ]
+ },
+ "shadow_light": {
+  "shadow_strength": 0.8468087,
+  "shadow_distance": 120.0,
+  "camera_far": 1000.0
+ },
+ "graphics": {
+  "video_memory_mb": 480,
+  "max_render_texture_size": 16384
+ },
+ "quality": {
+  "shadow_resolution": "VeryHigh"
+ },
+ "forward_light": {
+  "color": [
+   0.951,
+   0.906247,
+   0.876411736,
+   1.0
+  ],
+  "intensity": 1.0
+ }
+}
