@@ -327,9 +327,97 @@ static class Program
         Check(true, "null sharedMesh with null cached mesh accepted");
     }
 
+    // Probe 7.0.0: RenderNode queues through Camera+0x530 -> RenderLoop -> RenderLoopContext.
+    static void TestRenderNodes()
+    {
+        var m = new FakeMemory();
+        ulong cam = m.Alloc(0x600), rl = m.Alloc(0x40), ctx = m.Alloc(0x838), scene = m.Alloc(0x10068 + 0x100);
+        ulong nodes = m.Alloc(3 * 0x1a0);
+        m.U64(cam + 0x530, rl);
+        Check(RenderNodes.ContextOf(m, cam) == 0, "no context outside a render");
+        m.U64(rl, ctx); m.U64(ctx + 0x8, cam); m.U64(ctx + 0x830, rl); m.U64(ctx + 0x7c8, scene);
+        m.U64(ctx + 0x7d0, scene + 0x8); m.U64(ctx + 0x7d8, scene + 0x10068);
+        m.U64(scene + 0x8, nodes); m.U64(scene + 0x8 + 0x10, 3);
+        for (int i = 0; i < 3; i++) { m.U32(nodes + (ulong)(i * 0x1a0) + 0x100, (uint)(700 + i)); m.I32(nodes + (ulong)(i * 0x1a0) + 0x190, -100 - i); }
+        var r = RenderNodes.Read(m, cam, 0);
+        Check(r.Queues.Count == 2 && r.Queues[0].Count == 3 && r.Queues[1].Count == 0, "two queues, counts");
+        Check(r.Queues[0].Rows[2].MeshId == 702 && r.Queues[0].Rows[2].InstanceId == -102, "node+0x100 mesh id, node+0x190 instance id");
+        Throws<NativeReadError>(() => RenderNodes.Read(m, cam, ctx), "context already attached at pre_cull: not fresh");
+        Throws<NativeReadError>(() => RenderNodes.Read(m, cam, ulong.MaxValue), "unobserved pre_cull: not fresh");
+        m.U64(ctx + 0x8, cam + 8);
+        Throws<NativeReadError>(() => RenderNodes.Read(m, cam, 0), "context of another camera");
+        m.U64(ctx + 0x8, cam); m.U64(ctx + 0x7d8, scene + 0x10060);
+        Throws<NativeReadError>(() => RenderNodes.Read(m, cam, 0), "queue pointer not inside the scene");
+        m.U64(ctx + 0x7d8, scene + 0x10068); m.U64(scene + 0x8, 0);
+        Throws<NativeReadError>(() => RenderNodes.Read(m, cam, 0), "null nodes with a count");
+        m.U64(scene + 0x8, nodes); m.U64(scene + 0x8 + 0x10, 1UL << 20);
+        Throws<NativeReadError>(() => RenderNodes.Read(m, cam, 0), "unreasonable count");
+        m.U64(rl, 0);
+        Throws<NativeReadError>(() => RenderNodes.Read(m, cam, 0), "no context attached");
+        ulong mesh = m.Alloc(0x200); m.U32(mesh + 0x174, 4242);
+        Check(RenderNodes.MeshId(m, mesh) == 4242, "mesh+0x174");
+    }
+
+    static void TestPreparedInfo()
+    {
+        var m = new FakeMemory();
+        ulong module = m.Alloc(0x1561600 + 0x10);   // covers s_Instance at RVA 0x15615d0
+        ulong mgr = m.Alloc(0x200), rends = m.Alloc(8 * 8), infos = m.Alloc(8 * 8), smr = m.Alloc(0x400), info = m.Alloc(0x60);
+        m.U64(module + 0x15615d0, mgr); m.U64(mgr + 0x108, rends); m.U64(mgr + 0x128, infos);
+        m.I32(smr + 0x2f8, 3); m.U64(rends + 3 * 8, smr); m.U64(infos + 3 * 8, info);
+        int h;
+        Check(PreparedInfo.Read(m, module, smr, out h) == info && h == 3, "prepared info by manager handle");
+        m.U64(infos + 3 * 8, 0);
+        Check(PreparedInfo.Read(m, module, smr, out h) == 0, "registered but not prepared");
+        m.U64(rends + 3 * 8, smr + 8);
+        Throws<NativeReadError>(() => PreparedInfo.Read(m, module, smr, out h), "manager slot is another renderer");
+        m.I32(smr + 0x2f8, -1);
+        Check(PreparedInfo.Read(m, module, smr, out h) == 0 && h == -1, "unregistered renderer (handle -1)");
+        m.I32(smr + 0x2f8, -5);
+        Throws<NativeReadError>(() => PreparedInfo.Read(m, module, smr, out h), "bad handle");
+        m.U64(module + 0x15615d0, 0);
+        Throws<NativeReadError>(() => PreparedInfo.Read(m, module, smr, out h), "no manager");
+    }
+
+    static void TestYaw()
+    {
+        Func<string, bool> none = p => false;
+        const string pre = "{\"path\":\"E:\\\\a.png\",\"target\":[0,0,0],\"ortho_size\":1,\"width\":64,\"height\":64";
+        Check(BridgeBody.Parse(pre + "}", none).Yaw == 0, "yaw omitted -> 0 (bridge default)");
+        Check(BridgeBody.Parse(pre + ",\"yaw\":-22.5}", none).Yaw == -22.5, "yaw parsed");
+        Throws<ArgumentException>(() => BridgeBody.Parse(pre + ",\"yaw\":\"30\"}", none), "yaw must be a number");
+    }
+
+    static void TestRendererBounds()
+    {
+        var m = new FakeMemory();
+        ulong r = m.Alloc(0x400), mesh = m.Alloc(0x200), shared = m.Alloc(0x200), data = m.Alloc(2 * 24);
+        var aabb = new float[] { 1, 2, 3, 0.5f, 0.25f, 0.125f };
+        var b = new byte[24]; Buffer.BlockCopy(aabb, 0, b, 0, 24); m.Write(r + 0x38 + 0x88, b);
+        var got = RendererBounds.Aabb(m, r, UnityPlayerLayout.BaseWorldAabb);
+        Check(got[0] == 1 && got[5] == 0.125f, "world AABB at Renderer+0xc0");
+        Check(UnityPlayerLayout.RendererBase + UnityPlayerLayout.BaseWorldAabb == 0xc0 && UnityPlayerLayout.RendererBase + UnityPlayerLayout.BaseLocalAabb == 0xd8
+              && UnityPlayerLayout.RendererBase + UnityPlayerLayout.SmrBaseUpdateWhenOffscreen == 0x28c
+              && UnityPlayerLayout.RendererBase + UnityPlayerLayout.MrBaseMesh == 0x1c0, "Renderer-relative v7 offsets");
+        m.U64(mesh + 0x38, shared); m.U64(shared + 0xf0, 2); m.U64(mesh + 0x120, data);
+        long size, binds;
+        m.U64(mesh + 0x130, 0);
+        Check(RendererBounds.BoneBounds(m, mesh, out size, out binds) == null && size == 0 && binds == 2, "cache not current -> null");
+        m.U64(mesh + 0x130, 2);
+        var mm = new float[] { -1, -2, -3, 1, 2, 3, -4, -5, -6, 4, 5, 6 };
+        var bb = new byte[48]; Buffer.BlockCopy(mm, 0, bb, 0, 48); m.Write(data, bb);
+        var f = RendererBounds.BoneBounds(m, mesh, out size, out binds);
+        Check(f != null && f.Length == 12 && f[6] == -4 && f[11] == 6, "bone bounds min/max per bindpose");
+        m.U64(mesh + 0x120, 0);
+        Throws<NativeReadError>(() => RendererBounds.BoneBounds(m, mesh, out size, out binds), "null data with size");
+        m.U64(mesh + 0x38, 0);
+        Throws<NativeReadError>(() => RendererBounds.BoneBounds(m, mesh, out size, out binds), "null SharedMeshData");
+    }
+
     static int Main()
     {
-        foreach (var t in new Action[] { TestPool, TestSheet, TestNameTables, TestRequest, TestJson, TestBridgeBody, TestV6, TestSmrNative })
+        foreach (var t in new Action[] { TestPool, TestSheet, TestNameTables, TestRequest, TestJson, TestBridgeBody, TestV6, TestSmrNative,
+                                          TestRenderNodes, TestRendererBounds, TestYaw, TestPreparedInfo })
         {
             try { t(); }
             catch (Exception e) { failures++; Console.WriteLine("FAIL (exception in " + t.Method.Name + "): " + e); }

@@ -161,6 +161,62 @@ namespace HS2Codex.FramePairProbe
                 Validation.Add("info: SkinnedMeshRenderer cached mesh checked " + smrs.Length);
                 return smrs.Length > 0;
             });
+            // ---- v7 layouts ----
+            Check("instance id offset is Renderer+0x8 (RenderNode+0x190 copies [BaseRenderer-0x30])", () => InstanceIdOffset == 8);
+            Check("MeshRenderer Renderer+0x38+0x188 equals MeshFilter.sharedMesh native object for every scene MeshRenderer with a MeshFilter", () =>
+            {
+                int n = 0;
+                foreach (var r in renderers.OfType<MeshRenderer>())
+                {
+                    var mf = r.GetComponent<MeshFilter>();
+                    if (mf == null) continue;
+                    if (Mem.U64(Memory, Ptr(r) + UnityPlayerLayout.RendererBase + UnityPlayerLayout.MrBaseMesh) != Ptr(mf.sharedMesh)) return false;
+                    n++;
+                }
+                Validation.Add("info: MeshRenderer cached mesh checked " + n);
+                return n > 0;
+            });
+            Check("SkinnedMeshRenderer Renderer+0x38+0x254 equals updateWhenOffscreen for every scene SkinnedMeshRenderer", () =>
+                renderers.OfType<SkinnedMeshRenderer>().All(s => Mem.U8(Memory, Ptr(s) + UnityPlayerLayout.RendererBase + UnityPlayerLayout.SmrBaseUpdateWhenOffscreen)
+                                                                == (s.updateWhenOffscreen ? 1 : 0)));
+            Check("SkinnedMeshRendererManager: the renderer slot of every registered SkinnedMeshRenderer handle (+0x2f8) is that renderer", () =>
+            {
+                int registered = 0, prepared = 0;
+                foreach (var s in renderers.OfType<SkinnedMeshRenderer>())
+                {
+                    int h;
+                    ulong info = PreparedInfo.Read(Memory, Base, Ptr(s), out h);
+                    if (h >= 0) registered++;
+                    if (info != 0) prepared++;
+                }
+                Validation.Add("info: SkinnedMeshRendererManager registered " + registered + ", prepared " + prepared);
+                return registered > 0;
+            });
+            // TransformInfo world AABB vs Renderer.bounds: native read first; the getter can refresh a
+            // renderer whose transform moved after the last update, so >= 90 % with mismatches recorded.
+            Check("Renderer+0x38+0x88 world AABB equals Renderer.bounds bits (>= 90 % of enabled Mesh/SkinnedMeshRenderers)", () =>
+            {
+                int n = 0, equal = 0;
+                var mismatched = new List<string>();
+                foreach (var r in renderers.Where(x => x is MeshRenderer || x is SkinnedMeshRenderer))
+                {
+                    if (!r.enabled || !r.gameObject.activeInHierarchy) continue;
+                    var a = RendererBounds.Aabb(Memory, Ptr(r), UnityPlayerLayout.BaseWorldAabb);
+                    var b = r.bounds;
+                    var m = new[] { b.center.x, b.center.y, b.center.z, b.extents.x, b.extents.y, b.extents.z };
+                    bool same = true;
+                    for (int i = 0; i < 6; i++) if (BitConverter.ToInt32(BitConverter.GetBytes(a[i]), 0) != BitConverter.ToInt32(BitConverter.GetBytes(m[i]), 0)) same = false;
+                    n++;
+                    if (same) equal++; else mismatched.Add(r.name + "#" + r.GetInstanceID());
+                }
+                Validation.Add("info: world AABB bit-equal for " + equal + "/" + n + " renderers; mismatched: " + string.Join(", ", mismatched.ToArray()));
+                return n > 0 && equal * 10 >= n * 9;
+            });
+            Check("Camera.main RenderLoop (Camera+0x530) is set and has no context attached outside a render", () =>
+            {
+                var cam = Camera.main;
+                return cam != null && RenderNodes.ContextOf(Memory, Ptr(cam)) == 0;
+            });
             Check("renderer visibility bit equals Renderer.isVisible", () =>
                 renderers.All(r => ((Mem.U32(Memory, Ptr(r) + UnityPlayerLayout.RendererFlags) & UnityPlayerLayout.RendererVisibleBit) != 0
                                     && Mem.I32(Memory, Ptr(r) + UnityPlayerLayout.RendererSceneHandle) != -1) == r.isVisible));
@@ -405,7 +461,110 @@ namespace HS2Codex.FramePairProbe
             w.Key("base_renderer_transform_update_frame_0xbc"); w.Raw(Mem.U32(Memory, b + UnityPlayerLayout.BaseUpdateFrame).ToString(CultureInfo.InvariantCulture));
             w.Key("base_renderer_flags_0xf0"); w.Str("0x" + Mem.U32(Memory, b + UnityPlayerLayout.BaseFlags).ToString("x8"));
             w.Key("base_renderer_flatten_block_hex"); w.Str(Mem.Hex(Mem.Bytes(Memory, b + UnityPlayerLayout.BaseBlockStart, UnityPlayerLayout.BaseBlockLength)));
-            if (r is SkinnedMeshRenderer) WriteSkinFields(w, r, p);
+            w.Key("world_aabb_center_extent_0xc0"); Floats(w, RendererBounds.Aabb(Memory, p, UnityPlayerLayout.BaseWorldAabb));
+            w.Key("local_aabb_center_extent_0xd8"); Floats(w, RendererBounds.Aabb(Memory, p, UnityPlayerLayout.BaseLocalAabb));
+            if (r is SkinnedMeshRenderer) { WriteSkinFields(w, r, p); WriteBoneBounds(w, (SkinnedMeshRenderer)r, p); WritePreparedInfo(w, p); }
+            w.End('}');
+        }
+
+        static void Floats(JsonOut w, float[] f) { w.Begin('['); foreach (var v in f) w.Num(v); w.End(']'); }
+
+        // updateWhenOffscreen (Renderer+0x28c) and, when set, the Mesh::GetCachedBonesBounds data the
+        // bone-based bounds of SkinnedMeshRenderer::UpdateTransformInfo are computed from.
+        void WriteBoneBounds(JsonOut w, SkinnedMeshRenderer smr, ulong p)
+        {
+            int uwo = Mem.U8(Memory, p + UnityPlayerLayout.RendererBase + UnityPlayerLayout.SmrBaseUpdateWhenOffscreen);
+            if (uwo != (smr.updateWhenOffscreen ? 1 : 0)) throw new NativeReadError("Renderer+0x28c " + uwo + " differs from updateWhenOffscreen " + smr.updateWhenOffscreen);
+            w.Key("smr_update_when_offscreen_0x28c"); w.Int(uwo);
+            if (uwo == 0) { w.Key("bone_bounds"); w.Str("not exported: updateWhenOffscreen is false (renderer bounds are the mesh local AABB)"); return; }
+            long size, binds;
+            var f = RendererBounds.BoneBounds(Memory, Ptr(smr.sharedMesh), out size, out binds);
+            // Exported for completeness; the orchestrator computes these bounds from vertices, weights
+            // and bindposes (2026-10-25), so a stale cache is recorded, not fatal.
+            if (f == null) { w.Key("bone_bounds_state"); w.Str("cache_not_current: size " + size + " != bindposes " + binds); return; }
+            w.Key("bone_bounds_state"); w.Str("current");
+            var bytes = new byte[f.Length * 4]; Buffer.BlockCopy(f, 0, bytes, 0, bytes.Length);
+            w.Key("bone_bounds_count"); w.Raw(size.ToString(CultureInfo.InvariantCulture));
+            w.Key("bone_bounds_layout"); w.Str("per bindpose index: MinMaxAABB min3 max3 float32 (Mesh+0x120), bindpose space");
+            w.Key("bone_bounds_min_max_f32"); w.Str(Convert.ToBase64String(bytes));
+        }
+
+        // SkinnedMeshRendererManager PreparedRendererInfo flag bytes (+0..+4) of this renderer.
+        void WritePreparedInfo(JsonOut w, ulong p)
+        {
+            int handle;
+            ulong info = PreparedInfo.Read(Memory, Base, p, out handle);
+            w.Key("smr_manager_handle_0x2f8"); w.Int(handle);
+            w.Key("prepared_renderer_info");
+            if (info == 0) { w.Raw("null"); return; }
+            var b = Mem.Bytes(Memory, info, 8);
+            w.Begin('{');
+            w.Key("address"); w.Str("0x" + info.ToString("x"));
+            w.Key("flag_bytes_0_4"); w.Begin('['); for (int i = 0; i < 5; i++) w.Int(b[i]); w.End(']');
+            w.Key("meaning"); w.Str("InitializePreparedInfo 0xbdce90: +1 no mesh || bone weights || smr+0x2c8; +2 bonesPerVertex != 1; +4 updateWhenOffscreen && (no mesh || bone weights); +0/+3 initialized 0");
+            w.End('}');
+        }
+
+        // Compact per-render bounds of the updateWhenOffscreen renderers (post_render; the bone-based
+        // TransformInfo AABBs the render culled and drew with).
+        public void WriteSkinnedBounds(JsonOut w, SkinnedMeshRenderer smr)
+        {
+            ulong p = Ptr(smr);
+            int uwo = Mem.U8(Memory, p + UnityPlayerLayout.RendererBase + UnityPlayerLayout.SmrBaseUpdateWhenOffscreen);
+            w.Begin('{');
+            w.Key("renderer"); w.Int(smr.GetInstanceID()); w.Key("name"); w.Str(smr.name);
+            w.Key("smr_update_when_offscreen_0x28c"); w.Int(uwo);
+            w.Key("world_aabb_center_extent_0xc0"); Floats(w, RendererBounds.Aabb(Memory, p, UnityPlayerLayout.BaseWorldAabb));
+            w.Key("local_aabb_center_extent_0xd8"); Floats(w, RendererBounds.Aabb(Memory, p, UnityPlayerLayout.BaseLocalAabb));
+            w.Key("base_renderer_local_to_world_0x08"); Matrix(w, p + UnityPlayerLayout.RendererBase + UnityPlayerLayout.BaseL2W);
+            w.End('}');
+        }
+
+        // The RenderNode queues of the current render of cam (post_render only; see UnityPlayerLayout).
+        // node+0x100 is checked against [mesh+0x174] of the node's own renderer's cached mesh; a
+        // mismatch throws. Nodes whose instance id is not a scene renderer are exported as such.
+        public void WriteRenderNodes(JsonOut w, Camera cam, ulong contextAtPreCull, Dictionary<int, Renderer> byId)
+        {
+            var read = RenderNodes.Read(Memory, Ptr(cam), contextAtPreCull);
+            w.Begin('{');
+            w.Key("render_loop_0x530"); w.Str("0x" + read.RenderLoop.ToString("x"));
+            w.Key("context"); w.Str("0x" + read.Context.ToString("x"));
+            w.Key("shared_renderer_scene_0x7c8"); w.Str("0x" + read.Scene.ToString("x"));
+            w.Key("fresh"); w.Bool(true);
+            w.Key("queues"); w.Begin('[');
+            foreach (var q in read.Queues)
+            {
+                w.Begin('{');
+                w.Key("queue"); w.Str(q.Name); w.Key("count"); w.Raw(q.Count.ToString(CultureInfo.InvariantCulture));
+                w.Key("node_fields"); w.Str("index, instance_id(node+0x190), mesh_id(node+0x100), check");
+                w.Key("nodes"); w.Begin('[');
+                foreach (var n in q.Rows)
+                {
+                    Renderer r;
+                    string check;
+                    if (!byId.TryGetValue(n.InstanceId, out r) || r == null) check = "instance_not_a_scene_renderer";
+                    else
+                    {
+                        ulong mesh = 0;
+                        if (r is SkinnedMeshRenderer) mesh = Mem.U64(Memory, SmrNative.MeshAddress(Ptr(r)));
+                        else if (r is MeshRenderer) mesh = Mem.U64(Memory, Ptr(r) + UnityPlayerLayout.RendererBase + UnityPlayerLayout.MrBaseMesh);
+                        if (!(r is SkinnedMeshRenderer) && !(r is MeshRenderer)) check = "not_a_mesh_renderer:" + r.GetType().Name;
+                        else
+                        {
+                            uint expect = RenderNodes.MeshId(Memory, mesh);
+                            if (expect != n.MeshId)
+                                throw new NativeReadError("node " + n.Index + " (" + r.name + "): node+0x100 " + n.MeshId + " != mesh+0x174 " + expect);
+                            check = "equals_cached_mesh_0x174";
+                        }
+                    }
+                    w.Begin('[');
+                    w.Int(n.Index); w.Int(n.InstanceId); w.Raw(n.MeshId.ToString(CultureInfo.InvariantCulture)); w.Str(check);
+                    w.End(']');
+                }
+                w.End(']');
+                w.End('}');
+            }
+            w.End(']');
             w.End('}');
         }
 

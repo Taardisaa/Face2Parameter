@@ -139,8 +139,10 @@ def verify(index, window: Path, nonce_hex: str):
         check('bridge_result_render_count', bool(result) and (result.get('capture') or {}).get('temporal_render_count') == n,
               (result or {}).get('capture', {}).get('temporal_render_count') if result else None)
     probe = receipt.get('probe') or ''
-    if probe.startswith('HS2_FramePairProbe 6'):
+    if probe_version(probe) >= (6,):
         verify_v6(window, receipt, captured, frames, check, observe)
+    if probe_version(probe) >= (7,):
+        verify_v7(window, receipt, captured, frames, check, observe)
     return {'window': str(window), 'nonce': nonce_hex, 'captured_frame': captured, 'probe': probe,
             'accepted': all(c['ok'] for c in checks), 'checks': checks, 'observations': observations}
 
@@ -249,6 +251,106 @@ def verify_bridge_transforms(window, receipt, captured, frames, check):
                     bad.append({'ordinal': ordinal, 'problem': 'size', 'count': ct.get('count'), 'bytes': size, 'static': count})
     check('bridge_pre_cull_character_transforms', sorted(rows) == list(range(n or 0)) and not bad,
           {'ordinals': rows, 'static_transforms': count, 'bad': bad[:20]})
+
+
+NODE_CHECKS = ('equals_cached_mesh_0x174', 'instance_not_a_scene_renderer')
+
+
+def _captured_doc(window, frames, captured, prefix):
+    if captured not in frames:
+        return None
+    path = window / 'frames' / ('%s_%03d.json' % (prefix, frames.index(captured)))
+    return json.loads(path.read_text(encoding='utf-8')) if path.is_file() else None
+
+
+def verify_v7(window, receipt, captured, frames, check, observe):
+    """Probe 7.0.0: RenderNode queues per render, updateWhenOffscreen bone bounds, animation source."""
+    renders = _captured_doc(window, frames, captured, 'renders')
+    scene = _captured_doc(window, frames, captured, 'scene')
+    recs = (renders or {}).get('records', [])
+    pre_cull = [r for r in recs if r.get('phase') == 'pre_cull']
+    post = [r for r in recs if r.get('phase') == 'post_render']
+    bad, nonempty, unknown = [], 0, 0
+    for r in post:
+        data = r.get('data') or {}
+        rn = data.get('render_nodes')
+        if not isinstance(rn, dict):
+            bad.append({'render_id': r.get('render_id'), 'problem': data.get('render_nodes_error') or r.get('data_error') or 'missing'})
+            continue
+        qs = rn.get('queues') or []
+        if rn.get('fresh') is not True or len(qs) != 2:
+            bad.append({'render_id': r.get('render_id'), 'problem': 'not fresh or queue count %d' % len(qs)})
+            continue
+        for q in qs:
+            nodes = q.get('nodes') or []
+            if q.get('count') != len(nodes):
+                bad.append({'render_id': r.get('render_id'), 'problem': 'count %s != %d rows' % (q.get('count'), len(nodes))})
+            for n in nodes:
+                if n[3] not in NODE_CHECKS and not str(n[3]).startswith('not_a_mesh_renderer:'):
+                    bad.append({'render_id': r.get('render_id'), 'problem': 'node check %s' % n[3]})
+                unknown += n[3] == 'instance_not_a_scene_renderer'
+        nonempty += bool(qs and qs[0].get('count'))
+    check('render_nodes_v7', post and len(post) == len(pre_cull) and nonempty > 0 and not bad,
+          {'post_render': len(post), 'pre_cull': len(pre_cull), 'renders_with_nodes': nonempty, 'bad': bad[:20]})
+    observe('render_nodes_unknown_instance_ids', unknown)
+
+    rows = [r for r in (scene or {}).get('renderers', []) if r.get('type') == SMR_TYPE]
+    sbad = []
+    for r in rows:
+        nat = r.get('native') or {}
+        uwo = nat.get('smr_update_when_offscreen_0x28c')
+        if uwo not in (0, 1):
+            sbad.append({'name': r.get('name'), 'problem': 'no update_when_offscreen field'})
+        if 'prepared_renderer_info' not in nat or 'smr_manager_handle_0x2f8' not in nat:
+            sbad.append({'name': r.get('name'), 'problem': 'no SkinnedMeshRendererManager prepared-info fields'})
+    for r in post:
+        for b in (r.get('data') or {}).get('skinned_bounds_update_when_offscreen', []):
+            if 'error' in b or b.get('smr_update_when_offscreen_0x28c') != 1:
+                sbad.append({'render_id': r.get('render_id'), 'problem': str(b)[:200]})
+    uwo_rows = [r.get('name') for r in rows if (r.get('native') or {}).get('smr_update_when_offscreen_0x28c') == 1]
+    check('skinned_bounds_v7', rows and not sbad, {'smr_rows': len(rows), 'update_when_offscreen': uwo_rows, 'bad': sbad[:20]})
+    # Hair bone AABBs are exported for completeness only (the orchestrator computes them exactly).
+    observe('bone_bounds_state', {r.get('name'): (r.get('native') or {}).get('bone_bounds_state') for r in rows
+                                  if (r.get('native') or {}).get('smr_update_when_offscreen_0x28c') == 1})
+
+    chains = (scene or {}).get('transform_chains')
+    cbad = []
+    if not isinstance(chains, dict):
+        cbad.append((scene or {}).get('transform_chains_error') or 'missing')
+    else:
+        cam = chains.get('camera_main_chain') or []
+        if len(cam) < 2 or cam[-2].get('name') != 'CharaCamera':
+            cbad.append("Camera.main's parent is not CharaCamera: %s" % [c.get('name') for c in cam])
+        for name in ('CharaCamera', 'Lights Custom'):
+            if not (chains.get('named') or {}).get(name):
+                cbad.append('no transform named %s' % name)
+        if not chains.get('lights'):
+            cbad.append('no light chains')
+    check('transform_chains_v7', not cbad, cbad)
+    if receipt.get('mode') == 'renderstyle':
+        bp0 = [r for r in pre_cull if r.get('bridge_render')]
+        missing_chains = [r['bridge_render']['ordinal'] for r in bp0 if not isinstance((r.get('data') or {}).get('transform_chains'), dict)]
+        check('bridge_pre_cull_transform_chains_v7', bp0 and not missing_chains, {'missing': missing_chains})
+
+    anim = (scene or {}).get('animation')
+    abad = []
+    if not isinstance(anim, dict):
+        abad.append((scene or {}).get('animation_error') or 'missing')
+    else:
+        ans = [a for a in anim.get('animators', []) if isinstance(a, dict) and 'error' not in a]
+        if not ans or len(ans) != len(anim.get('animators', [])):
+            abad.append('animator rows missing or failed')
+        if not any(a.get('layer0_current_clips') for a in ans):
+            abad.append('no layer-0 current clip')
+        mp = anim.get('maker_pose_source')
+        if not isinstance(mp, dict) or not isinstance(mp.get('entry'), dict) or mp['entry'].get('bundle_file_exists') is not True:
+            abad.append('maker pose source: %s' % str(mp if mp is not None else anim.get('maker_pose_source_error'))[:200])
+    check('animation_source_v7', not abad, abad)
+    if receipt.get('mode') == 'renderstyle':
+        bp = [r for r in pre_cull if r.get('bridge_render')]
+        miss = [r['bridge_render']['ordinal'] for r in bp if not isinstance((r.get('data') or {}).get('animation'), dict)]
+        check('bridge_pre_cull_animation_v7', bp and not miss, {'bridge_pre_cull': len(bp), 'missing': miss})
+        observe('bridge_yaw_degrees', (receipt.get('bridge') or {}).get('body_yaw_degrees'))
 
 
 def verify_v6(window, receipt, captured, frames, check, observe):

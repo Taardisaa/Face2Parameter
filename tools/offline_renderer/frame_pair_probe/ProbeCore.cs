@@ -159,6 +159,47 @@ namespace HS2Codex.FramePairProbe
         // key bits 40..61), +0xd4 = ComputeStateBlockValuesHash; +0xd8 flags (bit 0 built, bit 1
         // instancing, bit 2 hashes dirty), +0xdc material instance id (material sort key).
         public const int SmdCasterPassHash = 0xD0, SmdStateBlockHash = 0xD4, SmdFlags = 0xD8, SmdInstanceId = 0xDC;
+
+        // ---- v7 ----
+        // Per-render RenderNode queue. Camera::CustomRender 0x661400: InitializeRenderLoopContext
+        // 0x6ba530(camera, [CullResults+0x800] = SharedRendererScene*, [Camera+0x530] = RenderLoop*)
+        // allocates a RenderLoopContext (0x838 bytes) and stores it at [RenderLoop+0]; context+0x8 =
+        // Camera*, +0x7c8 = SharedRendererScene*, +0x7d0 = scene+0x8 and +0x7d8 = scene+0x10068 (the
+        // two RenderNodeQueues the SharedRendererScene ctor 0x63f330 constructs), +0x830 = RenderLoop*.
+        // The static onPostRender (0x66181a) runs inside the render with the context attached;
+        // CleanupAfterRendering 0x65f720 -> CleanupAfterRenderLoop 0x6b70a0 frees it and zeroes
+        // [RenderLoop+0] at the end of every render.
+        public const int CameraRenderLoop = 0x530, RenderLoopContext = 0x0;
+        public const int CtxCamera = 0x8, CtxScene = 0x7C8, CtxQueueA = 0x7D0, CtxQueueB = 0x7D8, CtxRenderLoop = 0x830;
+        public const int SceneQueueA = 0x8, SceneQueueB = 0x10068;
+        // RenderNodeQueue: dynamic_array<RenderNode> (+0x0 data, +0x10 size; RenderNodeQueue::Reset
+        // 0x692080 iterates i < [queue+0x10] with stride 0x1a0). Renderer::AddAsRenderNode 0x739400:
+        // node+0x190 = [BaseRenderer-0x30] = Renderer instance id (Renderer+0x8). MeshRenderer::
+        // AddAsRenderNode 0x77aad0 / SkinnedMeshRenderer::AddAsRenderNode 0x77abe0: node+0x100 =
+        // [mesh+0x174] (the Mesh's own field; the Mesh ctor 0x7a0d50 initializes it at 0x7a1145).
+        public const int QueueNodes = 0x0, QueueCount = 0x10, NodeStride = 0x1A0, NodeMeshId = 0x100, NodeInstanceId = 0x190;
+        public const int MeshNodeId = 0x174;
+        // MeshRenderer::AddAsRenderNode 0x77aad0: [base+0x188] = cached Mesh* (Renderer+0x1c0).
+        public const int MrBaseMesh = 0x188;
+        // SkinnedMeshRenderer::UpdateTransformInfo 0x78adf0 (this = SkinnedMeshRenderer*):
+        //   [smr+0x28c] = updateWhenOffscreen (bone-bounds branch at 0x78aeb1; = base+0x254),
+        //   bone-based world AABB (center, extent) stored at [smr+0xc0] (= base+0x88) at 0x78b0e5,
+        //   InverseTransformAABB(world, root pos, root rot) -> local AABB at [smr+0xd8] (= base+0xa0).
+        // The same TransformInfo AABBs are the Renderer::GetWorldAABB/GetLocalAABB storage.
+        public const int SmrBaseUpdateWhenOffscreen = 0x254, BaseWorldAabb = 0x88, BaseLocalAabb = 0xA0;
+        // Mesh::GetCachedBonesBounds 0x7a4770: dynamic_array<MinMaxAABB> at Mesh+0x120 (data +0x120,
+        // size +0x130); the cache is current when size == [[Mesh+0x38] + 0xf0] (SharedMeshData
+        // bindpose count; bindposes data at +0xe0). MinMaxAABB = min3 max3 float32 (24 bytes;
+        // CalculateBoneBasedBounds 0x77c700 uses (min+max)/2, (max-min)/2).
+        public const int MeshBoneBounds = 0x120, MeshBoneBoundsSize = 0x130, MeshShared = 0x38, SharedBindposeCount = 0xF0;
+        // SkinnedMeshRendererManager (s_Instance at RVA 0x15615d0). AddRenderer 0xbd9fd0: handle =
+        // HandleManager::Allocate -> [smr+0x2f8], [[mgr+0x108] + handle*8] = SkinnedMeshRenderer*.
+        // AddPreparedInfo 0xbd9e70: [[mgr+0x128] + handle*8] = PreparedRendererInfo*.
+        // InitializePreparedInfo 0xbdce90 writes the flag bytes: +0 = 0, +1 = (no mesh || mesh has
+        // bone weights || [smr+0x2c8] != 0), +2 = CalculateBonesPerVertex() != 1, +3 = 0,
+        // +4 = updateWhenOffscreen && (no mesh || mesh has bone weights).
+        public const ulong SmrManagerInstance = 0x15615D0;
+        public const int MgrRenderers = 0x108, MgrPreparedInfos = 0x128, SmrManagerHandle = 0x2F8;
     }
 
     internal interface IMemory
@@ -772,6 +813,7 @@ namespace HS2Codex.FramePairProbe
     {
         public string Text, PngPath;
         public int Width, Height;
+        public double Yaw;   // degrees, as sent (0 when the body omits it, the bridge default)
 
         static readonly HashSet<string> Keys = new HashSet<string> { "path", "yaw", "target", "ortho_size", "width", "height", "freeze_pose" };
 
@@ -789,7 +831,14 @@ namespace HS2Codex.FramePairProbe
             double w = (double)d["width"], h = (double)d["height"];
             if (w != Math.Floor(w) || h != Math.Floor(h) || w < 64 || h < 64 || w > 4096 || h > 4096) throw new ArgumentException("width/height out of the bridge's bounds");
             if (d.ContainsKey("freeze_pose") && !(d["freeze_pose"] is bool)) throw new ArgumentException("freeze_pose must be boolean");
-            return new BridgeBody { Text = text, PngPath = path, Width = (int)w, Height = (int)h };
+            double yaw = 0;
+            if (d.ContainsKey("yaw"))
+            {
+                if (!(d["yaw"] is double)) throw new ArgumentException("yaw must be a number (degrees)");
+                yaw = (double)d["yaw"];
+                if (double.IsNaN(yaw) || double.IsInfinity(yaw)) throw new ArgumentException("yaw must be finite");
+            }
+            return new BridgeBody { Text = text, PngPath = path, Width = (int)w, Height = (int)h, Yaw = yaw };
         }
     }
 
@@ -839,6 +888,137 @@ namespace HS2Codex.FramePairProbe
         {
             RequireMesh(m, renderer, sharedMesh, name);
             return Mem.U64(m, UnityPlayerLayout.SmrField(renderer, UnityPlayerLayout.SmrBaseSkinBuffer));
+        }
+    }
+
+    // ---------------------------------------------------------------- v7 native readers
+    internal sealed class RenderNodeRow { public int Index, InstanceId; public uint MeshId; }
+
+    internal sealed class RenderNodeQueueRead
+    {
+        public string Name; public ulong Address, Nodes; public long Count;
+        public readonly List<RenderNodeRow> Rows = new List<RenderNodeRow>();
+    }
+
+    internal sealed class RenderNodesRead
+    {
+        public ulong RenderLoop, Context, Scene;
+        public readonly List<RenderNodeQueueRead> Queues = new List<RenderNodeQueueRead>();
+    }
+
+    internal static class RenderNodes
+    {
+        public const int MaxNodes = 1 << 16;
+
+        // [[Camera+0x530]+0]: the RenderLoopContext pointer (0 outside a render of this camera).
+        public static ulong ContextOf(IMemory m, ulong camera)
+        {
+            if (camera == 0) throw new NativeReadError("Camera has no native object");
+            ulong rl = Mem.U64(m, camera + UnityPlayerLayout.CameraRenderLoop);
+            if (rl == 0) throw new NativeReadError("Camera+0x530 RenderLoop is null");
+            return Mem.U64(m, rl + UnityPlayerLayout.RenderLoopContext);
+        }
+
+        // Fail closed: every structural link of the context must hold, and the queue must be the one
+        // of a render that began after the pre_cull observation contextAtPreCull == 0.
+        public static RenderNodesRead Read(IMemory m, ulong camera, ulong contextAtPreCull)
+        {
+            if (contextAtPreCull != 0)
+                throw new NativeReadError("RenderLoop context was already attached at pre_cull (0x" + contextAtPreCull.ToString("x") + "); this render's queue is not provably fresh");
+            var r = new RenderNodesRead();
+            r.RenderLoop = Mem.U64(m, camera + UnityPlayerLayout.CameraRenderLoop);
+            if (r.RenderLoop == 0) throw new NativeReadError("Camera+0x530 RenderLoop is null");
+            r.Context = Mem.U64(m, r.RenderLoop + UnityPlayerLayout.RenderLoopContext);
+            if (r.Context == 0) throw new NativeReadError("no RenderLoopContext attached (not inside this camera's render)");
+            if (Mem.U64(m, r.Context + UnityPlayerLayout.CtxCamera) != camera) throw new NativeReadError("RenderLoopContext+0x8 is not this camera");
+            if (Mem.U64(m, r.Context + UnityPlayerLayout.CtxRenderLoop) != r.RenderLoop) throw new NativeReadError("RenderLoopContext+0x830 is not this RenderLoop");
+            r.Scene = Mem.U64(m, r.Context + UnityPlayerLayout.CtxScene);
+            if (r.Scene == 0) throw new NativeReadError("RenderLoopContext+0x7c8 SharedRendererScene is null");
+            var queues = new[] { new { Name = "context_0x7d0_scene_0x8", Ctx = UnityPlayerLayout.CtxQueueA, Off = UnityPlayerLayout.SceneQueueA },
+                                 new { Name = "context_0x7d8_scene_0x10068", Ctx = UnityPlayerLayout.CtxQueueB, Off = UnityPlayerLayout.SceneQueueB } };
+            foreach (var q in queues)
+            {
+                ulong qa = Mem.U64(m, r.Context + (ulong)q.Ctx);
+                if (qa != r.Scene + (ulong)q.Off) throw new NativeReadError(q.Name + ": context queue pointer is not scene+0x" + q.Off.ToString("x"));
+                var read = new RenderNodeQueueRead { Name = q.Name, Address = qa };
+                read.Nodes = Mem.U64(m, qa + UnityPlayerLayout.QueueNodes);
+                ulong count = Mem.U64(m, qa + UnityPlayerLayout.QueueCount);
+                if (count > MaxNodes) throw new NativeReadError(q.Name + ": unreasonable node count " + count);
+                read.Count = (long)count;
+                if (count > 0)
+                {
+                    if (read.Nodes == 0) throw new NativeReadError(q.Name + ": nodes pointer is null with count " + count);
+                    var b = Mem.Bytes(m, read.Nodes, checked((int)count * UnityPlayerLayout.NodeStride));
+                    for (int i = 0; i < (int)count; i++)
+                    {
+                        int o = i * UnityPlayerLayout.NodeStride;
+                        read.Rows.Add(new RenderNodeRow { Index = i, MeshId = BitConverter.ToUInt32(b, o + UnityPlayerLayout.NodeMeshId),
+                                                          InstanceId = BitConverter.ToInt32(b, o + UnityPlayerLayout.NodeInstanceId) });
+                    }
+                }
+                r.Queues.Add(read);
+            }
+            return r;
+        }
+
+        // [mesh+0x174], the value AddAsRenderNode copies to node+0x100.
+        public static uint MeshId(IMemory m, ulong mesh)
+        {
+            if (mesh == 0) throw new NativeReadError("null mesh");
+            return Mem.U32(m, mesh + UnityPlayerLayout.MeshNodeId);
+        }
+    }
+
+    internal static class RendererBounds
+    {
+        // TransformInfo AABB (center3, extent3) at Renderer+0x38+offset.
+        public static float[] Aabb(IMemory m, ulong renderer, int baseOffset)
+        {
+            var b = Mem.Bytes(m, renderer + (ulong)UnityPlayerLayout.RendererBase + (ulong)baseOffset, 24);
+            var f = new float[6];
+            Buffer.BlockCopy(b, 0, f, 0, 24);
+            return f;
+        }
+
+        // Mesh::GetCachedBonesBounds storage. Returns null when the cache is not current
+        // (size != bindpose count); the caller decides whether that is legitimate.
+        public static float[] BoneBounds(IMemory m, ulong mesh, out long cacheSize, out long bindposeCount)
+        {
+            if (mesh == 0) throw new NativeReadError("null mesh");
+            ulong shared = Mem.U64(m, mesh + UnityPlayerLayout.MeshShared);
+            if (shared == 0) throw new NativeReadError("Mesh+0x38 SharedMeshData is null");
+            bindposeCount = (long)Mem.U64(m, shared + UnityPlayerLayout.SharedBindposeCount);
+            cacheSize = (long)Mem.U64(m, mesh + UnityPlayerLayout.MeshBoneBoundsSize);
+            if (bindposeCount < 0 || bindposeCount > 4096 || cacheSize < 0 || cacheSize > 4096)
+                throw new NativeReadError("unreasonable bone-bounds sizes " + cacheSize + "/" + bindposeCount);
+            if (cacheSize != bindposeCount) return null;
+            var f = new float[cacheSize * 6];
+            if (cacheSize > 0)
+            {
+                ulong data = Mem.U64(m, mesh + UnityPlayerLayout.MeshBoneBounds);
+                if (data == 0) throw new NativeReadError("bone-bounds data pointer is null with size " + cacheSize);
+                Buffer.BlockCopy(Mem.Bytes(m, data, (int)cacheSize * 24), 0, f, 0, (int)cacheSize * 24);
+            }
+            return f;
+        }
+    }
+
+    internal static class PreparedInfo
+    {
+        public const int MaxHandle = 1 << 20;
+
+        // Returns the PreparedRendererInfo* of the SkinnedMeshRenderer (0 = not prepared). Fails
+        // closed unless the manager's renderer slot for the renderer's handle is the renderer.
+        public static ulong Read(IMemory m, ulong moduleBase, ulong smr, out int handle)
+        {
+            ulong mgr = Mem.U64(m, moduleBase + UnityPlayerLayout.SmrManagerInstance);
+            if (mgr == 0) throw new NativeReadError("SkinnedMeshRendererManager::s_Instance is null");
+            handle = Mem.I32(m, smr + UnityPlayerLayout.SmrManagerHandle);
+            if (handle == -1) return 0;   // RemoveRenderer 0xbddaf0 resets the handle to -1 (not registered)
+            if (handle < 0 || handle >= MaxHandle) throw new NativeReadError("SkinnedMeshRenderer manager handle " + handle + " out of range");
+            ulong slot = Mem.U64(m, Mem.U64(m, mgr + UnityPlayerLayout.MgrRenderers) + (ulong)handle * 8);
+            if (slot != smr) throw new NativeReadError("manager renderer slot " + handle + " is 0x" + slot.ToString("x") + ", not this renderer");
+            return Mem.U64(m, Mem.U64(m, mgr + UnityPlayerLayout.MgrPreparedInfos) + (ulong)handle * 8);
         }
     }
 

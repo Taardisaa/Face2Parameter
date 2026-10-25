@@ -42,6 +42,10 @@ namespace HS2Codex.FramePairProbe
         readonly Dictionary<int, string> _lastSmd = new Dictionary<int, string>();
         readonly Dictionary<int, string> _lastMaterialSheet = new Dictionary<int, string>();
         Renderer[] _renderers = new Renderer[0];
+        Dictionary<int, Renderer> _rendererById = new Dictionary<int, Renderer>();
+        SkinnedMeshRenderer[] _offscreenSkinned = new SkinnedMeshRenderer[0];
+        // v7: [[Camera+0x530]+0] observed at each render's pre_cull (render id -> context pointer).
+        readonly Dictionary<int, ulong> _contextAtPreCull = new Dictionary<int, ulong>();
         Light[] _lights = new Light[0];
 
         // bridge arming (mode renderstyle)
@@ -53,6 +57,7 @@ namespace HS2Codex.FramePairProbe
         public int Errors;
         // static.json transform order; exported at every bridge render's pre_cull (6.1.0).
         public Transform[] CharacterTransforms;
+        public AIChara.ChaControl Chara;
 
         public RenderRecorder(ExportContext ctx, List<string> log) { _ctx = ctx; _log = log; Refresh(); StartFrame(); }
 
@@ -73,6 +78,8 @@ namespace HS2Codex.FramePairProbe
         public void Refresh()
         {
             _renderers = Resources.FindObjectsOfTypeAll<Renderer>().Where(r => r.gameObject.scene.IsValid()).ToArray();
+            _rendererById = _renderers.ToDictionary(r => r.GetInstanceID(), r => r);
+            _offscreenSkinned = _renderers.OfType<SkinnedMeshRenderer>().Where(r => r.updateWhenOffscreen).ToArray();
             _lights = Resources.FindObjectsOfTypeAll<Light>().Where(l => l.gameObject.scene.IsValid()).ToArray();
             foreach (var r in _renderers) foreach (var m in r.sharedMaterials) _ctx.Add(m);
         }
@@ -89,6 +96,7 @@ namespace HS2Codex.FramePairProbe
             _w.Begin('[');
             _renderInFrame = 0;
             _renderOfCamera.Clear();
+            _contextAtPreCull.Clear();
         }
 
         // Writes the records of the frame that just finished rendering.
@@ -97,7 +105,7 @@ namespace HS2Codex.FramePairProbe
             _w.End(']');
             var doc = new JsonOut(_w.Length + 512);
             doc.Begin('{');
-            doc.Key("schema_version"); doc.Raw("5");
+            doc.Key("schema_version"); doc.Raw("7");
             doc.Key("window_index"); doc.Int(windowIndex);
             doc.Key("frame_count"); doc.Int(Time.frameCount);
             doc.Key("render_count"); doc.Int(_renderInFrame);
@@ -122,6 +130,10 @@ namespace HS2Codex.FramePairProbe
             {
                 int id = ++_renderInFrame;
                 _renderOfCamera[cam.GetInstanceID()] = id;
+                ulong ctx0;
+                try { ctx0 = RenderNodes.ContextOf(_ctx.Native.Memory, UnityNative.Ptr(cam)); }
+                catch (Exception) { ctx0 = ulong.MaxValue; }      // unreadable: the post_render read refuses (not provably fresh)
+                _contextAtPreCull[id] = ctx0;
                 RenderTexture target;
                 BridgeRender bridge = null;
                 if (IsBridge(cam, out target))
@@ -136,6 +148,8 @@ namespace HS2Codex.FramePairProbe
                     // The bridge's PoseFreeze runs before Camera.Render, so these are the transforms
                     // each bridge render culls and draws with (head_skinning.md §10.1).
                     if (bridge != null) w.Guard("character_transforms", t => CharacterTransformBlock(t));
+                    if (bridge != null) w.Guard("animation", a => AnimationState.Write(a, Chara));
+                    if (bridge != null) w.Guard("transform_chains", c => TransformChains.Write(c));
                     w.Guard("render_buffer_pool", p => Dedup(p, ref _lastPool, () => { var j = new JsonOut(); PoolWalker.Write(j, _ctx.Native.Pool()); return j.ToString(); }));
                 });
                 _open.Push(id);
@@ -197,6 +211,12 @@ namespace HS2Codex.FramePairProbe
                 var bridge = BridgeOf(id);
                 Record(cam, "post_render", id, bridge, w =>
                 {
+                    ulong ctx0;
+                    if (!_contextAtPreCull.TryGetValue(id, out ctx0)) ctx0 = ulong.MaxValue;
+                    w.Guard("render_nodes", n => _ctx.Native.WriteRenderNodes(n, cam, ctx0, _rendererById));
+                    w.Key("skinned_bounds_update_when_offscreen"); w.Begin('[');
+                    foreach (var s in _offscreenSkinned) if (s != null) w.GuardValue(x => _ctx.Native.WriteSkinnedBounds(x, s));
+                    w.End(']');
                     Globals(w);
                     w.Guard("render_buffer_pool", p => Dedup(p, ref _lastPool, () => { var j = new JsonOut(); PoolWalker.Write(j, _ctx.Native.Pool()); return j.ToString(); }));
                 });

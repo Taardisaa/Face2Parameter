@@ -210,6 +210,7 @@ namespace HS2Codex.FramePairProbe
                 w.Key("request_body"); w.Str(Body.Text);
                 using (var h = SHA256.Create()) { w.Key("request_body_sha256"); w.Str(Mem.Hex(h.ComputeHash(new UTF8Encoding(false).GetBytes(Body.Text)))); }
                 w.Key("body_width"); w.Int(Body.Width); w.Key("body_height"); w.Int(Body.Height); w.Key("png_path"); w.Str(Body.PngPath);
+                w.Key("body_yaw_degrees"); w.Raw(Body.Yaw.ToString("R", System.Globalization.CultureInfo.InvariantCulture));
                 w.Key("post_frame"); w.Int(PostFrame);
                 w.Key("queued_observed_frame"); w.Int(QueuedObservedFrame);
                 w.Key("queue_match"); w.Str(QueueMatch);

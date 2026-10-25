@@ -292,6 +292,70 @@ class VerifierTests(unittest.TestCase):
                 r = vps.verify(self.index(), self.v61_bridge_window(tmp, **kw), NONCE)
                 self.assertIn('bridge_pre_cull_character_transforms', [c['check'] for c in r['checks'] if not c['ok']], kw)
 
+    def v7_window(self, tmp, node_check='equals_cached_mesh_0x174', fresh=True, nodes_error=False, prepared=True,
+                  pose_exists=True, bridge_anim=True, drop_post=False, lights_custom=True, cam_parent='CharaCamera',
+                  bridge_chains=True):
+        w = self.v61_bridge_window(tmp)
+        r = json.loads((w / 'capture_receipt.json').read_text(encoding='utf-8'))
+        r['probe'] = 'HS2_FramePairProbe 7.0.0'
+        r['bridge']['body_yaw_degrees'] = 30
+        (w / 'capture_receipt.json').write_text(json.dumps(r), encoding='utf-8')
+        pinfo = {'smr_manager_handle_0x2f8': 3, 'prepared_renderer_info': {'flag_bytes_0_4': [0, 1, 1, 0, 1]}} if prepared else {}
+        hair = {'type': 'UnityEngine.SkinnedMeshRenderer', 'name': 'hair',
+                'native': self.smr_native(smr_update_when_offscreen_0x28c=1, bone_bounds_state='current', **pinfo)}
+        head = {'type': 'UnityEngine.SkinnedMeshRenderer', 'name': 'o_head',
+                'native': self.smr_native(smr_update_when_offscreen_0x28c=0, bone_bounds='not exported',
+                                          smr_manager_handle_0x2f8=4, prepared_renderer_info=None)}
+        link = lambda n: {'name': n, 'local_position': [0, 0, 0], 'local_rotation': [0, 0, 0, 1], 'local_scale': [1, 1, 1]}
+        chains = {'camera_main_chain': [link('CharaCustom'), link(cam_parent), link('Main Camera')],
+                  'named': {'CharaCamera': [{'chain': []}], 'Lights Custom': [{'chain': []}] if lights_custom else []},
+                  'lights': [{'light': {'ref_name': 'Directional Light Key'}, 'chain': []}]}
+        anim = {'animators': [{'animator': {'ref_name': 'p_cf_anim'}, 'layer0_current_clips': [{'clip': {'ref_name': 'Idle_00'}, 'weight': 1}]}],
+                'maker_pose_source': {'pose_no': 1, 'entry': {'MainAB': 'custom/00/anim_f_00.unity3d', 'bundle_file_exists': pose_exists}}}
+        (w / 'frames' / 'scene_005.json').write_text(json.dumps({'renderers': [head, hair], 'animation': anim,
+                                                                   'transform_chains': chains}), encoding='utf-8')
+        doc = json.loads((w / 'frames' / 'renders_005.json').read_text(encoding='utf-8'))
+        recs = doc['records']
+        for x in recs:
+            if x['phase'] == 'pre_cull' and x.get('bridge_render') and bridge_anim:
+                x['data']['animation'] = anim
+            if x['phase'] == 'pre_cull' and x.get('bridge_render') and bridge_chains:
+                x['data']['transform_chains'] = chains
+        pre = [x for x in recs if x['phase'] == 'pre_cull']
+        for k, x in enumerate(pre):
+            if drop_post and k == 3:
+                continue
+            nodes = {'render_loop_0x530': '0x1', 'context': '0x2', 'fresh': fresh,
+                     'queues': [{'queue': 'context_0x7d0_scene_0x8', 'count': 2,
+                                 'nodes': [[0, -5, 77, node_check], [1, -9, 78, 'not_a_mesh_renderer:ParticleSystemRenderer']]},
+                                {'queue': 'context_0x7d8_scene_0x10068', 'count': 0, 'nodes': []}]}
+            data = {'render_nodes_error': 'NativeReadError: x'} if nodes_error and k == 2 else {'render_nodes': nodes}
+            data['skinned_bounds_update_when_offscreen'] = [{'renderer': -7, 'smr_update_when_offscreen_0x28c': 1}]
+            recs.append({'seq': 500 + k, 'frame_count': 1002, 'phase': 'post_render', 'render_id': k + 1,
+                         'bridge_render': x.get('bridge_render'), 'data': data})
+        (w / 'frames' / 'renders_005.json').write_text(json.dumps(doc), encoding='utf-8')
+        return w
+
+    def test_v7_accepted(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            r = vps.verify(self.index(), self.v7_window(tmp), NONCE)
+            self.assertTrue(r['accepted'], [c for c in r['checks'] if not c['ok']])
+            names = {c['check'] for c in r['checks']}
+            self.assertTrue({'render_nodes_v7', 'skinned_bounds_v7', 'animation_source_v7', 'bridge_pre_cull_animation_v7',
+                             'transform_chains_v7', 'bridge_pre_cull_transform_chains_v7'} <= names)
+            self.assertEqual({o['observation']: o['value'] for o in r['observations']}['bridge_yaw_degrees'], 30)
+
+    def test_v7_rejections(self):
+        cases = [({'node_check': 'mismatch'}, 'render_nodes_v7'), ({'fresh': False}, 'render_nodes_v7'),
+                 ({'nodes_error': True}, 'render_nodes_v7'), ({'drop_post': True}, 'render_nodes_v7'),
+                 ({'prepared': False}, 'skinned_bounds_v7'), ({'pose_exists': False}, 'animation_source_v7'),
+                 ({'bridge_anim': False}, 'bridge_pre_cull_animation_v7'), ({'lights_custom': False}, 'transform_chains_v7'),
+                 ({'cam_parent': 'CustomControl'}, 'transform_chains_v7'), ({'bridge_chains': False}, 'bridge_pre_cull_transform_chains_v7')]
+        for kw, name in cases:
+            with tempfile.TemporaryDirectory() as tmp:
+                r = vps.verify(self.index(), self.v7_window(tmp, **kw), NONCE)
+                self.assertIn(name, [c['check'] for c in r['checks'] if not c['ok']], kw)
+
     def test_v60_smr_fields_observed_invalid(self):
         with tempfile.TemporaryDirectory() as tmp:
             r = vps.verify(self.index(bridge=False), self.v6_window(tmp, hooks='0', drivers=False), NONCE)

@@ -86,6 +86,7 @@ namespace HS2Codex.FramePairProbe
         public readonly Dictionary<int, Material> Materials = new Dictionary<int, Material>();
         public readonly HashSet<object> Path = new HashSet<object>(RefEq.Instance);   // reflection ancestors (cycle guard)
         public UnityNative Native;
+        public AIChara.ChaControl Chara;   // v7: the window character (animation export)
         public ShaderManifest Manifest;
         public HashSet<string> RegisteredNames = new HashSet<string>(StringComparer.Ordinal);
         public readonly HashSet<int> SheetTextureIds = new HashSet<int>();   // native TextureIDs bound in material sheets
@@ -173,7 +174,7 @@ namespace HS2Codex.FramePairProbe
             var dropped = ctx.PruneDestroyed();
             var w = new JsonOut(1 << 22);
             w.Begin('{');
-            w.Key("schema_version"); w.Raw("6");
+            w.Key("schema_version"); w.Raw("7");
             w.Key("window_index"); w.Int(windowIndex);
             w.Key("frame_count"); w.Int(Time.frameCount);
             w.Key("rendered_frame_count"); w.Int(Time.renderedFrameCount);
@@ -190,6 +191,8 @@ namespace HS2Codex.FramePairProbe
             w.End('}');
 
             w.Guard("native", n => NativeFrame(n, ctx));
+            w.Guard("animation", a => AnimationState.Write(a, ctx.Chara));
+            w.Guard("transform_chains", c => TransformChains.Write(c));
 
             w.Key("global_keywords_manifest"); w.Begin('{');
             w.Key("source"); w.Str("native keyword table + g_SharedPassContext bits; Shader.IsKeywordEnabled is not called (keywords::Create side effect)");

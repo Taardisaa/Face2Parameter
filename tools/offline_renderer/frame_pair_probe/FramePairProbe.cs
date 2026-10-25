@@ -41,7 +41,7 @@ namespace HS2Codex.FramePairProbe
     [BepInPlugin("codex.hs2.framepairprobe", "HS2 Frame Pair Probe", Version)]
     public class FramePairProbe : BaseUnityPlugin
     {
-        public const string Version = "6.1.0";
+        public const string Version = "7.0.0";
         const string Magic = "HS2PAIRMARKERv01";
         const string BridgeMagic = "HS2PAIRBRIDGEv05";
         const string Tail = "HS2PAIRMARKEREND";
@@ -138,7 +138,7 @@ namespace HS2Codex.FramePairProbe
             Directory.CreateDirectory(req.OutDir);
             var w = new JsonOut();
             w.Begin('{');
-            w.Key("schema_version"); w.Raw("6"); w.Key("probe"); w.Str("HS2_FramePairProbe " + Version);
+            w.Key("schema_version"); w.Raw("7"); w.Key("probe"); w.Str("HS2_FramePairProbe " + Version);
             w.Key("nonce"); w.Str(req.NonceHex);
             w.Key("frame_count"); w.Int(Time.frameCount);
             w.Key("utc"); w.Str(DateTime.UtcNow.ToString("o"));
@@ -188,11 +188,13 @@ namespace HS2Codex.FramePairProbe
             log.Add("renderdoc " + _rd.Describe() + " captures_before=" + capturesBefore + " old_template=" + oldTemplate);
 
             var ctx = new ExportContext(native, manifest);
+            ctx.Chara = cha;
             native.SkinSlots = new SkinSlotTracker();
             _smrsForSlots = smrs;
             WriteStatic(Path.Combine(outDir, "static.json"), cha, transforms, smrs, index, new HashSet<string>(req.Meshes.Split(',')), outDir, native);
             var recorder = new RenderRecorder(ctx, log);
             recorder.CharacterTransforms = transforms;
+            recorder.Chara = cha;
             _marker = MarkerTexture("HS2_FramePairProbe_marker");
             _bridgeBegin = MarkerTexture("HS2_FramePairProbe_bridge_begin");
             _bridgeEnd = MarkerTexture("HS2_FramePairProbe_bridge_end");
