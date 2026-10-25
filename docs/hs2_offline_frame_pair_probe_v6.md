@@ -216,3 +216,77 @@ by decompiling it and its predecessors. Decompiled copies are in the session scr
   C:\Users\13666\Workspace\Face2Parameter --contract
   C:\Users\13666\Workspace\Face2Parameter\outputs\abmx_replay_20261005\installed_contract_v2.json`,
   and the head3 analogue with `--head 3 --driver-contract <new contract>`.
+
+## 9 Session 2026-10-25 results (probe 6.0.0 `42da95fd…`)
+
+Receipts: `HS2Mod/artifacts/chenger_reference_fit_20261012/paired_capture_session_v6_20261025/`.
+Bulk: `E:/HS2_offline_renderer_data/paired_session_v6_20261025/` and
+`E:/HS2_offline_renderer_data/abmx_rerun_20261025/`.
+
+| window | mode | captured frame | verifier |
+|---|---|---|---|
+| `6a9a1eb9…` | frame, DriverHooks 1 | 43100 | accepted, 20/20 |
+| `2def4f9f…` | renderstyle (16 bridge renders) | 51350 | accepted, 30/30 |
+| `a5078417…` | frame, DriverHooks 0 | 57875 | accepted, 16/16 |
+
+The quit request (`ExitDialog.GameEnd(false)`) ended the process within about 3 s, with no kill.
+
+### 9.1 Defect: the v6.0 `smr_*` fields are read from the wrong base
+
+`SkinnedMeshRenderer::AddAsRenderNode` (0x77abe0) runs on the BaseRenderer subobject. It does
+`lea rsi,[rbx-0x38]` to get the SkinnedMeshRenderer and passes `rbx` to
+`Renderer::AddAsRenderNode`. Its `+0x255/+0x256/+0x258/+0x260/+0x28c` offsets are therefore
+relative to `Renderer+0x38`. The SMR-relative offsets are `+0x28d/+0x28e/+0x290/+0x298/+0x2c4`,
+and the mesh is at `+0x1d8`. These agree with `hs2_offline_head_skinning.md` §9.6.
+
+Probe 6.0.0 adds the BaseRenderer-relative offsets to the SMR pointer. So every
+`smr_has_last_position_data_0x255`, `smr_force_matrix_recalc_0x256`, `smr_skin_buffer_0x258`,
+`smr_prev_skin_buffer_0x260` and `smr_dirty_0x28c`, and the derived `skin_buffer_holds_frame` and
+`prev_skin_buffer_holds_frame` labels, are invalid. For example, the `o_head` "buffers" were
+`0x16a00000034` and `0x3a`.
+
+The fix is to read at `Renderer+0x38+offset`, and to fail closed unless
+`Renderer+0x38+0x1a0 == native(sharedMesh)`. It is not built yet.
+
+The skin-slot rule (bridge slot 0 = N−2, slot 1 = N−1) does not use these fields. It comes from
+pairing the captured vertex buffers with the exports, through `pair_head_surfaces.py` (head meshes
+only, see 9.3), so it still holds.
+
+### 9.2 Neck hook JIT check: no effect observed
+
+Check script: `neck_jit_check.py`; result: `neck_jit_check/neck_jit_check.json`.
+
+The patched method's own arithmetic is `Lerp(transform.position[i], target.position[i], rate)`
+for i = 0, 1. In ptn 3 (ANIMATION) that value reaches only `NeckLookCalcVer2.backupPos`.
+
+The check runs the installed, unpatched `NeckLookControllerVer2.LateUpdate` on the hosted game JIT
+with each prefix record's inputs, and compares the result with the in-game patched postfix. On all
+16 hooked frames (mode a and mode b) these are bit-identical:
+- `backupPos`;
+- the `cf_J_Neck` and `cf_J_Head` local rotations;
+- `fixAngle` and `changeTypeTimer`.
+
+Every frame discriminates:
+- a float32-evaluated Lerp gives x = 1.9073486e-06, 13475 ulp off;
+- the observed x = 1.9058167e-06, which is the double-evaluated result, both in-game patched and
+  hosted unpatched.
+
+One diagnostic substitution is used: `changeTypeLerpCurve` is set to null in the host, which gives
+InverseLerp = 1. The records show evaluate = 1.
+
+**Correction to `hs2_offline_head_skinning.md` §9.5.** Slerp(0, b, 1) stored through the
+localRotation setter is not always b bit for bit. In 3 of 32 hooked bones the prefix and postfix
+differ by 1–2 ulp, and the host reproduces those values exactly.
+
+The hooks-off window has no records, so its `backupPos` cannot be observed. Re-applying the branch
+to its exported rotations reproduces 13 of 16 bones; the rest are off by 1–2 ulp. This is an
+idempotence property of the setter, not evidence about the JIT.
+
+### 9.3 Tooling gaps found
+
+- `pair_skin_capture.py` fails on Meshes=ALL exports: on a non-head surface the upload has 54186
+  words and the generated buffer 49260. The session used `pair_head_surfaces.py`, which restricts
+  the unchanged tool to the 8 head meshes.
+- `HS2Mod/tests/geometry_export/lowered_quality.py` refuses to run. Its guard reports that
+  `tools/geometry_quality/mesh_quality.py` changed (commit 1a02d3f) and no refrozen configuration
+  exists. It was not bypassed.
