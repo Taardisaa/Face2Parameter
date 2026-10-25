@@ -781,3 +781,56 @@ The card is `state_before_baseline.json`, and the patch is that window's `patch_
 - **Shadow casters and motion vectors:** the captured order is still used inside the
   mesh-id tie groups (`mesh_id_tiebreak`, 16 renders each; RenderNode+0x100 not exported).
 - **EyeLook:** the hidden state is seeded from the window's first frame, as in §10.2.
+
+## 13 Multi-view (yaw ≠ 0) support (2026-10-25, offline)
+
+Outputs: `E:/HS2_offline_renderer_data/multiview_20261025/`. Module:
+`src/render/hs2pipe/bridge_camera.py`; check tool:
+`tools/offline_renderer/bridge_camera_acceptance.py`.
+
+**How yaw reaches the frame** (MakerRenderStyleService.Capture):
+`position = target + Quaternion.Euler(0, yaw, 0) * (0, 0, distance); LookAt(target)`.
+- **Euler:** managed Deg2Rad products, then native Internal_FromEulerRad (emulated).
+- **`Quaternion * Vector3` and `Vector3 + Vector3`:** CoreModule IL (op_Multiply RVA
+  0x12d3c). Mono evaluates on a double stack and rounds at each float32 stloc/stfld.
+- **Position setter:** SetPosition 0xc01f60 → SetGlobalT 0x2030a0 →
+  InverseTransformPosition 0x1fff50 (emulated).
+- **LookAt:** Internal_LookAt 0x870400 (GetPosition / CalculateGlobalPosition 0x1dd810;
+  LookRotationToQuaternion 0x7ce350 with an identity seed, plus the degenerate fallback
+  SetFromToRotation 0x7da4c0 + MatrixToQuaternion 0x7ce390). Then SetRotation 0xc02230 →
+  InverseTransformRotation 0x200180 + SetLocalR normalisation.
+- **Matrices:** worldToCamera = Scale(1, 1, −1) · GetWorldToLocalMatrixNoScale (0x6647b0);
+  cameraToWorld = InvertMatrix4x4_Full (0x662dc0); culling = jittered projection ·
+  worldToCamera (0x662ea0).
+- **Lights under the camera** (DHH_Light, Lights Custom/Key|Back) and the DHH SSS cameras
+  (local identity) use CalculateGlobalPositionAndRotation over the new camera local.
+- **Not yaw-dependent:**
+  - `_PreviousVP` = Camera+0x598. It is updated from +0x5d8 only by
+    UpdatePreviousFrameMatrices (0x66e4ce), once per frame, so it is constant over the 16
+    renders (records agree).
+  - CTAA jitter offsets the projection only.
+  - DOF focus = distance.
+  - The shadow cascade fit and culling follow from the generated camera and light matrices
+    through the existing passes.
+- `capture_loop.capture_position` now implements every yaw. No yaw raise path is left.
+- `frame_orchestrate_paired.bridge_camera_pose` generates the camera and lights per bridge
+  render and replaces the record values after a bit-exact check.
+
+**Check (yaw 0, 4 windows × 16 renders):** camera local/world TRS, worldToCamera,
+cameraToWorld, culling and three attached-light TRS are all bit-equal (`camera_v1`). The
+template regression `regress_w_766d8184_template_v1` gives 959/959 with the generated camera.
+Predicted poses for −90..180 are in `camera_v1/report.json`; they need yaw ≠ 0 windows for
+acceptance.
+
+**Hair bone-driven bounds (updateWhenOffscreen), now generated** (`frozen_pose.bone_aabbs`,
+`prepared_local_matrix`, `prepared_compose`, `bone_world_aabb`):
+- **Mesh bone AABBs** (GetCachedBonesBounds 0x7a4770 → 0x7a2890, no-blend-shape branch):
+  every influence with weight > 0 contributes bindpose·v to a min/max box. They are
+  converted to centre/extent at 0xbde941.
+- **Bone matrices:** composed from the hierarchy top with the loop 0xbdb5d0..0xbdb895.
+- **World box:** 0xbdb8d0..0xbdba06.
+- **Result:** 64/64 bit-equal (4 windows × 16 renders). In `frozen_pose_check` the bounds
+  are 416/416. **No extra export is needed:** the exported vertices, weights and bindposes
+  suffice.
+- **Still open:** the blend-shape branch 0x7a2ce3 (no current mesh needs it; it is reported
+  if met).

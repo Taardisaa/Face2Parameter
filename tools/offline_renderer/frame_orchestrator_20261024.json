@@ -898,5 +898,22 @@
    "mesh_id_tiebreak (shadow_caster, motion_vectors) inside tie groups",
    "EyeLook seed (stated assumption)"
   ]
+ },
+ "multiview_20261025": {
+  "outputs": "E:/HS2_offline_renderer_data/multiview_20261025/",
+  "modules": [
+   "src/render/hs2pipe/bridge_camera.py",
+   "src/render/hs2pipe/frozen_pose.py (bone bounds)"
+  ],
+  "yaw0_check": "4 windows x 16 renders: camera local/world TRS, worldToCamera, cameraToWorld, culling, 3 attached lights bit-equal; template regression 959/959 with generated camera",
+  "hair_bone_bounds": "64/64 bit-equal; frozen_pose_check bounds 416/416",
+  "inferred_identity_inputs": [
+   "CharaCamera local TRS",
+   "Lights Custom local TRS"
+  ],
+  "open": [
+   "blend-shape branch of bone bounds 0x7a2ce3",
+   "yaw != 0 acceptance needs windows"
+  ]
  }
 }

@@ -677,6 +677,62 @@ def job_command_range(cap, passes):
     return (min(cis), max(cis)) if cis else (None, None)
 
 
+def bridge_camera_pose(scene, req, geometry_path):
+    """Generated camera pose of ``MakerRenderStyleService.Capture`` for the request's yaw
+    (``hs2pipe.bridge_camera``): camera TRS, worldToCamera / cameraToWorld / culling
+    matrices (culling with this render's CTAA-jittered projection) and the world TRS of the
+    lights under the camera.  The generated values replace the record's after a bit-exact
+    check (a disagreement is a FrameGap: the rule is wrong).  Not exported, identity
+    (labelled; records consistent): CharaCamera local TRS, ``Lights Custom`` local TRS."""
+    import numpy as np
+    from src.render.unity_skin_emu import shared_emulator
+    from src.render.hs2pipe import bridge_camera as bc
+    F_ = np.float32
+    emu = shared_emulator()
+    geo = json.loads(Path(geometry_path).read_text(encoding='utf-8'))
+    gby = {t['name']: t for t in geo['transforms'] if t['name'] in ('CustomControl', 'CharaCustom')}
+    ident = (np.zeros(3, F_), np.array([0, 0, 0, 1], F_), np.ones(3, F_))
+    chain = [ident] + [(np.asarray(gby[n]['local_position'], F_), np.asarray(gby[n]['local_rotation_xyzw'], F_),
+                        np.asarray(gby[n]['local_scale'], F_)) for n in ('CustomControl', 'CharaCustom')]
+    cam = [c for c in scene['cameras'] if c['name'] == 'Main Camera' and c['active_in_hierarchy']
+           and c['properties']['enabled']][0]
+    p = cam['properties']
+    pose = bc.capture_camera(emu, target=req['target'], ortho_size=req['ortho_size'], yaw=req.get('yaw', 0.0),
+                             field_of_view=p['fieldOfView'], camera_local_scale=[1.0, 1.0, 1.0], parent_chain=chain)
+
+    def rm(m):
+        return np.asarray(m, F_).reshape(4, 4).T.ravel()
+    proj = rm(p['projectionMatrix'])
+    mats = bc.camera_matrices(emu, pose, proj)
+    checks = {'worldToCameraMatrix': mats['world_to_camera'], 'cameraToWorldMatrix': mats['camera_to_world'],
+              'cullingMatrix': mats['culling']}
+    for k, v in checks.items():
+        if rm(p[k]).tobytes() != np.asarray(v, F_).tobytes():
+            raise fr.FrameGap('generated camera %s (yaw %r) differs from the render record' % (k, req.get('yaw')))
+        p[k] = [float(x) for x in np.asarray(v, F_).reshape(4, 4).T.ravel()]      # row-major as exported
+    rec_lights = {l['id']: l for l in (scene['_v5']['render_record']['data'].get('lights') or [])}
+    moved = []
+    for l in scene['lights']:
+        rl = rec_lights.get(l['id'])
+        if rl is None or not rl['active_in_hierarchy'] or '/Main Camera[0]/' not in (l.get('path') or ''):
+            continue
+        tr = rl['transform']
+        below = [(np.asarray(tr['local_position'], F_), np.asarray(tr['local_rotation'], F_),
+                  np.asarray(tr['local_scale'], F_))]
+        if not l['path'].split('/Main Camera[0]/', 1)[1].count('/') == 0:
+            below.append(ident)          # Lights Custom (identity, labelled)
+        pos, rot = bc.attached_world(emu, below, pose)
+        if (pos.tobytes() != np.asarray(tr['position'], F_).tobytes()
+                or rot.tobytes() != np.asarray(tr['rotation'], F_).tobytes()):
+            raise fr.FrameGap('generated light %s TRS (yaw %r) differs from the render record' % (l['id'], req.get('yaw')))
+        l['properties']['world_position'] = [F_(x) for x in pos]
+        l['properties']['world_rotation_xyzw'] = [F_(x) for x in rot]
+        moved.append(l['id'])
+    scene.setdefault('_bridge_overrides', {})['camera_pose'] = {
+        'yaw': req.get('yaw', 0.0), 'look_rotation_path': pose['look_rotation_path'], 'lights': moved,
+        'source': 'hs2pipe.bridge_camera (generated; equal to the record)'}
+
+
 def bridge_dof_focus(scene, req):
     """``MakerRenderStyleService.Capture`` sets DHH_Main.depthOfFieldLayer.focusDistance to
     the capture distance for its renders (capture_loop.plan_capture setup op
@@ -1353,6 +1409,8 @@ def run(args):
         job.scene = scene_v5.normalize(scene_raw, renders_doc, 'Main Camera', job.render_index, seed)
         if job.bridge:
             bridge_dof_focus(job.scene, bridge_req)
+            if args.skin_geometry:
+                bridge_camera_pose(job.scene, bridge_req, args.skin_geometry)
         lo, hi = job_command_range(cap, job.passes)
         job.cmd_window = (lo, hi + 1)
         plan_render(ctx, job)

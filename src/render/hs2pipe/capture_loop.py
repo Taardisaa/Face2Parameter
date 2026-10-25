@@ -105,17 +105,17 @@ def capture_aspect(width: int, height: int) -> np.float32:
 
 
 def capture_position(target, distance, yaw) -> np.ndarray:
-    """``target + Quaternion.Euler(0, yaw, 0) * new Vector3(0, 0, distance)``.
+    """``target + Quaternion.Euler(0, yaw, 0) * new Vector3(0, 0, distance)`` for any yaw.
 
-    ``Quaternion.Euler`` is native (``Internal_FromEulerRad``); for ``yaw == 0``
-    it is the identity quaternion exactly and the managed ``operator *``
-    returns the vector unchanged.  Other yaws need the transcribed native
-    quaternion routine (``unity_math``), not provided yet.
-    """
-    if float(yaw) != 0.0:
-        raise UnimplementedBranch('Quaternion.Euler for yaw != 0 requires the transcribed native routine')
-    t = [F32(v) for v in target]
-    return np.array([mono_f32(d(t[0]) + 0.0), mono_f32(d(t[1]) + 0.0), mono_f32(d(t[2]) + d(distance))], np.float32)
+    ``Quaternion.Euler``: managed Deg2Rad products -> native ``Internal_FromEulerRad``
+    (emulated); ``Quaternion * Vector3`` and ``Vector3 + Vector3``: the CoreModule IL with
+    Mono's double stack and float32 stores (``bridge_camera``).  The full pose (position
+    setter, LookAt, matrices, attached lights) is ``bridge_camera.capture_camera``."""
+    from src.render.unity_skin_emu import quaternion_euler_degrees, shared_emulator
+    from . import bridge_camera as bc
+    q = quaternion_euler_degrees(shared_emulator(), [0.0, float(F32(yaw)), 0.0])
+    return bc.vector3_add(np.asarray([F32(v) for v in target], np.float32),
+                          bc.quaternion_mul_vector3(q, [0.0, 0.0, F32(distance)]))
 
 
 def bridge_target(request: CaptureRequest) -> UnityRenderTexture:

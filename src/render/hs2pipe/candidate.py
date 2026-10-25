@@ -305,9 +305,8 @@ class BridgeCandidateRenderer:
         moved_ids = {self.tf[i]['id'] for i in moved}
         problems, head = [], []
         for rr in self.dep_rows:
-            if rr['head_surface'] and rr['update_when_offscreen'] and rr['deps'] & moved_ids:
-                problems.append('%s: bones moved and its bounds come from bones (updateWhenOffscreen path not '
-                                'transcribed)' % rr['name'])
+            # updateWhenOffscreen surfaces: bone-driven bounds are generated and checked in
+            # frozen_pose_check (a changed box differs from the template and raises there)
             if rr['head_surface']:
                 if rr['root'] in moved_ids or rr['transform'] in moved_ids:
                     problems.append('%s: root bone/transform moved -> ObjectToWorld, bounds, culling, shadow fit and '
@@ -465,6 +464,7 @@ class BridgeCandidateRenderer:
         out = {'renders': 0, 'rows': 0, 'root_trs_equal': 0, 'bounds_equal': 0, 'bounds_rows': 0,
                'animator_rewritten': None, 'forward_frozen_mismatch': [], 'mismatch': []}
         bone_bounds = set()
+        self.__dict__.setdefault('_bone_aabbs', {})
         for k in sorted(pr):
             A = np.frombuffer(base64.b64decode(pc[k]['data']['character_transforms']['transforms_f32']),
                               F).reshape(-1, 33)
@@ -502,7 +502,34 @@ class BridgeCandidateRenderer:
                 else:
                     out['mismatch'].append({'render': k, 'renderer': r['id'], 'field': 'root_trs'})
                 if r.get('update_when_offscreen'):
-                    bone_bounds.add(r['id'])
+                    # bone-driven bounds (CalculateTransformInfo_Prepared bone path): Mesh bone
+                    # AABBs from the exported mesh (GetCachedBonesBounds rule) and the bone
+                    # matrices composed from the hierarchy top (frozen_pose.prepared_*)
+                    st_ = self.renderers.get(r['id'])
+                    mesh_ = self.win.meshes.get(r['id']) if st_ is not None else None
+                    if mesh_ is None or mesh_.get('shapes'):
+                        bone_bounds.add(r['id'])      # blend-shape branch 0x7a2ce3 not transcribed
+                        continue
+                    if r['id'] not in self._bone_aabbs:
+                        self._bone_aabbs[r['id']] = fpz.bone_aabbs(mesh_['v'], mesh_['w'], mesh_['bi'], mesh_['bind'])
+                    ident = [np.array(c_, F) for c_ in np.eye(4)]
+                    mats = []
+                    for b in st_['bones']:
+                        ids_, c_ = [], tf[b]['id']
+                        while c_ is not None:
+                            ids_.append(c_)
+                            c_ = parent[c_]
+                        M = ident
+                        for tid_ in reversed(ids_):
+                            M = fpz.prepared_compose(M, fpz.prepared_local_matrix(*loc[tid_]))
+                        mats.append(M)
+                    out['bounds_rows'] += 1
+                    c, e = fpz.bone_world_aabb(mats, self._bone_aabbs[r['id']])
+                    if np.concatenate([c, e]).tobytes() == np.asarray(r['bounds'], F).tobytes():
+                        out['bounds_equal'] += 1
+                        out['bone_bounds_generated'] = out.get('bone_bounds_generated', 0) + 1
+                    else:
+                        out['mismatch'].append({'render': k, 'renderer': r['id'], 'field': 'bone_bounds'})
                     continue
                 out['bounds_rows'] += 1
                 c, e = fpz.world_aabb(fpz.global_matrix(self.emu, ch), r['local_bounds'][0:3], r['local_bounds'][3:6])
