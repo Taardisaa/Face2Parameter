@@ -75,8 +75,11 @@ class ProbeWindow:
             if r['id'] not in self.meshes:
                 continue
             m = self.meshes[r['id']]
+            # Exported per-frame activeInHierarchy, when constant over the window (else unknown).
+            states = {row['active'] for f in self.frames for row in f['renderers'] if row['id'] == r['id'] and 'active' in row}
+            active = states.pop() if len(states) == 1 else None
             rows.append({'renderer_id': r['id'], 'mesh_name': m['name'], 'renderer_path': r['name'] + '#' + str(r['id']),
-                         'vertex_count': m['n'], 'active_in_hierarchy': None,
+                         'vertex_count': m['n'], 'active_in_hierarchy': active,
                          'source': {'triangles': m['tri'].tolist(), 'uv': m['uv'], 'uv2': m['uv2'] if len(m['uv2']) else [],
                                     'bone_weights': m['w'], 'bone_indices': m['bi']}})
         return rows

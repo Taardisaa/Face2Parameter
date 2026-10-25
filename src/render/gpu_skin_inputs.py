@@ -46,6 +46,8 @@ SKIN_STRIDE = 40
 SKIN_ELEMENTS = (('POSITION', 0, 6, 0), ('NORMAL', 0, 6, 12), ('TANGENT', 0, 2, 24))
 DXGI_R16_UINT = 57
 DXGI_R32_UINT = 42
+DXGI_R32G32B32_FLOAT = 6
+DXGI_R32G32_FLOAT = 16
 D3D11_USAGE_DEFAULT = 0
 D3D11_USAGE_DYNAMIC = 2
 D3D11_BIND_VERTEX_BUFFER = 1
@@ -601,8 +603,23 @@ def upload_points(index, writes, draws, bindings, vs_usage, target_chunk=None):
             continue
         add(d['bound'][('VB', 0)][1], 'skinned_vertices_current', si, d, ('VB', 0))
         layout = index.layouts[d['layout']]
-        if any(e['SemanticName'] == 'TEXCOORD' and e['SemanticIndex'] == 4 and e['InputSlot'] == 1 for e in layout):
-            add(d['bound'][('VB', 1)][1], 'skinned_vertices_previous', si, d, ('VB', 1))
+        tc4 = [e for e in layout if e['SemanticName'] == 'TEXCOORD' and e['SemanticIndex'] == 4 and e['InputSlot'] == 1]
+        if tc4:
+            # The skinned motion-vector pass binds the previous skin buffer as
+            # TEXCOORD4 R32G32B32_FLOAT at offset 0 of a DYNAMIC stride-40 slot-1
+            # VB. A mesh with a fifth UV set (o_top_camisole2_a) also has a
+            # slot-1 TEXCOORD4, but as R32G32_FLOAT inside its DEFAULT static
+            # stream (stride 44): a static input, not previous skin.
+            prev_rid = d['vbs'][1]
+            desc = index.buffers[prev_rid]['desc'] if prev_rid in index.buffers else None
+            is_skin = (tc4[0]['Format'] == DXGI_R32G32B32_FLOAT and tc4[0]['AlignedByteOffset'] == 0
+                       and desc is not None and desc['Usage'] == D3D11_USAGE_DYNAMIC and d['strides'][1] == SKIN_STRIDE)
+            is_static_uv = (tc4[0]['Format'] == DXGI_R32G32_FLOAT and desc is not None
+                            and desc['Usage'] != D3D11_USAGE_DYNAMIC)
+            if is_skin:
+                add(d['bound'][('VB', 1)][1], 'skinned_vertices_previous', si, d, ('VB', 1))
+            elif not is_static_uv:
+                raise SkinPathError(f'Draw {d["chunk_index"]}: slot-1 TEXCOORD4 is neither previous skin nor a static UV')
         usage = vs_usage[d['shaders']['VS']]
         for mat in usage['object_matrices']:
             rid, wid = d['bound'].get(('VSCB', mat['cb_slot']), (None, None))

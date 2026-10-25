@@ -533,6 +533,14 @@ v4 exports none of these.
   - Native `Quaternion.Slerp(x, b, 1)` returns b bit-exactly for all 48 exported
     neck/head rotations, both for x = 0 (default `fixAngleBackup` when lookType
     never changed) and for x = identity.
+  - **Correction (v6 hook records, 2026-10-25).** That test fed the *exported*
+    rotations back in, which only shows idempotence. With the real pre-state,
+    Slerp(0, b, 1) stored through the localRotation setter (SetLocalR
+    normalisation) is **not** always b: in 3 of 32 hooked neck/head bones the
+    prefix (animator output) and postfix differ by 1–2 ulp, and the hosted game
+    code reproduces those values exactly (`neck_jit_check.json`, v6 doc §9.2).
+    The neck look in ANIMATION mode is therefore not a bit-exact passthrough of
+    the animator output. It is still candidate-independent (no position input).
   - The neck look is not executed hosted: `AnimationCurve.Evaluate` needs a
     native curve object. `curve(1)` is a v5 export item.
   - TARGET mode would also depend only on body transforms
@@ -642,3 +650,98 @@ first LateUpdate, after the animation phase.
 **Order certificate**: a per-frame sequence counter at the hooks above and at
 `ChaControl.LateUpdateForce` and ABMX `BoneController.LateUpdate`. It confirms
 the MonoScript order in effect.
+
+## 10 Status 2026-10-25 (v6 session work, stopped for the night)
+
+Bulk outputs: `E:/HS2_offline_renderer_data/skinning_20261025/`.
+
+### 10.1 All-mesh skinning: done and verified
+
+- **Cause of the 54186 vs 49260 failure.** It was a role-labelling error in
+  `gpu_skin_inputs.upload_points`, not a skinning difference.
+  - Any slot-1 `TEXCOORD4` was taken as the motion-vector previous-position
+    stream.
+  - `o_top_camisole2_a` has a fifth UV set. Its static slot-1 stream is
+    DEFAULT usage, stride 44, and has `TEXCOORD4` as R32G32_FLOAT at +36. Its
+    4926×44 bytes were paired against a 4926×40 skin.
+- **Fix.** The previous-skin role now requires all of the following:
+  - `TEXCOORD4` R32G32B32_FLOAT at offset 0;
+  - a DYNAMIC slot-1 buffer;
+  - stride 40.
+
+  A static R32G32 UV is skipped, and anything else fails closed.
+- **Inactive renderers.** `paired_skin.ProbeWindow.surfaces` now takes
+  `active_in_hierarchy` from the exported per-frame `active` flag. The 15
+  inactive renderers are classified `inactive_no_gpu_upload` instead of
+  `unbound`.
+- **Tests.** The existing `test_gpu_skin_inputs`/`test_paired_skin` suites pass
+  (17).
+- **Results** (`pair_all_v2_<nonce>/pairing.json`), using the unchanged
+  `pair_skin_capture.py` over all 30 exported meshes:
+
+  | window | skin uploads bit-exact | O2W/W2O |
+  |---|---|---|
+  | 6a9a1eb9 (mode a, 43100) | 26/26, 15 surfaces (body, 6 clothes, hair, head), current N and previous N−1 | 41/41 |
+  | a5078417 (hooks off, 57875) | 26/26 | 42/42 |
+  | 2def4f9f (mode b bridge, 51350) | 41/41: N−2, N−1 and N slots | 233/698 (see below) |
+
+- **Mode b per-draw matrices.**
+  - The 465 non-matching rows are the bridge renders' poses 0–2. No exported
+    frame's root TRS produces them.
+  - In the same renders, the skinned vertex buffers are the N−2/N−1 natural
+    frames. So inside `Camera.Render` the renderer TransformInfo *is* refreshed
+    from the PoseFreeze (normalizedTime 0) transforms, while the vertices are
+    not re-skinned. That answers the §9.6 open item: a renderstyle image is
+    stale skin under frozen-pose object matrices.
+  - Bit-exactness of those 465 rows is a gap. The frozen transforms are not
+    exported, because the bridge capture had no `geometry_out_path`, and the
+    renders' `pre_cull` records hold only camera state. The v7 probe needs the
+    character local TRS at the bridge render's `pre_cull`.
+
+### 10.2 Per-frame drivers from real hook pre-state: started, not done
+
+Confirmed from the v6 records:
+- **Hook order** is fbs → chara_late_update_force → abmx → neck → eye, matching
+  §9.1. chara_update_force runs in Update.
+- **Eye.** The prefix holds the full EyeObject state (`angleH`, `angleV`,
+  `dirUp`, refs, `origRotation`) and the call arguments. The target position is
+  exactly the camera value used in §9.2: (1.9058167e-6, 14, 21.8000011).
+- **FBS.** The prefix holds the blink control, all three controllers, the mouth
+  `tpcRand`/scale state and `Random.state`.
+- **Mouth.** The `cf_J_MouthMove` scale.x is 1 at the fbs prefix and 1.00501609
+  after ABMX. The ABMX override is observed directly.
+- **Animation.** The fbs prefix holds animated local TRS. The Animator is
+  `edit_F`, generic (not human), normalizedTime 20.41, length 4.667. FinalIK
+  `FullBodyBipedIK.enabled = false`.
+
+Next steps, in order:
+1. A tool (window path as argument) that seeds `HostedEyeLook` from each eye
+   prefix record and runs `EyeLookController.LateUpdate`. It uses that frame's
+   exported transforms (the Harness scene of `eye_look_acceptance.py`), the
+   record's `delta_time` and the `call_arguments` target. It then compares
+   bitwise: postfix `angleH`/`angleV`/`dirUp`/`fixAngle`/`angleHRate`/
+   `angleVRate`/`targetPos`, and the exported `cf_J_look_L/R`. Run modes a and b.
+2. The same for FBS:
+   - set `FBSBlinkControl`, each FBSBase (`openRate`, `OpenMin`/`OpenMax`,
+     `FixedRate`, `correctOpenMax`, `blendTimeCtrl`; assert dicts == {0:1}),
+     the mouth `tpcRand`/`scl*`/`adjustWidthScale` and voiceValue;
+   - set `rt.random_state` from the signed ints, as uint32;
+   - run `OnLateUpdate`;
+   - compare with the postfix fields, the postfix `Random.state`, and the frame
+     weights of the ct_head renderers.
+3. Neck: reuse `neck_jit_check` (16/16 already bit-identical). Mouth width:
+   check `UpdateBlendShapeVoice` against the chara_update_force prefix/postfix.
+4. Animation: Mecanim is not ported. Compare the fbs-prefix animated TRS with
+   the end-of-frame export to list which bones LateUpdate writers change.
+
+### 10.3 lowered_v2 denormal residual and lowered_quality: not started
+
+- Evidence: `E:/HS2_offline_renderer_data/abmx_rerun_20261025/`.
+- Next: in the exact `model.py`, trace `_positionBaseline` for `cf_J_Chin_rs`
+  (live x 1.641e-21 vs successor 6.616e-22). Candidates: denormal arithmetic,
+  FTZ/DAZ in UnityPlayer/Mono SSE, double-evaluated Mono products, and
+  operation order in the radial normalisation. Fix the cause, re-freeze via
+  `tools.abmx_stable_lowering.prepare`, and decide whether the 6 tests can bind
+  to the new live records.
+- `lowered_quality.py` is blocked by `mesh_quality.py` (1a02d3f). It needs that
+  tool's own config refreeze.
