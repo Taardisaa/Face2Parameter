@@ -264,5 +264,200 @@
  "step4_shadow": {
   "shadow_caster_raster_and_scissor_rule_vs_capture": "9/9 equal (frame 26059 shadow_map draws)",
   "order_hash": "SharedMaterialData+0xd0 = XXH32(seed 0x8f37154b) over [ShaderLab::Pass* address, ShaderKeywordSet, per-stage overriding values] (Material::UpdateHashes 0x84e3b0, Pass::ComputePassValuesHash 0x855f70): includes a heap address, not computable offline"
+ },
+ "v5_mode_a_f8bf_frame3605": {
+  "session": "E:/HS2_offline_renderer_data/paired_session_v5_1_20261021 (nonce f8bf0704ef654d909258bf357ab77f9c)",
+  "run": "E:/HS2_offline_renderer_data/orchestrator_20261024/modea_f8bf/run_v26",
+  "execution": {
+   "checkpoints": 60,
+   "equal": 60
+  },
+  "per_pass": {
+   "depth_texture": {
+    "draws": 14,
+    "draws_equal": 14,
+    "cbuffers": {
+     "equal": 78
+    }
+   },
+   "depth_normals": {
+    "draws": 22,
+    "draws_equal": 22,
+    "cbuffers": {
+     "equal": 100
+    }
+   },
+   "shadow_caster": {
+    "draws": 9,
+    "draws_equal": 9,
+    "cbuffers": {
+     "equal": 48
+    }
+   },
+   "screenspace_shadows": {
+    "draws": 1,
+    "draws_equal": 1,
+    "cbuffers": {
+     "equal": 7
+    }
+   },
+   "forward_opaque": {
+    "draws": 16,
+    "draws_equal": 16,
+    "cbuffers": {
+     "equal": 167
+    }
+   },
+   "skybox": {
+    "draws": 1,
+    "draws_equal": 1,
+    "cbuffers": {
+     "equal": 4
+    }
+   },
+   "motion_vectors_camera": {
+    "draws": 1,
+    "draws_equal": 1,
+    "cbuffers": {
+     "equal": 6
+    }
+   },
+   "motion_vectors": {
+    "draws": 12,
+    "draws_equal": 12,
+    "cbuffers": {
+     "equal": 48
+    }
+   },
+   "forward_transparent": {
+    "draws": 4,
+    "draws_equal": 4,
+    "cbuffers": {
+     "equal": 37
+    }
+   },
+   "image_effect_chain": {
+    "draws": 6,
+    "draws_equal": 6,
+    "cbuffers": {
+     "equal": 22
+    }
+   }
+  },
+  "summary": {
+   "vs": {
+    "equal": 86
+   },
+   "ps": {
+    "equal": 86
+   },
+   "blend": {
+    "equal": 86
+   },
+   "depth_stencil": {
+    "equal": 86
+   },
+   "raster": {
+    "equal": 86
+   },
+   "stencil_ref": {
+    "equal": 86
+   },
+   "cbuffers": {
+    "equal": 517
+   },
+   "cbuffer_variables": {
+    "generated": 1533,
+    "external": 24
+   }
+  },
+  "ppv2": {
+   "actions": 24,
+   "equal": 23,
+   "failing_fields": {
+    "args": 1,
+    "equal": 1
+   }
+  },
+  "grab_copies": [
+   {
+    "capture_command": 228,
+    "renderer": "o_body_cf",
+    "equal": true
+   },
+   {
+    "capture_command": 232,
+    "renderer": "o_namida",
+    "equal": true
+   }
+  ],
+  "clears": [
+   {
+    "capture_command": 29,
+    "pass": "depth_texture_prepass",
+    "op": "clear_dsv",
+    "equal": true,
+    "source": "Camera::RenderDepthTexture 0x6674bb"
+   },
+   {
+    "capture_command": 63,
+    "pass": "depth_normals",
+    "op": "clear_rtv",
+    "equal": true,
+    "source": "Camera::RenderShaderReplacementPass 0x668146 (colour 0x667227)"
+   },
+   {
+    "capture_command": 64,
+    "pass": "depth_normals",
+    "op": "clear_dsv",
+    "equal": true,
+    "source": "Camera::RenderShaderReplacementPass 0x668146 (colour 0x667227)"
+   },
+   {
+    "capture_command": 102,
+    "pass": "shadow_map",
+    "op": "clear_dsv",
+    "equal": true,
+    "source": "RenderShadowMaps directional 0x6a2847"
+   },
+   {
+    "capture_command": 121,
+    "pass": "screenspace_shadows",
+    "op": "clear_rtv",
+    "equal": true,
+    "source": "ComputeScreenSpaceShadowMap 0x69bbaa (r12 = -1 -> flags 1)"
+   },
+   {
+    "capture_command": 129,
+    "pass": "forward_scene",
+    "op": "clear_dsv",
+    "equal": true,
+    "source": "Camera::ClearNoSkybox 0x65fac0 -> 0x65f8e0"
+   }
+  ],
+  "external_variables": {
+   "_HasLastPositionData": 12,
+   "_MotionVectorDepthBias": 12
+  },
+  "spliced_by_reason": {
+   "capture resource update / clear / copy (non-pass command)": 171,
+   "capture resource update / clear / copy (clear_only)": 6,
+   "capture resource update / clear / copy (deferred_depth_copy)": 1,
+   "step not generated: deferred_reflections": 1,
+   "capture resource update / clear / copy (post_curves_texture_copy)": 1,
+   "step not generated: ui": 81,
+   "capture resource update / clear / copy (staging_upload_copy)": 1
+  },
+  "head_skin_uploads_generated": 14,
+  "external_capture_inputs": [
+   "shadow caster membership + order (SharedMaterialData+0xd0 hash over a Pass* address; v6 request)",
+   "GraphicsCaps+0xd0 bit 7 / +0x3fc: outcome of the normal-bias / PCF_SOFT branch (one boolean)",
+   "GraphicsCaps+0x3a1: camera Skybox clear colour bit (one boolean)",
+   "SkinnedMeshRenderer+0x255 (_HasLastPositionData), BuildSettings+0xfa (_MotionVectorDepthBias)",
+   "IA (mesh/skin/immediate quad buffers), SRVs, samplers, render-target allocation of every generated draw",
+   "chain/grab/engine texture identities and their cross-frame contents (CTAA history, rtCamera)",
+   "Graphics.Blit / PPv2 CopyStd dynamic VB ring placement",
+   "not generated: BackCamera deferred (clears, depth copy, reflections), curves copy, PPv2-internal clear, pre-UI stencil clear, UI (81 draws), staging copy"
+  ]
  }
 }

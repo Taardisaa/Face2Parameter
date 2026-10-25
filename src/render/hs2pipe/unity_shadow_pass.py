@@ -1,0 +1,96 @@
+"""Directional shadow of one camera render, bound to the scene export.
+
+Assembles the transcribed pieces into the shadow constants of the main
+directional light (Unity 2018.4.11f1, built-in forward, one light):
+
+* light axes: ``SharedLightData::UpdateTransform`` (0x6a6610) stores
+  ``Transform::GetLocalToWorldMatrixNoScale``; the rotation part is the native
+  quaternion->matrix expression of the world rotation
+  (``gpu_skin_inputs.unity_rotation_matrix``), translation = world position;
+* ShadowCullData (``unity_shadow_bounds.setup_shadow_cull_data``) from the
+  camera culling matrix;
+* caster MinMaxAABB (``caster_bounds``) and receiver MinMaxAABB
+  (``receiver_bounds``) from renderer world AABBs;
+* cascade fit ``unity_shadows.directional_cascade`` (0x6a4400) with the focused
+  light hull (``unity_light_hull``);
+* shadow map size (``CalculateShadowMapSize`` 0x69ad80), shader constants
+  (``SetCascadedShadowShaderParams`` 0x6a3540, ``unity_LightShadowBias`` from
+  ``RenderShadowMaps``), caster view-projection.
+
+Explicit input gap: the caster set (``caster_cull_set``: shadow-caster culling
+0x6ac320 is not transcribed) is passed in by the caller.
+"""
+from __future__ import annotations
+
+import numpy as np
+
+from . import unity_forward as uf
+from . import unity_light_hull as lh
+from . import unity_math as um
+from . import unity_shadow_bounds as sb
+from . import unity_shadows as us
+
+F = np.float32
+
+
+def light_matrix_no_scale(world_position, world_rotation_xyzw):
+    from src.render import gpu_skin_inputs as gsi
+    R = gsi.unity_rotation_matrix(np.asarray(world_rotation_xyzw, np.float32))
+    m = um.identity()
+    for c in range(3):
+        for r in range(3):
+            m[c * 4 + r] = F(R[r, c])
+    m[12], m[13], m[14] = (F(x) for x in world_position)
+    return m
+
+
+def aabb_of(renderer):
+    return [F(x) for x in renderer['center']] + [F(x) for x in renderer['extent']]
+
+
+def directional_shadow(cam, light_props, quality, graphics, casters, receivers, light_id, viewport):
+    """Cascade 0 of a CloseFit single-cascade directional light.
+
+    ``casters`` / ``receivers``: renderer dicts (``SceneAdapter.renderers()``
+    rows).  ``quality``: QualitySettings export.  ``graphics``:
+    ``{'max_render_texture_size', 'video_memory_mb'}``."""
+    lm = light_matrix_no_scale(light_props['world_position'], light_props['world_rotation_xyzw'])
+    axes = (tuple(lm[0:3]), tuple(lm[4:7]), tuple(lm[8:11]))
+    q = {'shadow_distance': quality['shadowDistance']}
+    sd = uf.shadow_distance_for_camera(q, cam)
+    proj_type = 'CloseFit' if str(quality['shadowProjection']).startswith('ShadowProjection.CloseFit') else 'StableFit'
+    if proj_type != 'CloseFit':
+        raise NotImplementedError('StableFit shadow projection')
+    cull = cam.m('culling_matrix')
+    w2c = cam.m('world_to_camera_matrix')
+    scd = sb.setup_shadow_cull_data(cull_world_to_clip=cull, world_to_camera=w2c, camera_near=cam.f('near_clip'),
+                                    camera_far=cam.f('far_clip'), shadow_distance_for_rendering=sd,
+                                    shadow_projection=sb.SHADOW_PROJECTION_CLOSE_FIT, cull_position=cam.get('position'),
+                                    is_orthographic=bool(cam.get('orthographic')), field_of_view=cam.f('field_of_view'))
+    cb = sb.caster_bounds([{'world_bounds': aabb_of(r), 'shadow_cull_visible': True, 'has_shadow_caster_pass': True,
+                            'shadow_casting_mode': ('off', 'on', 'two_sided', 'shadows_only')[r['shadow_casting_mode']]}
+                           for r in casters], light_type=sb.LIGHT_DIRECTIONAL, camera_frustum_planes=scd['planes_a'])
+    objs = [{'world_bounds': aabb_of(r), 'receive_shadows': bool(r['receive_shadows']), 'subshader_resolved': True,
+             'forward_main_light': light_id, 'forward_additional_lights': [], 'additional_light_shadow_pass': False}
+            for r in receivers]
+    rb = sb.receiver_bounds(objs, light_id, {light_id: {'type': 'directional', 'shadows': True, 'active_flag_0x20': True}},
+                            scd, receiver_gate=True)
+    cascades = int(quality['shadowCascades'])
+    qs = {'shadow_cascades': cascades, 'shadow_cascade_2_split': quality['shadowCascade2Split'],
+          'shadow_cascade_4_split': quality['shadowCascade4Split']}
+    dist, pct = uf.cascade_split_distances(cam.f('near_clip'), sd, cascades, uf.quality_split_ratios(qs))
+    ok, c2w_clip = um.invert_full(cull)
+    inp = us.CascadeInputs(projection_type=proj_type, clip_to_world=c2w_clip, camera_near=cam.f('near_clip'),
+                           camera_far=cam.f('far_clip'), shadow_distance=sd, split_percentages=pct,
+                           cascade_count=cascades, near_plane_offset=F(quality['shadowNearPlaneOffset']),
+                           reversed_z=True, light_axes=axes, caster_bounds=cb, receiver_bounds=rb,
+                           camera_orthographic=bool(cam.get('orthographic')), camera_fov=cam.f('field_of_view'),
+                           hull_function=lh.calculate_focused_light_hull)
+    res_name = str(quality['shadowResolution']).split('.')[-1].split('=')[0]
+    size = uf.shadow_map_size(graphics, {'shadow_resolution': res_name},
+                              {'type': 'Directional', 'shadow_resolution': light_props.get('shadowResolution_index', -1),
+                               'shadow_custom_resolution': light_props.get('shadowCustomResolution', 0)},
+                              viewport[0], viewport[1])
+    res = us.directional_cascade(inp, 0, size, size)
+    return {'result': res, 'size': size, 'split_distances': dist, 'split_percentages': pct, 'caster_bounds': cb,
+            'receiver_bounds': rb, 'shadow_distance': sd, 'light_matrix': lm}

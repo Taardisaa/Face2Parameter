@@ -331,7 +331,22 @@ class FrameEmitter:
                 shadow = bytearray(self.pool.shadow(*key))
                 generated, external = [], []
                 have = {}
+                fb = values.get('_property_fallback')
                 for v in variables:
+                    if v.name not in values and fb is not None and v.name not in fb['builtin']:
+                        # shaderprops::Get* (0x85aea0 / 0x85bc40 / 0x85b390): material sheet,
+                        # then the global sheet, then zero / identity
+                        if v.name in fb['global']:
+                            values = dict(values)
+                            values[v.name] = fb['global'][v.name]
+                        else:
+                            n = (v.array_size or 1) * v.rows * v.columns
+                            if v.matrix and v.rows == 4 and not v.array_size:
+                                dv = [F(1) if i % 5 == 0 else F(0) for i in range(16)]
+                            else:
+                                dv = [F(0)] * n
+                            values = dict(values)
+                            values[v.name] = dv
                     if v.name in values:
                         val = unwrap(values[v.name])
                         n = np.asarray(val).size
@@ -364,7 +379,8 @@ class FrameEmitter:
 
     # ------------------------------------------------------------ draws
     def emit_draw(self, *, label, cap_index, stage_programs, pass_record, light_mode, values, material_floats,
-                  device: ds.DeviceRaster, renderer_name, shader_name, keywords, notes=()):
+                  device: ds.DeviceRaster, renderer_name, shader_name, keywords, notes=(), viewports=None,
+                  scissors=None):
         cap_cmd = self.cap.commands[cap_index]
         cst = cap_cmd['state']
         st = DrawState()
@@ -416,9 +432,15 @@ class FrameEmitter:
             rec.external['states'] = 'pass state unresolved'
         st.om.blend_factor = list(cst['om']['blend_factor'])
         st.om.sample_mask = cst['om']['sample_mask']
-        st.rs.viewports = copy.deepcopy(cst['rs']['viewports'])
-        st.rs.scissors = copy.deepcopy(cst['rs']['scissors'])
-        rec.external['viewport'] = 'camera pixel rect binding taken from the capture'
+        if viewports is None:
+            st.rs.viewports = copy.deepcopy(cst['rs']['viewports'])
+            st.rs.scissors = copy.deepcopy(cst['rs']['scissors'])
+            rec.external['viewport'] = 'camera pixel rect binding taken from the capture'
+        else:
+            st.rs.viewports = copy.deepcopy(viewports)
+            st.rs.scissors = copy.deepcopy(scissors if scissors is not None else cst['rs']['scissors'])
+            if scissors is None:
+                rec.external['scissor'] = 'scissor rect (disabled by the raster state) taken from the capture'
         prov = {'generator': GENERATOR, 'pass': label, 'renderer': renderer_name, 'shader': shader_name,
                 'capture_event': rec.capture_event, 'external': sorted(rec.external)}
         op = cap_cmd['op']
@@ -541,8 +563,9 @@ class UnityForwardLowering:
     Camera renders, sorted-object passes, engine buffers and the active colour
     target are answered by the frame ``driver``."""
 
-    def __init__(self, emitter, library, driver, *, anisotropic_filtering='ForceEnable'):
+    def __init__(self, emitter, library, driver, *, anisotropic_filtering='ForceEnable', color_space='Linear'):
         from . import unity_math as um
+        self.color_space = color_space
         self.em = emitter
         self.lib = library
         self.driver = driver
@@ -626,9 +649,33 @@ class UnityForwardLowering:
         kw = frozenset(keywords) | frozenset(self.keywords)
         pz, sps, why = self._select(shader, pass_index, kw, captured)
         values = dict(self.blit_values)
+        to_screen = bool(dest.get('backbuffer'))
+        if to_screen:
+            # RenderTexture::SetActive(null): the backbuffer is active, the device does not
+            # invert the projection (GL.LoadOrtho GPU projection without the Y flip)
+            from . import unity_math as um
+            ortho = um.gl_get_gpu_projection(um.set_ortho(0, 1, 0, 1, -1, 100), False)
+            values['glstate_matrix_projection'] = list(ortho)
+            values['unity_MatrixVP'] = list(um.multiply(ortho, um.identity()))
         values.update(decode_globals(ps_globals))
         if '_MainTex_TexelSize' not in values and 'rt' in source:
             values['_MainTex_TexelSize'] = list(source['rt'].texel_size())
+        # Material::BuildProperties (0x849050) starts a code-created material's sheet as a
+        # copy of the shader's default property sheet (ShaderPropertySheet::CopyFrom,
+        # 0x8490bc): properties the plugin does not set keep the shader defaults
+        # (colours stored linear in Linear space unless [Gamma]).
+        from . import unity_forward as uf
+        copies = self.lib.copies(shader)
+        if copies:
+            for prop in copies[0].record.get('properties', []):
+                if prop['type'] == 'texture' or prop['name'] in values:
+                    continue
+                v = [F(x) for x in prop['default']]
+                if prop['type'] == 'color' and self.color_space == 'Linear' and not prop['flags'] & 32:
+                    v = uf.gamma_to_linear_color(v)
+                if prop['type'] in ('float', 'range', 'int'):
+                    v = [v[0]]
+                values[prop['name']] = v
         st = DrawState()
         rec = DrawRecord(command=-1, pass_label='blit', capture_command=cap_index,
                          capture_event=self.em.cap.event(cap_index), renderer='Graphics.Blit', shader=shader,
@@ -683,7 +730,7 @@ class UnityForwardLowering:
         st.om.depth_stencil_state = self.em.state('depth_state', ds.d3d11_depth_stencil_desc(gs.depth, gs.stencil))
         st.om.stencil_ref = gs.stencil['ref']
         st.rs.state = self.em.state('raster_state',
-                                    ds.d3d11_raster_desc(gs.raster, ds.DeviceRaster(invert_projection=True)))
+                                    ds.d3d11_raster_desc(gs.raster, ds.DeviceRaster(invert_projection=not to_screen)))
         w, h = dest['rt'].width, dest['rt'].height
         st.rs.viewports = [{'TopLeftX': 0.0, 'TopLeftY': 0.0, 'Width': float(w), 'Height': float(h),
                             'MinDepth': 0.0, 'MaxDepth': 1.0}]

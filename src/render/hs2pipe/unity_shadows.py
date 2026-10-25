@@ -335,10 +335,14 @@ def shadow_caster_view_projection(result, reversed_z=True):
     return um.multiply(dev, result.view), dev
 
 
-def unused_cascade_world_to_shadow():
-    """unity_WorldToShadow entries beyond the cascade count (capture_observed:
-    zero 3x3 with column 3 = (0,0,1,1); source writer not yet located: gap)."""
+def unused_cascade_world_to_shadow(reversed_z=True):
+    """unity_WorldToShadow entries beyond the cascade count: ``PrepareShadowMaps``
+    (0x69f4f0) initialises all four header matrices at 0x69fecf..0x69ffe1 to zero,
+    m[14] = 1.0 when ShadowMapJobHeader+0x11143 (GraphicsCaps+0xdd reversed Z,
+    stored 0x69fa13) is set, and m[15] = 1.0; the cascade fit overwrites only the
+    used ones."""
     m = [F(0.0)] * 16
-    m[14] = F(1.0)
+    if reversed_z:
+        m[14] = F(1.0)
     m[15] = F(1.0)
     return m

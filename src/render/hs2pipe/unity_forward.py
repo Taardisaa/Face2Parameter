@@ -632,6 +632,26 @@ def light_shadow_bias(light, device_shadow_projection, texel_x, texel_y, soft_no
     return [x, F(1.0), nb * t, F(0.0)]
 
 
+def soft_normal_bias_branch(*, light_shadows, caps_0xd0_bit7, tier_0xb4, build_0x101, build_0x102, caps_0x3fc,
+                            quality_shadows, shadow_distance):
+    """Condition of the normalBias*3.65 multiply (``RenderShadowMaps`` 0x6a29db..0x6a2a60).
+
+    header+0x5b0 (= SharedLightData+0xa4, light shadow type, written 0x69fba8) == 2
+    (Soft); GraphicsCaps+0xd0 bit 7; header+0x11140 (GraphicsSettings tier
+    [GraphicsCaps+0xd4] +0xb4 byte, 0x69f48d); header+0x11141 / +0x11142
+    (BuildSettings+0x101 / +0x102, 0x69f4a0..0x69f4b4); GraphicsCaps+0x3fc == 0;
+    header+0x11144 (QualitySettings level +0x2c = shadows) >= 2; header+0x11148
+    (level +0x3c = shadowDistance) > 0 (``comiss xmm8, xmm11``; xmm11 = 0 from
+    0x6a1acf).  Header fields are filled by the helper 0x69f180."""
+    if int(light_shadows) != 2 or not caps_0xd0_bit7 or not tier_0xb4:
+        return False
+    if not build_0x101 or not build_0x102 or caps_0x3fc:
+        return False
+    if int(quality_shadows) < 2:
+        return False
+    return bool(F(shadow_distance) > F(0.0))
+
+
 def cascade_shader_params(world_to_shadow, cascades, split_dist, spheres):
     """``SetCascadedShadowShaderParams`` (RVA 0x6a3540)."""
     def scale(m):

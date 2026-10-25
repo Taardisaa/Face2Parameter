@@ -276,3 +276,114 @@ Receipt: `tools/offline_renderer/frame_orchestrator_20261024.json`.
   field: `SharedMaterialData+0xd0` per material (or the caster draw order). Light matrices: an
   explicit gap for frame 26059; they are in the v5.0.1 export.
 - The shadow pass itself is not yet emitted (still spliced).
+
+## 8 Update 2026-10-24/25 — v5.0.1 mode a (`f8bf0704…`, frame 3605)
+
+Run: `E:/HS2_offline_renderer_data/orchestrator_20261024/modea_f8bf/run_v26` (superseded runs in
+`modea_f8bf/deprecated/`). Inputs: v5 scene/renders export (`hs2pipe.scene_v5`), native material
+sheets (exact colours), light transform rotation, scene node handles. Numbers: §8.6.
+
+### 8.1 Scene node order (proof, replaces the capture MV order)
+
+- `Renderer+0x160` is the renderer's index in the RendererScene node array:
+  `AddRendererInternal` (0x68ae10) appends a SceneNode and returns the previous count;
+  `RemoveRenderer` (0x690f80) swap-removes and writes the moved node's new index back to its
+  renderer (back pointer +0x38, +0x128 → +0x160, 0x691142).
+- Static nodes are the indices below the static count, so list 0 then list 1 in node order is
+  ascending index. `cull` keeps node order within a list; `render_node_queue_order`
+  (BeginRenderQueueExtraction 0x68bc00) appends main-thread-prepared nodes (SkinnedMeshRenderer
+  has no PrepareRenderNodes job callback) after job-prepared ones.
+- Probe v5 field `native.scene_handle_0x160`; `SceneAdapter.node_queue`. `flags_0x128` is not
+  needed for the order.
+
+### 8.2 Shadows (generated except the caster set/order)
+
+- `unity_shadow_pass.directional_shadow`: light axes = `GetLocalToWorldMatrixNoScale` from the
+  world rotation (`SharedLightData::UpdateTransform` 0x6a6610); ShadowCullData, caster/receiver
+  MinMaxAABB, CloseFit cascade (0x6a4400) with the focused light hull; shadow map size
+  (0x69ad80). Caster `unity_MatrixVP`, `unity_WorldToShadow[0]` bit-equal to the capture.
+- Unused cascades: `PrepareShadowMaps` 0x69fecf..0x69ffe1 zeroes the four header matrices, sets
+  m[14] = 1 when ShadowMapJobHeader+0x11143 (GraphicsCaps+0xdd) and m[15] = 1.
+- `unity_LightShadowBias` normal-bias ×3.65 branch (`RenderShadowMaps` 0x6a29db..0x6a2a60):
+  light shadows == Soft (header+0x5b0 = SharedLightData+0xa4, 0x69fba8), GraphicsCaps+0xd0 bit 7,
+  tier byte GraphicsSettings[tier]+0xb4, BuildSettings+0x101/+0x102, GraphicsCaps+0x3fc == 0,
+  QualitySettings.shadows ≥ 2, shadowDistance > 0 (header fields filled by 0x69f180).
+  `unity_forward.soft_normal_bias_branch`. Only the two GraphicsCaps bits are not exported: the
+  branch outcome is taken from the capture (one boolean, external:capture).
+- Depth-texture pass: the depth-pass render job (0x6c8840) writes `unity_LightShadowBias = 0` on
+  the device (0x6c890e..0x6c8923) before its draws.
+- Caster draws: `unity_camera_passes.shadow_caster_plan` (GetShadowCasterPassToUse per material,
+  `SHADOWS_DEPTH`), `shadow_caster_device`, viewport = map size, scissor inset by 1. Membership
+  and order are the explicitly listed external:capture input (`SharedMaterialData+0xd0`).
+- Screen-space shadows (`CollectShadows` 0x6c8210 → `ComputeScreenSpaceShadowMap` 0x69b950):
+  subshader by `ShadowmapFilter` tag — soft = the same caps/settings chain without the tier byte;
+  force-inverse-projection = Camera+0x4ec == 0 (explicit projection: `SetProjectionMatrix`
+  0x66bc84 writes 0, `ResetProjectionMatrix` 0x6690f0 writes 1) and projection row 3 ≠ (0,0,0,1);
+  `LoadFullScreenOrthoMatrix(-1, 100)`; `SHADOWS_SINGLE_CASCADE`; `_ShadowMapTexture_TexelSize`.
+
+### 8.3 Other generated draws
+
+- Particles: every ParticleSystemRenderer render callback (0xb02e30, 0xb03530, 0xb03c10, 0xb042e0,
+  0xb04780, 0xb04c30) calls `SetWorldMatrixAndType(identity, 0)` (GfxDevice vtable +0xd8 =
+  0x8cf3b0); vertices are generated in world space.
+- Motion-vector camera quad (DoMotionVectorRenderLoop 0x6c9b60): pass `r12+1`, r12 = 1 when
+  Camera+0x558 (current target) is null or its antiAliasing (RenderTexture+0xd0) > 1;
+  `_NonJitteredVP`/`_PreviousVP` on the internal material; `LoadFullScreenOrthoMatrix(0,
+  GetProjectionFar)` (0x68fc70: SetOrtho → SetProjectionMatrix, SetViewMatrix(identity));
+  `GetProjectionFar` (0x663750) transcribed; mono `RenderFullScreenQuad` sets no matrices, so the
+  world matrix is the device state left by the previous generated draw (the skybox restores its
+  own through `DeviceMVPMatricesState` 0x68a1d0).
+- OnRenderImage chain of Main Camera (component order: CustomRender 6, CTAA_PC 7):
+  `capture_loop` CustomRender ops + `ctaa.on_render_image` from the v5 CTAA fields, lowered
+  through `PluginLowering` / `UnityForwardLowering` with `ChainDriver`. Graphics.Blit to the
+  backbuffer (camera targetTexture null) does not invert the projection; a code-created blit
+  material starts from the shader default sheet (`Material::BuildProperties` 0x849050 →
+  `ShaderPropertySheet::CopyFrom` 0x8490bc), so BlitCopy `_Color` = (1,1,1,1).
+- GrabPass copies: `hs2pipe.liquid` rule (whole active colour target; the grab runs before the
+  pending ForwardBase draw of the preceding object).
+- Clears: `GfxDeviceD3D11Base::Clear` (0x5445b0) translation; depth texture (0x6674bb),
+  depth-normals replacement pass (0x668146, colour (0.5,0.5,1,1)), directional shadow map
+  (0x6a2847), screen-space shadow map (0x69bbaa, flags 1, colour (1,0,1,0)), main camera
+  (`Camera::ClearNoSkybox` 0x65fac0 → 0x65f8e0: Skybox with material → 6 + GraphicsCaps+0x3a1).
+
+### 8.4 Results (run_v26, execution with a fresh oracle)
+
+| pass | draws equal | cbuffers equal |
+|---|---|---|
+| depth_texture | 14/14 | 78/78 |
+| depth_normals | 22/22 | 100/100 |
+| shadow_caster | 9/9 | 48/48 |
+| screenspace_shadows | 1/1 | 7/7 |
+| forward_opaque | 16/16 | 167/167 |
+| skybox | 1/1 | 4/4 |
+| motion_vectors_camera | 1/1 | 6/6 |
+| motion_vectors | 12/12 | 48/48 |
+| forward_transparent | 4/4 | 37/37 |
+| image_effect_chain (CustomRender + CTAA) | 6/6 | 22/22 |
+
+86/86 draws, 517/517 cbuffers; grab copies 2/2; clears 6/6; head skin uploads 14/14; PPv2
+actions 23/24 (CopyStd blit ring args); **execution 60/60 checkpoints equal**. Generated cbuffer
+variables 1533, external 24 (`_HasLastPositionData` 12, `_MotionVectorDepthBias` 12).
+
+### 8.5 Remaining external:capture
+
+- Listed: shadow caster membership and order.
+- One-boolean caps inputs: GraphicsCaps+0xd0 bit 7 / +0x3fc (normal-bias and PCF_SOFT branch),
+  GraphicsCaps+0x3a1 (Skybox clear colour bit).
+- `_HasLastPositionData` (SkinnedMeshRenderer+0x255), `_MotionVectorDepthBias` (BuildSettings+0xfa).
+- Per generated draw: IA (mesh/skin/immediate-quad buffers), SRVs, samplers (engine textures),
+  render-target allocation; chain/grab/engine texture identities and cross-frame contents.
+- Graphics.Blit / PPv2 CopyStd dynamic VB ring placement.
+- Not generated (spliced): BackCamera deferred (5 clears, depth copy, reflections), curves copy,
+  PPv2-internal clear (event 1522), pre-UI stencil clear (event 1691), UI (81 draws), staging copy.
+- Assumed and to be confirmed by the probe: GfxDevice+0x21e8 == 0 (no single-pass stereo);
+  Camera+0x4ec inferred from the projection comparison; Camera+0x558 = the camera intermediate
+  RT with antiAliasing from QualitySettings (creation not transcribed).
+
+### 8.6 v6 field requests
+
+SharedMaterialData+0xd0 per material (or the caster queue order) and the caster cull set;
+SkinnedMeshRenderer+0x255; BuildSettings+0xfa; GraphicsCaps+0xd0, +0x3fc, +0x3a1, +0x404;
+Camera+0x4ec, Camera+0x558 (+ its RenderTexture+0xd0); GfxDevice+0x21e8; per engine RT
+(camera intermediates, motion-vector texture, GrabPass Temp) the RenderTexture descriptor and
+filter/wrap/aniso for sampler generation.

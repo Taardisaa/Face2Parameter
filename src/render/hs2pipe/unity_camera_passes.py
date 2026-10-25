@@ -158,7 +158,10 @@ def _fallback_copy(lib, name):
 
 
 def _nodes(adapter, cam, lib, gaps, cache):
-    rens = adapter.visible(cam, adapter.renderers())
+    return _node_rows(adapter.node_queue(cam), lib, gaps, cache)
+
+
+def _node_rows(rens, lib, gaps, cache):
     nodes = []
     for r in rens:
         mats = []
@@ -199,6 +202,48 @@ def depth_texture_plan(adapter, cam, lib, global_keywords, quality, gaps, cache=
                                     global_keywords, quality)
         out.append({'pass_kind': 'depth_texture', 'renderer': r, 'material': mat['raw'], 'shader': e['shader']['name'],
                     'pass': p, 'light_mode': 'SHADOWCASTER', 'keywords': kw, 'key': e['key']})
+    return out
+
+
+def shadow_caster_plan(adapter, lib, global_keywords, quality, gaps, caster_ids, cache=None):
+    """Shadow-caster draws of the main directional light (``RenderShadowMaps``
+    0x6a18b0 -> caster job 0x6a56c0 -> loop 0x6a0b00).
+
+    Per caster node, every material whose active subshader index
+    (CalculateSubShaderIndexToUse 0x69b270) yields a pass from
+    ``Shader::GetShadowCasterPassToUse`` (0xbf96c0) contributes one draw with the
+    ``SHADOWS_DEPTH`` keyword (SetShadowsKeywords for a directional light).
+
+    ``caster_ids``: renderer ids of the light's shadow RenderNodeQueue in draw
+    order.  Both the membership (shadow-caster culling 0x6ac320, gap
+    ``caster_cull_set``) and the order (the sort key includes
+    ``SharedMaterialData+0xd0``, an XXH32 over a ``ShaderLab::Pass*`` heap
+    address: gap ``shadow_caster_order``) are ``external:capture`` inputs."""
+    cache = {} if cache is None else cache
+    by_id = {r['id']: r for r in adapter.renderers()}
+    rens = [by_id[i] for i in caster_ids]
+    nodes = _node_rows(rens, lib, gaps, cache)
+    out = []
+    for node in nodes:
+        r = node['renderer']
+        for mi, mat in enumerate(node['materials']):
+            sub = ps.calculate_subshader_index_to_use(mat['shader'], mat, None)
+            if sub < 0:
+                continue
+            pp = ps.get_shadow_caster_pass_to_use(mat['shader'], sub)
+            if pp is None:
+                continue
+            p = mat['shader']['subshaders'][pp['subshader']]['passes'][pp['pass']]['lib_pass']
+            kw = renderer_pass_keywords('SHADOWCASTER', r, mat['raw'], {'lights': [], 'has_main_light': False},
+                                        global_keywords, quality)
+            out.append({'pass_kind': 'shadow_caster', 'renderer': r, 'material': mat['raw'],
+                        'material_index': mi, 'shader': mat['shader']['name'], 'pass': p,
+                        'light_mode': 'SHADOWCASTER', 'keywords': kw})
+    gaps.append({'gap': 'caster_cull_set', 'detail': 'shadow caster culling (0x6ac320) not transcribed: '
+                 'caster membership external:capture'})
+    gaps.append({'gap': 'shadow_caster_order', 'detail': 'caster sort key uses SharedMaterialData+0xd0 '
+                 '(XXH32 seed 0x8f37154b over a ShaderLab::Pass* address, Material::UpdateHashes 0x84e3b0): '
+                 'order external:capture; v6 field request: +0xd0 per material or the caster queue order'})
     return out
 
 

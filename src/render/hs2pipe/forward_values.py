@@ -40,6 +40,16 @@ EXTERNAL_CAPTURE = {
 }
 
 
+# Built-in shader parameters (GfxDevice built-in state, not ShaderPropertySheet lookups):
+# vector names .rdata 0x14b89c0 (121), matrix names 0x14b8988 (6), read from the installed
+# UnityPlayer.dll.  Every other uniform is resolved by shaderprops::Get* (material sheet,
+# then global sheet, then the default: Vector4f::zero 0x85bc57, float 0.0 0x85aeb7,
+# Matrix4x4f::identity 0x85b3a7).
+BUILTIN_VECTORS = ('unity_LightColor0', 'unity_LightColor1', 'unity_LightColor2', 'unity_LightColor3', 'unity_LightColor4', 'unity_LightColor5', 'unity_LightColor6', 'unity_LightColor7', 'unity_LightPosition0', 'unity_LightPosition1', 'unity_LightPosition2', 'unity_LightPosition3', 'unity_LightPosition4', 'unity_LightPosition5', 'unity_LightPosition6', 'unity_LightPosition7', 'unity_SpotDirection0', 'unity_SpotDirection1', 'unity_SpotDirection2', 'unity_SpotDirection3', 'unity_SpotDirection4', 'unity_SpotDirection5', 'unity_SpotDirection6', 'unity_SpotDirection7', 'unity_LightAtten0', 'unity_LightAtten1', 'unity_LightAtten2', 'unity_LightAtten3', 'unity_LightAtten4', 'unity_LightAtten5', 'unity_LightAtten6', 'unity_LightAtten7', 'unity_VertexLightParams', 'glstate_lightmodel_ambient', '_WorldSpaceLightPos0', '_LightColor0', '_WorldSpaceCameraPos', 'unity_WorldTransformParams', '_ProjectionParams', '_ScreenParams', '_ZBufferParams', 'unity_OrthoParams', '_LightPositionRange', '_LightProjectionParams', 'unity_Ambient', 'unity_LightmapFade', 'unity_OcclusionMaskSelector', 'unity_ProbesOcclusion', '_ShadowOffsets0', '_ShadowOffsets1', '_ShadowOffsets2', '_ShadowOffsets3', '_LightShadowData', 'unity_LightShadowBias', '_LightSplitsNear', '_LightSplitsFar', 'unity_ShadowSplitSpheres0', 'unity_ShadowSplitSpheres1', 'unity_ShadowSplitSpheres2', 'unity_ShadowSplitSpheres3', 'unity_ShadowSplitSqRadii', 'unity_ShadowCascadeScales', 'unity_ShadowFadeCenterAndType', 'unity_ShadowColor', 'unity_LODFade', 'unity_RenderingLayer', 'unity_LightmapST', 'unity_DynamicLightmapST', 'unity_SHAr', 'unity_SHAg', 'unity_SHAb', 'unity_SHBr', 'unity_SHBg', 'unity_SHBb', 'unity_SHC', '_Time', '_LastTime', '_SinTime', '_CosTime', '_PiTime', 'unity_DeltaTime', 'unity_4LightPosX0', 'unity_4LightPosY0', 'unity_4LightPosZ0', 'unity_4LightAtten0', 'unity_FogStart', 'unity_FogEnd', 'unity_FogDensity', 'unity_FogColor', 'unity_FogParams', 'unity_CameraWorldClipPlanes0', 'unity_CameraWorldClipPlanes1', 'unity_CameraWorldClipPlanes2', 'unity_CameraWorldClipPlanes3', 'unity_CameraWorldClipPlanes4', 'unity_CameraWorldClipPlanes5', 'unity_AmbientSky', 'unity_AmbientEquator', 'unity_AmbientGround', 'unity_IndirectSpecColor', 'unity_SpecCube0_HDR', 'unity_SpecCube0_BoxMax', 'unity_SpecCube0_BoxMin', 'unity_SpecCube0_ProbePosition', 'unity_SpecCube1_HDR', 'unity_SpecCube1_BoxMax', 'unity_SpecCube1_BoxMin', 'unity_SpecCube1_ProbePosition', 'unity_BillboardNormal', 'unity_BillboardTangent', 'unity_BillboardCameraParams', 'unity_ProbeVolumeMin', 'unity_ProbeVolumeSizeInv', 'unity_ProbeVolumeParams', 'unity_StereoEyeIndex', 'unity_LightIndicesOffsetAndCount', 'unity_4LightIndices0', 'unity_4LightIndices1', 'unity_ReflectionProbeIndicesOffsetAndCount', 'unity_MotionVectorsParams', 'unity_HalfStereoSeparation')
+BUILTIN_MATRICES = ('unity_ObjectToWorld', 'unity_WorldToObject', 'unity_MatrixV', 'unity_MatrixInvV', 'glstate_matrix_projection', 'unity_MatrixVP')
+
+
+
 def material_values(material, shader, textures):
     """Material property values as GPU encodings (typed manifest properties only).
 
@@ -47,6 +57,9 @@ def material_values(material, shader, textures):
     colour space unless the property carries the Gamma flag; ``<tex>_ST`` is
     (scale, offset); ``<tex>_TexelSize`` is (1/w, 1/h, w, h) of the bound
     texture.  Missing typed properties -> the variable is not generated."""
+    if '_native_values' in material:
+        # probe v5: the material ShaderPropertySheet's stored bytes are the GPU values
+        return dict(material['_native_values']), None
     typed = material.get('typed_properties_from_manifest')
     if not typed:
         return {}, 'no typed properties (shader not in the probe manifest)'
@@ -131,12 +144,26 @@ class ForwardValues:
                                                                   cam.f('far_clip'))
             if q['shadowProjection'].startswith('ShadowProjection.CloseFit'):
                 self.light['unity_ShadowFadeCenterAndType'] = [F(0.0)] * 4
+            if 'world_rotation_xyzw' in lp:
+                # SharedLightData::UpdateTransform (0x6a6610) stores
+                # Transform::GetLocalToWorldMatrixNoScale at +0x140; SetupForwardAddLight /
+                # the base-light path (0x680be5) writes (-m[8], -m[9], -m[10], 0) of it
+                # (column 2 at +0x160).  Rotation part = the native quaternion->matrix
+                # expression (gpu_skin_inputs.unity_rotation_matrix, bit-exact on the
+                # skinned ObjectToWorld) of the world rotation.
+                from src.render import gpu_skin_inputs as gsi
+                R = gsi.unity_rotation_matrix(np.asarray(lp['world_rotation_xyzw'], np.float32))
+                self.light['_WorldSpaceLightPos0'] = [-R[0, 2], -R[1, 2], -R[2, 2], F(0.0)]
             ch = int(lp['bakingOutput']['LightBakingOutput.occlusionMaskChannel'])
             sel = [F(0.0)] * 4
             sel[ch if ch != -1 else 0] = F(1.0)
             self.light['unity_OcclusionMaskSelector'] = sel
         # No ReflectionProbe is exported: every renderer's per-object list is empty and it
         # receives the context default sample.
+        self.global_sheet = None
+        if '_v5' in scene:
+            from .scene_v5 import sheet_values
+            self.global_sheet = sheet_values(scene['_v5']['render_record']['data']['global_sheet'])
         self.reflection = uf.reflection_probe_constants(
             uf.renderer_reflection_sample(rs, None, scene['reflection_probes'], self.linear))
 
@@ -191,7 +218,18 @@ class ForwardValues:
                    + o[8] * (o[1] * o[6] - o[5] * o[2]))
             vals['unity_WorldTransformParams'] = [F(0.0), F(0.0), F(0.0), F(-1.0) if det < 0 else F(1.0)]
         elif renderer['kind'] == 'ParticleSystemRenderer':
-            notes.append('particle_render_matrix: ParticleSystemRenderer draw matrix rule not transcribed')
+            # Every ParticleSystemRenderer render callback (single/multiple x 3 modes,
+            # 0xb02e30 / 0xb03530 / 0xb03c10 / 0xb042e0 / 0xb04780 / 0xb04c30) starts with
+            # GfxDevice::SetWorldMatrixAndType(Matrix4x4f::identity, 0) (vtable +0xd8 =
+            # 0x8cf3b0 -> SetWorldMatrix +0xe0); particle vertices are generated in world
+            # space (PrepareForRender 0xb0b72e passes the simulation-space matrix to
+            # ParticleSystemTempData::SetMatrices).  WorldToObject = General3D inverse.
+            from . import unity_math as um
+            ident = um.identity()
+            ok_, inv = um.invert_general_3d(ident)
+            vals['unity_ObjectToWorld'] = ident
+            vals['unity_WorldToObject'] = inv
+            notes.append('particle draw matrix: SetWorldMatrixAndType(identity) (0xb02e71)')
         ish = renderer['raw'].get('interpolated_sh')
         if ish:
             vals.update(uf.sh_shader_constants([F(x) for x in ish]))
@@ -199,6 +237,14 @@ class ForwardValues:
         mv, why = material_values(material, sh, self.textures)
         vals.update(mv)
         vals['_inputs'] = mv.get('_inputs', {})
+        if self.global_sheet is not None:
+            vals['_property_fallback'] = {'global': self.global_sheet, 'builtin': BUILTIN_SET}
         if why:
             notes.append(why)
         return vals, notes
+
+
+# Per-object values the motion-vector loop sets with ShaderPropertySheet::SetFloat on its
+# own sheet (DoMotionVectorRenderLoop job 0x6cc4e7..0x6cc557); never a material/global lookup.
+MOTION_VECTOR_SHEET = frozenset(('_HasLastPositionData', '_ForceNoMotion', '_MotionVectorDepthBias'))
+BUILTIN_SET = frozenset(BUILTIN_VECTORS) | frozenset(BUILTIN_MATRICES) | MOTION_VECTOR_SHEET
