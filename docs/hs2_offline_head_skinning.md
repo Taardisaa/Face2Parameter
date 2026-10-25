@@ -697,6 +697,10 @@ Bulk outputs: `E:/HS2_offline_renderer_data/skinning_20261025/`.
     exported, because the bridge capture had no `geometry_out_path`, and the
     renders' `pre_cull` records hold only camera state. The v7 probe needs the
     character local TRS at the bridge render's `pre_cull`.
+  - (Probe work, 2026-10-25: probe 6.1.0 exports these as
+    `data.character_transforms` on every bridge `pre_cull` record, and
+    `pair_skin_capture.py` reports `o2w/w2o_bit_exact_bridge_renders` per matrix
+    row. Not yet captured. See `hs2_offline_frame_pair_probe_v6.md` §10.)
 
 ### 10.2 Per-frame drivers from real hook pre-state: started, not done
 
@@ -745,3 +749,105 @@ Next steps, in order:
   to the new live records.
 - `lowered_quality.py` is blocked by `mesh_quality.py` (1a02d3f). It needs that
   tool's own config refreeze.
+
+### 10.4 Resumed 2026-10-25: results of steps 1–4
+
+Bulk outputs: `E:/HS2_offline_renderer_data/skinning_20261025/`. They are
+`drivers_v6/`, `rebind_dryrun/`, `quality_refreeze/` and
+`lowered_quality_rerun_20261025/`.
+
+**1. Eye look and FBS seeded from the hook prefix: bit-exact.** Tool:
+`tools/offline_renderer/driver_hook_acceptance.py`; report:
+`drivers_v6/driver_hook_acceptance_v1.json`.
+
+- Eye: every EyeObject and EyeLookCalc postfix field, plus `cf_J_look_L/R`, is
+  bit-exact on 16/16 hooked frames (mode a 43095–43102, mode b 51345–51352).
+- FBS: every recorded field, the postfix `Random.state` and all head
+  blendshape weights are bit-exact on 16/16. This includes a real blink start at
+  51351. There the mode goes 0→1, `SetForceClose` consumes two `Random.Range`
+  calls, and the native RNG state still matches.
+- The §9.2 seed-dependence is therefore resolved with the game's own pre-state.
+
+**2. Mouth width: bit-exact.** The installed
+`TransformScaleEx.SetLocalScaleX(cf_J_MouthMove, adjustWidthScale of the F−1
+FBS postfix)` runs hosted on the F−1 end-of-frame state.
+
+- It equals the Update-phase `ChaControl.UpdateForce` postfix: scale (1, y, z),
+  with position and rotation unchanged, on 14/14 frames. Voice is absent.
+- The ABMX postfix (x = 1.00501609) equals the end-of-frame export on 14/14.
+
+**3. Animation snapshot vs end-of-frame.** `drivers_v6/anim_vs_export.json`
+compares the fbs-prefix local TRS, the first LateUpdate after the animator, with
+the end-of-frame export. 52–55 bones differ per frame.
+
+- In the head subtree, only `cf_J_MouthMove` scale (ABMX) and `cf_J_look_L/R`
+  (eye look) differ.
+- `cf_J_Neck`/`cf_J_Head` differ only in frames 43099, 51349 and 51350, where the
+  neck-look setter adds 1–2 ulp (the §9.5 correction).
+- The rest is body:
+  - Ana/Vagina/Belly position-only groups;
+  - SiriDam and Mune rotations (DynamicBone candidates);
+  - `f_t_arm_L/R`.
+
+  The v6 hooks have no per-writer snapshot for these body bones, so their
+  writers are not attributed.
+
+**4a. lowered_v2 `_positionBaseline` residual: not a model defect.**
+
+- The 6 differences are all `persistent_history._positionBaseline[0]` and its
+  copies in `cache_after`.
+- Each artifact copies them verbatim from its own recorded identity trace:
+  - 2026-10-25: `cf_J_Chin_rs` 1.64112634e-21;
+  - 2026-10-05: 6.615929e-22.
+
+  They are normal float32 values, not denormals.
+- They are ABMX's private history captured from each session's own game state.
+- The live re-run artifact passes `verify_compiled_artifact` under the current
+  code. Its executed patches equal the 2026-10-24 offline successor's.
+- Nothing needed fixing or regenerating: the live collector already froze it
+  through the tool's own path.
+
+**4b. Rebinding the 6 tests to the new live records.** Dry run in
+`rebind_dryrun/` uses copies of the tests with only the fixture paths and SHA
+changed.
+
+| Test | Result | Reason |
+|---|---|---|
+| `test_asset_provider.test_source_only_full8_fk_lbs_unchanged_math` | passes | The new head3 record is reproducible; legitimate to rebind. |
+| strict `test_wrong_actual_wrapper_type_refused` | passes | |
+| strict `test_inconsistent_completed_count_refused` | passes | |
+| strict `test_actual_full_new_guard_posthoc` | fails, independent of `model.py` | See the stale-review row below. |
+| strict `test_zero_prefix_explicitly_supported` | fails, independent of `model.py` | See the stale-review row below. |
+| `test_asset_provider_strict.test_source_only_target_uses_all8_unchanged_gate` | fails | Its V1 asset contract is bound to the old head3 source history. Rebinding needs a new staged asset contract for the new history (`stage_from_identity`). |
+
+The two strict failures come from the review contract
+`HS2Mod/artifacts/ocular_visibility_audit_20261005/stable_lowering_review_v1/new_strict_metadata_contract.json`.
+
+- It pins `MakerGeometryService.cs` at `43e45941…`, an uncommitted intermediate
+  revision matching neither git version (LF or CRLF).
+- It therefore fails on the old records too.
+- Rebinding needs a new strict-metadata review against bridge 0.31.14 sources.
+
+No test file was edited.
+
+**4c. `mesh_quality` refreeze: done.** Tool:
+`tools/abmx_refreeze/quality_threshold_binding.py`.
+
+- The tool proves commit 1a02d3f is behaviour-neutral on the established path.
+  The pinned old module is loaded by its recorded SHA from `ccc4bbf`. Its
+  `analyze_snapshot` reports on two recorded actual geometries are identical
+  except for the added `exclude_shared_vertex` key and the wall-clock
+  `elapsed_seconds`.
+- It rewrote `threshold_binding_v1.json` in place; the old copy is in
+  `deprecated/`. Thresholds, config and sampling are unchanged.
+- The `stateful_multibone_fresh_quality` and `mesh_quality` tests pass (26).
+- `lowered_quality.py` now runs on the 2026-10-25 live re-run:
+  - o_head relative gate 3/3 pass;
+  - identity RMS .0014270 / P95 .0017396, the same as `lowered_quality_v1`;
+  - cross-mesh new pairs 20/10/10, versus 8/10/10 in v1, so early differs.
+
+Remaining:
+- the 465 bridge frozen-pose matrix rows (waiting on the v6.1 export);
+- a new strict-metadata review;
+- a staged asset contract for the new head3 history, if those 3 tests are to
+  bind to the new records.
