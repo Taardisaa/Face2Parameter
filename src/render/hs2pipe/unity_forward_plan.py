@@ -108,8 +108,13 @@ class SceneAdapter:
         c2w = row_major_to_memory(m.get('cameraToWorldMatrix', p['cameraToWorldMatrix']))
         cull = row_major_to_memory(p['cullingMatrix'])
         from . import unity_math as um
-        implicit = um.to_bytes(proj) == um.to_bytes(um.set_perspective(p['fieldOfView'], p['aspect'],
-                                                                      p['nearClipPlane'], p['farClipPlane']))
+        native = c.get('_native') or {}
+        if 'implicit_projection_flag_0x4ec' in native:
+            # Camera+0x4ec: 1 after ResetProjectionMatrix (0x6690f0), 0 after SetProjectionMatrix (0x66bc84)
+            implicit = int(native['implicit_projection_flag_0x4ec']) == 1
+        else:
+            implicit = um.to_bytes(proj) == um.to_bytes(um.set_perspective(p['fieldOfView'], p['aspect'],
+                                                                          p['nearClipPlane'], p['farClipPlane']))
         rect = p['pixelRect']
         mode = enum_value(p['depthTextureMode'])
         flags = 0
@@ -132,9 +137,10 @@ class SceneAdapter:
             'layer_cull_distances': p['layerCullDistances'], 'layer_cull_spherical': p['layerCullSpherical'],
             'culling_matrix': cull})
         self.gaps.append({'gap': 'camera_transform_position', 'detail': 'position from cameraToWorldMatrix column 3'})
-        self.gaps.append({'gap': 'camera_implicit_flags', 'detail': 'implicit projection inferred by comparing the '
-                          'exported projection with SetPerspective; culling matrix taken as explicit '
-                          '(Camera.cullingMatrix export)'})
+        self.gaps.append({'gap': 'camera_implicit_flags', 'detail': ('implicit projection from Camera+0x4ec (probe v5 '
+                          'native field)' if 'implicit_projection_flag_0x4ec' in native else 'implicit projection '
+                          'inferred by comparing the exported projection with SetPerspective') + '; culling matrix '
+                          'taken as explicit (Camera.cullingMatrix export)'})
         return cam
 
     def rules_camera(self, cam):
@@ -158,7 +164,11 @@ class SceneAdapter:
                 continue
             kind = r['type'].split('.')[-1]
             fr = self.frame_renderers.get(int(r['id']))
-            if fr is not None and fr.get('bounds_f32'):
+            rr = (self.scene.get('_render_renderers') or {}).get(int(r['id']))
+            if rr is not None and rr.get('bounds') is not None:
+                b = [F(v) for v in rr['bounds']]
+                bounds_src = 'render record bounds (OnPreRender of this render)'
+            elif fr is not None and fr.get('bounds_f32'):
                 b = _b64f(fr['bounds_f32'])
                 bounds_src = 'frame bounds_f32'
             else:
@@ -180,6 +190,39 @@ class SceneAdapter:
                         'lightmap_index': int(p.get('lightmapIndex', -1)),
                         'materials': mats, 'raw': r})
         return out
+
+    def node_queue(self, cam):
+        """Visible renderers in RenderNodeQueue order.
+
+        Scene node index: ``Renderer+0x160`` is the renderer's index in the
+        RendererScene node array -- ``AddRendererInternal`` (0x68ae10) appends a
+        SceneNode and returns the previous count, and ``RemoveRenderer``
+        (0x690f80) swap-removes, writing the moved node's new index back to its
+        renderer (+0x38 back pointer, +0x128 -> +0x160, 0x691142).  Static nodes are
+        the indices below the static count, dynamic ones above, so list 0 then
+        list 1 in node order is ascending index.  ``cull`` keeps node order
+        within a list; ``render_node_queue_order`` (BeginRenderQueueExtraction
+        0x68bc00 ...) then appends main-thread-prepared nodes (SkinnedMeshRenderer
+        has no PrepareRenderNodes job callback) after the job-prepared ones.
+        Probe v5 exports the index as ``native.scene_handle_0x160``."""
+        rens = self.renderers()
+        handles = [r['raw'].get('native', {}).get('scene_handle_0x160') for r in rens]
+        if any(h is None for h in handles):
+            vis = self.visible(cam, rens)
+            return vis
+        if any(h < 0 for h in handles):
+            raise PlanGap('enabled renderer without a scene node')
+        rens = [r for _, r in sorted(zip(handles, rens), key=lambda x: x[0])]
+        rc = self.rules_camera(cam)
+        rr = [{'list': 1, 'center': r['center'], 'extent': r['extent'], 'layer': r['layer'],
+               'flags': rules.shadow_casting_flags(r['shadow_casting_mode']), 'has_renderer': True} for r in rens]
+        vis = rules.cull(rr, rc)
+        flags = [{'job_prepared': r['kind'] != 'SkinnedMeshRenderer', 'produces_node': True} for r in rens]
+        order = rules.render_node_queue_order(vis, flags, 1)
+        self.gaps.append({'gap': 'static_scene_node_count', 'detail': 'static/dynamic split of the node array not '
+                          'exported; it does not change the order (static then dynamic = ascending index); '
+                          'job block ranges use one job (node count < 128 per job)'})
+        return [rens[i] for i in order]
 
     def visible(self, cam, renderers):
         rc = self.rules_camera(cam)
@@ -277,7 +320,7 @@ def render_objects(adapter, cam):
     ``extract_render_objects``): shared by the forward, motion-vector and
     depth passes."""
     rc = adapter.rules_camera(cam)
-    rens = adapter.visible(cam, adapter.renderers())
+    rens = adapter.node_queue(cam)
     mode, axis = rules.resolve_transparency_sort(rc, {'transparency_sort_mode': 0, 'transparency_sort_axis': (0, 0, 1)})
     ctx = {'world_to_camera': cam.m('world_to_camera_matrix'), 'position': cam.get('position'),
            'sort_mode': mode, 'sort_axis': axis}

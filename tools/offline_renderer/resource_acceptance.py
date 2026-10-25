@@ -279,6 +279,59 @@ def classify_texture(name, desc, info, consumers):
             'programs': sorted(c)}
 
 
+# ------------------------------------------------------------------- wiring
+class Wiring:
+    """Scene-state bytes of capture resources, for the frame orchestrator: every entry
+    is byte-equal to the capture-start content it replaces (checked here)."""
+
+    def __init__(self, out):
+        self.out = out
+        (out / 'blobs').mkdir(parents=True, exist_ok=True)
+        self.rows = {}
+
+    def add(self, rid, subs, provenance):
+        rec = []
+        for sub, rp, sp, data in subs:
+            h = hashlib.sha256(data).hexdigest()
+            f = self.out / 'blobs' / (h + '.bin')
+            if not f.exists():
+                f.write_bytes(data)
+            rec.append({'subresource': sub, 'row_pitch': rp, 'slice_pitch': sp, 'sha256': h, 'bytes': len(data),
+                        'file': 'blobs/%s.bin' % h})
+        self.rows[str(rid)] = {'subresources': rec, **provenance}
+
+    def write(self):
+        (self.out / 'wiring.json').write_text(json.dumps({'schema': 'hs2_resource_wiring/1', 'resources': self.rows},
+                                                         indent=1, default=str), encoding='utf-8')
+
+
+def wire_raw(wiring, raw_jobs, oracle, rid, request, row):
+    """Runtime texture whose capture-start content equals the probe's raw GPU readback
+    (``HS2_RenderReadback``, frame N-1, D3D11 subresource order, tight rows)."""
+    sid = (request or {}).get('scene_texture_id') if isinstance(request, dict) else None
+    job = raw_jobs.get(int(sid)) if sid is not None else None
+    if job is None:
+        row['raw_readback'] = 'no raw export for scene texture %s' % sid
+        return
+    d = json.loads((Path(job['path']) / 'descriptor.json').read_text(encoding='utf-8'))
+    label, cap = oracle.capture_start(rid)
+    if cap is None or len(cap) != len(d['subresources']):
+        row['raw_readback'] = 'capture-start content %s not comparable (%s subresources)' % (
+            label, None if cap is None else len(cap))
+        return
+    subs = []
+    for s_, c_ in zip(d['subresources'], cap):
+        data = (Path(job['path']) / s_['path']).read_bytes()
+        if data != c_:
+            row['raw_readback'] = 'raw readback differs from the capture-start content (subresource %d)' % s_['index']
+            return
+        subs.append((s_['index'], s_['row_pitch'], s_['slice_pitch'], data))
+    row['raw_readback'] = 'byte_exact'
+    row['status'] = 'raw_readback_byte_exact'
+    wiring.add(rid, subs, {'source': 'raw GPU readback (HS2_RenderReadback, frame %s)' % raw_jobs['_doc']['queued_frame'],
+                           'request': request, 'raw_path': job['path'], 'raw_reader': raw_jobs['_doc']})
+
+
 # ------------------------------------------------------------------- run
 def run(args):
     t0 = time.time()
@@ -313,6 +366,12 @@ def run(args):
                           plugin_meshes=plugin_meshes, xunity=R.XUnityTextureTranslations())
     reads = oracle.frame_reads()
     consumers = consumer_programs(oracle, args.shader_library or ())
+    wiring = Wiring(Path(args.wiring_out)) if args.wiring_out else None
+    raw_jobs = None
+    if args.raw_dir:
+        doc = json.loads((Path(args.raw_dir) / 'raw_textures.json').read_text(encoding='utf-8'))
+        raw_jobs = {int(j['instance_id']): j for j in doc['jobs'] if j['status'] == 'complete'}
+        raw_jobs['_doc'] = {k: doc[k] for k in ('dll', 'dll_sha256', 'queued_frame', 'layout')}
     ctx = Context(oracle, sr, scene, args)
     rows = []
     for rid in sorted(reads):
@@ -343,11 +402,19 @@ def run(args):
             ok = row['desc_equal'] and row['srv_desc_equal'] in (True, None)
             row['status'] = 'runtime_descriptor_equal' if ok else 'runtime_descriptor_mismatch'
             row['runtime'] = entry.provenance.get('producer')
+            if ok and wiring is not None and raw_jobs is not None:
+                wire_raw(wiring, raw_jobs, oracle, rid, request, row)
         else:
             ok = row['desc_equal'] and row['bytes_equal'] and row['srv_desc_equal'] in (True, None)
             row['status'] = 'byte_exact' if ok else 'mismatch'
+            if ok and wiring is not None:
+                wiring.add(rid, [(s_['subresource'], s_['row_pitch'], s_['slice_pitch'], s_['data'])
+                                 for s_ in entry.initial],
+                           {'source': 'hs2pipe.resources', 'request': request, 'provenance': entry.provenance})
         rows.append(row)
     (out / 'resources_table.json').write_text(json.dumps(rows, indent=1, default=sorted), encoding='utf-8')
+    if wiring is not None:
+        wiring.write()
     run.context = {'uncensor_body': uncensor, 'sideloader': sideloader, 'index': index}
     return rows, oracle, time.time() - t0
 
@@ -565,6 +632,8 @@ def main(argv=None):
     ap.add_argument('--sideloader-scan', help='sideloader_assets.scan() JSON of the installed mods')
     ap.add_argument('--card-state', help='bridge state JSON of the loaded card (ChaFileParameter for plugin selections)')
     ap.add_argument('--shader-library', action='append', help='shader library extraction dirs (consumer names)')
+    ap.add_argument('--wiring-out', help='write scene-state bytes of every byte-equal resource (orchestrator input)')
+    ap.add_argument('--raw-dir', help='probe raw texture readback dir (raw_textures.json) for runtime textures')
     args = ap.parse_args(argv)
     rows, oracle, secs = run(args)
     from collections import Counter

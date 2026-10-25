@@ -459,5 +459,134 @@
    "Graphics.Blit / PPv2 CopyStd dynamic VB ring placement",
    "not generated: BackCamera deferred (clears, depth copy, reflections), curves copy, PPv2-internal clear, pre-UI stencil clear, UI (81 draws), staging copy"
   ]
+ },
+ "v5_mode_b_5af9_frame8750_bridge": {
+  "session": "E:/HS2_offline_renderer_data/paired_session_v5_1_20261021 (nonce 5af92a0873c440e38ff76ff7b4cd1134)",
+  "run": "E:/HS2_offline_renderer_data/orchestrator_20261024/modeb_5af9/run_v7",
+  "oracle": "E:/HS2_offline_renderer_data/orchestrator_20261024/modeb_5af9/run_v6/exec_oracle",
+  "renders": 16,
+  "execution": {
+   "checkpoints": 959,
+   "equal": 959
+  },
+  "per_pass": {
+   "depth_texture": {
+    "draws": 224,
+    "draws_equal": 224,
+    "cbuffers": {
+     "equal": 1248
+    }
+   },
+   "depth_normals": {
+    "draws": 352,
+    "draws_equal": 352,
+    "cbuffers": {
+     "equal": 1600
+    }
+   },
+   "shadow_caster": {
+    "draws": 144,
+    "draws_equal": 144,
+    "cbuffers": {
+     "equal": 768
+    }
+   },
+   "screenspace_shadows": {
+    "draws": 16,
+    "draws_equal": 16,
+    "cbuffers": {
+     "equal": 112
+    }
+   },
+   "forward_opaque": {
+    "draws": 256,
+    "draws_equal": 256,
+    "cbuffers": {
+     "equal": 2672
+    }
+   },
+   "motion_vectors_camera": {
+    "draws": 16,
+    "draws_equal": 16,
+    "cbuffers": {
+     "equal": 96
+    }
+   },
+   "motion_vectors": {
+    "draws": 192,
+    "draws_equal": 192,
+    "cbuffers": {
+     "equal": 768
+    }
+   },
+   "forward_transparent": {
+    "draws": 64,
+    "draws_equal": 64,
+    "cbuffers": {
+     "equal": 592
+    }
+   },
+   "image_effect_chain": {
+    "draws": 97,
+    "draws_equal": 97,
+    "cbuffers": {
+     "equal": 356
+    }
+   }
+  },
+  "summary": {
+   "vs": {
+    "equal": 1361
+   },
+   "ps": {
+    "equal": 1361
+   },
+   "blend": {
+    "equal": 1361
+   },
+   "depth_stencil": {
+    "equal": 1361
+   },
+   "raster": {
+    "equal": 1361
+   },
+   "stencil_ref": {
+    "equal": 1361
+   },
+   "cbuffers": {
+    "equal": 8212
+   },
+   "cbuffer_variables": {
+    "generated": 24436,
+    "external": 384
+   }
+  },
+  "ppv2": {
+   "actions": 384,
+   "equal": 368,
+   "failing_fields": {
+    "args": 16,
+    "equal": 16
+   }
+  },
+  "grab_copies_equal": 32,
+  "grab_copies": 32,
+  "clears_equal": 112,
+  "clears": 112,
+  "head_skin_uploads": 22,
+  "resources_wired": 182,
+  "final_target": {
+   "resource": 31690,
+   "checkpoint": "p658_blit_copy_r31690",
+   "generated_sha256": "1480f828dd64f1480741a68910d83e233e384a6a01986ab8c4df761f1f530220",
+   "oracle_sha256": "1480f828dd64f1480741a68910d83e233e384a6a01986ab8c4df761f1f530220",
+   "equal_to_replay": true,
+   "bridge_capture_2_png_rgba_bottom_up_sha256": "1480f828dd64f1480741a68910d83e233e384a6a01986ab8c4df761f1f530220",
+   "equal_to_png": true
+  },
+  "external_variables": {
+   "_HasLastPositionData": 192,
+   "_MotionVectorDepthBias": 192
+  }
  }
 }

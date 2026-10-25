@@ -387,3 +387,93 @@ SkinnedMeshRenderer+0x255; BuildSettings+0xfa; GraphicsCaps+0xd0, +0x3fc, +0x3a1
 Camera+0x4ec, Camera+0x558 (+ its RenderTexture+0xd0); GfxDevice+0x21e8; per engine RT
 (camera intermediates, motion-vector texture, GrabPass Temp) the RenderTexture descriptor and
 filter/wrap/aniso for sampler generation.
+
+## 9 Update 2026-10-25 — bridge 16-render frame, v5.0.1 mode b (`5af92a08…`, frame 8750)
+
+Bulky outputs: `E:/HS2_offline_renderer_data/orchestrator_20261024/modeb_5af9/`
+(`inspect/`, `capture_program/` through event 27734, `frame_graph/` segmented at the capture
+target 31690, `resource_acceptance/`, `resource_wiring/`, runs `run_v6` (oracle) and `run_v7`).
+
+### 9.1 Structure
+
+`frame_orchestrate_paired` is now job based: one job per camera render.
+
+- **Mode a** is one job.
+- **Mode b** has 16 jobs: the frame-graph segments that end with a write of the bridge
+  capture target. Each job pairs with the Main Camera `pre_render` record of the same bridge
+  ordinal.
+- **Per-render scene:** `scene_v5.normalize(..., render_index)` overlays the camera
+  properties of that render, which include the native `implicit_projection_flag_0x4ec`. It also
+  takes keywords, sheets, lights (camera-attached) and renderer state (bounds, root bones) from
+  that render.
+- **Shared across jobs:**
+  - one PostProcessLayer generator (`PPv2Run.add_job`), so temporal and pool state carry over
+    between renders;
+  - one `PluginLowering` / `ChainDriver`, so the CTAA history handles persist.
+- CTAA state = the scene-export fields, then `ResetTemporal` before render 0. History textures
+  are recreated in render 0 at 1086×1448; these allocations are generated.
+- The segment-16 ordinary render, BackCamera and UI are spliced (outside the bridge target).
+
+### 9.2 Bridge-specific rules
+
+- **Renderer bounds and skinned matrices** come from the render record: TRS of the
+  pose-frozen root bone (the `paired_skin.unity_object_matrices` rule). The end-of-frame export
+  differs because the bridge's pose freeze moves the bones between the frame export and the
+  renders.
+- **DOF focus distance:** `MakerRenderStyleService.Capture` sets
+  `DHH_Main.depthOfFieldLayer.focusDistance` = `capture_distance(ortho_size, fov)` (the
+  `ppv2_parameter` setup op of `capture_loop.plan_capture`). Applied per bridge render to the
+  DepthOfField settings object of the volume profile.
+- **Depth-pass `_WorldSpaceLightPos0`:** device state of the previous render. The depth job
+  0x6c8840 writes only `unity_LightShadowBias`; the forward setup (0x680be5) and the
+  RenderShadowMaps prologue (0x6a1c4c) write the light position. Render 0 therefore sees frame
+  N−1's light.
+- **`_AEXCTAA` / `_AEYCTAA`** use `Screen.width/height` (3200×1800), not the RT size.
+- **Skin streams** (session pairing, not traced):
+  - the bridge reads capture-start slot 0 = frame N−2 skin and slot 1 = N−1;
+  - the frame's own skinning after the bridge writes slot 0 = N.
+
+  `bridge_skin_frame_rule` / `frame_skin.head_skin_uploads(frame_rule=…)`. The swap is not in
+  `SkinOnGPU`, `PrepareVertexBufferForWriting`, `UpdateSkinnedMeshes` or `OncePerFrameUpdate`;
+  the trace is open.
+
+### 9.3 Resources
+
+`resource_acceptance.py --wiring-out --raw-dir` writes scene-state bytes for every byte-equal
+capture resource. The orchestrator's `--resource-wiring` replaces their capture-start contents.
+
+- 168 resources come from `hs2pipe.resources` (assets and computed built-ins).
+- 14 runtime textures come from the probe raw readback (frame 8749), byte-equal to the capture.
+- Remaining capture-start content:
+  - body/clothes/hair skinning streams (27; the probe exports only the head surfaces);
+  - UI resources (font atlases, list textures, canvas geometry);
+  - dynamic VB rings.
+
+### 9.4 Results (run_v7 against the run_v6 oracle)
+
+| pass (16 renders) | draws equal | cbuffers equal |
+|---|---|---|
+| depth_texture | 224/224 | 1248/1248 |
+| depth_normals | 352/352 | 1600/1600 |
+| shadow_caster | 144/144 | 768/768 |
+| screenspace_shadows | 16/16 | 112/112 |
+| forward_opaque | 256/256 | 2672/2672 |
+| motion_vectors_camera | 16/16 | 96/96 |
+| motion_vectors | 192/192 | 768/768 |
+| forward_transparent | 64/64 | 592/592 |
+| image_effect_chain (CustomRender + CTAA) | 97/97 | 356/356 |
+
+- PPv2 368/384 actions; the 16 failures are the CopyStd ring arguments.
+- Grab copies 32/32, clears 112/112, head skin uploads 22/22, resources wired 182.
+- **Execution 959/959 checkpoints equal.**
+- Final capture target 31690 after render 15: SHA `1480f828…` = oracle replay =
+  `bridge_capture_2.png` RGBA rows in ReadPixels (bottom-up) order.
+
+### 9.5 Remaining external:capture and v6 field requests (additions to §8.6)
+
+- Everything in §8.5 (shadow caster set/order, caps booleans, MV sheet fields, IA/SRV/sampler
+  bindings and RT allocations, ring placement).
+- Body/clothes/hair skin streams: v6 request for the skin inputs (mesh, weights, bones) of
+  every SkinnedMeshRenderer, not only the head surfaces.
+- Skin double-buffer slot timing: source trace open. Probe request: a field naming the frame
+  held by each skinning slot at bridge time.

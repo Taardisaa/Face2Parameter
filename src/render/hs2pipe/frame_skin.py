@@ -37,9 +37,13 @@ def ancestor_chain(win, geometry_path):
     return chain
 
 
-def head_skin_uploads(xml, window_dir, geometry_path, fxc, work_dir, frame_current):
+def head_skin_uploads(xml, window_dir, geometry_path, fxc, work_dir, frame_current, frame_rule=None):
     """{zip.xml chunk index: {bytes, role, surface, frame, captured_equal}} of every
-    skinned-vertex upload read by a bound head draw."""
+    skinned-vertex upload read by a bound head draw.
+
+    ``frame_rule(role, write) -> frame`` chooses the probe frame of each write; the
+    default is the ordinary frame (current stream = ``frame_current``, previous stream =
+    ``frame_current - 1``)."""
     from src.render.unity_skin_emu import shared_emulator
     index = g.CaptureIndex(Path(xml))
     writes, draws = g.simulate(index)
@@ -61,7 +65,10 @@ def head_skin_uploads(xml, window_dir, geometry_path, fxc, work_dir, frame_curre
             continue
         si = p['surfaces'][0]
         rid = surfaces[si]['renderer_id']
-        fc = frame_current if p['role'] == 'skinned_vertices_current' else frame_current - 1
+        if frame_rule is not None:
+            fc = frame_rule(p['role'], writes[p['write_id']])
+        else:
+            fc = frame_current if p['role'] == 'skinned_vertices_current' else frame_current - 1
         if fc not in win.by_frame:
             raise g.SkinPathError('frame %d not in the probe window' % fc)
         data = ps.unity_exact_vertices(emu, win, win.by_frame[fc], renderers[rid], win.meshes[rid], anc)

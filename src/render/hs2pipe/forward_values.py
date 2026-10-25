@@ -92,18 +92,40 @@ def material_values(material, shader, textures):
     return out, None
 
 
-def renderer_matrices(renderers, win, emu, frame_count):
-    """unity_ObjectToWorld / unity_WorldToObject per renderer id."""
+def renderer_matrices(renderers, win, emu, frame_count, render_renderers=None):
+    """unity_ObjectToWorld / unity_WorldToObject per renderer id.
+
+    With per-render renderer state (probe v5 render record): a SkinnedMeshRenderer's
+    matrix is TRS(rootBone.position, rootBone.rotation, 1) as of that render
+    (paired_skin.unity_object_matrices rule; the bridge's pose freeze moves the bones
+    between the frame export and the renders), WorldToObject its General3D inverse."""
     from src.render import paired_skin as ps
+    from src.render import gpu_skin_inputs as gsi
+    from src.render.unity_skin_emu import invert_general3d
     from . import unity_math as um
     fr = win.by_frame[frame_count]
     static = {r['id']: r for r in win.static['renderers']}
+    rr_all = render_renderers or {}
     out = {}
     for r in renderers:
-        if r['id'] in static:
+        rr = rr_all.get(r['id'])
+        if rr is not None and rr.get('root_bone') and r['kind'] == 'SkinnedMeshRenderer':
+            rb = rr['root_bone']
+            o2w = np.eye(4, dtype=F)
+            o2w[:3, :3] = gsi.unity_rotation_matrix(np.asarray(rb['rotation'], F))
+            o2w[:3, 3] = np.asarray(rb['position'], F)
+            o, w = gsi.matrix_bytes(o2w), gsi.matrix_bytes(invert_general3d(emu, o2w))
+            out[r['id']] = {'unity_ObjectToWorld': um.from_bytes(o), 'unity_WorldToObject': um.from_bytes(w),
+                            '_source': 'render record rootBone TRS (paired_skin.unity_object_matrices rule)'}
+        elif r['id'] in static:
             o, w = ps.unity_object_matrices(emu, win, fr, static[r['id']])
             out[r['id']] = {'unity_ObjectToWorld': um.from_bytes(o), 'unity_WorldToObject': um.from_bytes(w),
                             '_source': 'paired_skin.unity_object_matrices'}
+        elif rr is not None and rr.get('local_to_world_rowmajor'):
+            o2w = up.row_major_to_memory(rr['local_to_world_rowmajor'])
+            ok, w2o = um.invert_general_3d(o2w)
+            out[r['id']] = {'unity_ObjectToWorld': o2w, 'unity_WorldToObject': w2o,
+                            '_source': 'render record localToWorld (float32 round-trip decimal)'}
         else:
             o2w = up.row_major_to_memory(r['raw']['properties']['localToWorldMatrix'])
             ok, w2o = um.invert_general_3d(o2w)
@@ -126,7 +148,8 @@ class ForwardValues:
         self.active = active
         self.setup = uf.camera_setup(cam, GRAPHICS_D3D11)
         self.camera = uf.camera_shader_props(cam, self.setup, GRAPHICS_D3D11)
-        self.mats = renderer_matrices(adapter.renderers(), window, emulator, scene['frame_count'])
+        self.mats = renderer_matrices(adapter.renderers(), window, emulator, scene['frame_count'],
+                                      scene.get('_render_renderers'))
         self.textures = {t['id']: t for t in scene['textures']}
         st = scene['statics']
         q = st['UnityEngine.QualitySettings']

@@ -60,8 +60,12 @@ class ProbeScene:
         h = t['properties'].get('height') if t else None
         return TextureValue('probe:%d:%s' % (ref['ref_id'], ref.get('ref_name')), w, h)
 
-    def texture_attrs(self, name):
+    def texture_attrs(self, name, size=None):
         rows = [t for t in self.scene['textures'] if t['name'] == name]
+        if size is not None and len(rows) > 1:
+            # several cameras' textures of the same name (e.g. bridge and ordinary renders):
+            # the one of this render's size
+            rows = [t for t in rows if (t['properties'].get('width'), t['properties'].get('height')) == tuple(size)]
         if len(rows) != 1:
             raise KeyError('texture %r: %d matches' % (name, len(rows)))
         p = rows[0]['properties']
