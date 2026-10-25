@@ -201,7 +201,8 @@ def depth_texture_plan(adapter, cam, lib, global_keywords, quality, gaps, cache=
         kw = renderer_pass_keywords('SHADOWCASTER', r, mat['raw'], {'lights': [], 'has_main_light': False},
                                     global_keywords, quality)
         out.append({'pass_kind': 'depth_texture', 'renderer': r, 'material': mat['raw'], 'shader': e['shader']['name'],
-                    'pass': p, 'light_mode': 'SHADOWCASTER', 'keywords': kw, 'key': e['key']})
+                    'pass': p, 'light_mode': 'SHADOWCASTER', 'keywords': kw, 'key': e['key'],
+                    'tie': (e['key'],)})
     return out
 
 
@@ -270,37 +271,45 @@ def shadow_caster_plan(adapter, lib, global_keywords, quality, gaps, caster_ids,
     entries = []
     if ordered_by_key:
         casters, parts = ps.shadow_caster_parts(nodes)
-        keyed = []
+        hi_of = {}
         for c in casters:
             for pi in range(c['first'], c['end']):
                 part, node = parts[pi], nodes[c['node']]
                 h = int(part['material']['shadow_caster_hash'])
                 two = 1 if int(node['shadow_casting_mode']) == ps.SHADOW_CASTING_TWO_SIDED else 0
-                hi = (((h & 0x3FFFFF) | (two << 22)) << 1) | ((int(node['transform_type']) >> 2) & 1)
-                keyed.append(hi)
-        if len(set(keyed)) != len(keyed):
-            raise ps.SorterGap('shadow caster parts tie on (two-sided, material hash, odd scale): the order then '
-                               'depends on RenderNode+0x100 (not exported)') if hasattr(ps, 'SorterGap') else                 RuntimeError('shadow caster key tie needs RenderNode+0x100')
+                hi_of[pi] = (((h & 0x3FFFFF) | (two << 22)) << 1) | ((int(node['transform_type']) >> 2) & 1)
+        nodes_by_hi = {}
+        for c in casters:
+            for pi in range(c['first'], c['end']):
+                nodes_by_hi.setdefault(hi_of[pi], set()).add(c['node'])
+        tied = {k for k, v in nodes_by_hi.items() if len(v) > 1}
         for n in nodes:
-            n['mesh_id'] = 0      # bits 24..38: never reached (no tie on the higher bits, checked above)
+            # bits 24..38 (RenderNode+0x100 = Mesh+0x174) not exported: decide only between parts of
+            # different nodes that tie on the higher bits; those groups are labelled ('tie') and
+            # their inner order is resolved by the caller (mesh_id_tiebreak, external:capture).
+            # Parts of one node share the mesh id, so their relative order (subset bits) stays generated.
+            n['mesh_id'] = 0
         sorted_entries = ps.shadow_caster_draws(nodes, casters, parts, split=0, split_masks=[1] * len(casters),
                                                 cull_matrix=cull_matrix)
         for e in sorted_entries:
             node, part = nodes[e['node']], parts[e['part']]
-            entries.append((node, part['material_index'], part['material'], part['subshader']))
+            hi = hi_of[e['part']]
+            entries.append((node, part['material_index'], part['material'], part['subshader'],
+                            ('hi', hi) if hi in tied else None, e['node']))
         gaps.append({'gap': 'shadow_caster_order', 'detail': 'generated from SharedMaterialData+0xd0 (probe v6) '
-                     'and RenderNode fields (flatten block); RenderNode+0x100 not needed (no tie)'})
+                     'and RenderNode fields (flatten block); %d key groups tie across nodes on the exported bits '
+                     '(order inside them needs RenderNode+0x100)' % len(tied)})
     else:
         for node in nodes:
             for mi, mat in enumerate(node['materials']):
                 sub = ps.calculate_subshader_index_to_use(mat['shader'], mat, None)
                 if sub < 0:
                     continue
-                entries.append((node, mi, mat, sub))
+                entries.append((node, mi, mat, sub, None, None))
         gaps.append({'gap': 'shadow_caster_order', 'detail': 'material hash / node fields not exported: '
                      'order external:capture'})
     out = []
-    for node, mi, mat, sub in entries:
+    for node, mi, mat, sub, tie, node_index in entries:
         r = node['renderer']
         pp = ps.get_shadow_caster_pass_to_use(mat['shader'], sub)
         if pp is None:
@@ -310,7 +319,8 @@ def shadow_caster_plan(adapter, lib, global_keywords, quality, gaps, caster_ids,
                                     global_keywords, quality)
         out.append({'pass_kind': 'shadow_caster', 'renderer': r, 'material': mat['raw'],
                     'material_index': mi, 'shader': mat['shader']['name'], 'pass': p,
-                    'light_mode': 'SHADOWCASTER', 'keywords': kw, 'order_generated': bool(ordered_by_key)})
+                    'light_mode': 'SHADOWCASTER', 'keywords': kw, 'order_generated': bool(ordered_by_key),
+                    'tie': tie, 'node_index': node_index})
     return out
 
 
@@ -328,13 +338,19 @@ def depth_normals_plan(adapter, cam, lib, global_keywords, gaps, cache=None):
         r = node['renderer']
         kw = frozenset(set(global_keywords) | set(mat['raw'].get('shader_keywords') or []))
         out.append({'pass_kind': 'depth_normals', 'renderer': r, 'material': mat['raw'], 'shader': rep['name'],
-                    'pass': p, 'light_mode': p.light_mode, 'keywords': kw, 'subshader': d['subshader']})
+                    'pass': p, 'light_mode': p.light_mode, 'keywords': kw, 'subshader': d['subshader'],
+                    'key': d.get('key'), 'tie': (d.get('layering'), d.get('key'))})
     gaps.append({'gap': 'depth_normals_shader_source', 'detail': 'GraphicsSettings builtin shader 4 taken as the '
                  'installed Hidden/Internal-DepthNormalsTexture (library copy)'})
     return out
 
 
 MV_MODES = {'Camera': ps.MV_CAMERA, 'Object': ps.MV_OBJECT, 'ForceNoMotion': ps.MV_FORCE_NO_MOTION}
+
+
+def fr_bits24(d):
+    from .unity_forward_rules import f32_bits
+    return f32_bits(d) >> 24
 
 
 def motion_vector_plan(adapter, cam, lib, global_keywords, gaps, included_renderer_ids, cache=None):
@@ -391,5 +407,14 @@ def motion_vector_plan(adapter, cam, lib, global_keywords, gaps, included_render
         p = sh['subshaders'][sh['active_subshader']]['passes'][e['pass']]['lib_pass']
         kw = frozenset(set(global_keywords) | set(mat.get('shader_keywords') or []))
         out.append({'pass_kind': 'motion_vectors', 'renderer': node['renderer'], 'material': mat, 'shader': sh['name'],
-                    'pass': p, 'light_mode': p.light_mode, 'keywords': kw, 'object_pass': e['object_pass']})
+                    'pass': p, 'light_mode': p.light_mode, 'keywords': kw, 'object_pass': e['object_pass'],
+                    # instancing_key = Mesh id << 16 | subset (RO extraction); the engine mesh id
+                    # (RenderNode+0x100 = Mesh+0x174) is not exported (the adapter's mesh_id is the
+                    # managed sharedMesh instance id, a stand-in): instanced entries of one
+                    # (layering, queue, distance bucket) group are ordered by it -> 'tie'
+                    'tie': (('mv_instancing', x['layering'], x['queue'], fr_bits24(x['distance']))
+                            if x['instancing_key'] else None),
+                    'sort_key': {'ro': e['ro'], 'layering': x['layering'], 'queue': x['queue'],
+                                 'distance': x['distance'], 'instancing_key': x['instancing_key'],
+                                 'priority': node.get('priority', 0), 'center': list(node['renderer'].get('center') or [])}})
     return out, candidates

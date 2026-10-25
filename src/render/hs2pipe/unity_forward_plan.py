@@ -181,7 +181,11 @@ class SceneAdapter:
                 mats.append(self.materials.get(ref['ref_id']) if ref else None)
             out.append({'id': int(r['id']), 'name': r['name'], 'kind': kind, 'layer': int(r['layer']),
                         'mesh': (p.get('sharedMesh') or {}).get('ref_name'),
+                        # STAND-IN (labelled): the managed sharedMesh instance id; the engine key is
+                        # RenderNode+0x100 = Mesh+0x174 (not exported, v7 field request). Sorts whose
+                        # outcome depends on it are reported as mesh_id_tiebreak where detected.
                         'mesh_id': (p.get('sharedMesh') or {}).get('ref_id'),
+                        'mesh_id_source': 'managed sharedMesh instance id (stand-in for Mesh+0x174)',
                         'center': b[0:3], 'extent': b[3:6], 'bounds_source': bounds_src,
                         'shadow_casting_mode': SHADOW_CASTING[enum_value(p['shadowCastingMode'])],
                         'receive_shadows': bool(p['receiveShadows']),

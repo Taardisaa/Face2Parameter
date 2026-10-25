@@ -581,7 +581,7 @@ whose float32 locals differ from the baseline in any frame; their descendants ar
 - The skin double-buffer swap timing is untraced (§9.2).
 - Native acceptance of candidates happens later, in a game session.
 
-## 11 v6 session (in progress, stopped 2026-10-25 night)
+## 11 v6 session (steps 1-3 done 2026-10-25; candidate work moved to the v6.1 session)
 
 Outputs: `E:/HS2_offline_renderer_data/orchestrator_20261025/{modea_6a9a, modeb_2def}`.
 
@@ -611,6 +611,78 @@ Outputs: `E:/HS2_offline_renderer_data/orchestrator_20261025/{modea_6a9a, modeb_
     acceptance table; RenderTexture rows by name and size), the sampler (`sampler_desc` from
     the texture/RT settings) and the IA buffers (mesh streams, skin streams). It checks each
     against the captured binding and counts the rest as external.
+
+### Results of steps 1-3 (2026-10-25)
+
+| Run | Checkpoints | Draws / cbuffers | Bindings derived / external |
+|-----|-------------|------------------|-----------------------------|
+| `modea_6a9a/run_v10_final` (oracle `run_v6_execute`, fresh) | 60/60 | 86/86, 517/517 | 524 / 363 |
+| `modeb_2def/run_v5_execute` (oracle `run_v1`, fresh) | 959/959 | 1361/1361, 8212/8212 | 8351 / 5745 |
+
+PPv2 actions stay 23/24 (mode a) and 368/384 (mode b). The failures are only the CopyStd
+blit-ring `args` (as in v5).
+
+**Step 1: caster order and ties.**
+- The shadow-caster order is generated from SharedMaterialData+0xd0 plus the flatten-block
+  node fields.
+- Parts of *different* nodes that tie on (two-sided, hash, odd scale) are now labelled
+  `tie` instead of raising: mode a has 1 group (2 entries), mode b has 32 entries. The
+  caller adopts the captured order only inside a tie group, and parts of one node must keep
+  their generated (subset) order.
+  - Statuses: `equal` / `equal_tie_order_external`.
+  - In both captures the generated order already equalled the capture inside the ties, so
+    no `mesh_id_tiebreak` was needed for shadow casters.
+- Depth texture and depth normals use the same `adopt_tie_order` helper.
+- **Motion vectors (mode b):** the v6 capture draws o_body_cf before o_head in all 16 bridge
+  renders; mode a and v5 drew head first.
+  - Cause: `motion_vector_less` (0x6c6f20) compares `instancing_key` = Mesh id << 16 |
+    subset before the exact distance. Head and body fall in the same distance bucket (0xC2).
+  - The adapter's `mesh_id` is the managed sharedMesh instance id, a stand-in for
+    RenderNode+0x100 = Mesh+0x174, which is not exported. It is now labelled
+    (`mesh_id_source`).
+  - Instanced entries of one (layering, queue, bucket) group carry `tie`. Their order inside
+    the group comes from the capture (`mesh_id_tiebreak` motion_vectors, 16 renders).
+  - Before this fix, `modeb_2def/run_v1` gave 914/959; the 45 failures were MV → CTAA →
+    blit → target.
+- **Open:** the same stand-in feeds the forward opaque `mesh_id` comparison
+  (the `mesh_id` field compared by the `unity_forward_rules` opaque comparator). All forward lists were equal, but they are not
+  proven independent of it. This needs the v7 field RenderNode+0x100 per renderer.
+
+**Step 2: bindings.** `--acceptance-table <resource_acceptance/resources_table.json>` wires
+`BindingDeriver` after each `emit_draw`. Each slot is counted as derived only when it equals
+the binding the command carries. The report has `per_pass[*].bindings` and
+`bindings_summary`.
+- Engine textures (not in the pre-render sheets, which hold the previous camera's values)
+  come from `engine_textures`:
+  - `_CameraDepthTexture` / `_LastCameraDepthTexture`: Camera::RenderDepthTexture
+    0x6675de / 0x66760e → depth target of this render's depth pass;
+  - `_CameraDepthNormalsTexture`: 0x6c8736;
+  - `_ShadowMapTexture` in the collect draw: ComputeScreenSpaceShadowMap 0x69bbdf → the
+    cascaded map;
+  - `_ShadowMapTexture` in forward draws: RenderLightShadowMaps 0x6cece3 stores the
+    CollectShadows result, then EndLoopFlush 0x6cb58b → SetLightShadowProps 0x6cfc85 →
+    "Screenspace ShadowMap".
+- Remaining external, by category:
+  - IA default vertex stream: the channel → stream rule is not transcribed;
+  - skinned runtime VBs: body, clothes and hair skin outputs are not generated yet;
+  - engine built-in geometry and the dynamic ring;
+  - null/default material textures: the m_DefaultName → built-in table 0x14b8e40 /
+    GetBuiltinTexEnvParamName 0x8a0e50 selection is not transcribed. Both the SRV and the
+    sampler are listed as `builtin-default`;
+  - unity_SpecCube0/1 and unity_ProbeVolumeSH (built-in defaults);
+  - the comparison sampler of `_ShadowMapTexture` in the collect pass.
+
+**Step 3: engine RT samplers.** `chain_engine_rec` attaches the probe-v6 `render_textures`
+row (render record, unique name + size match), and `UnityForwardLowering.blit` generates the
+sampler. The generated sampler must equal the captured one, else FrameGap.
+- A pooled temporary (`temp_entry_0x138` ≠ 0) that exists at the render is handed out again
+  by GetTempBuffer. That path runs TextureSettings::Reset (0x7074e0: Bilinear, aniso 1), then
+  sets wrap U/V/W = Clamp (0x75691c..2d) and anisoLevel = 0 (0x756934).
+- The pre-render row can still hold the previous user's settings: the first bridge render's
+  TempBuffer 214 row had aniso 1, while the capture used Bilinear (Filter 20) at the blit.
+- Results: 80/97 chain blits in mode b have no external sampler. The remaining
+  `_CameraMotionVectorsTexture` SRV/sampler (16) and three `_MainTex` samplers in mode a
+  have no unique row.
 
 ### Running when stopped
 

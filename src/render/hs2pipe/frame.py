@@ -713,6 +713,18 @@ class UnityForwardLowering:
                 if t['sampler'] is not None and t['sampler'] >= 0:
                     if srec is not None and 'rt' in srec and not srec.get('engine'):
                         smp = self.em.state('sampler', rt_sampler_desc(srec, self.aniso))
+                    elif srec is not None and srec.get('engine') and srec.get('rt_row'):
+                        # engine RenderTexture: sampler from its probe v6 TextureSettings row;
+                        # it must equal the captured sampler of the slot (else the rule is wrong)
+                        want = rt_sampler_desc(srec, self.aniso)
+                        cs = [x for x in cst[stage]['samplers'] if x['slot'] == t['sampler']]
+                        if cs and self.em.cap.obj(cs[0]['sampler'])['desc'] != want:
+                            raise FrameGap('%s: %s sampler from the v6 RenderTexture row %r differs from the '
+                                           'captured one (capture command %d): %r vs %r'
+                                           % (shader, name, srec['rt_row'], cap_index, want,
+                                              self.em.cap.obj(cs[0]['sampler'])['desc']))
+                        smp = self.em.state('sampler', want)
+                        rec.notes.append('%s sampler: v6 RenderTexture row %s' % (name, srec['rt_row']['name']))
                     else:
                         cs = [x for x in cst[stage]['samplers'] if x['slot'] == t['sampler']]
                         if not cs:

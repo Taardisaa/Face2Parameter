@@ -377,6 +377,8 @@ def diff_draw(rec, cap, b):
         return objs[i].get('desc') if i in objs and 'desc' in objs[i] else cap.obj(i)['desc']
     row = {'pass_label': rec.pass_label, 'event': rec.capture_event, 'renderer': rec.renderer, 'shader': rec.shader, 'pass': rec.pass_index,
            'external': rec.external}
+    if getattr(rec, 'bindings', None) is not None:
+        row['bindings'] = rec.bindings
     for stage in ('vs', 'ps'):
         g = objs[gs[stage]['shader']]['blob'] if gs[stage]['shader'] in objs else cap.shader_sha(gs[stage]['shader'])
         row[stage] = 'equal' if g == cap.shader_sha(cs[stage]['shader']) else 'different'
@@ -523,12 +525,44 @@ def scene_rt(tex, name):
                               use_mipmap=bool(p.get('useMipMap', False)), lifetime='persistent')
 
 
-def chain_engine_rec(cap, views_of, res, rt, name, dres=None):
+def engine_rt_row(cap, res, rows):
+    """probe v6 ``render_textures`` row of the RenderTexture behind capture resource ``res``
+    (RenderTexture names are the D3D debug names): unique name + size match, else None."""
+    if not rows:
+        return None
+    d = cap.obj(res)['desc']
+    names = [n.strip() for n in str(cap.obj(res).get('name') or '').split(' | ') if n.strip()]
+    hits = [t for t in rows if t.get('name') and t['name'] in names
+            and (int(t['descriptor']['width']), int(t['descriptor']['height'])) == (int(d['Width']), int(d['Height']))]
+    return hits[0] if len(hits) == 1 else None
+
+
+def chain_engine_rec(cap, views_of, res, rt, name, dres=None, rows=None):
     d = cap.obj(res)['desc']
     if (int(d['Width']), int(d['Height'])) != (rt.width, rt.height):
         raise fr.FrameGap('%s: captured resource %dx%d differs from %dx%d' % (name, d['Width'], d['Height'],
                                                                                rt.width, rt.height))
     rec = {'resource': res, 'engine': True, 'name': name, 'rt': rt}
+    row = engine_rt_row(cap, res, rows)
+    if row is not None:
+        wu, wv, ww = (up.enum_value(row[k]) for k in ('wrapModeU', 'wrapModeV', 'wrapModeW'))
+        if wu == wv == ww and float(row.get('mipMapBias') or 0) == 0.0:
+            # TextureSettings of the engine RenderTexture at the render (probe v6 row):
+            # filterMode / wrapMode / anisoLevel -> D3D11 sampler (ppv2_unity.sampler_desc)
+            import dataclasses
+            pooled = str((row.get('native') or {}).get('temp_entry_0x138', '0x0')) not in ('0x0', '0', 'None')
+            if pooled:
+                # a RenderBufferManager temporary that already exists at the render is handed out
+                # again by GetTempBuffer during the render: TextureSettings::Reset (0x756915),
+                # wrap U/V/W = Clamp (0x75691c..0x75692d), anisoLevel (+0x3c) = 0 (0x756934);
+                # the pre-render row may still hold the previous user's settings
+                rec['rt'] = dataclasses.replace(rt, filter_mode='Bilinear', wrap_mode='Clamp', aniso_level=0)
+                rec['reused'] = True
+            else:
+                rec['rt'] = dataclasses.replace(rt, filter_mode=up.enum_value(row['filterMode']), wrap_mode=wu,
+                                                aniso_level=int(row['anisoLevel']))
+            rec['rt_row'] = {'name': row['name'], 'id': row['id'], 'pooled_temporary': pooled,
+                             'texture_id_0x50': (row.get('native') or {}).get('texture_id_0x50')}
     if 'SwapChain-BackBuffer' in cap.obj(res).get('name', '') or 'Swap Chain Backbuffer' in cap.obj(res).get('name', ''):
         rec['backbuffer'] = True          # OnRenderImage destination null -> the screen
     for v in views_of.get(res, []):
@@ -693,6 +727,86 @@ def bridge_skin_frame_rule(frame):
     return rule
 
 
+
+def engine_textures(cap, job, label):
+    """Textures the engine binds during render ``job`` (absent from the pre-render sheets),
+    as {property: (capture resource, RenderTexture name, source)} for draws of ``label``.
+
+    * ``_CameraDepthTexture`` / ``_LastCameraDepthTexture``: Camera+0x560 (the
+      "Camera DepthTexture" temp buffer, GetTempBuffer 0x667435) set on the pass-context
+      sheet after the depth pass (Camera::RenderDepthTexture 0x6675de / 0x66760e); the
+      resource is the depth target of this render's depth_texture draws;
+    * ``_CameraDepthNormalsTexture``: CombineDepthNormalsTexture 0x6c8736 -> colour target
+      of this render's depth_normals draws;
+    * ``_ShadowMapTexture``: in the screen-space collect draw the material property set by
+      ComputeScreenSpaceShadowMap 0x69bbdf = the cascaded shadow map (depth target of the
+      shadow_caster draws); in forward draws the light's ForwardShadowMap texture
+      (RenderLightShadowMaps 0x6cece3 stores CollectShadows' "Screenspace ShadowMap"
+      result; EndLoopFlush 0x6cb58b -> SetLightShadowProps 0x6cfc85) = colour target of the
+      screenspace_shadows draw."""
+    out_ = {}
+
+    def target(lbl, depth):
+        for ci_, entries in job.plan.items():
+            for e in entries:
+                if e[0] == lbl:
+                    st_ = cap.commands[ci_]['state']['om']
+                    v = st_['depth_stencil'] if depth else (st_['render_targets'][0]['view']
+                                                           if st_['render_targets'] else None)
+                    return cap.obj(v)['resource'] if v is not None else None
+        return None
+    after_depth = label not in ('depth_texture', 'depth_normals', 'shadow_caster')
+    if after_depth:
+        r = target('depth_texture', True)
+        if r is not None:
+            out_['_CameraDepthTexture'] = (r, 'Camera DepthTexture', 'Camera::RenderDepthTexture 0x6675de')
+            out_['_LastCameraDepthTexture'] = (r, 'Camera DepthTexture', 'Camera::RenderDepthTexture 0x66760e')
+        r = target('depth_normals', False)
+        if r is not None:
+            out_['_CameraDepthNormalsTexture'] = (r, 'Camera DepthNormalsTexture', 'CombineDepthNormalsTexture 0x6c8736')
+    if label == 'screenspace_shadows':
+        r = target('shadow_caster', True)
+        if r is not None:
+            out_['_ShadowMapTexture'] = (r, 'Shadowmap', 'ComputeScreenSpaceShadowMap 0x69bbdf')
+    elif label in ('forward_opaque', 'forward_transparent'):
+        r = target('screenspace_shadows', False)
+        if r is not None:
+            out_['_ShadowMapTexture'] = (r, 'Screenspace ShadowMap', 'SetLightShadowProps 0x6cfc85 via 0x6cece3')
+    return out_
+
+
+def adopt_tie_order(gl, cl, names, same, node_of=None):
+    """Captured order inside runs of equal ``tie`` keys (entries whose sort keys tie on
+    every exported bit; the deciding RenderNode+0x100 = Mesh+0x174 is not exported).
+    Returns (permutation or None when a mismatch leaves a tie group, entries moved).
+    ``node_of``: entries of one node share the mesh id, so their generated relative
+    order must survive the adoption (else None)."""
+    i, reordered, ties = 0, [], 0
+    while i < len(gl):
+        j = i
+        while j + 1 < len(gl) and gl[i].get('tie') is not None and gl[j + 1].get('tie') == gl[i].get('tie'):
+            j += 1
+        grp = list(range(i, j + 1))
+        pick, left = [], list(grp)
+        for cm in cl[i:j + 1]:
+            hit = [k for k in left if same(names[k], cm)]
+            if not hit:
+                break
+            pick.append(hit[0])
+            left.remove(hit[0])
+        if len(pick) != len(grp):
+            return None, 0
+        if node_of is not None:
+            for n in {node_of(gl[k]) for k in grp}:
+                mine = [k for k in pick if node_of(gl[k]) == n]
+                if mine != sorted(mine):
+                    return None, 0
+        if pick != grp:
+            ties += len(grp)
+        reordered += pick
+        i = j + 1
+    return reordered, ties
+
 def plan_render(ctx, job):
     """Generated replacements of one camera render (keyed by capture command index)."""
     args, lib, cap = ctx.args, ctx.lib, ctx.cap
@@ -734,10 +848,28 @@ def plan_render(ctx, job):
             ('depth_texture', 'depth_texture_prepass', ucp.depth_texture_plan(ad, cam, lib, gk, quality, pgaps, cache)),
             ('depth_normals', 'depth_normals', ucp.depth_normals_plan(ad, cam, lib, gk, pgaps, cache))):
         cl = [d for p in passes if p['label'] == cap_label for d in p['draws']]
+
+        def same(n, cm):
+            return cm['mesh'].startswith(n) if n.endswith('-') else cm['mesh'] == n
         names = [fr_mesh(d['renderer']) for d in gl]
-        ok = len(gl) == len(cl) and all(cm['mesh'].startswith(n) if n.endswith('-') else cm['mesh'] == n
-                                        for n, cm in zip(names, cl))
+        ok = len(gl) == len(cl) and all(same(n, cm) for n, cm in zip(names, cl))
+        ties = 0
+        if not ok and len(gl) == len(cl):
+            # the low key bits are RenderNode+0x100 (Mesh+0x174, not exported; taken as 0): entries
+            # whose computed key ties are ordered by it.  A mismatch confined to tie groups takes
+            # the captured order inside each group (external:capture, counted); anything else fails.
+            reordered, ties = adopt_tie_order(gl, cl, names, same)
+            if reordered is not None:
+                gl[:] = [gl[k] for k in reordered]
+                names = [fr_mesh(d['renderer']) for d in gl]
+                ok = all(same(n, cm) for n, cm in zip(names, cl))
         lists[label] = [{'status': 'equal' if ok else 'different'} for _ in gl]
+        if ties:
+            pgaps.append({'gap': 'mesh_id_tiebreak', 'detail': '%s: %d entries tie on every exported key bit; '
+                          'order inside the tie from the capture (RenderNode+0x100 = Mesh+0x174 not exported)'
+                          % (label, ties)})
+            job.tiebreaks = getattr(job, 'tiebreaks', {})
+            job.tiebreaks[label] = ties
         if not ok:
             raise fr.FrameGap('render %d %s draw list differs from the capture: %r vs %r'
                               % (job.k, label, names, [c['mesh'] for c in cl]))
@@ -799,10 +931,23 @@ def plan_render(ctx, job):
         sc_plan = ucp.shadow_caster_plan(ad, lib, gk, quality, pgaps, caster_ids, cache,
                                          cull_matrix=cam.m('culling_matrix'))
         names = [fr_mesh(g['renderer']) for g in sc_plan]
+        sc_ties = 0
+        if names != [d['mesh'] for d in sm_cap] and len(sc_plan) == len(sm_cap):
+            perm, sc_ties = adopt_tie_order(sc_plan, sm_cap, names, lambda n, cm: cm['mesh'] == n,
+                                            node_of=lambda g: g.get('node_index'))
+            if perm is not None:
+                sc_plan = [sc_plan[k] for k in perm]
+                names = [fr_mesh(g['renderer']) for g in sc_plan]
+        if sc_ties:
+            pgaps.append({'gap': 'mesh_id_tiebreak', 'detail': 'shadow_caster: %d entries of different nodes tie on '
+                          '(two-sided, SharedMaterialData+0xd0, odd scale); order inside the tie from the capture '
+                          '(RenderNode+0x100 = Mesh+0x174 not exported)' % sc_ties})
+            job.tiebreaks = getattr(job, 'tiebreaks', {})
+            job.tiebreaks['shadow_caster'] = sc_ties
         if names != [d['mesh'] for d in sm_cap]:
             raise fr.FrameGap('shadow caster plan %r differs from the capture %r' % (names, [d['mesh'] for d in sm_cap]))
-        lists['shadow_caster'] = [{'status': 'equal' if g.get('order_generated') else 'equal_order_external'}
-                                  for g in sc_plan]
+        lists['shadow_caster'] = [{'status': ('equal_tie_order_external' if g.get('tie') is not None else 'equal')
+                                   if g.get('order_generated') else 'equal_order_external'} for g in sc_plan]
         for g, c in zip(sc_plan, sm_cap):
             ci = cap.command_at_event(c['event'])
             plan[ci] = [('shadow_caster', g, c, ci)]
@@ -957,9 +1102,24 @@ def plan_render(ctx, job):
         mv_plan, mv_candidates = ucp.motion_vector_plan(ad, cam, lib, gk, pgaps, set(included), cache)
         names = [fr_mesh(d['renderer']) for d in mv_plan]
         ok = names == [d['mesh'] for d in mv_cap]
-        lists['motion_vectors'] = [{'status': 'equal' if ok else 'different'} for _ in mv_plan]
+        mv_ties = 0
+        if not ok and len(mv_plan) == len(mv_cap):
+            perm, mv_ties = adopt_tie_order(mv_plan, mv_cap, names, lambda n, cm: cm['mesh'] == n)
+            if perm is not None:
+                mv_plan = [mv_plan[k] for k in perm]
+                names = [fr_mesh(d['renderer']) for d in mv_plan]
+                ok = names == [d['mesh'] for d in mv_cap]
+        if mv_ties:
+            pgaps.append({'gap': 'mesh_id_tiebreak', 'detail': 'motion_vectors: %d instanced entries of one '
+                          '(layering, queue, distance bucket) group are ordered by instancing_key = Mesh id << 16 | '
+                          'subset; Mesh+0x174 not exported: order inside the group from the capture' % mv_ties})
+            job.tiebreaks = getattr(job, 'tiebreaks', {})
+            job.tiebreaks['motion_vectors'] = mv_ties
+        lists['motion_vectors'] = [{'status': ('equal_tie_order_external' if d.get('tie') is not None else 'equal')
+                                    if ok else 'different'} for d in mv_plan]
         job.report_mv = {'generated_order': names, 'captured_order': [d['mesh'] for d in mv_cap],
-                         'candidates': len(mv_candidates), 'included_external': len(included)}
+                         'candidates': len(mv_candidates), 'included_external': len(included),
+                         'sort_keys': {fr_mesh(d['renderer']): d.get('sort_key') for d in mv_plan}}
         cap_of = {}
         for rid, c in zip(included, mv_cap):
             cap_of[rid] = c
@@ -1151,6 +1311,7 @@ def run(args):
     if int(scene_raw.get('schema_version', 0)) < 5:
         raise fr.FrameGap('the multi-render orchestrator reads probe v5 exports')
     renders_doc = json.loads((W / 'frames' / ('renders_%03d.json' % args.window_index)).read_text(encoding='utf-8'))
+    seed = scene_v5.prior_seed(W, args.window_index)
     ctx.frame = json.loads((W / 'frames' / ('frame_%03d.json' % args.window_index)).read_text(encoding='utf-8'))
     ctx.static = json.loads((W / 'static.json').read_text(encoding='utf-8'))
     lib = sl.ShaderLibrary([Path(args.library) / r for r in LIB_ROOTS])
@@ -1173,7 +1334,7 @@ def run(args):
     jobs = []
     if args.frame_graph:
         summ = json.loads((Path(args.frame_graph) / 'summary.json').read_text(encoding='utf-8'))
-        recs = [r for r in scene_v5.resolve_records(renders_doc)
+        recs = [r for r in scene_v5.resolve_records(renders_doc, seed)
                 if r['camera']['name'] == 'Main Camera' and r['phase'] == 'pre_render']
         bridge = [r for r in recs if r.get('bridge_render')]
         segs = [s_ for s_ in summ['segments']]
@@ -1189,7 +1350,7 @@ def run(args):
     if args.frame_graph and bridge_req is None:
         raise fr.FrameGap('bridge renders need --bridge-request (MakerRenderStyleService.Capture body)')
     for job in jobs:
-        job.scene = scene_v5.normalize(scene_raw, renders_doc, 'Main Camera', job.render_index)
+        job.scene = scene_v5.normalize(scene_raw, renders_doc, 'Main Camera', job.render_index, seed)
         if job.bridge:
             bridge_dof_focus(job.scene, bridge_req)
         lo, hi = job_command_range(cap, job.passes)
@@ -1281,6 +1442,13 @@ def run(args):
                     raise fr.FrameGap('skin upload chunk %d not in the capture program' % chunk)
                 skin_rows.append(row)
         em = fr.FrameEmitter(b, cap, lib, cbuffer_names=cb_names)
+        deriver = None
+        if generate and args.acceptance_table:
+            from src.render.hs2pipe.bindings import BindingDeriver
+            skin_res = {e['id'] for e in b.program['resources']
+                        if (e.get('provenance') or {}).get('generator') == 'hs2pipe.frame_skin'}
+            skin_res |= {cap.commands[ci_]['resource'] for ci_ in skin_cmds}
+            deriver = BindingDeriver(cap, lib, args.acceptance_table, scene0, skin_res)
         dev = ds.DeviceRaster(invert_projection=True)
         last_cmd_of_pass = {}
         ppv = None
@@ -1460,6 +1628,17 @@ def run(args):
                                        scissors=sc_override)
                     rec.inputs = vals.get('_inputs', {})
                     rec.render = job.k
+                    if deriver is not None:
+                        # per-slot re-derivation of the bound SRVs / samplers / IA buffers from the
+                        # scene state; a slot counts as derived only when it equals the binding the
+                        # emitted command carries (the captured one)
+                        deriver.set_scene(job.scene)
+                        gsheet = ((job.scene.get('_v5') or {}).get('render_record') or {}).get('data', {}).get('global_sheet')
+                        bres = deriver.derive(cap.commands[ci]['state'], sps, g['material'], gsheet,
+                                              g['renderer'].get('id'), engine=engine_textures(cap, job, label))
+                        rec.bindings = bres
+                        rec.external['srvs_samplers'] = ('derived %d slot(s); external: %s'
+                                                         % (bres['derived'], '; '.join(bres['external']) or 'none'))
                     idx = rec.command
                     if label != 'skybox' and 'unity_ObjectToWorld' in vals:
                         world_state = list(vals['unity_ObjectToWorld'])
@@ -1552,6 +1731,18 @@ def run(args):
         pp = per_pass.setdefault(r['pass_label'], {'draws': 0, 'draws_equal': 0, 'cbuffers': {}})
         pp['draws'] += 1
         pp['draws_equal'] += r['status'] == 'equal'
+        if 'bindings' in r:
+            bb = pp.setdefault('bindings', {'derived': 0, 'external': 0, 'external_slots': {}})
+            bb['derived'] += r['bindings']['derived']
+            bb['external'] += len(r['bindings']['external'])
+            for x in r['bindings']['external']:
+                if x.startswith('ia '):
+                    why_ = x.split(' (', 1)[1].rstrip(')') if ' (' in x else ''
+                    kx = ' '.join(x.split(' ')[:3]) + ': ' + why_.split(':')[0].split(' of renderer')[0]
+                else:
+                    kx = x.split('.', 1)[-1]
+                    kx = kx.split(' (')[0] + (' [' + kx.split(' (', 1)[1].split(' ')[0] + ']' if ' (' in kx else '')
+                bb['external_slots'][kx] = bb['external_slots'].get(kx, 0) + 1
         for k in ('vs', 'ps', 'blend', 'depth_stencil', 'raster', 'stencil_ref'):
             tot.setdefault(k, {}).setdefault(r[k], 0)
             tot[k][r[k]] += 1
@@ -1574,6 +1765,11 @@ def run(args):
     report['external_variables'] = dict(sorted(ext_names.items(), key=lambda x: -x[1]))
     report['summary'] = tot
     report['per_pass'] = per_pass
+    if any('bindings' in v for v in per_pass.values()):
+        report['bindings_summary'] = {
+            'derived': sum(v.get('bindings', {}).get('derived', 0) for v in per_pass.values()),
+            'external': sum(v.get('bindings', {}).get('external', 0) for v in per_pass.values()),
+            'source': 'hs2pipe.bindings (acceptance table %s)' % args.acceptance_table}
     if not args.no_execute:
         ex = {}
         runs = [('generated', out / 'generated')] + ([] if args.reuse_oracle else [('oracle', out / 'oracle')])
@@ -1609,6 +1805,7 @@ def chain_scopes(cap, lib, job, views_of, cdrv):
     chain = job.chain
     cis = chain['cis']
     sp_cache = {}
+    rows = (((job.scene.get('_v5') or {}).get('render_record') or {}).get('data') or {}).get('render_textures')
 
     def rt_of(ci):
         st_ = cap.commands[ci]['state']
@@ -1636,9 +1833,9 @@ def chain_scopes(cap, lib, job, views_of, cdrv):
             d = cap.obj(res)['desc']
             rt_ = UnityRenderTexture(h, int(d['Width']), int(d['Height']), 0, DXGI_RT_FORMATS[int(d['Format'])],
                                      'Default')
-        cdrv.engine[h] = chain_engine_rec(cap, views_of, res, rt_, h, dres)
+        cdrv.engine[h] = chain_engine_rec(cap, views_of, res, rt_, h, dres, rows)
     src0 = srv_resource(cap, lib, cap.commands[cis[0]]['state'], '_MainTex', sp_cache)
-    chain_src = chain_engine_rec(cap, views_of, src0, chain['source_rt'], 'ImageEffects source')
+    chain_src = chain_engine_rec(cap, views_of, src0, chain['source_rt'], 'ImageEffects source', rows=rows)
     first_of = []
     k = 0
     for c in chain['components']:
@@ -1653,7 +1850,7 @@ def chain_scopes(cap, lib, job, views_of, cdrv):
         d = cap.obj(res)['desc']
         drt = UnityRenderTexture('%s destination' % c['component'], int(d['Width']), int(d['Height']), 0,
                                  DXGI_RT_FORMATS[int(d['Format'])], 'Default')
-        dst = chain_engine_rec(cap, views_of, res, drt, drt.name, dres)
+        dst = chain_engine_rec(cap, views_of, res, drt, drt.name, dres, rows)
         if c['last']:
             tt = scene_cam_target_texture(job.scene)
             if tt is None and not dst.get('backbuffer'):
@@ -1680,6 +1877,8 @@ def main(argv=None):
                     help='plugin shader manifests (CTAA, CustomRender blit): enables the OnRenderImage chain')
     ap.add_argument('--frame-graph', help='frame_graph.py output of the capture: its segments (split at the bridge '
                     'capture target) are the bridge camera renders')
+    ap.add_argument('--acceptance-table', help='resource_acceptance resources_table.json: re-derive per-draw SRV / '
+                    'sampler / IA bindings from the scene state (hs2pipe.bindings) and report derived vs external')
     ap.add_argument('--resource-wiring', help='resource_acceptance --wiring-out dir: scene-state bytes of capture '
                     'resources (replaces their capture-start contents)')
     ap.add_argument('--bridge-request', help='MakerRenderStyleService.Capture request body (bridge renders)')

@@ -36,6 +36,7 @@ class BindingDeriver:
         self.tex_res = collections.defaultdict(set)      # scene texture id -> capture resources
         self.builtin_res = {}
         self.mesh_res = {}                               # capture resource -> (renderer id, role)
+        self.row_of = {r['resource']: r for r in rows}
         for r in rows:
             rq = r.get('request')
             if not isinstance(rq, dict) or r['status'] not in ('byte_exact', 'raw_readback_byte_exact',
@@ -49,18 +50,8 @@ class BindingDeriver:
             elif 'scene_renderer_id' in rq:
                 self.mesh_res[r['resource']] = (int(rq['scene_renderer_id']), rq['role'])
         self.skin_res = set(skin_resources)
-        self.tex_by_native = {}
-        for t in scene['textures']:
-            nid = (t.get('native') or {}).get('texture_id_0x50')
-            if nid is not None:
-                self.tex_by_native[int(nid)] = t
-        self.rt_by_native = {}
-        for t in scene.get('render_textures_compact') or []:
-            nid = (t.get('native') or {}).get('texture_id_0x50')
-            if nid is not None:
-                self.rt_by_native[int(nid)] = t
-        q = scene['statics']['UnityEngine.QualitySettings']
-        self.aniso = str(q.get('anisotropicFiltering', 'Enable')).split('.')[-1].split('=')[0]
+        self._scene_key = None
+        self.set_scene(scene)
         self.views_of = collections.defaultdict(list)
         for v in cap.program['views']:
             self.views_of[v['resource']].append(v)
@@ -70,6 +61,26 @@ class BindingDeriver:
                 self.res_by_name[n.strip()].append(e['id'])
         self.counts = collections.Counter()
         self.external = collections.Counter()
+
+    def set_scene(self, scene):
+        """Scene state of the render being emitted (texture ids, RenderTexture rows)."""
+        if self._scene_key == id(scene):
+            return
+        self._scene_key, self.scene = id(scene), scene
+        self.tex_by_native = {}
+        for t in scene['textures']:
+            nid = (t.get('native') or {}).get('texture_id_0x50')
+            if nid is not None:
+                self.tex_by_native[int(nid)] = t
+        self.rt_by_native = {}
+        rec = ((scene.get('_v5') or {}).get('render_record') or {}).get('data') or {}
+        self.rts = rec.get('render_textures') or scene.get('render_textures_compact') or []
+        for t in self.rts:
+            nid = (t.get('native') or {}).get('texture_id_0x50')
+            if nid is not None:
+                self.rt_by_native[int(nid)] = t
+        q = scene['statics']['UnityEngine.QualitySettings']
+        self.aniso = str(q.get('anisotropicFiltering', 'Enable')).split('.')[-1].split('=')[0]
 
     # ------------------------------------------------------------ helpers
     def _sheet_textures(self, sheet):
@@ -126,10 +137,36 @@ class BindingDeriver:
                 out.add(rid)
         return out
 
+    def _buffer_reason(self, b, renderer_id):
+        r = self.row_of.get(b)
+        if r is None:
+            return 'not in the acceptance table'
+        rq = r.get('request') if isinstance(r.get('request'), dict) else {}
+        if 'unity_default_vertex_buffer' in rq:
+            return 'engine default vertex stream: channel-to-stream rule not transcribed'
+        if 'unity_builtin_geometry' in rq:
+            return 'engine built-in geometry %s: binding rule not transcribed' % rq['unity_builtin_geometry']
+        if 'scene_renderer_id' in rq:
+            return 'mesh stream of renderer %s, not of the drawn renderer %s' % (rq['scene_renderer_id'], renderer_id)
+        if r['status'] == 'runtime':
+            return 'runtime buffer (%s): skin output not generated / dynamic ring' % (r.get('debug_name') or 'unnamed')
+        return 'acceptance status %s' % r['status']
+
     # ------------------------------------------------------------ derive
-    def derive(self, state, stage_programs, material, global_sheet, renderer_id=None):
-        """Per-slot derivation of one draw; returns {'derived': n, 'external': [labels]}."""
+    def rt_row(self, name, width, height):
+        """RenderTexture row (render record ``render_textures``, probe v6) of a named engine RT."""
+        hits = [t for t in self.rts if t.get('name') == name and int(t['descriptor']['width']) == int(width)
+                and int(t['descriptor']['height']) == int(height)]
+        return hits[0] if len(hits) == 1 else None
+
+    def derive(self, state, stage_programs, material, global_sheet, renderer_id=None, engine=None):
+        """Per-slot derivation of one draw; returns {'derived': n, 'external': [labels]}.
+
+        ``engine``: textures the engine binds during the render (not in the pre-render
+        sheets): {property: (capture resource, RenderTexture name, source)}; see
+        ``frame_orchestrate_paired.engine_textures``."""
         derived, external = 0, []
+        engine = engine or {}
         for stage in ('vs', 'ps'):
             sp = stage_programs.get(stage)
             if sp is None:
@@ -141,10 +178,19 @@ class BindingDeriver:
                 view = bound_srv.get(t['srv'])
                 if view is None:
                     continue
-                res = self.cap.obj(view)['resource'] if view in self.cap.objects else None
-                cands, props, src = self._texture_source(name, (material or {}).get('_native_sheet'), global_sheet)
+                res = self.cap.obj(view)['resource'] if view in self.cap.by_id else None
+                if name in engine:
+                    eres, ename, esrc = engine[name]
+                    d_ = self.cap.obj(eres)['desc']
+                    row = self.rt_row(ename, d_.get('Width', -1), d_.get('Height', -1))
+                    cands, props, src = {eres}, row, 'engine %s (%s)' % (ename, esrc)
+                else:
+                    cands, props, src = self._texture_source(name, (material or {}).get('_native_sheet'), global_sheet)
                 if res is not None and res in self.builtin_res and not cands:
-                    cands, src = {res}, 'Unity built-in %s' % self.builtin_res[res]
+                    # the bound resource is an accepted Unity built-in, but which built-in a null /
+                    # absent texture property selects (m_DefaultName -> builtin TexEnv table
+                    # 0x14b8e40, GetBuiltinTexEnvParamName 0x8a0e50) is not transcribed: external
+                    src = 'builtin-default %s (default-name selection not transcribed)' % self.builtin_res[res]
                 if res is not None and res in cands:
                     derived += 1
                     self.counts['srv'] += 1
@@ -169,7 +215,7 @@ class BindingDeriver:
                 derived += 1
                 self.counts['ia_mesh_stream'] += 1
             else:
-                external.append('ia vertex buffer %s' % b)
+                external.append('ia vertex buffer %s (%s)' % (b, self._buffer_reason(b, renderer_id)))
                 self.external['ia vertex buffer'] += 1
         ib = (state['ia'].get('index_buffer') or {}).get('buffer')
         if ib is not None:
@@ -177,6 +223,6 @@ class BindingDeriver:
                 derived += 1
                 self.counts['ia_index_buffer'] += 1
             else:
-                external.append('ia index buffer %s' % ib)
+                external.append('ia index buffer %s (%s)' % (ib, self._buffer_reason(ib, renderer_id)))
                 self.external['ia index buffer'] += 1
         return {'derived': derived, 'external': external}

@@ -822,10 +822,39 @@
    "mode b frame graph: 17 segments at capture target 114653, 0 driver mismatches",
    "v6 input code (caster order from SharedMaterialData+0xd0, GraphicsCaps booleans, +0x404, BuildSettings+0xfa); v5 mode a regression run_v30: 86/86 draws, 517/517 cbuffers"
   ],
-  "written_not_run": [
-   "src/render/hs2pipe/bindings.py (BindingDeriver)"
-  ],
-  "running_when_stopped": "resource_acceptance --wiring-out for both v6 captures (check logs for the final counts line)",
-  "next_steps": "docs/hs2_offline_frame_orchestrator.md section 11"
+  "written_not_run": [],
+  "running_when_stopped": null,
+  "next_steps": "docs/hs2_offline_frame_orchestrator.md section 11",
+  "steps_1_3_done": {
+   "mode_a": {
+    "run": "modea_6a9a/run_v10_final",
+    "oracle": "modea_6a9a/run_v6_execute",
+    "checkpoints": "60/60",
+    "draws": "86/86",
+    "cbuffers": "517/517",
+    "bindings_derived_external": [
+     524,
+     363
+    ],
+    "ppv2": "23/24 (CopyStd ring args)"
+   },
+   "mode_b": {
+    "run": "modeb_2def/run_v5_execute",
+    "oracle": "modeb_2def/run_v1",
+    "checkpoints": "959/959",
+    "draws": "1361/1361",
+    "cbuffers": "8212/8212",
+    "bindings_derived_external": [
+     8351,
+     5745
+    ],
+    "ppv2": "368/384 (CopyStd ring args)"
+   },
+   "tie_handling": "shadow caster / depth / depth normals / motion vectors: entries tying on all exported key bits carry tie; captured order only inside tie groups (mesh_id_tiebreak); RenderNode+0x100 = Mesh+0x174 not exported",
+   "mesh_id_stand_in": "adapter mesh_id = managed sharedMesh instance id (labelled); forward opaque sorter comparison still depends on it (open, v7 field RenderNode+0x100)",
+   "engine_textures": "_CameraDepthTexture 0x6675de, _CameraDepthNormalsTexture 0x6c8736, _ShadowMapTexture 0x69bbdf (collect) / 0x6cece3->0x6cfc85 (forward)",
+   "engine_rt_samplers": "v6 render_textures row; pooled temporaries: GetTempBuffer reuse Reset 0x7074e0 + Clamp + aniso 0 (0x75691c..0x756934); checked equal to capture",
+   "superseded_runs_in_deprecated": true
+  }
  }
 }
