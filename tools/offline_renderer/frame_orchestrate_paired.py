@@ -196,6 +196,91 @@ class PPv2Run:
         self.records['post'] = self.ex.records[n:]
 
 
+def diff_ppv2_action(ci, rec, cap, b, lib):
+    """Generated PPv2 draw/dispatch vs the captured one it replaces: shaders, states,
+    constant-buffer bytes per slot, output and input view/resource descriptors."""
+    g = b.program['commands'][rec['command']]
+    c = cap.commands[ci]
+    objs = {e['id']: e for t in ('shaders', 'blend_states', 'depth_states', 'raster_states', 'samplers', 'views',
+                                 'resources') for e in b.program[t]}
+    gs, cs = g['state'], c['state']
+    row = {'capture_event': cap.event(ci), 'kind': rec['kind'], 'shader': rec.get('shader') or rec.get('compute'),
+           'pass': rec.get('pass') if rec['kind'] == 'draw' else rec.get('kernel')}
+    stages = ('cs',) if c['op'] == 'dispatch' else ('vs', 'ps')
+    eq = True
+    for st in stages:
+        sha = objs[gs[st]['shader']]['blob']
+        ok = sha == cap.shader_sha(cs[st]['shader'])
+        row[st] = ok
+        eq &= ok
+        refl = lib.reflection(sha)
+        cb, cb_full = {}, {}
+        for slot_row in gs[st]['constant_buffers']:
+            gbytes = b.blobs.read(slot_row['blob'])
+            bound = cap.bound_cbuffer(ci, st, slot_row['slot'])
+            n = 16 * refl['cb'][str(slot_row['slot'])]['float4_count']
+            ok = bound is not None and bound[1][:n] == gbytes[:n]
+            cb[slot_row['slot']] = ok
+            cb_full[slot_row['slot']] = bound is not None and bound[1] == gbytes
+            eq &= ok
+        row[st + '_cbuffers'] = cb
+        row[st + '_cbuffers_full_buffer_info'] = cb_full
+        used = {'srvs': {int(k) for k in refl['srv']}, 'samplers': {int(k) for k in refl['sampler']}}
+
+        def desc_of(table_objs, sid):
+            return table_objs(sid)
+        for kind in ('srvs', 'samplers'):
+            gv = [(x['slot'], objs[x['view' if kind == 'srvs' else 'sampler']]) for x in gs[st][kind]
+                  if x['slot'] in used[kind]]
+            cv = [(x['slot'], cap.obj(x['view' if kind == 'srvs' else 'sampler'])) for x in cs[st][kind]
+                  if x['slot'] in used[kind]]
+            if kind == 'srvs':
+                ok = [(sl, v['desc'], objs[v['resource']]['desc']) for sl, v in gv] == \
+                     [(sl, v['desc'], cap.obj(v['resource'])['desc']) for sl, v in cv]
+            else:
+                ok = [(sl, v['desc']) for sl, v in gv] == [(sl, v['desc']) for sl, v in cv]
+            row[st + '_' + kind] = ok
+            eq &= ok
+    if c['op'] != 'dispatch':
+        for name, a, k in (('blend', 'om', 'blend_state'), ('depth_stencil', 'om', 'depth_stencil_state'),
+                           ('raster', 'rs', 'state')):
+            ok = objs[gs[a][k]]['desc'] == cap.obj(cs[a][k])['desc']
+            row[name] = ok
+            eq &= ok
+        ok = gs['rs']['viewports'] == cs['rs']['viewports']
+        row['viewport'] = ok
+        eq &= ok
+        gt = [(objs[r['view']]['desc'], objs[objs[r['view']]['resource']]['desc']) for r in gs['om']['render_targets']]
+        ct = [(cap.obj(r['view'])['desc'], cap.obj(cap.obj(r['view'])['resource'])['desc'])
+              for r in cs['om']['render_targets']]
+        row['targets'] = gt == ct
+        eq &= gt == ct
+        row['args'] = g['args'] == c['args']
+        if not row['args']:
+            row['args_detail'] = {'generated': g['args'], 'captured': c['args']}
+        eq &= row['args']
+    else:
+        row['groups'] = g['args'] == c['args']
+        eq &= row['groups']
+    row['equal'] = bool(eq)
+    return row
+
+
+def ppv2_summary(rows):
+    out = {'actions': len(rows), 'equal': sum(r['equal'] for r in rows)}
+    fails = {}
+    for r in rows:
+        for k, v in r.items():
+            if v is False:
+                fails[k] = fails.get(k, 0) + 1
+            if isinstance(v, dict) and not k.endswith('_info'):
+                for kk, vv in v.items():
+                    if vv is False:
+                        fails[k] = fails.get(k, 0) + 1
+    out['failing_fields'] = fails
+    return out
+
+
 def fr_mesh(r):
     if r['kind'] == 'ParticleSystemRenderer':
         return 'Buffer-2-'
@@ -371,6 +456,11 @@ def run(args):
             event_pass[e] = (p['pass_index'], p['label'])
 
     cb_names, cb_conflicts = fr.capture_cbuffer_names(cap, lib)
+    skin = None
+    if args.skin_geometry:
+        from src.render.hs2pipe import frame_skin
+        skin = frame_skin.head_skin_uploads(args.xml, W, args.skin_geometry, args.fxc, out / 'skin_work',
+                                            scene['frame_count'])
     pp_inputs = None
     if args.ppv2_scene_state:
         def rd(k):
@@ -385,6 +475,29 @@ def run(args):
                                              'capture oracle (verbatim capture program)', 'purpose': REASON},
                            first_id=cap.max_id + 1)
         cap.import_into(b, reason='capture objects (meshes, textures, samplers, targets, cbuffer residue)')
+        skin_rows = []
+        skin_cmds = {}
+        if generate and skin is not None:
+            chunk_res = {(e.get('provenance') or {}).get('chunk'): e for e in b.program['resources']}
+            chunk_cmd = {(c.get('provenance') or {}).get('chunk'): i for i, c in enumerate(cap.commands)}
+            for chunk, u in sorted(skin.items()):
+                row = {k: v for k, v in u.items() if k != 'bytes'}
+                row['chunk'] = chunk
+                if chunk in chunk_cmd:
+                    skin_cmds[chunk_cmd[chunk]] = u
+                    row['emitted_as'] = 'map_write (in-frame upload)'
+                elif chunk in chunk_res:
+                    e = chunk_res[chunk]
+                    if e['kind'] != 'buffer' or e['desc']['ByteWidth'] != len(u['bytes']):
+                        raise fr.FrameGap('skin upload %d does not fit resource %d' % (chunk, e['id']))
+                    e['initial'] = [{'subresource': 0, 'blob': b.blob(u['bytes']), 'row_pitch': len(u['bytes']),
+                                     'slice_pitch': len(u['bytes'])}]
+                    e['provenance'] = {'generator': 'hs2pipe.frame_skin', 'role': u['role'], 'frame': u['frame'],
+                                       'surface': u['surface'], 'replaces': 'capture-start buffer contents'}
+                    row['emitted_as'] = 'initial contents (state at frame start)'
+                else:
+                    raise fr.FrameGap('skin upload chunk %d not in the capture program' % chunk)
+                skin_rows.append(row)
         em = fr.FrameEmitter(b, cap, lib, cbuffer_names=cb_names)
         dev = ds.DeviceRaster(invert_projection=True)
         last_cmd_of_pass = {}
@@ -393,7 +506,16 @@ def run(args):
         if ppv is not None:
             ppv.warm_up()
             segments = ppv.segments
+        em.seeded_keys = em.seed_frame_start() if generate else []
         for i, c in enumerate(cap.commands):
+            if i in skin_cmds:
+                u = skin_cmds[i]
+                if c['end'] - c['start'] != len(u['bytes']):
+                    raise fr.FrameGap('skin upload size differs at capture command %d' % i)
+                b.map_write(c['resource'], c['subresource'], c['map_type'], c['map_flags'], c['start'], c['end'],
+                            u['bytes'], generator='hs2pipe.frame_skin', role=u['role'], surface=u['surface'],
+                            frame=u['frame'], capture_command=i)
+                continue
             if ppv is not None and i in segments:
                 segments[i]()
             if ppv is not None and i in ppv.skip:
@@ -438,36 +560,63 @@ def run(args):
             ev = cap.event(i)
             if ev in event_pass and (c['op'] in DRAW_OPS or c['op'] == 'dispatch'):
                 last_cmd_of_pass[event_pass[ev][0]] = (idx, i)
+        # PPv2 actions replace capture actions one for one, in order
+        pp_pairs = {}
+        if ppv is not None:
+            gen_acts = [r for r in ppv.records.get('opaque', []) + ppv.records.get('post', [])
+                        if r['kind'] in ('draw', 'dispatch')]
+            cap_acts = sorted(ppv.skip)
+            if len(gen_acts) != len(cap_acts):
+                raise fr.FrameGap('PPv2: %d generated actions vs %d captured' % (len(gen_acts), len(cap_acts)))
+            pp_pairs = dict(zip(cap_acts, gen_acts))
+            em.ppv2_pairs = pp_pairs
+
+        def outputs(st, op, objs):
+            if op == 'dispatch':
+                return [objs(u['view'])['resource'] for u in st['cs']['uavs']]
+            t = [objs(r['view'])['resource'] for r in st['om']['render_targets']]
+            if st['om']['depth_stencil'] is not None:
+                t.append(objs(st['om']['depth_stencil'])['resource'])
+            return t
+        views = {v['id']: v for v in b.program['views']}
         # read-backs: outputs of the last action of every pass with actions
         checks = []
         for pidx, (gidx, cidx) in sorted(last_cmd_of_pass.items()):
             cmd = cap.commands[cidx]
-            st = cmd['state']
-            targets = []
-            if cmd['op'] == 'dispatch':
-                targets = [cap.obj(u['view'])['resource'] for u in st['cs']['uavs']]
-            else:
-                targets = [cap.obj(r['view'])['resource'] for r in st['om']['render_targets']]
-                if st['om']['depth_stencil'] is not None:
-                    targets.append(cap.obj(st['om']['depth_stencil'])['resource'])
-            for res in targets:
+            ctargets = outputs(cmd['state'], cmd['op'], cap.obj)
+            gtargets = ctargets
+            if cidx in pp_pairs:
+                rec = pp_pairs[cidx]
+                gidx = rec['command']
+                g = b.program['commands'][gidx]
+                gtargets = outputs(g['state'], g['op'], lambda v: views[v])
+                if len(gtargets) != len(ctargets):
+                    raise fr.FrameGap('PPv2 action output count differs at capture command %d' % cidx)
+            for res, gres in zip(ctargets, gtargets):
                 r = cap.obj(res)
                 if r['kind'] == 'buffer':
                     continue
                 name = 'p%02d_%s_r%d' % (pidx, [p for p in cap_passes if p['pass_index'] == pidx][0]['label'], res)
-                b.readback(name, res, subresource=0, after_command=gidx, orientation='d3d_rows_top_down')
-                checks.append({'name': name, 'pass_index': pidx, 'resource': res, 'command': gidx, 'capture_command': cidx})
+                b.readback(name, gres if generate else res, subresource=0, after_command=gidx,
+                           orientation='d3d_rows_top_down')
+                checks.append({'name': name, 'pass_index': pidx, 'resource': res, 'generated_resource': gres,
+                               'command': gidx, 'capture_command': cidx})
         b.write()
+        em.skin_rows = skin_rows
         return b, em, checks
 
     gen_b, em, checks = build(out / 'generated', True)
     if not args.no_execute and not args.reuse_oracle:
         build(out / 'oracle', False)
     rows = [diff_draw(r, cap, gen_b) for r in em.records]
+    ppv2_rows = [diff_ppv2_action(ci, rec, cap, gen_b, lib) for ci, rec in sorted(getattr(em, 'ppv2_pairs', {}).items())]
     report = {'schema': 'hs2_frame_orchestrator_paired/1', 'capture_program': str(args.capture_program),
               'draw_lists': {k: [r['status'] for r in v] for k, v in lists.items()},
               'generated_draws': len(em.records), 'spliced_commands': len(em.spliced),
               'spliced_by_reason': {}, 'draws': rows, 'gaps': ad.gaps + em.gaps + pgaps, 'motion_vectors': report_mv,
+              'head_skin': getattr(em, 'skin_rows', []),
+              'ppv2_actions': ppv2_rows,
+              'ppv2_summary': ppv2_summary(ppv2_rows),
               'summary': {}}
     for _, reason in em.spliced:
         report['spliced_by_reason'][reason] = report['spliced_by_reason'].get(reason, 0) + 1
@@ -534,6 +683,8 @@ def main(argv=None):
     ap.add_argument('--capture-program', required=True)
     ap.add_argument('--executor', default=str(ROOT / 'outputs/offline_renderer_executor_20261020/build_v3/frame_executor.exe'))
     ap.add_argument('--no-execute', action='store_true')
+    ap.add_argument('--skin-geometry', help='same-session geometry export (ancestors above ChaControl)')
+    ap.add_argument('--fxc', default='C:/Program Files (x86)/Windows Kits/10/bin/10.0.26100.0/x64/fxc.exe')
     ap.add_argument('--ppv2-scene-state', help='PPv2 static scene state (extract_ppv2_scene_state output)')
     ap.add_argument('--reuse-oracle', help='earlier run directory whose exec_oracle read-backs are reused')
     ap.add_argument('--diagnostic-capture-mv-order', action='store_true',

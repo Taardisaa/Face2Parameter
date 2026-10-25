@@ -165,3 +165,114 @@ E=E:/HS2_offline_renderer_data/orchestrator_20261020
 `E:` has no hard-link support, so each run copies the 1.3 GB of capture blobs. The runs `frame_v1`
 and `frame_v2` are partial runs that failed; they were left in place because deletion was not
 permitted.
+
+## 7 Update 2026-10-24 (steps 1–4 of the resumed batch)
+
+Bulky outputs: `E:/HS2_offline_renderer_data/orchestrator_20261024/`. Superseded runs from
+this batch are in `deprecated/` there.
+
+Receipt: `tools/offline_renderer/frame_orchestrator_20261024.json`.
+
+### Step 1 — PPv2 in-frame (frame 26059)
+
+**Changes:**
+
+- `ppv2._any_kernel` asks the shader source for `any_kernel(compute)`.
+  `LibraryShaderSource.any_kernel` returns the first kernel of the D3D11 variant from
+  `shader_library`. This is valid because ComputeShader parameters are per shader.
+- The frame's shared pool is now seeded at frame start with every capture constant buffer's
+  pre-frame bytes (`FrameEmitter.seed_frame_start`). This is the cross-frame residue of Unity's
+  (name, size) shadow copies, labelled `external:capture`.
+- PPv2 uses the same pool. Spliced work mirrors into it.
+
+**Results:**
+
+- Diagnostic run (`step1_diag`, captured colours and captured motion-vector order):
+  - **58/58 checkpoints** equal; all PPv2 intermediates are read back from the generated
+    temporaries.
+  - 430/430 forward-family cbuffers equal.
+  - PPv2 actions structurally equal: 23/24 (shaders, cbuffer bytes in the declared ranges, SRV and
+    sampler descriptors, states, viewport, targets).
+  - The remaining action is CopyStd's `CommandBuffer.Blit` draw arguments: dynamic VB/IB ring
+    placement, gap `blit_dynamic_ring`.
+- Delivered run (`step1_delivered`): 38/58 checkpoints. Only the two known input gaps remain:
+  material colour precision and RenderObject (scene-node) order. Three PPv2 cbuffers inherit the
+  colour bytes through the shared `$Globals/464` key, the head material shared with SMAA, which
+  confirms the pool sharing.
+
+### Step 2 — forward interface and plugin blits (retry frame 17675, 16 renders)
+
+**`frame.UnityForwardLowering`** implements `blit`, `render_camera`, `engine_state`,
+`draw_pass`, `active_color_target` and `engine_buffer`. The blit is UnityPlayer's
+`Graphics.Blit`:
+
+| element | value |
+|---|---|
+| target | destination RT, plus its depth surface |
+| viewport | full |
+| projection | `GL.LoadOrtho` GPU projection |
+| view, world | identity |
+| `_MainTex_ST` | (1, 1, 0, 0) |
+| geometry | 4-vertex quad |
+| states | material pass, through `unity_d3d11_state` |
+| samplers | `ppv2_unity.sampler_desc`, aniso 0 for re-pooled temporaries |
+| cbuffers | shared pool |
+
+**`tools/offline_renderer/frame_orchestrate_retry.py`** drives `PluginLowering` over the
+`validate_plugin_effects` plan:
+
+- SSS blurs and the convolution blit, GrabPass copies, CustomRender and CTAA blits, and every
+  plugin RT come from the allocator.
+- Spliced capture work that touches a plugin RT is rewritten to the generated texture through a
+  per-render role map (`remap_command`).
+
+**Results (`retry_v4`):**
+
+- **177/177 generated blits are structurally equal.**
+- 32 GrabPass copies are generated.
+- Execution: **1138/1169 checkpoints equal**. Every colour output of every render is equal,
+  including the final capture RT.
+- The 31 mismatches are depth attachments of plugin RTs that Unity never writes in the frame:
+  the SSSLightingTextureBlurred depth, and the SSS_ProfileTex depth from render 1 on. The capture
+  converter clears resources created mid-capture; generated RTs start undefined.
+- Still spliced:
+  - the DHH cameras' object draws (profile / LightingPass replacement renders);
+  - the lighting camera's depth, depth-normals, shadow and screen-space shadows;
+  - the copy-back.
+
+  The retry capture has no paired scene state for objects. The v5.0.1 mode-b capture now has one.
+
+### Step 3 — head skinning in-frame (frame 26059)
+
+**`hs2pipe.frame_skin`** locates the uploads consumed by the head draws with `gpu_skin_inputs`
+(`simulate`, `bind_surfaces`, `upload_points`). It regenerates them from the probe export with
+`paired_skin.unity_exact_vertices`, which runs UnityPlayer arithmetic through `unity_skin_emu`:
+
+- 8 current VBs from frame N, emitted as in-frame `map_write`;
+- 6 motion-vector previous VBs from frame N−1, emitted as frame-start buffer contents.
+
+**14/14 are byte-identical to the capture.** Execution: 58/58 with the two diagnostics
+(`step3_diag`). Per-draw matrices of the generated passes were already generated
+(`ForwardValues`). The spliced shadow pass still carries captured matrices.
+
+### Step 4 — shadow map (source part)
+
+- **Device state:**
+  - The caster draw loop (0x6a0b00) calls `SetGlobalDepthBias(1, 1)` (0x6a0cc7) and restores
+    it at 0x6a1116.
+  - `RenderShadowMaps` sets the directional scissor to the split viewport inset by 1 pixel
+    (0x6a2b2c, `SetScissorRect` 0x54c7b0).
+  - These live in `unity_d3d11_state.shadow_caster_device` and `shadow_scissor_rect`.
+  - With them, raster state and scissor are **9/9 equal** on the frame-26059 shadow draws: bias −1,
+    slope −1 after reversed Z, scissor (1, 1, 4095, 4095).
+- **Order:** the caster key's material field `SharedMaterialData+0xd0` is computed by
+  `Material::UpdateHashes` 0x84e3b0 → `Pass::ComputePassValuesHash` 0x855f70. It is XXH32
+  (seed 0x8f37154b) over:
+  - the `ShaderLab::Pass*` address;
+  - the 32-byte keyword set;
+  - the per-stage `PrepareOverridingValues` bytes.
+
+  The input contains a heap address, so the order **cannot be computed offline**. Required
+  field: `SharedMaterialData+0xd0` per material (or the caster draw order). Light matrices: an
+  explicit gap for frame 26059; they are in the v5.0.1 export.
+- The shadow pass itself is not yet emitted (still spliced).

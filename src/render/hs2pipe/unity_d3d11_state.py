@@ -212,3 +212,26 @@ def d3d11_raster_desc(raster, dev: DeviceRaster):
             'DepthBias': bias, 'DepthBiasClamp': 0.0, 'SlopeScaledDepthBias': float(slope),
             'DepthClipEnable': bool(raster['depth_clip']), 'ScissorEnable': bool(dev.scissor),
             'MultisampleEnable': True, 'AntialiasedLineEnable': False}
+
+
+# ------------------------------------------------------------ shadow-caster draws
+def shadow_caster_device(directional):
+    """Device raster state while shadow casters are drawn into a shadow map.
+
+    The caster draw loop (UnityPlayer 0x6a0b00, called through the job at
+    0x6a56c0 from ``RenderShadowMaps`` 0x6a18b0) calls
+    ``SetGlobalDepthBias(1.0, 1.0)`` (0x6a0cc7) before the casters and restores
+    it afterwards (0x6a1116).  ``RenderShadowMaps`` enables the scissor for the
+    directional-light path (``[rbp+0x40] == 1``: ``SetScissorRect`` 0x6a2b2c,
+    ``DisableScissor`` 0x6a2c50).  The target is a RenderTexture, so the
+    projection is inverted (FrontCounterClockwise)."""
+    return DeviceRaster(invert_projection=True, global_bias=1.0, global_slope=1.0, scissor=bool(directional))
+
+
+def shadow_scissor_rect(x, y, w, h):
+    """``RenderShadowMaps`` 0x6a2b02..0x6a2b2c: RectT{x+1, y+1, w-2, h-2} of the
+    split viewport -> ``SetScissorRect`` 0x54c7b0 -> D3D11 {left=x, top=y,
+    right=x+w, bottom=y+h} (``FlipRectForSurface`` leaves a symmetric inset
+    unchanged)."""
+    rx, ry, rw, rh = x + 1, y + 1, w - 2, h - 2
+    return {'left': rx, 'top': ry, 'right': rx + rw, 'bottom': ry + rh}

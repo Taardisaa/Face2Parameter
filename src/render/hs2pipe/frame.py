@@ -84,6 +84,46 @@ class FrameGap(RuntimeError):
     pass
 
 
+def remap_command(cmd, res_map, view_map):
+    """Rewrite resource/view ids of one command; returns the rewritten ids."""
+    changed = []
+
+    def v(x):
+        if x in view_map:
+            changed.append(('view', x, view_map[x]))
+            return view_map[x]
+        return x
+
+    def r(x):
+        if x in res_map:
+            changed.append(('resource', x, res_map[x]))
+            return res_map[x]
+        return x
+    op = cmd['op']
+    if op in ('clear_rtv', 'clear_dsv', 'clear_uav_float', 'clear_uav_uint', 'generate_mips'):
+        cmd['view'] = v(cmd['view'])
+    elif op in ('update_subresource', 'map_write'):
+        cmd['resource'] = r(cmd['resource'])
+    elif op in ('copy_resource', 'copy_subresource_region', 'resolve'):
+        cmd['dst'] = r(cmd['dst'])
+        cmd['src'] = r(cmd['src'])
+    elif op in DRAW_OPS or op == 'dispatch':
+        st = cmd['state']
+        for stage, b in st.items():
+            if not isinstance(b, dict):
+                continue
+            for x in b.get('srvs', []):
+                x['view'] = v(x['view'])
+            for x in b.get('uavs', []):
+                x['view'] = v(x['view'])
+        if 'om' in st:
+            for x in st['om']['render_targets']:
+                x['view'] = v(x['view'])
+            if st['om']['depth_stencil'] is not None:
+                st['om']['depth_stencil'] = v(st['om']['depth_stencil'])
+    return changed
+
+
 def cbuffer_key(debug_name, names):
     """(cbuffer name, size) of a capture buffer named ``ConstantBuffer-<id>-<size>``."""
     parts = debug_name.split('-')
@@ -191,11 +231,17 @@ class FrameEmitter:
         return self.states[key]
 
     # ------------------------------------------------------------ splice
-    def splice(self, index, reason):
-        """Copy one capture command verbatim (labelled external:capture)."""
+    def splice(self, index, reason, remap=None):
+        """Copy one capture command (labelled external:capture).  ``remap`` =
+        (resource map, view map): capture ids of textures whose generated
+        counterparts replace them (plugin render textures) are rewritten."""
         cmd = copy.deepcopy(self.cap.commands[index])
         prov = dict(cmd.get('provenance') or {})
         prov.update(external='external:capture', reason=reason, capture_command=index)
+        if remap is not None:
+            changed = remap_command(cmd, *remap)
+            if changed:
+                prov['remapped'] = changed
         cmd['provenance'] = prov
         link_command_blobs(self.b, self.cap, cmd)
         self.b.program['commands'].append(cmd)
@@ -203,6 +249,21 @@ class FrameEmitter:
         if cmd['op'] in DRAW_OPS or cmd['op'] == 'dispatch':
             self._mirror_pool(index)
         return len(self.b.program['commands']) - 1
+
+    def seed_frame_start(self):
+        """Pool state at frame start: Unity's (name, size) shadow copies persist across
+        frames, so every key starts with the bytes its capture buffer holds before its
+        first in-frame write (external:capture, cross-frame residue)."""
+        seeded = []
+        for e in self.cap.program['resources']:
+            if e['kind'] != 'buffer' or not e['desc']['BindFlags'] & 4:
+                continue
+            key = cbuffer_key(e.get('name', ''), self.cb_names)
+            if key is None or key[1] != e['desc']['ByteWidth']:
+                continue
+            self.pool.seed(key[0], key[1], self.cap.frame_start_contents(e['id']))
+            seeded.append(key)
+        return seeded
 
     def _mirror_pool(self, index):
         """A spliced draw went through Unity's pool too: its uploaded shadow copies
@@ -405,6 +466,14 @@ class LibraryShaderSource:
                            'asset': sh.source_label, 'library': 'hs2pipe.shader_library', 'score': sel.score,
                            'exact': sel.exact}}
 
+    def any_kernel(self, compute):
+        """Name of the first kernel of the D3D11 (target renderer 2) variant."""
+        rec = self.lib.compute(compute)['record']
+        variants = [v for v in rec['variants'] if v['target_renderer'] == 2]
+        if len(variants) != 1:
+            raise KeyError('%s: expected exactly one D3D11 variant' % compute)
+        return variants[0]['kernels'][0]['name']
+
     def kernel(self, compute, kernel_name):
         k = self.lib.compute_kernel(compute, kernel_name)
         kr = k['kernel']
@@ -423,3 +492,211 @@ class LibraryShaderSource:
                                       for p in c['params']]} for c in k['constant_buffers']}
         return {'dxbc': data, 'sha256': kr['dxbc_sha256'], 'kernel': kernel, 'cbuffers': cbs,
                 'source': {'compute': compute, 'kernel': kernel_name, 'library': 'hs2pipe.shader_library'}}
+
+
+# ------------------------------------------------------------ Graphics.Blit + forward interface
+BLIT_QUAD_VERTICES = ((0.0, 0.0, 0.1, 0.0, 0.0), (0.0, 1.0, 0.1, 0.0, 1.0), (1.0, 1.0, 0.1, 1.0, 1.0),
+                      (1.0, 0.0, 0.1, 1.0, 0.0))
+BLIT_QUAD_INDICES = (0, 1, 2, 0, 2, 3)
+BLIT_INPUT_ELEMENTS = [{'SemanticName': 'POSITION', 'SemanticIndex': 0, 'Format': 6, 'InputSlot': 0,
+                        'AlignedByteOffset': 0, 'InputSlotClass': 0, 'InstanceDataStepRate': 0},
+                       {'SemanticName': 'TEXCOORD', 'SemanticIndex': 0, 'Format': 16, 'InputSlot': 0,
+                        'AlignedByteOffset': 12, 'InputSlotClass': 0, 'InstanceDataStepRate': 0}]
+
+
+def decode_globals(ps_globals):
+    """``plugin_common.pack_variables`` output -> {name: values} for the pool writer."""
+    out = {}
+    for name, v in (ps_globals or {}).items():
+        raw = bytes.fromhex(v['hex'])
+        dt = {0: np.float32, 1: np.int32, 2: np.uint32}[v['type']]
+        arr = np.frombuffer(raw, dt)
+        out[name] = ('int', list(arr)) if v['type'] != 0 else list(arr)
+    return out
+
+
+def rt_sampler_desc(rec, anisotropic_filtering='ForceEnable'):
+    """D3D11 sampler of a plugin RenderTexture record (``ppv2_unity.sampler_desc``
+    rule).  A temporary handed out again by the pool samples with anisoLevel 0
+    (``GetTempBuffer`` TextureSettings::Reset path 0x756915; plugin doc gap 1)."""
+    from .ppv2_unity import TextureRef, sampler_desc
+    rt = rec['rt']
+    aniso = 0 if rec.get('reused') else rt.aniso_level
+    tex = TextureRef(rec.get('resource', 0), rec.get('srv'), rt.width, rt.height, filter_mode=rt.filter_mode,
+                     wrap_mode=rt.wrap_mode, aniso_level=aniso)
+    return sampler_desc(tex, anisotropic_filtering)
+
+
+class UnityForwardLowering:
+    """``plugin_common.FORWARD_INTERFACE`` on the frame program.
+
+    ``blit`` is ``Graphics.Blit`` / ``CommandBuffer.Blit`` of UnityPlayer: the
+    destination becomes the active render target (its depth surface too, when it
+    has one) with a full viewport; ``GL.LoadOrtho`` sets view = identity and the
+    GPU projection of ``ortho(0,1,0,1,-1,100)`` (``unity_math``); the world matrix
+    is identity; ``_MainTex`` = source with ``_MainTex_ST`` (1,1,0,0); the
+    material pass is drawn on the 4-vertex quad (``BLIT_QUAD_*``, bytes as Unity
+    writes them into its dynamic VB ring; ring placement is gap
+    ``blit_dynamic_ring``).  sRGB write follows the destination view format.
+    Camera renders, sorted-object passes, engine buffers and the active colour
+    target are answered by the frame ``driver``."""
+
+    def __init__(self, emitter, library, driver, *, anisotropic_filtering='ForceEnable'):
+        from . import unity_math as um
+        self.em = emitter
+        self.lib = library
+        self.driver = driver
+        self.aniso = anisotropic_filtering
+        self.globals = {}
+        self.keywords = set()
+        self.log = []
+        self.records = []
+        ortho = um.gl_get_gpu_projection(um.set_ortho(0, 1, 0, 1, -1, 100), True)
+        ident = um.identity()
+        self.blit_values = {'unity_ObjectToWorld': ident, 'unity_WorldToObject': ident,
+                            'glstate_matrix_projection': list(ortho), 'unity_MatrixV': ident,
+                            'unity_MatrixInvV': ident, 'unity_MatrixVP': list(um.multiply(ortho, ident)),
+                            'unity_WorldTransformParams': [F(0), F(0), F(0), F(1)],
+                            '_MainTex_ST': [F(1), F(1), F(0), F(0)]}
+        self._quad = None
+
+    def quad(self, vs_dxbc, vs_sha):
+        import struct
+        b = self.em.b
+        if self._quad is None:
+            vb = b''.join(struct.pack('<5f', *[float(F(x)) for x in v]) for v in BLIT_QUAD_VERTICES)
+            ib = struct.pack('<6H', *BLIT_QUAD_INDICES)
+            v = b.buffer({'ByteWidth': len(vb), 'Usage': 0, 'BindFlags': 1, 'CPUAccessFlags': 0, 'MiscFlags': 0,
+                          'StructureByteStride': 0}, initial=vb, name='Graphics.Blit quad')
+            i = b.buffer({'ByteWidth': len(ib), 'Usage': 0, 'BindFlags': 2, 'CPUAccessFlags': 0, 'MiscFlags': 0,
+                          'StructureByteStride': 0}, initial=ib, name='Graphics.Blit quad indices')
+            self._quad = {'vb': v, 'ib': i, 'il': {}, 'vb_bytes': vb, 'ib_bytes': ib}
+        if vs_sha not in self._quad['il']:
+            self._quad['il'][vs_sha] = b.input_layout(BLIT_INPUT_ELEMENTS, vs_dxbc)
+        return self._quad
+
+    # -------------------------------------------------------- interface
+    def engine_state(self, op):
+        a = op['args']
+        if op['kind'] == 'global_keyword':
+            (self.keywords.add if a['enabled'] else self.keywords.discard)(a['keyword'])
+        elif op['kind'] == 'set_global_texture':
+            self.globals[a['name']] = self.driver.resolve_handle(a['handle'])
+        self.log.append(op)
+
+    def render_camera(self, builder, args, on_opaque):
+        return self.driver.render_camera(args, on_opaque)
+
+    def draw_pass(self, builder, op):
+        return self.driver.draw_pass(op)
+
+    def active_color_target(self):
+        return self.driver.active_color_target()
+
+    def engine_buffer(self, name):
+        return self.driver.engine_buffer(name)
+
+    def _select(self, shader, pass_index, kw, captured):
+        """Program per stage; installed copies must agree, otherwise the copy whose
+        selection equals the captured DXBC is used (labelled)."""
+        rows = []
+        for c in self.lib.copies(shader):
+            sh, sub = c.resolve(tier=None)
+            passes = sub.passes
+            if pass_index >= len(passes):
+                raise FrameGap('%s has no pass %d' % (shader, pass_index))
+            pz = passes[pass_index]
+            sps = {}
+            for st in ('vs', 'ps'):
+                sel = pz.select(st, kw, tier=None)
+                sps[st] = sel.subprogram if sel else None
+            rows.append((c, pz, sps))
+        sig = {tuple(r[2][st].dxbc_sha256 if r[2][st] else None for st in ('vs', 'ps')) for r in rows}
+        if len(sig) == 1:
+            return rows[0][1], rows[0][2], None
+        for c, pz, sps in rows:
+            if all(sps[st] is not None and sps[st].dxbc_sha256 == captured[st] for st in ('vs', 'ps')):
+                return pz, sps, 'external:capture (installed copies differ; %s chosen by captured DXBC)' % c.source_label
+        raise FrameGap('%s pass %d: no installed copy selects the captured programs' % (shader, pass_index))
+
+    def blit(self, builder, *, source, dest, shader, pass_index, keywords, ps_globals, textures):
+        cap_index = self.driver.next_generated_action('blit')
+        cst = self.em.cap.commands[cap_index]['state']
+        captured = {'vs': self.em.cap.shader_sha(cst['vs']['shader']), 'ps': self.em.cap.shader_sha(cst['ps']['shader'])}
+        kw = frozenset(keywords) | frozenset(self.keywords)
+        pz, sps, why = self._select(shader, pass_index, kw, captured)
+        values = dict(self.blit_values)
+        values.update(decode_globals(ps_globals))
+        if '_MainTex_TexelSize' not in values and 'rt' in source:
+            values['_MainTex_TexelSize'] = list(source['rt'].texel_size())
+        st = DrawState()
+        rec = DrawRecord(command=-1, pass_label='blit', capture_command=cap_index,
+                         capture_event=self.em.cap.event(cap_index), renderer='Graphics.Blit', shader=shader,
+                         pass_index=pz.index, keywords=tuple(sorted(kw)),
+                         programs={k: (v.dxbc_sha256 if v else None) for k, v in sps.items()},
+                         notes=[why] if why else [])
+        for stage in ('vs', 'ps'):
+            getattr(st, stage).shader = self.em.shader(stage, sps[stage].dxbc_sha256, sps[stage].identity())
+        cbs = self.em.draw_cbuffers(sps, values, cap_index)
+        rec.cbuffers = cbs
+        for (stage, slot), cb in sorted(cbs.items()):
+            getattr(st, stage).constant_buffers.append({'slot': slot, 'blob': self.em.b.blob(cb['bytes'])})
+        ext_tex = []
+        for stage in ('vs', 'ps'):
+            b = getattr(st, stage)
+            res = sps[stage].resources()
+            if res['inline_samplers']:
+                raise FrameGap('inline samplers in ' + shader)
+            for t in res['textures']:
+                name = t['name']
+                trec = source if name == '_MainTex' else (textures.get(name) if textures else None)
+                if trec is None:
+                    trec = self.globals.get(name)
+                srec = None
+                if trec is None or trec.get('srv') is None:
+                    cv = [x for x in cst[stage]['srvs'] if x['slot'] == t['srv']]
+                    if not cv:
+                        raise FrameGap('%s: texture %s has neither a generated nor a captured binding' % (shader, name))
+                    b.srvs.append({'slot': t['srv'], 'view': self.driver.map_view(cv[0]['view'])})
+                    ext_tex.append(name)
+                else:
+                    view = self.driver.map_view(trec['srv']) if trec.get('engine') else trec['srv']
+                    b.srvs.append({'slot': t['srv'], 'view': view})
+                    srec = trec
+                if t['sampler'] is not None and t['sampler'] >= 0:
+                    if srec is not None and 'rt' in srec and not srec.get('engine'):
+                        smp = self.em.state('sampler', rt_sampler_desc(srec, self.aniso))
+                    else:
+                        cs = [x for x in cst[stage]['samplers'] if x['slot'] == t['sampler']]
+                        if not cs:
+                            raise FrameGap('%s: no captured sampler at slot %d' % (shader, t['sampler']))
+                        smp = cs[0]['sampler']
+                        ext_tex.append(name + ' sampler')
+                    b.samplers.append({'slot': t['sampler'], 'sampler': smp})
+        if ext_tex:
+            rec.external['textures'] = 'external:capture bindings: ' + ', '.join(ext_tex)
+        mv = self.driver.map_view if dest.get('engine') else (lambda x: x)
+        st.om.render_targets = [{'slot': 0, 'view': mv(dest['rtv'])}]
+        st.om.depth_stencil = mv(dest['dsv']) if dest.get('dsv') is not None else None
+        gs = ds.gfx_states(pz.record['state'], light_mode=pz.light_mode, material_floats={})
+        st.om.blend_state = self.em.state('blend_state', ds.d3d11_blend_desc(gs.blend))
+        st.om.depth_stencil_state = self.em.state('depth_state', ds.d3d11_depth_stencil_desc(gs.depth, gs.stencil))
+        st.om.stencil_ref = gs.stencil['ref']
+        st.rs.state = self.em.state('raster_state',
+                                    ds.d3d11_raster_desc(gs.raster, ds.DeviceRaster(invert_projection=True)))
+        w, h = dest['rt'].width, dest['rt'].height
+        st.rs.viewports = [{'TopLeftX': 0.0, 'TopLeftY': 0.0, 'Width': float(w), 'Height': float(h),
+                            'MinDepth': 0.0, 'MaxDepth': 1.0}]
+        q = self.quad(sps['vs'].dxbc(), sps['vs'].dxbc_sha256)
+        st.ia.input_layout = q['il'][sps['vs'].dxbc_sha256]
+        st.ia.topology = 4
+        st.ia.vertex_buffers = [{'slot': 0, 'buffer': q['vb'], 'stride': 20, 'offset': 0}]
+        st.ia.index_buffer = {'buffer': q['ib'], 'format': 57, 'offset': 0}
+        rec.external['blit_dynamic_ring'] = 'quad bytes generated; dynamic VB/IB ring placement not reproduced'
+        rec.command = self.em.b.draw_indexed(st, {'generator': GENERATOR, 'unity': 'Graphics.Blit', 'shader': shader,
+                                                  'capture_event': rec.capture_event},
+                                             IndexCount=6, StartIndexLocation=0, BaseVertexLocation=0)
+        self.driver.generated_action_done(cap_index, rec.command)
+        self.em.records.append(rec)
+        self.records.append(rec)
+        return rec

@@ -1267,6 +1267,12 @@ class Executor:
 
 
 def _any_kernel(shaders, compute):
+    """First kernel of the D3D11 variant: ComputeShader parameters belong to the
+    ComputeShader (one cbuffer shadow shared by its kernels), so any kernel's
+    cbuffer list serves ``SetComputeFloatParams``.  Shader sources other than the
+    manifest adapter (``hs2pipe.frame.LibraryShaderSource``) provide ``any_kernel``."""
+    if hasattr(shaders, 'any_kernel'):
+        return shaders.any_kernel(compute)
     root, doc, c = shaders.compute[compute]
     v = [v for v in c['variants'] if v['targetRenderer'] == 2][0]
     return v['kernels'][0]['name']

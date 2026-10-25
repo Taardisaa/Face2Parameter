@@ -1,0 +1,268 @@
+{
+ "schema": "hs2_frame_orchestrator_receipt/2",
+ "date": "2026-10-24",
+ "bulky_outputs": "E:/HS2_offline_renderer_data/orchestrator_20261024/",
+ "step1_ppv2_in_frame": {
+  "delivered": {
+   "dir": "E:/HS2_offline_renderer_data/orchestrator_20261024/step1_delivered",
+   "execution": {
+    "checkpoints": 58,
+    "equal": 38
+   },
+   "ppv2": {
+    "actions": 24,
+    "equal": 20,
+    "failing_fields": {
+     "args": 1,
+     "equal": 4,
+     "vs_cbuffers": 3,
+     "ps_cbuffers": 2
+    }
+   },
+   "per_pass": {
+    "depth_texture": {
+     "draws": 14,
+     "draws_equal": 14,
+     "cbuffers": {
+      "equal": 78
+     }
+    },
+    "depth_normals": {
+     "draws": 22,
+     "draws_equal": 22,
+     "cbuffers": {
+      "equal": 100
+     }
+    },
+    "forward_opaque": {
+     "draws": 16,
+     "draws_equal": 9,
+     "cbuffers": {
+      "equal": 155,
+      "different_export_decimal_precision_only": 12
+     }
+    },
+    "motion_vectors": {
+     "draws": 12,
+     "draws_equal": 12,
+     "cbuffers": {
+      "equal": 48
+     }
+    },
+    "forward_transparent": {
+     "draws": 4,
+     "draws_equal": 3,
+     "cbuffers": {
+      "equal": 35,
+      "different_export_decimal_precision_only": 2
+     }
+    }
+   }
+  },
+  "diagnostic_colours_and_mv_order": {
+   "dir": "E:/HS2_offline_renderer_data/orchestrator_20261024/step1_diag",
+   "execution": {
+    "checkpoints": 58,
+    "equal": 58
+   },
+   "ppv2": {
+    "actions": 24,
+    "equal": 23,
+    "failing_fields": {
+     "args": 1,
+     "equal": 1
+    }
+   },
+   "cbuffers": {
+    "equal": 430
+   }
+  },
+  "remaining_ppv2_field": "CopyStd CommandBuffer.Blit draw args (dynamic VB/IB ring placement, gap blit_dynamic_ring)"
+ },
+ "step2_plugin_blits_retry_17675": {
+  "dir": "E:/HS2_offline_renderer_data/orchestrator_20261024/retry_v4",
+  "blits": {
+   "blits": 177,
+   "blits_equal": 177,
+   "failing_fields": {}
+  },
+  "grab_copies_generated": 32,
+  "execution": {
+   "checkpoints": 1169,
+   "equal": 1138
+  },
+  "execution_mismatches": "31 depth attachments never written in the frame (capture conversion clears resources created mid-capture; generated RTs start undefined)",
+  "mismatch_names": [
+   "s00_p0011_sss_separable_blur_1",
+   "s01_p0057_blit_copy_1",
+   "s01_p0066_sss_separable_blur_1",
+   "s02_p0111_blit_copy_1",
+   "s02_p0120_sss_separable_blur_1",
+   "s03_p0165_blit_copy_1",
+   "s03_p0174_sss_separable_blur_1",
+   "s04_p0219_blit_copy_1",
+   "s04_p0228_sss_separable_blur_1",
+   "s05_p0273_blit_copy_1",
+   "s05_p0282_sss_separable_blur_1",
+   "s06_p0327_blit_copy_1",
+   "s06_p0336_sss_separable_blur_1",
+   "s07_p0381_blit_copy_1",
+   "s07_p0390_sss_separable_blur_1",
+   "s08_p0435_blit_copy_1",
+   "s08_p0444_sss_separable_blur_1",
+   "s09_p0489_blit_copy_1",
+   "s09_p0498_sss_separable_blur_1",
+   "s10_p0543_blit_copy_1",
+   "s10_p0552_sss_separable_blur_1",
+   "s11_p0597_blit_copy_1",
+   "s11_p0606_sss_separable_blur_1",
+   "s12_p0651_blit_copy_1",
+   "s12_p0660_sss_separable_blur_1",
+   "s13_p0705_blit_copy_1",
+   "s13_p0714_sss_separable_blur_1",
+   "s14_p0759_blit_copy_1",
+   "s14_p0768_sss_separable_blur_1",
+   "s15_p0813_blit_copy_1",
+   "s15_p0822_sss_separable_blur_1"
+  ]
+ },
+ "step3_head_skin": {
+  "dir": "E:/HS2_offline_renderer_data/orchestrator_20261024/step3_diag",
+  "uploads": [
+   {
+    "role": "skinned_vertices_previous",
+    "surface": "o_head",
+    "frame": 26059,
+    "captured_equal": true,
+    "bytes_len": 177560,
+    "chunk": 1258,
+    "emitted_as": "initial contents (state at frame start)"
+   },
+   {
+    "role": "skinned_vertices_previous",
+    "surface": "o_eyebase_R",
+    "frame": 26059,
+    "captured_equal": true,
+    "bytes_len": 5920,
+    "chunk": 1260,
+    "emitted_as": "initial contents (state at frame start)"
+   },
+   {
+    "role": "skinned_vertices_previous",
+    "surface": "o_tooth",
+    "frame": 26059,
+    "captured_equal": true,
+    "bytes_len": 22560,
+    "chunk": 1262,
+    "emitted_as": "initial contents (state at frame start)"
+   },
+   {
+    "role": "skinned_vertices_previous",
+    "surface": "o_tang",
+    "frame": 26059,
+    "captured_equal": true,
+    "bytes_len": 26120,
+    "chunk": 1264,
+    "emitted_as": "initial contents (state at frame start)"
+   },
+   {
+    "role": "skinned_vertices_previous",
+    "surface": "o_eyeshadow",
+    "frame": 26059,
+    "captured_equal": true,
+    "bytes_len": 11840,
+    "chunk": 1266,
+    "emitted_as": "initial contents (state at frame start)"
+   },
+   {
+    "role": "skinned_vertices_previous",
+    "surface": "o_eyebase_L",
+    "frame": 26059,
+    "captured_equal": true,
+    "bytes_len": 5920,
+    "chunk": 1268,
+    "emitted_as": "initial contents (state at frame start)"
+   },
+   {
+    "role": "skinned_vertices_current",
+    "surface": "o_eyelashes",
+    "frame": 26060,
+    "captured_equal": true,
+    "bytes_len": 15920,
+    "chunk": 1598,
+    "emitted_as": "map_write (in-frame upload)"
+   },
+   {
+    "role": "skinned_vertices_current",
+    "surface": "o_namida",
+    "frame": 26060,
+    "captured_equal": true,
+    "bytes_len": 33520,
+    "chunk": 1604,
+    "emitted_as": "map_write (in-frame upload)"
+   },
+   {
+    "role": "skinned_vertices_current",
+    "surface": "o_tang",
+    "frame": 26060,
+    "captured_equal": true,
+    "bytes_len": 26120,
+    "chunk": 1605,
+    "emitted_as": "map_write (in-frame upload)"
+   },
+   {
+    "role": "skinned_vertices_current",
+    "surface": "o_head",
+    "frame": 26060,
+    "captured_equal": true,
+    "bytes_len": 177560,
+    "chunk": 1606,
+    "emitted_as": "map_write (in-frame upload)"
+   },
+   {
+    "role": "skinned_vertices_current",
+    "surface": "o_eyebase_L",
+    "frame": 26060,
+    "captured_equal": true,
+    "bytes_len": 5920,
+    "chunk": 1608,
+    "emitted_as": "map_write (in-frame upload)"
+   },
+   {
+    "role": "skinned_vertices_current",
+    "surface": "o_eyebase_R",
+    "frame": 26060,
+    "captured_equal": true,
+    "bytes_len": 5920,
+    "chunk": 1609,
+    "emitted_as": "map_write (in-frame upload)"
+   },
+   {
+    "role": "skinned_vertices_current",
+    "surface": "o_eyeshadow",
+    "frame": 26060,
+    "captured_equal": true,
+    "bytes_len": 11840,
+    "chunk": 1610,
+    "emitted_as": "map_write (in-frame upload)"
+   },
+   {
+    "role": "skinned_vertices_current",
+    "surface": "o_tooth",
+    "frame": 26060,
+    "captured_equal": true,
+    "bytes_len": 22560,
+    "chunk": 1611,
+    "emitted_as": "map_write (in-frame upload)"
+   }
+  ],
+  "execution": {
+   "checkpoints": 58,
+   "equal": 58
+  }
+ },
+ "step4_shadow": {
+  "shadow_caster_raster_and_scissor_rule_vs_capture": "9/9 equal (frame 26059 shadow_map draws)",
+  "order_hash": "SharedMaterialData+0xd0 = XXH32(seed 0x8f37154b) over [ShaderLab::Pass* address, ShaderKeywordSet, per-stage overriding values] (Material::UpdateHashes 0x84e3b0, Pass::ComputePassValuesHash 0x855f70): includes a heap address, not computable offline"
+ }
+}
