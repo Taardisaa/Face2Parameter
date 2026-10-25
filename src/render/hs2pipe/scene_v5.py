@@ -128,11 +128,19 @@ def normalize(scene, renders_doc, camera='Main Camera', render_index=0):
             gu[e['name']] = {'value': v if e['type'] == 'vector' else v[0]}
     s['global_uniforms'] = gu
     changed = {}
+    smd = {}
     for row in d.get('material_sheets_changed') or []:
         sh = row['sheet']
         if 'entries' in sh:
             changed[row['material']] = sh
+        if row.get('shared_material_data'):
+            smd[row['material']] = row['shared_material_data']
     for m in s['materials']:
+        sd = smd.get(m['id'], m.get('shared_material_data'))
+        if sd:
+            # probe v6: SharedMaterialData+0xd0 (Material::UpdateHashes 0x84e3b0 ->
+            # Pass::ComputePassValuesHash 0x855f70), the shadow-caster sort material key
+            m['shadow_caster_hash'] = int(sd['caster_pass_values_hash_0xd0'])
         sheet = changed.get(m['id'], m.get('native_sheet'))
         if sheet is None:
             continue

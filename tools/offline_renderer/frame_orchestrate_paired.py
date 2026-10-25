@@ -796,20 +796,32 @@ def plan_render(ctx, job):
                   'bias_candidates': cand, 'caster_ids': caster_ids, 'soft_inputs': soft_inputs,
                   'split_distances': sh['split_distances']}
         job.shadow = shadow
-        sc_plan = ucp.shadow_caster_plan(ad, lib, gk, quality, pgaps, caster_ids, cache)
+        sc_plan = ucp.shadow_caster_plan(ad, lib, gk, quality, pgaps, caster_ids, cache,
+                                         cull_matrix=cam.m('culling_matrix'))
         names = [fr_mesh(g['renderer']) for g in sc_plan]
         if names != [d['mesh'] for d in sm_cap]:
             raise fr.FrameGap('shadow caster plan %r differs from the capture %r' % (names, [d['mesh'] for d in sm_cap]))
-        lists['shadow_caster'] = [{'status': 'equal_order_external'} for _ in sc_plan]
+        lists['shadow_caster'] = [{'status': 'equal' if g.get('order_generated') else 'equal_order_external'}
+                                  for g in sc_plan]
         for g, c in zip(sc_plan, sm_cap):
             ci = cap.command_at_event(c['event'])
             plan[ci] = [('shadow_caster', g, c, ci)]
         c0i = cap.command_at_event(sm_cap[0]['event'])
         pz0, sps0, _ = select_pass_programs(lib, sc_plan[0]['pass'], sc_plan[0]['keywords'],
                                             {'vs': sm_cap[0]['vs'], 'ps': sm_cap[0]['ps']})
-        branch = shadow_branch(cap, c0i, sps0, cand)
+        if 'graphics_caps_0xd0_bit7' in nst:
+            # probe v6: GraphicsCaps+0xd0 bit 7 and +0x3fc read from the process
+            caps_bits = {'caps_0xd0_bit7': bool(nst['graphics_caps_0xd0_bit7']),
+                         'caps_0x3fc': bool(int(nst['graphics_caps_0x3fc_u32']))}
+            branch = uf.soft_normal_bias_branch(**caps_bits, **soft_inputs)
+            if shadow_branch(cap, c0i, sps0, cand) != branch:
+                raise fr.FrameGap('captured unity_LightShadowBias disagrees with the GraphicsCaps branch')
+            shadow['caps_source'] = 'probe v6 GraphicsCaps'
+        else:
+            branch = shadow_branch(cap, c0i, sps0, cand)
+            caps_bits = {'caps_0xd0_bit7': branch, 'caps_0x3fc': False} if branch else None
+            shadow['caps_source'] = 'external:capture (branch outcome)'
         shadow['branch'] = branch
-        caps_bits = {'caps_0xd0_bit7': branch, 'caps_0x3fc': False} if branch else None
         ss_cap = [d for p in passes if p['label'] == 'screenspace_shadows' for d in p['draws']]
         if ss_cap and caps_bits is not None:
             ss_shader = lib.copies('Hidden/Internal-ScreenSpaceShadows')
@@ -996,10 +1008,14 @@ def plan_render(ctx, job):
             # presence of a colour clear in the capture decides it (external:capture)
             has_sky = rs_.get('skybox') is not None
             cf = cam.get('clear_flags')
-            caps3a1 = bool(rtvs) if cf == 'Skybox' and has_sky else False
+            nst_ = scene['native']['settings']
+            if 'graphics_caps_0x3a1_u8' in nst_:
+                caps3a1 = bool(int(nst_['graphics_caps_0x3a1_u8']))       # probe v6
+            else:
+                caps3a1 = bool(rtvs) if cf == 'Skybox' and has_sky else False
+                if cf == 'Skybox' and has_sky:
+                    note = 'GraphicsCaps+0x3a1 external:capture (%s)' % caps3a1
             flags = camera_clear_flags(cf, has_sky, caps3a1)
-            if cf == 'Skybox' and has_sky:
-                note = 'GraphicsCaps+0x3a1 external:capture (%s)' % caps3a1
             props = [c for c in scene['cameras'] if c['name'] == 'Main Camera' and c['active_in_hierarchy']
                      and c['properties']['enabled']][0]['properties']
             from src.render.hs2pipe import unity_forward as uf_
@@ -1381,12 +1397,15 @@ def run(args):
                         vals, notes = fv.draw_values(g['renderer'], g['material'])
                     if label == 'skybox':
                         from src.render.hs2pipe import unity_forward as uf, unity_math as um
-                        sk = uf.skybox_matrices(cam, fv.setup, FV.GRAPHICS_D3D11)
+                        nst_ = job.scene['native']['settings']
+                        c404 = nst_.get('graphics_caps_0x404_f32', 1.0)
+                        sk = uf.skybox_matrices(cam, fv.setup, FV.GRAPHICS_D3D11, caps_404=c404)
                         ok_, w2o = um.invert_general_3d(sk['unity_ObjectToWorld'])
                         devp = um.calculate_device_projection(sk['projection'], False, fv.setup.invert_y, True)
                         vals.update({'unity_ObjectToWorld': sk['unity_ObjectToWorld'], 'unity_WorldToObject': w2o,
                                      'unity_MatrixVP': sk['unity_MatrixVP'], 'glstate_matrix_projection': devp})
-                        notes = list(notes) + ['skybox: GraphicsCaps+0x404 taken as 1.0 (gap skybox_caps_404)']
+                        notes = list(notes) + ['skybox: GraphicsCaps+0x404 = %r (%s)' % (
+                            c404, 'probe v6' if 'graphics_caps_0x404_f32' in nst_ else 'gap skybox_caps_404, 1.0')]
                     vp_override = sc_override = None
                     devx = dev
                     if label == 'depth_texture':
@@ -1402,9 +1421,9 @@ def run(args):
                                      'unity_MatrixVP': list(shadow['vp']),
                                      'glstate_matrix_projection': list(shadow['device_projection'])})
                         bias = shadow['bias_candidates']
-                        vals['unity_LightShadowBias'] = bias[shadow_branch(cap, ci, sps, bias)]
-                        notes = list(notes) + ['shadow normal-bias branch: GraphicsCaps+0xd0 bit 7 / +0x3fc '
-                                               'external:capture (outcome of the 0x6a29db branch)']
+                        vals['unity_LightShadowBias'] = bias[shadow['branch']]
+                        notes = list(notes) + ['shadow normal-bias branch (0x6a29db): GraphicsCaps from '
+                                               + shadow['caps_source']]
                         n = shadow['size']
                         vp_override = [{'TopLeftX': 0.0, 'TopLeftY': 0.0, 'Width': float(n), 'Height': float(n),
                                         'MinDepth': 0.0, 'MaxDepth': 1.0}]

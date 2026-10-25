@@ -814,5 +814,18 @@
     "total_s": null
    }
   ]
+ },
+ "v6_session_status_20261025": {
+  "outputs": "E:/HS2_offline_renderer_data/orchestrator_20261025/",
+  "done_verified": [
+   "inspect + capture programs mode a (through 2226) and mode b (through 27492)",
+   "mode b frame graph: 17 segments at capture target 114653, 0 driver mismatches",
+   "v6 input code (caster order from SharedMaterialData+0xd0, GraphicsCaps booleans, +0x404, BuildSettings+0xfa); v5 mode a regression run_v30: 86/86 draws, 517/517 cbuffers"
+  ],
+  "written_not_run": [
+   "src/render/hs2pipe/bindings.py (BindingDeriver)"
+  ],
+  "running_when_stopped": "resource_acceptance --wiring-out for both v6 captures (check logs for the final counts line)",
+  "next_steps": "docs/hs2_offline_frame_orchestrator.md section 11"
  }
 }

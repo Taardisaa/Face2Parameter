@@ -220,6 +220,12 @@ class ForwardValues:
         out = {'_NonJitteredVP': list(self.setup.non_jittered_vp),
                '_PreviousVP': self.cam.m('previous_view_projection'),
                '_ForceNoMotion': [F(1.0) if renderer['motion_vector_mode'] == 'ForceNoMotion' else F(0.0)]}
+        st = (self.scene.get('native') or {}).get('settings') or {}
+        if 'build_settings_0xfa' in st:
+            # probe v6: BuildSettings+0xfa; the MV loop sets -0.001 when it is set (0x6cc539)
+            if not int(st['build_settings_0xfa']):
+                raise up.PlanGap('_MotionVectorDepthBias branch for BuildSettings+0xfa == 0 not transcribed')
+            out['_MotionVectorDepthBias'] = [F(-0.001)]
         pm, src = self.previous_object_to_world(renderer)
         if pm is not None:
             out['_PreviousM'] = pm

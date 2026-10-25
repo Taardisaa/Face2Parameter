@@ -580,3 +580,68 @@ whose float32 locals differ from the baseline in any frame; their descendants ar
 - The two stated assumptions in 10.2.
 - The skin double-buffer swap timing is untraced (§9.2).
 - Native acceptance of candidates happens later, in a game session.
+
+## 11 v6 session (in progress, stopped 2026-10-25 night)
+
+Outputs: `E:/HS2_offline_renderer_data/orchestrator_20261025/{modea_6a9a, modeb_2def}`.
+
+### Done and verified
+
+- **v6 conversions.** Driver inspect listings; capture programs (mode a through event 2226,
+  mode b through 27492); mode-b frame graph segmented at the capture target 114653 (17
+  segments: 16 bridge renders plus the ordinary frame; 0 mismatched driver actions).
+- **Code for the v6 inputs.** v5 regression: `modea_f8bf/run_v30_v6code_regression` gives
+  86/86 draws and 517/517 cbuffers, unchanged. Without v6 fields every path falls back to the
+  earlier behaviour.
+  - Shadow-caster order is generated:
+    - `unity_camera_passes.shadow_caster_plan`: shadow queue in scene-node order, then
+      `shadow_caster_parts`, then `shadow_caster_draws` with key 0x6a5880;
+    - the material hash comes from `scene_v5` `shadow_caster_hash`
+      (SharedMaterialData+0xd0, also per render);
+    - node fields come from the BaseRenderer flatten block (block byte k = RenderNode+k, from
+      `FlattenBasicData` 0x650b50);
+    - it raises if two parts tie above bit 39, because RenderNode+0x100 is not exported.
+  - GraphicsCaps+0xd0 bit 7, +0x3fc, +0x3a1 and +0x404 come from the v6
+    `native.settings`. The captured bias is still cross-checked.
+  - `_MotionVectorDepthBias` = −0.001 from BuildSettings+0xfa.
+  - `_HasLastPositionData` stays external, because the v6 `smr_*` fields are invalid (probe
+    §9.1).
+  - `src/render/hs2pipe/bindings.py` (`BindingDeriver`) is written but **not wired or run**.
+    For each slot it derives the SRV (material/global texture → capture resource via the
+    acceptance table; RenderTexture rows by name and size), the sampler (`sampler_desc` from
+    the texture/RT settings) and the IA buffers (mesh streams, skin streams). It checks each
+    against the captured binding and counts the rest as external.
+
+### Running when stopped
+
+`resource_acceptance --wiring-out --raw-dir` for both v6 captures (background). Logs:
+`orchestrator_20261025/mode*/resource_acceptance.log`. If the logs show no final counts line,
+the run did not finish: re-run the same command into a fresh directory and move the partial one
+to `deprecated/`.
+
+### Next steps (exact)
+
+1. Run `frame_orchestrate_paired`:
+   - **v6 mode a:** window `6a9a1eb9…`, index 5, its capture program, `--resource-wiring`.
+   - **v6 mode b:** add `--frame-graph modeb_2def/frame_graph` and `--bridge-request
+     bridge_body_2def4f9f…json`.
+
+   Check that the generated caster order equals the capture (`lists.shadow_caster` 'equal'),
+   then execute against fresh oracles.
+2. Wire `BindingDeriver` into `build()`. After each `emit_draw` call
+   `derive(state, sps, material, fv.global_sheet-entries, renderer id)`, using the
+   acceptance table of that capture and the skin-stream resource ids. Report the derived and
+   external counts per pass; the remaining external list goes into the report.
+3. Engine RT samplers for chain blits: build the engine records' `rt` from the v6
+   `render_textures` rows (filter/wrap/aniso), and let `UnityForwardLowering.blit` generate
+   samplers for those records.
+4. Task 2 (waits on the skinning agent's `gpu_skin_inputs` coverage of body, clothes and
+   hair):
+   - generate those streams;
+   - replace the `CandidateUnsupported` root/other-renderer rules in `candidate.py` with
+     recomputation: bounds = local AABB × root (rule cited in §10.3) → culling, shadow caster
+     set and fit, matrices;
+   - raise only for the shadow-caster cull membership when the candidate can change it.
+5. Task 3: candidate identity on the v6 bridge frame. Point `SessionConfig` at the v6 session
+   (`state_before_renderstyle.json` in the v6 artifacts, template = the v6 mode-b run, target
+   114653).

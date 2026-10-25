@@ -205,7 +205,25 @@ def depth_texture_plan(adapter, cam, lib, global_keywords, quality, gaps, cache=
     return out
 
 
-def shadow_caster_plan(adapter, lib, global_keywords, quality, gaps, caster_ids, cache=None):
+def flatten_node_fields(renderer):
+    """RenderNode fields from the probe v6 ``base_renderer_flatten_block_hex``.
+
+    ``BaseRenderer::FlattenBasicData`` 0x650b50 copies BaseRenderer+0x08..+0x88 to
+    RenderNode+0x00..+0x80 and +0x88..+0xfc to +0x80..+0xf4, so byte k of the exported
+    block (BaseRenderer+0x08+k) is RenderNode+k for k < 0xf4."""
+    import struct
+    hx = (renderer['raw'].get('native') or {}).get('base_renderer_flatten_block_hex')
+    if not hx:
+        return None
+    b = bytes.fromhex(hx)
+    return {'transform_type': struct.unpack_from('<I', b, 0xb0)[0],
+            'first_subset': struct.unpack_from('<H', b, 0xb8)[0],
+            'static_batch_subset_count': struct.unpack_from('<H', b, 0xba)[0],
+            'flags_0xe8': struct.unpack_from('<I', b, 0xe8)[0],
+            'center': list(struct.unpack_from('<3f', b, 0x80)), 'extent': list(struct.unpack_from('<3f', b, 0x8c))}
+
+
+def shadow_caster_plan(adapter, lib, global_keywords, quality, gaps, caster_ids, cache=None, cull_matrix=None):
     """Shadow-caster draws of the main directional light (``RenderShadowMaps``
     0x6a18b0 -> caster job 0x6a56c0 -> loop 0x6a0b00).
 
@@ -214,36 +232,85 @@ def shadow_caster_plan(adapter, lib, global_keywords, quality, gaps, caster_ids,
     ``Shader::GetShadowCasterPassToUse`` (0xbf96c0) contributes one draw with the
     ``SHADOWS_DEPTH`` keyword (SetShadowsKeywords for a directional light).
 
-    ``caster_ids``: renderer ids of the light's shadow RenderNodeQueue in draw
-    order.  Both the membership (shadow-caster culling 0x6ac320, gap
-    ``caster_cull_set``) and the order (the sort key includes
-    ``SharedMaterialData+0xd0``, an XXH32 over a ``ShaderLab::Pass*`` heap
-    address: gap ``shadow_caster_order``) are ``external:capture`` inputs."""
+    ``caster_ids``: the renderers of the light's shadow RenderNodeQueue (membership:
+    shadow-caster culling 0x6ac320, not readable -- ``caster_cull_set``, external).
+    Order: with the probe v6 material hash (``SharedMaterialData+0xd0``) and node
+    fields, the queue (scene-node order, BeginRenderQueueExtraction rule) is split into
+    parts (0x69cfa0/0x69d310) and sorted by ShadowCasterSortData key (0x6a5880, QSort
+    0x696c00).  Key bits 24..38 (RenderNode+0x100) are not exported: the order is
+    returned only when no two parts tie on the higher bits."""
     cache = {} if cache is None else cache
     by_id = {r['id']: r for r in adapter.renderers()}
     rens = [by_id[i] for i in caster_ids]
-    nodes = _node_rows(rens, lib, gaps, cache)
-    out = []
-    for node in nodes:
-        r = node['renderer']
-        for mi, mat in enumerate(node['materials']):
-            sub = ps.calculate_subshader_index_to_use(mat['shader'], mat, None)
-            if sub < 0:
-                continue
-            pp = ps.get_shadow_caster_pass_to_use(mat['shader'], sub)
-            if pp is None:
-                continue
-            p = mat['shader']['subshaders'][pp['subshader']]['passes'][pp['pass']]['lib_pass']
-            kw = renderer_pass_keywords('SHADOWCASTER', r, mat['raw'], {'lights': [], 'has_main_light': False},
-                                        global_keywords, quality)
-            out.append({'pass_kind': 'shadow_caster', 'renderer': r, 'material': mat['raw'],
-                        'material_index': mi, 'shader': mat['shader']['name'], 'pass': p,
-                        'light_mode': 'SHADOWCASTER', 'keywords': kw})
-    gaps.append({'gap': 'caster_cull_set', 'detail': 'shadow caster culling (0x6ac320) not transcribed: '
+    gaps.append({'gap': 'caster_cull_set', 'detail': 'shadow caster culling (0x6ac320) not readable: '
                  'caster membership external:capture'})
-    gaps.append({'gap': 'shadow_caster_order', 'detail': 'caster sort key uses SharedMaterialData+0xd0 '
-                 '(XXH32 seed 0x8f37154b over a ShaderLab::Pass* address, Material::UpdateHashes 0x84e3b0): '
-                 'order external:capture; v6 field request: +0xd0 per material or the caster queue order'})
+    hashes = [m.get('shadow_caster_hash') for r in rens for m in r['materials'] if m is not None]
+    fields = [flatten_node_fields(r) for r in rens]
+    ordered_by_key = cull_matrix is not None and hashes and all(h is not None for h in hashes) and all(fields)
+    if ordered_by_key:
+        handles = [r['raw'].get('native', {}).get('scene_handle_0x160') for r in rens]
+        if any(h is None for h in handles):
+            ordered_by_key = False
+    if ordered_by_key:
+        idx = sorted(range(len(rens)), key=lambda i: handles[i])
+        flags = [{'job_prepared': rens[i]['kind'] != 'SkinnedMeshRenderer', 'produces_node': True} for i in idx]
+        order = rules.render_node_queue_order({0: [], 1: list(range(len(idx)))}, flags, 1)
+        queue = [rens[idx[i]] for i in order]
+    else:
+        queue = rens
+    nodes = _node_rows(queue, lib, gaps, cache)
+    for node, r in zip(nodes, queue):
+        f = flatten_node_fields(r)
+        if f:
+            node.update({'transform_type': f['transform_type'], 'first_subset': f['first_subset'],
+                         'static_batch_subset_count': f['static_batch_subset_count'],
+                         'shadow_casting_mode': (f['flags_0xe8'] >> 6) & 3})
+        for m in node['materials']:
+            m['shadow_caster_hash'] = m['raw'].get('shadow_caster_hash')
+    entries = []
+    if ordered_by_key:
+        casters, parts = ps.shadow_caster_parts(nodes)
+        keyed = []
+        for c in casters:
+            for pi in range(c['first'], c['end']):
+                part, node = parts[pi], nodes[c['node']]
+                h = int(part['material']['shadow_caster_hash'])
+                two = 1 if int(node['shadow_casting_mode']) == ps.SHADOW_CASTING_TWO_SIDED else 0
+                hi = (((h & 0x3FFFFF) | (two << 22)) << 1) | ((int(node['transform_type']) >> 2) & 1)
+                keyed.append(hi)
+        if len(set(keyed)) != len(keyed):
+            raise ps.SorterGap('shadow caster parts tie on (two-sided, material hash, odd scale): the order then '
+                               'depends on RenderNode+0x100 (not exported)') if hasattr(ps, 'SorterGap') else                 RuntimeError('shadow caster key tie needs RenderNode+0x100')
+        for n in nodes:
+            n['mesh_id'] = 0      # bits 24..38: never reached (no tie on the higher bits, checked above)
+        sorted_entries = ps.shadow_caster_draws(nodes, casters, parts, split=0, split_masks=[1] * len(casters),
+                                                cull_matrix=cull_matrix)
+        for e in sorted_entries:
+            node, part = nodes[e['node']], parts[e['part']]
+            entries.append((node, part['material_index'], part['material'], part['subshader']))
+        gaps.append({'gap': 'shadow_caster_order', 'detail': 'generated from SharedMaterialData+0xd0 (probe v6) '
+                     'and RenderNode fields (flatten block); RenderNode+0x100 not needed (no tie)'})
+    else:
+        for node in nodes:
+            for mi, mat in enumerate(node['materials']):
+                sub = ps.calculate_subshader_index_to_use(mat['shader'], mat, None)
+                if sub < 0:
+                    continue
+                entries.append((node, mi, mat, sub))
+        gaps.append({'gap': 'shadow_caster_order', 'detail': 'material hash / node fields not exported: '
+                     'order external:capture'})
+    out = []
+    for node, mi, mat, sub in entries:
+        r = node['renderer']
+        pp = ps.get_shadow_caster_pass_to_use(mat['shader'], sub)
+        if pp is None:
+            continue
+        p = mat['shader']['subshaders'][pp['subshader']]['passes'][pp['pass']]['lib_pass']
+        kw = renderer_pass_keywords('SHADOWCASTER', r, mat['raw'], {'lights': [], 'has_main_light': False},
+                                    global_keywords, quality)
+        out.append({'pass_kind': 'shadow_caster', 'renderer': r, 'material': mat['raw'],
+                    'material_index': mi, 'shader': mat['shader']['name'], 'pass': p,
+                    'light_mode': 'SHADOWCASTER', 'keywords': kw, 'order_generated': bool(ordered_by_key)})
     return out
 
 
