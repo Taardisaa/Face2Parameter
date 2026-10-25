@@ -856,5 +856,47 @@
    "engine_rt_samplers": "v6 render_textures row; pooled temporaries: GetTempBuffer reuse Reset 0x7074e0 + Clamp + aniso 0 (0x75691c..0x756934); checked equal to capture",
    "superseded_runs_in_deprecated": true
   }
+ },
+ "candidate_native_v6_1_20261025": {
+  "outputs": "E:/HS2_offline_renderer_data/candidate_native_20261025/",
+  "tool": "tools/offline_renderer/candidate_native_acceptance.py",
+  "card_state": "state_before_baseline.json",
+  "windows": {
+   "766d8184": {
+    "patch": null,
+    "target_resource": 44998,
+    "template": "w_766d8184/template_v1 959/959",
+    "identity_sha256": "fa8481267b534f54814a48f5deb267f3d878c2fa26b6aa9b59c94f705001055a",
+    "equal_replay_and_png": true
+   },
+   "75e17db3": {
+    "patch": "patch_chin_tip_down_002.json",
+    "target_resource": 60885,
+    "template": "w_75e17db3/template_v1 959/959",
+    "identity_sha256": "e37e788a253e16a6c7f634d8bc35742d4fa1608ba72e2f0c6eeb01d2b205bcc2",
+    "equal_replay_and_png": true
+   },
+   "8a42b979": {
+    "patch": "patch_chin_low_forward_002.json",
+    "target_resource": 71318,
+    "template": "w_8a42b979/template_v1 959/959",
+    "identity_sha256": "e3f80fd597b8c2622f56ce65c899cd8d090260dd4066e20c19c4abd407189b7a",
+    "equal_replay_and_png": true
+   },
+   "0b3351d6": {
+    "patch": "patch_chin_rs_wider_x108.json",
+    "target_resource": 81031,
+    "template": "w_0b3351d6/template_v1 959/959",
+    "identity_sha256": "6d19836e8fe25db22445edc977116496bf2734b829729a6b4e3de6a7ffceb873",
+    "equal_replay_and_png": true
+   }
+  },
+  "result": "every window: forward(card+patch) = probe export in 5 frames; 41/41 skin uploads = capture; frozen root TRS 416/416 and local-AABB bounds 400/400 = render records; target = replay = bridge_capture PNG (0 pixels differ)",
+  "gaps": [
+   "hair updateWhenOffscreen bone-AABB bounds path (0xbdb41e..0xbdb9cc, Mesh::GetCachedBonesBounds 0x7a4770) not transcribed; invariance enforced by dependency_check",
+   "animator-rewritten set identified from the frozen export (clip bindings not parsed)",
+   "mesh_id_tiebreak (shadow_caster, motion_vectors) inside tie groups",
+   "EyeLook seed (stated assumption)"
+  ]
  }
 }

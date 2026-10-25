@@ -83,6 +83,10 @@ class SessionConfig:
     target_resource: int = 31690
     target_size: tuple = (1086, 1448)
     apply_count: int = 2
+    # the patch the window was captured with (card + this patch is what the game rendered);
+    # the template's skin streams are the window's, so the reference streams are generated
+    # from card + window_patch
+    window_patch: dict | None = None
 
     @property
     def window(self):
@@ -196,15 +200,17 @@ class BridgeCandidateRenderer:
                                 'capture_start': start, 'captured': bytes(index.blob(w['buffer']))})
         self.head_renderers = sorted({p['renderer'] for p in self.points})
         # template program locations of every point
-        self._bind_template()
+        if cfg.template_run is not None:
+            self._bind_template()
         self.scene = json.loads((cfg.window / 'frames' / ('scene_%03d.json' % self._window_index())).read_text(
             encoding='utf-8'))
         self._build_dependency_tables()
         self.baseline = None
-        self.baseline = self._streams(patches=(), native=None)
+        wp = cfg.window_patch or {}
+        self.baseline = self._streams(patches=wp.get('bones') or (), native=wp.get('native59'))
         mism = [(p['chunk'], p['role']) for p in self.points if self.baseline['bytes'][p['chunk']] != p['captured']]
         if mism:
-            raise RuntimeError('baseline card does not reproduce the captured skin uploads: %r' % mism)
+            raise RuntimeError('card + window patch does not reproduce the captured skin uploads: %r' % mism)
         self.timings_init = {'init_s': time.time() - t0}
         self.proc = None
         if start_executor:
@@ -279,10 +285,12 @@ class BridgeCandidateRenderer:
                          'transform': int(p['transform']['ref_id']) if p.get('transform') else None,
                          'deps': ids, 'update_when_offscreen': str(p.get('updateWhenOffscreen')) == 'True'})
         self.dep_rows = rows
-        for rr in rows:
-            if rr['head_surface'] and rr['update_when_offscreen']:
-                raise CandidateUnsupported('head surface %s updates bounds from bones (updateWhenOffscreen): '
-                                           'bounds would depend on the candidate' % rr['name'])
+        # head surfaces whose world bounds come from their bones (updateWhenOffscreen: the
+        # bone-AABB path of CalculateTransformInfo_Prepared 0xbdb41e..0xbdb9cc over Mesh bone
+        # AABBs, which the probe does not export; not transcribed). Their bounds are taken from
+        # the template and a candidate that moves any of their bones/root raises.
+        self.bone_bounds_surfaces = sorted({rr['name'] for rr in rows
+                                            if rr['head_surface'] and rr['update_when_offscreen']})
 
     def dependency_check(self, changed_ids):
         """Which program inputs a set of changed transforms reaches (computed)."""
@@ -297,6 +305,9 @@ class BridgeCandidateRenderer:
         moved_ids = {self.tf[i]['id'] for i in moved}
         problems, head = [], []
         for rr in self.dep_rows:
+            if rr['head_surface'] and rr['update_when_offscreen'] and rr['deps'] & moved_ids:
+                problems.append('%s: bones moved and its bounds come from bones (updateWhenOffscreen path not '
+                                'transcribed)' % rr['name'])
             if rr['head_surface']:
                 if rr['root'] in moved_ids or rr['transform'] in moved_ids:
                     problems.append('%s: root bone/transform moved -> ObjectToWorld, bounds, culling, shadow fit and '
@@ -416,6 +427,92 @@ class BridgeCandidateRenderer:
             ch |= v
         return ch
 
+    # ------------------------------------------------------------ frozen bridge pose
+    def frozen_pose_check(self, streams):
+        """Per bridge render: generate the frozen-pose locals, then every enabled
+        SkinnedMeshRenderer's rootBone world TRS (ObjectToWorld) and, for local-AABB
+        renderers, the world bounds (``frozen_pose``); compare them bit for bit with the
+        render record values the template program was built from.
+
+        Frozen locals (MakerRenderService.PoseFreeze: Animator Play(hash, 0, 0) + Update(0)
+        inside frame N, before frame N's animation and LateUpdate): transforms the Animator
+        rewrites carry the phase-zero sample (bridge pre_cull export; the clip bindings are
+        not parsed, so 'rewritten' = differs from the N-1 end-of-frame export); every other
+        transform keeps its N-1 end-of-frame local, which for the forward model's outputs
+        is the forward chain (card + patch) at N-1."""
+        import base64
+        from src.render.unity_skin_emu import global_position_rotation
+        from . import frozen_pose as fpz, scene_v5 as sv
+        cfg = self.cfg
+        idx = self._window_index()
+        recs = sv.resolve_records(json.loads((cfg.window / 'frames' / ('renders_%03d.json' % idx)).read_text(
+            encoding='utf-8')), sv.prior_seed(cfg.window, idx))
+        pc = {r['bridge_render']['ordinal']: r for r in recs if r['phase'] == 'pre_cull' and r.get('bridge_render')}
+        pr = {r['bridge_render']['ordinal']: r for r in recs if r['phase'] == 'pre_render' and r.get('bridge_render')}
+        if not pc:
+            raise CandidateUnsupported('window has no bridge pre_cull character transforms (probe < 6.1)')
+        tf, prev = self.tf, self.N - 1
+        fwd = streams['locals'][prev]
+        T1 = self.win.by_frame[prev]['T']
+        parent = {}
+        for t in tf:
+            parent[t['id']] = tf[t['parent']]['id'] if t['parent'] >= 0 else self.by_id[t['id']]['parent_id']
+        for tid in list(parent.values()):
+            cur = tid
+            while cur is not None and cur not in parent:
+                parent[cur] = self.by_id[cur]['parent_id']
+                cur = parent[cur]
+        out = {'renders': 0, 'rows': 0, 'root_trs_equal': 0, 'bounds_equal': 0, 'bounds_rows': 0,
+               'animator_rewritten': None, 'forward_frozen_mismatch': [], 'mismatch': []}
+        bone_bounds = set()
+        for k in sorted(pr):
+            A = np.frombuffer(base64.b64decode(pc[k]['data']['character_transforms']['transforms_f32']),
+                              F).reshape(-1, 33)
+            rewritten = {tf[i]['id'] for i in range(len(tf)) if A[i, 0:10].tobytes() != T1[i, 0:10].tobytes()}
+            if out['animator_rewritten'] is None:
+                out['animator_rewritten'] = sorted(tf[self.index_of[t]]['name'] for t in rewritten)
+            loc = {}
+            for i, t in enumerate(tf):
+                tid = t['id']
+                if tid in fwd and tid not in rewritten:
+                    L = fwd[tid]
+                    g_ = (np.asarray(L['local_position'], F), np.asarray(L['local_rotation_xyzw'], F),
+                          np.asarray(L['local_scale'], F))
+                    if np.concatenate(g_).tobytes() != A[i, 0:10].tobytes() and k == min(pr):
+                        out['forward_frozen_mismatch'].append(t['name'])
+                    loc[tid] = g_
+                else:
+                    loc[tid] = (A[i, 0:3].copy(), A[i, 3:7].copy(), A[i, 7:10].copy())
+            for tid in parent:
+                if tid is not None and tid not in loc:
+                    L = fwd[tid]
+                    loc[tid] = (np.asarray(L['local_position'], F), np.asarray(L['local_rotation_xyzw'], F),
+                                np.asarray(L['local_scale'], F))
+            out['renders'] += 1
+            for r in pr[k]['data']['renderers']:
+                if r['type'] != 'UnityEngine.SkinnedMeshRenderer' or not r.get('root_bone') or not r['enabled']:
+                    continue
+                rb = r['root_bone']
+                ch = fpz.chain_of(loc, parent, rb['id'])
+                pos, rot = global_position_rotation(self.emu, ch)
+                out['rows'] += 1
+                if (pos.tobytes() == np.asarray(rb['position'], F).tobytes()
+                        and rot.tobytes() == np.asarray(rb['rotation'], F).tobytes()):
+                    out['root_trs_equal'] += 1
+                else:
+                    out['mismatch'].append({'render': k, 'renderer': r['id'], 'field': 'root_trs'})
+                if r.get('update_when_offscreen'):
+                    bone_bounds.add(r['id'])
+                    continue
+                out['bounds_rows'] += 1
+                c, e = fpz.world_aabb(fpz.global_matrix(self.emu, ch), r['local_bounds'][0:3], r['local_bounds'][3:6])
+                if np.concatenate([c, e]).tobytes() == np.asarray(r['bounds'], F).tobytes():
+                    out['bounds_equal'] += 1
+                else:
+                    out['mismatch'].append({'render': k, 'renderer': r['id'], 'field': 'bounds'})
+        out['bone_bounds_renderers'] = sorted(bone_bounds)
+        return out
+
     # ------------------------------------------------------------ executor
     def _start_executor(self):
         cfg = self.cfg
@@ -475,6 +572,16 @@ class BridgeCandidateRenderer:
         for k, v in st['object_matrices'].items():
             if v != self.baseline['object_matrices'][k]:
                 raise CandidateUnsupported('ObjectToWorld/WorldToObject of renderer %s frame %s changed' % k)
+        frozen = None
+        if getattr(self, 'has_frozen_export', None) is not False:
+            try:
+                frozen = self.frozen_pose_check(st)
+                self.has_frozen_export = True
+            except CandidateUnsupported:
+                self.has_frozen_export = False
+        if frozen is not None and frozen['mismatch']:
+            raise CandidateUnsupported('generated frozen-pose matrices/bounds differ from the template: %r'
+                                       % frozen['mismatch'][:8])
         t1 = time.time()
         blobs = out_dir / 'streams'
         blobs.mkdir()
@@ -512,10 +619,12 @@ class BridgeCandidateRenderer:
                               changed_bones=sorted(self.tf[self.index_of[t]]['name'] for t in changed
                                                    if t in self.index_of),
                               patched=patched, dependency=dep)
+        res.frozen = frozen
         (out_dir / 'result.json').write_text(json.dumps({'candidate': candidate, 'png': str(png),
                                                          'target_sha256_raw_d3d': rb['sha256'],
                                                          'timings': timings, 'changed_bones': res.changed_bones,
-                                                         'patched': patched, 'dependency': {
+                                                         'patched': patched, 'frozen_pose': frozen,
+                                                         'dependency': {
                                                              k: v for k, v in dep.items() if k != 'citations'}},
                                                         indent=1, default=str), encoding='utf-8')
         return res

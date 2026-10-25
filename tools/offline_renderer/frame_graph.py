@@ -777,6 +777,8 @@ class FrameGraph:
             self.pending_queries.append({'event': ev, 'chunk': idx, 'method': method, 'query': f['pAsync']})
         elif method == 'Present':
             self._present(f, idx, ev)
+        elif method == 'Flush':
+            pass    # ID3D11DeviceContext::Flush: submission only, no state or resource effect
         else:
             raise UnresolvedFrame('Uninterpreted context command ' + method)
 

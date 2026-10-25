@@ -1379,6 +1379,19 @@ def run(args):
     if args.skin_geometry:
         from src.render.hs2pipe import frame_skin
         rule = bridge_skin_frame_rule(scene_raw['frame_count']) if args.frame_graph else None
+        if rule is not None:
+            # probe v6.1: the frame each skin slot holds at every bridge render (native
+            # SkinnedMeshRenderer skin / previous-skin buffer stamps); must equal the rule
+            n_ = scene_raw['frame_count']
+            for job_ in jobs:
+                for rid_, rr_ in (job_.scene.get('_render_renderers') or {}).items():
+                    nat_ = rr_.get('native') or {}
+                    if nat_.get('skin_buffer_holds_frame', -1) in (-1, None):
+                        continue
+                    if (nat_['skin_buffer_holds_frame'], nat_['prev_skin_buffer_holds_frame']) != (n_ - 2, n_ - 1):
+                        raise fr.FrameGap('render %d renderer %s: skin slots hold %r, rule says (N-2, N-1)'
+                                          % (job_.k, rid_, (nat_['skin_buffer_holds_frame'],
+                                                            nat_['prev_skin_buffer_holds_frame'])))
         skin = frame_skin.head_skin_uploads(args.xml, W, args.skin_geometry, args.fxc, out / 'skin_work',
                                             scene_raw['frame_count'], frame_rule=rule)
     wiring = None

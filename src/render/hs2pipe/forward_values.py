@@ -226,6 +226,14 @@ class ForwardValues:
             if not int(st['build_settings_0xfa']):
                 raise up.PlanGap('_MotionVectorDepthBias branch for BuildSettings+0xfa == 0 not transcribed')
             out['_MotionVectorDepthBias'] = [F(-0.001)]
+        rr = (self.scene.get('_render_renderers') or {}).get(renderer['id'])
+        nat = (rr or {}).get('native') or {}
+        if 'skin_buffer_holds_frame' in nat and 'smr_has_last_position_data_0x28d' in nat:
+            # probe v6.1 (field base corrected, confirmed natively): SkinnedMeshRenderer+0x255 is
+            # copied into RenderNode+0xe8 bit 9 by SkinnedMeshRenderer::AddAsRenderNode
+            # (0x77ae22..0x77ae37); the MV loop sets _HasLastPositionData = bit 9 ? 1.0 : 0.0
+            # (0x6cc4e7..0x6cc508, xmm6 = 1.0 from 0x6cc453)
+            out['_HasLastPositionData'] = [F(1.0) if int(nat['smr_has_last_position_data_0x28d']) else F(0.0)]
         pm, src = self.previous_object_to_world(renderer)
         if pm is not None:
             out['_PreviousM'] = pm

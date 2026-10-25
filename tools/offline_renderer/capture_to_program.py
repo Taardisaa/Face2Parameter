@@ -917,6 +917,10 @@ class Converter:
             if q is None or q['Query'] != 0:
                 raise Unconvertible('Non-event query %s at event %d' % (q, ev))
             self.skipped['event_query_' + method] = self.skipped.get('event_query_' + method, 0) + 1
+        elif method == 'Flush':
+            # ID3D11DeviceContext::Flush only submits the queued command buffer to the GPU; it
+            # changes no pipeline state and no resource contents (D3D11 API contract)
+            self.skipped['context_Flush'] = self.skipped.get('context_Flush', 0) + 1
         elif method == 'Present':
             raise Unconvertible('Present inside the program range is not a frame-program command')
         else:

@@ -717,3 +717,67 @@ to `deprecated/`.
 5. Task 3: candidate identity on the v6 bridge frame. Point `SessionConfig` at the v6 session
    (`state_before_renderstyle.json` in the v6 artifacts, template = the v6 mode-b run, target
    114653).
+
+## 12 Native candidate acceptance (probe v6.1 session, 2026-10-25)
+
+Data: `E:/HS2_offline_renderer_data/paired_session_v6_1_20261025/`; receipts in the HS2Mod
+artifacts `paired_capture_session_v6_1_20261025/`. Outputs:
+`E:/HS2_offline_renderer_data/candidate_native_20261025/w_<nonce8>/`. Tool:
+`tools/offline_renderer/candidate_native_acceptance.py`.
+
+**Inputs for each window.** The window's own capture is converted:
+- driver inspect;
+- capture program through Present−1;
+- frame graph segmented at the window's 1086×1448 target (44998, 60885, 71318, 81031);
+- resource acceptance and wiring (182 wired; same statuses as v6);
+- `frame_orchestrate_paired` template run. All four give 959/959 checkpoints, 1361/1361
+  draws, 8212/8212 cbuffers and **0 external cbuffer variables**.
+
+The card is `state_before_baseline.json`, and the patch is that window's `patch_*.json`
+(absolute ABMX values; empty for the baseline).
+
+| window | patch | forward = export (5 frames) | skin uploads | frozen root TRS / bounds | target |
+|---|---|---|---|---|---|
+| `766d8184` baseline | none | all equal | 41/41 | 416/416, 400/400 | `fa848126…` = replay = `bridge_capture_baseline.png` |
+| `75e17db3` | cf_J_ChinTip_s | all equal | 41/41 | 416/416, 400/400 | `e37e788a…` = replay = PNG |
+| `8a42b979` | cf_J_ChinLow | all equal | 41/41 | 416/416, 400/400 | `e3f80fd5…` = replay = PNG |
+| `0b3351d6` | cf_J_Chin_rs | all equal | 41/41 | 416/416, 400/400 | `6d19836e…` = replay = PNG |
+
+- The patch is load-bearing. Without it, the card alone differs at the patched bone and in
+  3 / 3 / 5 skin uploads.
+- In the identity run all 41 streams are substituted from card + patch. They are
+  `skin_from_locals` streams N−2 / N−1 (capture-start contents) and N (in-frame uploads)
+  for all 30 meshes.
+- The pixels equal `bridge_capture_<name>.png`: 0 differing pixels in every window.
+
+**New source-derived rules.**
+- **`_HasLastPositionData`:** SkinnedMeshRenderer+0x255 → RenderNode+0xe8 bit 9
+  (AddAsRenderNode 0x77ae22..37). The MV loop sets 1.0/0.0 (0x6cc4e7..0x6cc508; 1.0 from
+  0x6cc453). The input is the v6.1 `smr_has_last_position_data_0x28d`.
+- **Bridge skin slots:** v6.1 `skin_buffer_holds_frame` / `prev_skin_buffer_holds_frame`
+  cross-check the N−2/N−1 rule at every bridge render.
+- **Frozen bridge pose** (`candidate.frozen_pose_check`, `frozen_pose.py`):
+  - PoseFreeze runs `Animator.Play(hash, 0, 0)` + `Update(0)` inside frame N.
+  - Transforms the Animator rewrites take the phase-0 sample from the bridge `pre_cull`
+    export.
+  - Every other transform keeps its N−1 end-of-frame local, i.e. the forward chain at N−1.
+  - Root TRS comes from CalculateGlobalPositionAndRotation 0xdda60.
+  - World AABB of local-AABB skinned renderers: CalculateGlobalMatrix 0xdd620 (emulated),
+    then the inline path 0xbdbe7f..0xbdbf5c (centre = ((C1·cy + C2·cz) + C0·cx) + C3;
+    extent = (|C0·ex| + |C1·ey|) + |C2·ez|).
+- **Converter:** ID3D11DeviceContext::Flush (window 0b3351d6, event 25071) has no state or
+  resource effect. It is now accepted by `capture_to_program` and `frame_graph`.
+
+**Gaps (explicit).**
+- **Hair bounds** (`Kamael_Valentine_Hair_03_HQ`, updateWhenOffscreen): this is the
+  bone-AABB path of CalculateTransformInfo_Prepared 0xbdb41e..0xbdb9cc. It runs over the
+  Mesh bone AABBs (`Mesh::GetCachedBonesBounds` 0x7a4770), which are not exported, and it is
+  not transcribed.
+  - Its bounds are the template's.
+  - `dependency_check` raises when a candidate moves any of its bones, root or transform.
+    None of the chin patches does.
+- **Animator-rewritten set:** it is identified as "frozen local differs from the N−1
+  export" (86 transforms in every window). The clip bindings are not parsed.
+- **Shadow casters and motion vectors:** the captured order is still used inside the
+  mesh-id tie groups (`mesh_id_tiebreak`, 16 renders each; RenderNode+0x100 not exported).
+- **EyeLook:** the hidden state is seeded from the window's first frame, as in §10.2.
