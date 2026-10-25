@@ -1,0 +1,100 @@
+{
+ "schema": "abmx_refreeze_v1",
+ "date": "2026-10-24",
+ "reason": "tools/abmx_replay/model.py exact revision (Face2Parameter c810e75): old eece6fd9..., new 15ef1d1e...",
+ "model_py_sha256": {
+  "old": "eece6fd99dd643fb36dfa3f4d075cb02022a8d136149d3ff2dd206c2e16efb6a",
+  "new": "15ef1d1e2e7f9e8048c8908ac903e3fa2242fecb01f3167276ddac4931a8e7d0"
+ },
+ "regenerated": [
+  {
+   "tool": "abmx_stable_lowering",
+   "regenerated": "C:\\Users\\13666\\Workspace\\Face2Parameter\\outputs\\abmx_stable_lowering_20261005\\original_combined_source_only\\compiled_execution.json",
+   "sha256": "523187b028b735e3b5ee876cd3394be08d1adef77a4a9cc68eafd47356b294eb",
+   "superseded": "C:\\Users\\13666\\Workspace\\Face2Parameter\\outputs\\abmx_stable_lowering_20261005\\original_combined_source_only\\deprecated\\compiled_execution.json",
+   "superseded_sha256": "562cc36f77724ba5aec6e921468552b76d494af86fc47d77be95f494758893d7",
+   "command": "python -m tools.abmx_stable_lowering.prepare --manifest ../HS2Mod/artifacts/infrastructure_live_20261005/abmx_stability_v1/live_cases.json --manifest-sha256 0c1dda10567e0ef9e4b3c19a5bf48b27ccedf63d4123ae68e98b17846ebfb154 --contract outputs/abmx_replay_20261005/installed_contract_v2.json --out <path>  (docs/hs2_abmx_stable_lowering.md)"
+  },
+  {
+   "tool": "abmx_stability",
+   "regenerated": "C:\\Users\\13666\\Workspace\\Face2Parameter\\outputs\\abmx_stability_20261005\\original_source_only_target\\source_freeze.json",
+   "sha256": "3b11ca3485b8d07b794c0c99abbe51c43322b86c65402f25a45095ab68f306ab",
+   "superseded": "C:\\Users\\13666\\Workspace\\Face2Parameter\\outputs\\abmx_stability_20261005\\deprecated\\original_source_only_target\\source_freeze.json",
+   "superseded_sha256": "14276ee79412a839c10b4f5b6af7d2cf0fb8891aee3f79a2532a04d97a4859c4",
+   "command": "python -m tools.abmx_refreeze.stability_source_target (lowered_target.prepare_target on the refrozen compiler artifact)"
+  },
+  {
+   "tool": "abmx_stability",
+   "regenerated": "C:\\Users\\13666\\Workspace\\Face2Parameter\\outputs\\abmx_stability_20261005\\actual_v1\\summary.json",
+   "sha256": "02381e6f666db92ae37baec4ed362d3da5d46f2273f89b5517f917b397a76615",
+   "superseded": "C:\\Users\\13666\\Workspace\\Face2Parameter\\outputs\\abmx_stability_20261005\\deprecated\\actual_v1\\summary.json",
+   "superseded_sha256": "40e5986030baea82883371b3dfebd05e428499abd267ec719db5c19971fe3e07",
+   "command": "python tools/abmx_stability/run.py ../HS2Mod/artifacts/infrastructure_live_20261005/abmx_stability_v1/live_cases.json --contract outputs/abmx_replay_20261005/installed_contract_v2.json --out outputs/abmx_stability_20261005/actual_v1 --prediction-count 512 (docs/hs2_abmx_stability.md)"
+  },
+  {
+   "tool": "abmx_stability",
+   "regenerated": "C:\\Users\\13666\\Workspace\\Face2Parameter\\outputs\\abmx_stability_20261005\\actual_v1_supplemental_freeze.json",
+   "sha256": "1c29c9b33f1011f8749721f430a1b9f97fb535d7cbb1bad2f1fab081cd9f5acc",
+   "superseded": "C:\\Users\\13666\\Workspace\\Face2Parameter\\outputs\\abmx_stability_20261005\\deprecated\\actual_v1_supplemental_freeze.json",
+   "superseded_sha256": "d1fd151a9f1c5dedac78f15532f0d6203c513fcb849bcecb8246463d5d8fa0d7",
+   "command": "python outputs/abmx_stability_20261005/verify_freeze.py"
+  },
+  {
+   "tool": "abmx_stability",
+   "regenerated": "C:\\Users\\13666\\Workspace\\Face2Parameter\\outputs\\abmx_stability_20261005\\reference_combined_prediction.json",
+   "sha256": "180367b5ab3a75b4270abbc65e94747c2671984b8963a4817d5d7b75fcb854e7",
+   "superseded": "C:\\Users\\13666\\Workspace\\Face2Parameter\\outputs\\abmx_stability_20261005\\deprecated\\reference_combined_prediction.json",
+   "superseded_sha256": "c8e664dc1438d7896700ad29bf2cd9c94b81b6656d3a12cbf8719a2c5ed822bb",
+   "command": "python tools/abmx_stability/analyze_trace.py <recorded trace_path> --contract outputs/abmx_replay_20261005/installed_contract_v2.json --out <path> --count 512"
+  },
+  {
+   "tool": "native_radial_target",
+   "regenerated": "C:\\Users\\13666\\Workspace\\Face2Parameter\\outputs\\native_radial_target_20261005\\source_smoke_frozen_v1\\compiled.json",
+   "sha256": "87da40f60a61d52369e2af4dfcba89ae7305d5450b8432befe7ea1e9311ff808",
+   "superseded": "C:\\Users\\13666\\Workspace\\Face2Parameter\\outputs\\native_radial_target_20261005\\source_smoke_frozen_v1\\deprecated\\compiled.json",
+   "superseded_sha256": "7b668e37c47dc500c6976a159915e6217baf7260e08c081b0403eacb1f136eda",
+   "command": "python -m tools.abmx_refreeze.native_source_smoke (compile_native_target + prepare_execution_guard + verify_snapshot + test_native_target)"
+  },
+  {
+   "tool": "native_radial_target",
+   "regenerated": "C:\\Users\\13666\\Workspace\\Face2Parameter\\outputs\\native_radial_target_20261006\\strict_provider_final_v1\\staged\\strict_asset_contract.json",
+   "sha256": "325136ca4739c3693c5961d27ae96792c920b6ca19ecc3c11574991a4ea2f1cd",
+   "superseded": "C:\\Users\\13666\\Workspace\\Face2Parameter\\outputs\\native_radial_target_20261006\\strict_provider_final_v1\\deprecated\\staged\\strict_asset_contract.json",
+   "superseded_sha256": "c1a61e08d944cf3c3eb429378b39d7dc622e347fc4928c18ca6d91553411ba4c",
+   "command": "python -m tools.abmx_refreeze.strict_provider --record (asset_provider_strict.wrap_existing_v1 on the recorded V1 descriptor)"
+  },
+  {
+   "tool": "native_radial_target",
+   "regenerated": "C:\\Users\\13666\\Workspace\\Face2Parameter\\outputs\\native_radial_target_20261006\\strict_provider_smoke_v1\\strict_asset_contract.json",
+   "sha256": "d5b879680cb037d08ae0d77c03405d4c270d39d7fa0900a3db93e793f8f8a9c3",
+   "superseded": "C:\\Users\\13666\\Workspace\\Face2Parameter\\outputs\\native_radial_target_20261006\\strict_provider_smoke_v1\\deprecated\\strict_asset_contract.json",
+   "superseded_sha256": "a5c15c46b5d90b23b16f3bedac346b0c98f08f48cc6543d0252e361c9627e809",
+   "command": "python -m tools.abmx_refreeze.strict_provider"
+  }
+ ],
+ "not_regenerated": [
+  {
+   "path": "C:\\Users\\13666\\Workspace\\HS2Mod\\artifacts\\infrastructure_live_20261005\\abmx_lowered_v2\\compiled_execution.json",
+   "why": "artifact executed by the live lowered_v2 game run and SHA-bound by its live_cases.json; the exact recompile changes the executed CheekUp L/R offsets by 2.98e-8, so a successor would not be what the game ran",
+   "successor": "E:/HS2_offline_renderer_data/abmx_refreeze_20261024/live_successors/abmx_lowered_v2_compiled_execution.json",
+   "blocked_checks": [
+    "tools.abmx_stable_lowering.test_strict_metadata_guard (4 tests)",
+    "tools/abmx_stability/lowered.py rerun of lowered_actual_v2 (and lowered_quality_v1 built on it)"
+   ]
+  },
+  {
+   "path": "C:\\Users\\13666\\Workspace\\HS2Mod\\artifacts\\infrastructure_live_20261006\\native_radial_drivers_head3_v1\\compiled_execution.json",
+   "why": "artifact executed by the live head3 drivers run and SHA-bound by its live_cases.json; exact recompile keeps executed/logical patches and native baselines bit-identical, only predictions (<=1.19e-7) and provenance change",
+   "successor": "E:/HS2_offline_renderer_data/abmx_refreeze_20261024/live_successors/native_radial_drivers_head3_v1_compiled_execution.json",
+   "blocked_checks": [
+    "tools.native_radial_target.test_asset_provider.test_source_only_full8_fk_lbs_unchanged_math",
+    "tools.native_radial_target.test_asset_provider_strict.test_source_only_target_uses_all8_unchanged_gate"
+   ]
+  },
+  {
+   "path": "C:\\Users\\13666\\Workspace\\Face2Parameter\\outputs\\native_radial_target_20261005\\corrected_lifecycle_source_v2",
+   "why": "pinned to the old model.py; its producer script was not recorded and no suite consumes it; regenerating only compiled_source_only.json would leave summary/source_target/actual_call_replay inconsistent. Recompiling it changes only the same <=1.19e-7 predictions; executed patches unchanged"
+  }
+ ],
+ "bulky_comparisons": "E:/HS2_offline_renderer_data/abmx_refreeze_20261024/"
+}
