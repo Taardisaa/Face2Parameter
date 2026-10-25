@@ -63,9 +63,12 @@ def tolerant(obj):
     return obj
 
 
-def resolve_records(renders_doc):
-    """Records in seq order with ``unchanged`` fields replaced by the last carried value."""
-    last = {}
+def resolve_records(renders_doc, seed=None):
+    """Records in seq order with ``unchanged`` fields replaced by the last carried value.
+
+    ``seed``: the last carried values of the earlier frames (probe v6 dedups fields such as
+    ``render_textures`` across frames; :func:`prior_seed`)."""
+    last = dict(seed or {})
     out = []
     for rec in sorted(renders_doc['records'], key=lambda r: r['seq']):
         data = {}
@@ -81,8 +84,21 @@ def resolve_records(renders_doc):
     return out
 
 
-def render_record(renders_doc, camera, phase='pre_render', render_index=0):
-    rows = [r for r in resolve_records(renders_doc) if r['camera']['name'] == camera and r['phase'] == phase]
+def prior_seed(window, index):
+    """Last carried field values after the renders files of frames 0..index-1."""
+    last = {}
+    for k in range(index):
+        f = Path(window) / 'frames' / ('renders_%03d.json' % k)
+        if not f.exists():
+            continue
+        for rec in resolve_records(json.loads(f.read_text(encoding='utf-8')), last):
+            for kk, v in rec['data'].items():
+                last[kk] = v
+    return last
+
+
+def render_record(renders_doc, camera, phase='pre_render', render_index=0, seed=None):
+    rows = [r for r in resolve_records(renders_doc, seed) if r['camera']['name'] == camera and r['phase'] == phase]
     if len(rows) <= render_index:
         raise KeyError('%s %s record %d not exported' % (camera, phase, render_index))
     return rows[render_index]
@@ -116,9 +132,9 @@ def sheet_floats(sheet):
             for e in sheet['entries'] if e['type'] == 'float'}
 
 
-def normalize(scene, renders_doc, camera='Main Camera', render_index=0):
+def normalize(scene, renders_doc, camera='Main Camera', render_index=0, seed=None):
     s = copy.deepcopy(scene)
-    rec = render_record(renders_doc, camera, 'pre_render', render_index)
+    rec = render_record(renders_doc, camera, 'pre_render', render_index, seed)
     d = rec['data']
     s['global_keywords'] = {k['name']: True for k in d['global_keywords']['enabled']}
     gu = {}
@@ -133,8 +149,9 @@ def normalize(scene, renders_doc, camera='Main Camera', render_index=0):
         sh = row['sheet']
         if 'entries' in sh:
             changed[row['material']] = sh
-        if row.get('shared_material_data'):
-            smd[row['material']] = row['shared_material_data']
+        sd = row.get('shared_material_data')
+        if sd and 'caster_pass_values_hash_0xd0' in sd:          # {"unchanged": true}: scene value
+            smd[row['material']] = sd
     for m in s['materials']:
         sd = smd.get(m['id'], m.get('shared_material_data'))
         if sd:
@@ -182,4 +199,4 @@ def load(window, index, camera='Main Camera', render_index=0):
     W = Path(window)
     scene = json.loads((W / 'frames' / ('scene_%03d.json' % index)).read_text(encoding='utf-8'))
     renders = json.loads((W / 'frames' / ('renders_%03d.json' % index)).read_text(encoding='utf-8'))
-    return normalize(scene, renders, camera, render_index), renders
+    return normalize(scene, renders, camera, render_index, prior_seed(W, index)), renders
