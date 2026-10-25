@@ -169,6 +169,42 @@ class VerifierTests(unittest.TestCase):
             failed = {c['check'] for c in r['checks'] if not c['ok']}
             self.assertTrue({'bridge_markers', 'raw_jobs_resolved'} <= failed, failed)
 
+    def v6_window(self, tmp, hooks='1', drivers=True, errors=0, missing=None):
+        w = self.window(tmp, mode='frame')
+        r = json.loads((w / 'capture_receipt.json').read_text(encoding='utf-8'))
+        r['probe'] = 'HS2_FramePairProbe 6.0.0'
+        r['driver_hooks'] = None if hooks == '0' else {'installed': list(vps.HOOKS), 'errors': errors}
+        (w / 'capture_receipt.json').write_text(json.dumps(r), encoding='utf-8')
+        (w / 'request.ini').write_text('Mode=frame\nDriverHooks=%s\n' % hooks, encoding='utf-8')
+        if drivers:
+            recs, seq = [], 0
+            for h in ('chara_update_force', 'fbs', 'chara_late_update_force', 'abmx', 'neck', 'eye'):
+                for p in ('prefix', 'postfix'):
+                    if missing == (h, p):
+                        continue
+                    seq += 1
+                    recs.append({'seq': seq, 'hook': h, 'phase': p, 'frame_count': 1002, 'instance_in_window_character': True})
+            (w / 'frames' / 'drivers_005.json').write_text(json.dumps({'frame_count': 1002, 'records': recs}), encoding='utf-8')
+        return w
+
+    def test_v6_driver_hooks_accepted_and_order_observed(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            r = vps.verify(self.index(bridge=False), self.v6_window(tmp), NONCE)
+            self.assertTrue(r['accepted'], [c for c in r['checks'] if not c['ok']])
+            obs = {o['observation']: o['value'] for o in r['observations']}
+            self.assertTrue(obs['late_update_hook_order']['matches'])
+
+    def test_v6_rejects_missing_hook_and_errors(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            r = vps.verify(self.index(bridge=False), self.v6_window(tmp, errors=2, missing=('neck', 'postfix')), NONCE)
+            failed = {c['check'] for c in r['checks'] if not c['ok']}
+            self.assertTrue({'driver_hook_errors_zero', 'driver_hooks_all_fired_for_character'} <= failed, failed)
+
+    def test_v6_without_hooks(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            r = vps.verify(self.index(bridge=False), self.v6_window(tmp, hooks='0', drivers=False), NONCE)
+            self.assertTrue(r['accepted'], [c for c in r['checks'] if not c['ok']])
+
     def test_frame_mode_ignores_bridge_checks(self):
         with tempfile.TemporaryDirectory() as tmp:
             r = vps.verify(self.index(bridge=False), self.window(tmp, mode='frame'), NONCE)

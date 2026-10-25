@@ -6,15 +6,18 @@
     <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
     <AllowUnsafeBlocks>false</AllowUnsafeBlocks>
     <Deterministic>true</Deterministic>
-    <Version>5.0.0</Version>
+    <Version>6.0.0</Version>
     <HS2GameRoot Condition="'$(HS2GameRoot)' == ''">E:\HoneySelect2_ArcticFox</HS2GameRoot>
   </PropertyGroup>
   <ItemGroup>
     <Compile Remove="tests/**/*.cs" />
     <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies" Version="1.0.3" PrivateAssets="all" />
+    <Reference Include="0Harmony"><HintPath>$(HS2GameRoot)\BepInEx\core\0Harmony.dll</HintPath><Private>false</Private></Reference>
     <Reference Include="BepInEx"><HintPath>$(HS2GameRoot)\BepInEx\core\BepInEx.dll</HintPath><Private>false</Private></Reference>
     <Reference Include="UnityEngine"><HintPath>$(HS2GameRoot)\HoneySelect2_Data\Managed\UnityEngine.dll</HintPath><Private>false</Private></Reference>
     <Reference Include="UnityEngine.CoreModule"><HintPath>$(HS2GameRoot)\HoneySelect2_Data\Managed\UnityEngine.CoreModule.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="UnityEngine.AnimationModule"><HintPath>$(HS2GameRoot)\HoneySelect2_Data\Managed\UnityEngine.AnimationModule.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="UnityEngine.AudioModule"><HintPath>$(HS2GameRoot)\HoneySelect2_Data\Managed\UnityEngine.AudioModule.dll</HintPath><Private>false</Private></Reference>
     <Reference Include="Assembly-CSharp"><HintPath>$(HS2GameRoot)\HoneySelect2_Data\Managed\Assembly-CSharp.dll</HintPath><Private>false</Private></Reference>
   </ItemGroup>
 </Project>

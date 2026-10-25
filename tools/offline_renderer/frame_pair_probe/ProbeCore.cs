@@ -117,6 +117,38 @@ namespace HS2Codex.FramePairProbe
         public const ulong GraphicsCapsPtr = 0x14B6C00;
         public const int CapsActiveTier = 0xD4, CapsVideoMemoryMB = 0xD8 /* float */, CapsMaxRenderTextureSize = 0xF8;
         public const int GraphicsSettingsTierStride = 16, GraphicsSettingsTierCascaded = 0xB4;  // 0x69f48d
+
+        // ---- v6 (requests of docs/hs2_offline_frame_orchestrator.md §8.6/§9.5) ----
+        // GraphicsCaps fields used by the forward rules: +0xd0 bit 7 and +0x3fc (RenderShadowMaps
+        // 0x6a29db..0x6a2a60 normal-bias/PCF_SOFT branch), +0x3a1 (Camera::ClearNoSkybox 0x65f8e0
+        // clear flags 6 + byte), +0x404 (skybox projection eps = value * 1e-6, unity_forward.py),
+        // +0xdd (unused-cascade m[14], PrepareShadowMaps 0x69fecf). Read raw; meaning per caller.
+        public const int CapsD0 = 0xD0, CapsDD = 0xDD, Caps3A1 = 0x3A1, Caps3FC = 0x3FC, Caps404 = 0x404;
+        // BuildSettings+0xfa: _MotionVectorDepthBias -0.001 branch (forward_values.py, 0x6cc4e7 region).
+        public const int BuildFlagFA = 0xFA;
+        // Camera+0x558: current render target RenderTexture* (DoMotionVectorRenderLoop 0x6c9b60:
+        // pass r12+1, r12 = 1 when null or RenderTexture+0xd0 (antiAliasing) > 1).
+        public const int CameraCurrentTarget = 0x558, RenderTextureAntiAliasing = 0xD0;
+        // GfxDevice+0x21e8: single-pass stereo eye count (SetupMotionMatrices 0x6d011d: 0 = mono).
+        public const int GfxSinglePassStereo = 0x21E8;
+        // Renderer::AddAsRenderNode 0x739400: BaseRenderer subobject at Renderer+0x38
+        // (rcx = r15, Renderer* = r15-0x38). BaseRenderer::FlattenBasicData 0x650b50 copies
+        // BaseRenderer+0x08..+0x88 -> RenderNode+0x00..+0x80 (+0x08 localToWorld, +0x48 previous
+        // localToWorld = _PreviousM) and BaseRenderer+0x88..+0xfc -> RenderNode+0x80..+0xf4
+        // (+0xbc transform update frame -> node+0xb4, +0xf0 flags -> node+0xe8 = Renderer+0x128).
+        public const int RendererBase = 0x38, BaseL2W = 0x08, BasePrevL2W = 0x48, BaseUpdateFrame = 0xBC, BaseFlags = 0xF0;
+        public const int BaseBlockStart = 0x08, BaseBlockLength = 0xF4;
+        // SkinnedMeshRenderer::AddAsRenderNode 0x77abe0: +0x28c re-skin (dirty) byte (cleared at
+        // 0x77ad53 after PrepareSkin/SkinOnGPU), +0x256 forceMatrixRecalculationPerRender test,
+        // +0x258 / +0x260 the two GfxBuffer* passed to MeshRenderingData::Init(mesh, mesh, [+0x258],
+        // [+0x260]) (skinned VB and previous-position VB), +0x255 _HasLastPositionData (0x77ae22 ->
+        // RenderNode+0xe8 bit 9).
+        public const int SmrHasLastPosition = 0x255, SmrForceMatrixRecalc = 0x256, SmrSkinBuffer = 0x258, SmrPrevSkinBuffer = 0x260, SmrDirty = 0x28C;
+        // Material+0xb0 = SharedMaterialData* (GetWritableSharedMaterialData; Material::UpdateHashes
+        // 0x84e3b0 writes +0xd0 = Pass::ComputePassValuesHash of the shadow-caster pass (caster sort
+        // key bits 40..61), +0xd4 = ComputeStateBlockValuesHash; +0xd8 flags (bit 0 built, bit 1
+        // instancing, bit 2 hashes dirty), +0xdc material instance id (material sort key).
+        public const int SmdCasterPassHash = 0xD0, SmdStateBlockHash = 0xD4, SmdFlags = 0xD8, SmdInstanceId = 0xDC;
     }
 
     internal interface IMemory
@@ -495,7 +527,8 @@ namespace HS2Codex.FramePairProbe
     // ---------------------------------------------------------------- request and plan
     internal sealed class ProbeRequest
     {
-        public string Mode;                 // frame | renderstyle
+        public string Mode;                 // frame | renderstyle | quit
+        public bool DriverHooks;
         public byte[] Nonce;
         public string NonceHex, OutDir, RawOutDir, CapturePrefix, ExpectedRenderDocSha256, ExpectedUnityPlayerSha256;
         public string ReadbackDll, ExpectedReadbackSha256, ShaderManifest, Meshes;
@@ -512,14 +545,27 @@ namespace HS2Codex.FramePairProbe
 
         static readonly string[] Common = { "Mode", "Nonce", "OutDir", "RawOutDir", "Frames", "TriggerIndex", "PollSeconds", "CapturePrefix",
             "ExpectedRenderDocSha256", "ExpectedUnityPlayerSha256", "ReadbackDll", "ExpectedReadbackSha256", "RawTimeoutSeconds",
-            "RawMinFreeGB", "ShaderManifest", "Meshes" };
+            "RawMinFreeGB", "ShaderManifest", "Meshes", "DriverHooks" };
+        static readonly string[] Quit = { "Mode", "Nonce", "OutDir" };
         static readonly string[] Bridge = { "BridgeUrl", "BridgeBodyFile", "ExpectedBridgeSha256", "BridgeDispatchRequestFile", "BridgeTimeoutSeconds" };
 
         public static ProbeRequest Parse(Dictionary<string, string> d, Func<string, bool> pathExists)
         {
             var r = new ProbeRequest { Raw = d };
             r.Mode = Get(d, "Mode");
-            if (r.Mode != "frame" && r.Mode != "renderstyle") throw new ArgumentException("Mode must be frame or renderstyle");
+            if (r.Mode != "frame" && r.Mode != "renderstyle" && r.Mode != "quit") throw new ArgumentException("Mode must be frame, renderstyle or quit");
+            if (r.Mode == "quit")
+            {
+                // Clean exit through the game's own path (ExitDialog.GameEnd(isCheck: false), the
+                // dialog's Yes button). Only a nonce and a fresh receipt directory.
+                foreach (var k in d.Keys) if (Array.IndexOf(Quit, k) < 0) throw new ArgumentException("Unknown quit request key " + k);
+                foreach (var k in Quit) Get(d, k);
+                r.NonceHex = Get(d, "Nonce").ToLowerInvariant();
+                if (r.NonceHex.Length != 32) throw new ArgumentException("Nonce must be 32 hex digits");
+                r.OutDir = Abs(d, "OutDir");
+                if (pathExists(r.OutDir)) throw new ArgumentException("Fresh OutDir required: " + r.OutDir);
+                return r;
+            }
             var allowed = new HashSet<string>(Common);
             if (r.Mode == "renderstyle") foreach (var k in Bridge) allowed.Add(k);
             foreach (var k in d.Keys) if (!allowed.Contains(k)) throw new ArgumentException("Unknown request key " + k);
@@ -538,6 +584,9 @@ namespace HS2Codex.FramePairProbe
             r.PollSeconds = Flt(d, "PollSeconds"); r.RawTimeoutSeconds = Flt(d, "RawTimeoutSeconds");
             r.RawMinFreeBytes = (long)(Flt(d, "RawMinFreeGB") * 1073741824.0);
             r.Meshes = Get(d, "Meshes");
+            var hooks = Get(d, "DriverHooks");
+            if (hooks != "0" && hooks != "1") throw new ArgumentException("DriverHooks must be 0 or 1");
+            r.DriverHooks = hooks == "1";
             if (r.TriggerIndex < 1) throw new ArgumentException("TriggerIndex must be >= 1 (the frame before the trigger is exported)");
             int minFrames = r.ExpectedCaptureIndex + (r.Mode == "renderstyle" ? 2 : 1);
             if (r.Frames < minFrames || r.Frames > 64) throw new ArgumentException("Frames must be in [" + minFrames + ", 64] for this TriggerIndex");
@@ -734,6 +783,38 @@ namespace HS2Codex.FramePairProbe
         }
     }
 
+    // ---------------------------------------------------------------- skin double buffer
+    // Labels which frame's skin each of a SkinnedMeshRenderer's two GfxBuffers holds.
+    // Observations: (frame, point, renderer, slot0=[+0x258], slot1=[+0x260]). Rule (session
+    // v5.0.1 mode b evidence, pairing of 5af92a08): the frame's own skinning writes the buffer
+    // that is slot 0 at the end of that frame, so a buffer holds the skin of the last frame F
+    // whose end-of-frame observation had it in slot 0 (and, for F < first observed frame, the
+    // label is unknown). The raw observations are exported with the labels so the rule can be
+    // re-checked against the RDC.
+    internal sealed class SkinSlotTracker
+    {
+        readonly Dictionary<ulong, int> _lastEndOfFrameSlot0 = new Dictionary<ulong, int>();
+
+        public void EndOfFrame(int frame, ulong slot0)
+        {
+            if (slot0 != 0) _lastEndOfFrameSlot0[slot0] = frame;
+        }
+
+        // -1 = not observed as slot 0 at any earlier end of frame in this window.
+        public int HoldsFrame(ulong buffer)
+        {
+            int f;
+            return buffer != 0 && _lastEndOfFrameSlot0.TryGetValue(buffer, out f) ? f : -1;
+        }
+    }
+
+    // Global order certificate shared by camera callbacks and driver hooks.
+    internal static class ProbeSequence
+    {
+        static long _next;
+        public static long Next() { return ++_next; }
+    }
+
     // ---------------------------------------------------------------- JSON
     // Streaming JSON writer. Floats are written in round-trip form, verified by
     // parsing back; values that do not round-trip use G9 (always exact for float32),
@@ -750,6 +831,20 @@ namespace HS2Codex.FramePairProbe
         // Writes key:value where value is produced by body into a scratch writer; on any
         // exception writes key_error:"Type: message" instead, so a failing section never
         // leaves partial JSON behind.
+        // Array-element form of Guard: the value, or {"error":"Type: message"}.
+        public void GuardValue(Action<JsonOut> body)
+        {
+            var sub = new JsonOut(1024);
+            try { body(sub); }
+            catch (Exception e)
+            {
+                var inner = e is System.Reflection.TargetInvocationException && e.InnerException != null ? e.InnerException : e;
+                Begin('{'); Key("error"); Str(inner.GetType().Name + ": " + inner.Message); End('}');
+                return;
+            }
+            Raw(sub.ToString());
+        }
+
         public void Guard(string key, Action<JsonOut> body)
         {
             var sub = new JsonOut(1024);

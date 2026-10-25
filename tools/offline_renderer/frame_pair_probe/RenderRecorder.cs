@@ -35,10 +35,11 @@ namespace HS2Codex.FramePairProbe
         readonly ExportContext _ctx;
         readonly List<string> _log;
         JsonOut _w;
-        int _seq, _renderInFrame;
+        int _renderInFrame;
         readonly Stack<int> _open = new Stack<int>();
         readonly Dictionary<int, int> _renderOfCamera = new Dictionary<int, int>();
-        string _lastGlobalSheet, _lastPool, _lastKeywords, _lastBuiltins;
+        string _lastGlobalSheet, _lastPool, _lastKeywords, _lastBuiltins, _lastRts;
+        readonly Dictionary<int, string> _lastSmd = new Dictionary<int, string>();
         readonly Dictionary<int, string> _lastMaterialSheet = new Dictionary<int, string>();
         Renderer[] _renderers = new Renderer[0];
         Light[] _lights = new Light[0];
@@ -168,6 +169,13 @@ namespace HS2Codex.FramePairProbe
                             _lastMaterialSheet[m.GetInstanceID()] = sheet.Hash;
                             SheetReader.Write(s, sheet, _ctx.Native.Name);
                         });
+                        w.Guard("shared_material_data", s =>
+                        {
+                            var j = new JsonOut(); _ctx.Native.WriteSharedMaterialData(j, m);
+                            var text = j.ToString(); string last;
+                            if (_lastSmd.TryGetValue(m.GetInstanceID(), out last) && last == text) { s.Begin('{'); s.Key("unchanged"); s.Bool(true); s.End('}'); return; }
+                            _lastSmd[m.GetInstanceID()] = text; s.Raw(text);
+                        });
                         w.End('}');
                     }
                     w.End(']');
@@ -205,7 +213,7 @@ namespace HS2Codex.FramePairProbe
         {
             var w = _w;
             w.Begin('{');
-            w.Key("seq"); w.Int(++_seq);
+            w.Key("seq"); w.Int(ProbeSequence.Next());
             w.Key("phase"); w.Str(phase);
             w.Key("frame_count"); w.Int(Time.frameCount);
             w.Key("render_id"); w.Int(id);
@@ -230,8 +238,25 @@ namespace HS2Codex.FramePairProbe
             w.Raw(text);
         }
 
+        // Every RenderTexture object (camera intermediates, motion-vector texture, GrabPass Temp,
+        // CustomRender rtCamera, pooled temporaries): descriptor, filter/wrap/aniso and native
+        // fields, deduplicated against the previous callback.
+        void RenderTextures(JsonOut w)
+        {
+            w.Guard("render_textures", t => Dedup(t, ref _lastRts, () =>
+            {
+                var j = new JsonOut();
+                j.Begin('[');
+                foreach (var rt in Resources.FindObjectsOfTypeAll<RenderTexture>().OrderBy(x => x.GetInstanceID()))
+                    if (rt != null) _ctx.Native.WriteRenderTextureCompact(j, rt);
+                j.End(']');
+                return j.ToString();
+            }));
+        }
+
         void Globals(JsonOut w)
         {
+            RenderTextures(w);
             w.Guard("global_keywords", k => Dedup(k, ref _lastKeywords, () => { var j = new JsonOut(); _ctx.Native.WriteKeywords(j); return j.ToString(); }));
             w.Guard("global_sheet", g => Dedup(g, ref _lastGlobalSheet, () => { var j = new JsonOut(); SheetReader.Write(j, _ctx.GlobalSheet(), _ctx.Native.Name); return j.ToString(); }));
             w.Guard("builtin_params", b => Dedup(b, ref _lastBuiltins, () => { var j = new JsonOut(); _ctx.Native.WriteBuiltins(j); return j.ToString(); }));

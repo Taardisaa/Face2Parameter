@@ -38,9 +38,10 @@ using UnityEngine;
 
 namespace HS2Codex.FramePairProbe
 {
-    [BepInPlugin("codex.hs2.framepairprobe", "HS2 Frame Pair Probe", "5.0.0")]
+    [BepInPlugin("codex.hs2.framepairprobe", "HS2 Frame Pair Probe", Version)]
     public class FramePairProbe : BaseUnityPlugin
     {
+        public const string Version = "6.0.0";
         const string Magic = "HS2PAIRMARKERv01";
         const string BridgeMagic = "HS2PAIRBRIDGEv05";
         const string Tail = "HS2PAIRMARKEREND";
@@ -49,12 +50,14 @@ namespace HS2Codex.FramePairProbe
         bool _busy;
         Texture2D _marker, _bridgeBegin, _bridgeEnd;
         RenderDocApi _rd;
+        DriverHooks _hooks;
+        SkinnedMeshRenderer[] _smrsForSlots = new SkinnedMeshRenderer[0];
         int _expectedBridgeRenders;
 
         void Awake()
         {
             _requestPath = Path.Combine(Path.GetDirectoryName(Info.Location), "HS2_FramePairProbe.request.ini");
-            Logger.LogInfo("FramePairProbe 5.0.0 ready; request path " + _requestPath);
+            Logger.LogInfo("FramePairProbe " + Version + " ready; request path " + _requestPath);
         }
 
         void Update()
@@ -77,15 +80,28 @@ namespace HS2Codex.FramePairProbe
             string outDir = null;
             Exception failure = null;
             IEnumerator inner = null;
+            ProbeRequest quitRequest = null;
             try
             {
                 var req = ProbeRequest.Parse(raw, p => Directory.Exists(p) || File.Exists(p));
                 outDir = req.OutDir;
-                Directory.CreateDirectory(Path.Combine(outDir, "frames"));
-                File.WriteAllText(Path.Combine(outDir, "request.ini"), string.Join("\n", raw.Select(kv => kv.Key + "=" + kv.Value).ToArray()));
-                inner = Window(req, log);
+                if (req.Mode == "quit") quitRequest = req;
+                if (quitRequest == null)
+                {
+                    Directory.CreateDirectory(Path.Combine(outDir, "frames"));
+                    File.WriteAllText(Path.Combine(outDir, "request.ini"), string.Join("\n", raw.Select(kv => kv.Key + "=" + kv.Value).ToArray()));
+                    inner = Window(req, log);
+                }
             }
             catch (Exception e) { failure = e; }
+            if (quitRequest != null && failure == null)
+            {
+                try { Quit(quitRequest, raw); }
+                catch (Exception e) { failure = e; }
+                if (failure != null) { log.Add("FAILURE " + failure); Logger.LogError(failure.ToString()); }
+                _busy = false;
+                yield break;
+            }
             while (failure == null)
             {
                 bool more;
@@ -105,6 +121,33 @@ namespace HS2Codex.FramePairProbe
             _marker = _bridgeBegin = _bridgeEnd = null;
             _rd = null;
             _busy = false;
+        }
+
+        // Clean exit through the game's own path: ExitDialog.GameEnd(isCheck: false) is what the
+        // exit dialog's Yes button calls (decompiled ExitDialog.Initialize); it clears
+        // _isGameEndCheck so the Application.wantsToQuit handler returns true, then calls
+        // Application.Quit(). Game.OnApplicationQuit then saves the game progress data as on any
+        // normal exit. The receipt is written before the call.
+        void Quit(ProbeRequest req, Dictionary<string, string> raw)
+        {
+            var exitDialog = AppDomain.CurrentDomain.GetAssemblies().Select(a => a.GetType("ExitDialog", false)).FirstOrDefault(t => t != null);
+            if (exitDialog == null) throw new InvalidOperationException("ExitDialog type not loaded");
+            var gameEnd = exitDialog.GetMethod("GameEnd", System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static, null, new[] { typeof(bool) }, null);
+            if (gameEnd == null) throw new InvalidOperationException("ExitDialog.GameEnd(bool) not found");
+            var active = exitDialog.GetProperty("active", System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static);
+            Directory.CreateDirectory(req.OutDir);
+            var w = new JsonOut();
+            w.Begin('{');
+            w.Key("schema_version"); w.Raw("6"); w.Key("probe"); w.Str("HS2_FramePairProbe " + Version);
+            w.Key("nonce"); w.Str(req.NonceHex);
+            w.Key("frame_count"); w.Int(Time.frameCount);
+            w.Key("utc"); w.Str(DateTime.UtcNow.ToString("o"));
+            w.Key("exit_dialog_active_before"); w.Raw(active == null ? "null" : ((bool)active.GetValue(null, null) ? "true" : "false"));
+            w.Key("call"); w.Str("ExitDialog.GameEnd(isCheck: false) -> Application.Quit()");
+            w.End('}');
+            File.WriteAllText(Path.Combine(req.OutDir, "quit_request_receipt.json"), w.ToString());
+            Logger.LogInfo("FramePairProbe quit request " + req.NonceHex + ": ExitDialog.GameEnd(false)");
+            gameEnd.Invoke(null, new object[] { false });
         }
 
         static Texture2D MarkerTexture(string name)
@@ -145,6 +188,8 @@ namespace HS2Codex.FramePairProbe
             log.Add("renderdoc " + _rd.Describe() + " captures_before=" + capturesBefore + " old_template=" + oldTemplate);
 
             var ctx = new ExportContext(native, manifest);
+            native.SkinSlots = new SkinSlotTracker();
+            _smrsForSlots = smrs;
             WriteStatic(Path.Combine(outDir, "static.json"), cha, transforms, smrs, index, new HashSet<string>(req.Meshes.Split(',')), outDir, native);
             var recorder = new RenderRecorder(ctx, log);
             _marker = MarkerTexture("HS2_FramePairProbe_marker");
@@ -158,6 +203,13 @@ namespace HS2Codex.FramePairProbe
             var capturing = new List<string>();
             int triggeredFrame = -1, rawFrame = -1;
             bool triggered = false, aborted = false;
+            DriverHooks hooks = null;
+            if (req.DriverHooks)
+            {
+                // Before the trigger: a missing hook target aborts the window (exception -> no capture).
+                hooks = DriverHooks.Install(ctx, cha, transforms, smrs, log);
+            }
+            _hooks = hooks;
             recorder.Attach();
             try
             {
@@ -183,7 +235,12 @@ namespace HS2Codex.FramePairProbe
                     recorder.Refresh();
                 }
             }
-            finally { recorder.Detach(); }
+            finally
+            {
+                recorder.Detach();
+                if (hooks != null) { hooks.Uninstall(); log.Add("driver hooks removed; errors " + hooks.Errors); }
+                _hooks = null;
+            }
 
             float deadline = Time.realtimeSinceStartup + req.PollSeconds;
             uint after = _rd.NumCaptures();
@@ -200,7 +257,7 @@ namespace HS2Codex.FramePairProbe
             var w = new JsonOut();
             w.Begin('{');
             w.Key("schema_version"); w.Raw("5");
-            w.Key("probe"); w.Str("HS2_FramePairProbe 5.0.0");
+            w.Key("probe"); w.Str("HS2_FramePairProbe " + Version);
             w.Key("mode"); w.Str(req.Mode);
             w.Key("nonce"); w.Str(req.NonceHex);
             w.Key("frame_counts_by_index"); w.Begin('['); foreach (var f in frameCounts) w.Int(f); w.End(']');
@@ -225,6 +282,7 @@ namespace HS2Codex.FramePairProbe
             w.Key("is_frame_capturing_samples"); SceneState.Names(w, capturing);
             w.Key("markers_written"); SceneState.Names(w, markersWritten);
             w.Key("recorder_errors"); w.Int(recorder.Errors);
+            w.Key("driver_hooks"); if (hooks == null) w.Raw("null"); else { w.Begin('{'); w.Key("installed"); SceneState.Names(w, hooks.Patched); w.Key("errors"); w.Int(hooks.Errors); w.End('}'); }
             w.Key("bridge_expected_renders"); w.Int(_expectedBridgeRenders);
             w.Key("bridge_expected_renders_rule"); w.Str("MakerRenderStyleService.Capture: 16 when an enabled CTAA_PC is on Camera.main, else 1; evaluated at the post");
             w.Key("bridge_renders"); w.Begin('[');
@@ -253,7 +311,10 @@ namespace HS2Codex.FramePairProbe
                 switch (action)
                 {
                     case "export_frame":
+                        // Skin double buffer: this frame's skinning wrote the current slot-0 buffers.
+                        foreach (var r in _smrsForSlots) if (r != null) ctx.Native.SkinSlots.EndOfFrame(fc, ctx.Native.SkinBuffer(r));
                         recorder.Flush(Path.Combine(outDir, "frames", "renders_" + k.ToString("D3") + ".json"), k);
+                        if (_hooks != null) _hooks.Flush(Path.Combine(outDir, "frames", "drivers_" + k.ToString("D3") + ".json"), k);
                         WriteFrame(Path.Combine(outDir, "frames", "frame_" + k.ToString("D3") + ".json"), k, transforms, smrs);
                         break;
                     case "export_scene":
@@ -401,6 +462,7 @@ namespace HS2Codex.FramePairProbe
             }
             sb.Append("],\"renderers\":[");
             int meshFile = 0;
+            var exportedMeshes = new Dictionary<int, string>();
             for (int s = 0; s < smrs.Length; s++)
             {
                 var r = smrs[s];
@@ -428,10 +490,15 @@ namespace HS2Codex.FramePairProbe
                     sb.Append(",\"mesh\":{\"id\":").Append(mesh.GetInstanceID()).Append(",\"name\":").Append(Json(mesh.name))
                       .Append(",\"vertex_count\":").Append(mesh.vertexCount).Append(",\"blendshape_count\":").Append(mesh.blendShapeCount)
                       .Append(",\"readable\":").Append(mesh.isReadable ? "true" : "false");
-                    if (meshNames.Contains(mesh.name) && mesh.isReadable)
+                    bool wanted = meshNames.Contains("ALL") || meshNames.Contains(mesh.name);
+                    sb.Append(",\"export\":").Append(Json(!wanted ? "not_requested" : !mesh.isReadable ? "not_readable (Mesh.isReadable false: CPU data not retained)" : exportedMeshes.ContainsKey(mesh.GetInstanceID()) ? "same_mesh_as:" + exportedMeshes[mesh.GetInstanceID()] : "exported"));
+                    if (wanted && mesh.isReadable && exportedMeshes.ContainsKey(mesh.GetInstanceID()))
+                        sb.Append(",\"data_file\":").Append(Json(exportedMeshes[mesh.GetInstanceID()]));
+                    else if (wanted && mesh.isReadable)
                     {
                         string file = "mesh_" + (meshFile++).ToString("D2") + "_" + Safe(mesh.name) + ".json";
                         WriteMesh(Path.Combine(outDir, file), mesh);
+                        exportedMeshes[mesh.GetInstanceID()] = file;
                         sb.Append(",\"data_file\":").Append(Json(file));
                     }
                     sb.Append('}');

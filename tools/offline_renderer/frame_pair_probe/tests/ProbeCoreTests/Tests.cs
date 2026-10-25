@@ -190,6 +190,7 @@ static class Program
             { "ExpectedRenderDocSha256", new string('a', 64) }, { "ExpectedUnityPlayerSha256", UnityPlayerLayout.Sha256 },
             { "ReadbackDll", @"E:\g\HS2_RenderReadback.dll" }, { "ExpectedReadbackSha256", new string('b', 64) },
             { "RawTimeoutSeconds", "600" }, { "RawMinFreeGB", "50" }, { "ShaderManifest", @"E:\x\m.tsv" }, { "Meshes", "o_head" },
+            { "DriverHooks", "1" },
         };
         if (mode == "renderstyle")
         {
@@ -266,9 +267,42 @@ static class Program
         Throws<FormatException>(() => MiniJson.Parse("{\"a\":1,\"a\":2}"), "duplicate JSON key");
     }
 
+    static void TestV6()
+    {
+        Func<string, bool> none = p => false;
+        var q = ProbeRequest.Parse(new Dictionary<string, string> { { "Mode", "quit" }, { "Nonce", "0123456789abcdef0123456789abcdef" }, { "OutDir", @"C:\s\quit_x" } }, none);
+        Check(q.Mode == "quit" && q.OutDir == @"C:\s\quit_x", "quit request");
+        Throws<ArgumentException>(() => ProbeRequest.Parse(new Dictionary<string, string> { { "Mode", "quit" }, { "Nonce", "0123456789abcdef0123456789abcdef" }, { "OutDir", @"C:\s\q" }, { "Frames", "8" } }, none), "quit rejects window keys");
+        Throws<ArgumentException>(() => ProbeRequest.Parse(new Dictionary<string, string> { { "Mode", "quit" }, { "Nonce", "0123456789abcdef0123456789abcdef" }, { "OutDir", @"C:\s\q" } }, p => true), "quit needs a fresh OutDir");
+        var d = BaseRequest("frame"); d.Remove("DriverHooks");
+        Throws<ArgumentException>(() => ProbeRequest.Parse(d, none), "DriverHooks required");
+        d = BaseRequest("frame"); d["DriverHooks"] = "yes";
+        Throws<ArgumentException>(() => ProbeRequest.Parse(d, none), "DriverHooks must be 0/1");
+        d = BaseRequest("frame"); d["DriverHooks"] = "0";
+        Check(!ProbeRequest.Parse(d, none).DriverHooks && ProbeRequest.Parse(BaseRequest("frame"), none).DriverHooks, "DriverHooks flag");
+
+        // Skin double buffer: buffers A and B alternate as slot 0 at end of frame (A in 8748, B in 8749,
+        // A in 8750). At bridge time of 8750 (before its skinning) slot0 = A holds 8748, slot1 = B holds 8749;
+        // after 8750's skinning slot0 = A holds 8750 (the session v5.0.1 mode-b pairing).
+        var tr = new SkinSlotTracker();
+        ulong A = 0x1000, B = 0x2000;
+        Check(tr.HoldsFrame(A) == -1, "unobserved buffer is unknown");
+        tr.EndOfFrame(8748, A); tr.EndOfFrame(8749, B);
+        Check(tr.HoldsFrame(A) == 8748 && tr.HoldsFrame(B) == 8749, "bridge-time labels N-2 / N-1");
+        tr.EndOfFrame(8750, A);
+        Check(tr.HoldsFrame(A) == 8750 && tr.HoldsFrame(B) == 8749 && tr.HoldsFrame(0) == -1, "end-of-frame labels");
+
+        var w = new JsonOut();
+        w.Begin('['); w.GuardValue(x => x.Int(1)); w.GuardValue(x => { x.Begin('{'); throw new InvalidOperationException("boom"); }); w.End(']');
+        var arr = (List<object>)MiniJson.Parse(w.ToString());
+        Check(arr.Count == 2 && (double)arr[0] == 1 && ((Dictionary<string, object>)arr[1]).ContainsKey("error"), "GuardValue array isolation");
+        long s1 = ProbeSequence.Next(), s2 = ProbeSequence.Next();
+        Check(s2 == s1 + 1, "sequence counter");
+    }
+
     static int Main()
     {
-        foreach (var t in new Action[] { TestPool, TestSheet, TestNameTables, TestRequest, TestJson, TestBridgeBody })
+        foreach (var t in new Action[] { TestPool, TestSheet, TestNameTables, TestRequest, TestJson, TestBridgeBody, TestV6 })
         {
             try { t(); }
             catch (Exception e) { failures++; Console.WriteLine("FAIL (exception in " + t.Method.Name + "): " + e); }

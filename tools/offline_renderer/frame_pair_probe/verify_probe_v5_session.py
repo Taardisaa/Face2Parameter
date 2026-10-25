@@ -72,6 +72,12 @@ def verify(index, window: Path, nonce_hex: str):
     def check(name, ok, evidence):
         checks.append({'check': name, 'ok': bool(ok), 'evidence': evidence})
 
+    observations = []
+
+    def observe(name, value):
+        # Recorded game facts (e.g. the hook order); never part of acceptance.
+        observations.append({'observation': name, 'value': value})
+
     check('receipt_nonce', receipt.get('nonce') == nonce_hex, receipt.get('nonce'))
     check('not_aborted', receipt.get('aborted_before_trigger') is False, receipt.get('aborted_before_trigger'))
     check('triggered', receipt.get('triggered_frame', -1) > 0, receipt.get('triggered_frame'))
@@ -132,8 +138,54 @@ def verify(index, window: Path, nonce_hex: str):
         check('bridge_png_written', png and Path(png).is_file(), png)
         check('bridge_result_render_count', bool(result) and (result.get('capture') or {}).get('temporal_render_count') == n,
               (result or {}).get('capture', {}).get('temporal_render_count') if result else None)
-    return {'window': str(window), 'nonce': nonce_hex, 'captured_frame': captured,
-            'accepted': all(c['ok'] for c in checks), 'checks': checks}
+    probe = receipt.get('probe') or ''
+    if probe.startswith('HS2_FramePairProbe 6'):
+        verify_v6(window, receipt, captured, frames, check, observe)
+    return {'window': str(window), 'nonce': nonce_hex, 'captured_frame': captured, 'probe': probe,
+            'accepted': all(c['ok'] for c in checks), 'checks': checks, 'observations': observations}
+
+
+HOOKS = ('fbs', 'chara_update_force', 'chara_late_update_force', 'abmx', 'neck', 'eye')
+# Installed MonoScript execution order (head_skinning.md §9.1): UniRx dispatcher -16000 (FBS),
+# Manager.Character -45 (LateUpdateForce), ABMX 0, NeckLookControllerVer2 10050, EyeLookController 10800.
+LATE_ORDER = ('fbs', 'chara_late_update_force', 'abmx', 'neck', 'eye')
+
+
+def verify_v6(window, receipt, captured, frames, check, observe):
+    """Probe v6 additions: driver hooks (when requested), skin slots in renders."""
+    req = {}
+    for line in (window / 'request.ini').read_text(encoding='utf-8').splitlines():
+        if '=' in line:
+            k, v = line.split('=', 1)
+            req[k.strip()] = v.strip()
+    if req.get('DriverHooks') != '1':
+        check('driver_hooks_not_requested_and_absent', receipt.get('driver_hooks') is None, receipt.get('driver_hooks'))
+        return
+    hooks = receipt.get('driver_hooks') or {}
+    check('driver_hooks_installed', len(hooks.get('installed', [])) == len(HOOKS), hooks.get('installed'))
+    check('driver_hook_errors_zero', hooks.get('errors') == 0, hooks.get('errors'))
+    if captured not in frames:
+        return
+    k = frames.index(captured)
+    path = window / 'frames' / ('drivers_%03d.json' % k)
+    check('drivers_export_of_captured_frame', path.is_file(), str(path))
+    if not path.is_file():
+        return
+    doc = json.loads(path.read_text(encoding='utf-8'))
+    recs = [r for r in doc['records'] if r.get('instance_in_window_character')]
+    check('drivers_single_frame', doc['frame_count'] == captured and all(r['frame_count'] == captured for r in doc['records']),
+          sorted({r['frame_count'] for r in doc['records']}))
+    have = {(r['hook'], r['phase']) for r in recs}
+    missing = [(h, p) for h in HOOKS for p in ('prefix', 'postfix') if (h, p) not in have]
+    check('driver_hooks_all_fired_for_character', not missing, missing)
+    first = {}
+    for r in recs:
+        if r['phase'] == 'prefix' and r['hook'] not in first:
+            first[r['hook']] = r['seq']
+    order = sorted((h for h in LATE_ORDER if h in first), key=lambda h: first[h])
+    observe('late_update_hook_order', {'observed': order, 'installed_monoscript_order': list(LATE_ORDER),
+                                       'matches': order == list(LATE_ORDER), 'first_prefix_seq': first})
+
 
 
 def main(argv=None):

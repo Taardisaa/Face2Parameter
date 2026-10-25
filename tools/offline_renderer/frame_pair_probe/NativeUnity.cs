@@ -125,6 +125,33 @@ namespace HS2Codex.FramePairProbe
                 return true;
             });
             var renderers = Resources.FindObjectsOfTypeAll<Renderer>().Where(r => r.gameObject.scene.IsValid()).ToArray();
+            Check("instance id offset: native +offset equals GetInstanceID for every scene renderer", () =>
+                InstanceIdOffset > 0 && renderers.All(r => Mem.I32(Memory, Ptr(r) + (ulong)InstanceIdOffset) == r.GetInstanceID()));
+            Check("SharedMaterialData (Material+0xb0) +0xdc equals Material.GetInstanceID for every renderer material", () =>
+                renderers.SelectMany(r => r.sharedMaterials).Where(m => m != null).Distinct()
+                    .All(m => Mem.I32(Memory, Mem.U64(Memory, Ptr(m) + UnityPlayerLayout.MaterialPropertiesHolder) + UnityPlayerLayout.SmdInstanceId) == m.GetInstanceID()));
+            Check("RenderTexture+0xd0 equals RenderTexture.antiAliasing for every RenderTexture", () =>
+                rts.Values.All(t => Mem.I32(Memory, Ptr(t) + UnityPlayerLayout.RenderTextureAntiAliasing) == t.antiAliasing));
+            // BaseRenderer's matrix is refreshed by RendererUpdateManager at culling, so a MeshRenderer
+            // moved by a script after the last cull legitimately differs. A wrong layout matches none;
+            // require >= 90 % bit-exact matches and record every mismatch.
+            Check("BaseRenderer (Renderer+0x38) +0x08 equals MeshRenderer.localToWorldMatrix bits (>= 90 % of enabled MeshRenderers)", () =>
+            {
+                int n = 0, equal = 0;
+                var mismatched = new List<string>();
+                foreach (var r in renderers.OfType<MeshRenderer>())
+                {
+                    if (!r.enabled || !r.gameObject.activeInHierarchy) continue;
+                    var m = r.localToWorldMatrix;
+                    var raw = Mem.Bytes(Memory, Ptr(r) + UnityPlayerLayout.RendererBase + UnityPlayerLayout.BaseL2W, 64);
+                    bool same = true;
+                    for (int i = 0; i < 16; i++) if (!SameBits(m[i], raw, 4 * i)) { same = false; break; }   // Matrix4x4 indexer = column-major memory order
+                    n++;
+                    if (same) equal++; else mismatched.Add(r.name + "#" + r.GetInstanceID());
+                }
+                Validation.Add("info: BaseRenderer localToWorld bit-equal for " + equal + "/" + n + " MeshRenderers; mismatched: " + string.Join(", ", mismatched.ToArray()));
+                return n > 0 && equal * 10 >= n * 9;
+            });
             Check("renderer visibility bit equals Renderer.isVisible", () =>
                 renderers.All(r => ((Mem.U32(Memory, Ptr(r) + UnityPlayerLayout.RendererFlags) & UnityPlayerLayout.RendererVisibleBit) != 0
                                     && Mem.I32(Memory, Ptr(r) + UnityPlayerLayout.RendererSceneHandle) != -1) == r.isVisible));
@@ -332,8 +359,21 @@ namespace HS2Codex.FramePairProbe
             w.Key("previous_view_projection_0x598"); Matrix(w, p + UnityPlayerLayout.CameraPreviousViewProjection);
             w.Key("view_projection_0x5d8"); Matrix(w, p + UnityPlayerLayout.CameraViewProjection);
             w.Key("matrix_order"); w.Str("Matrix4x4f memory order (column-major, m00,m10,m20,m30,m01,...)");
+            ulong target = Mem.U64(Memory, p + UnityPlayerLayout.CameraCurrentTarget);
+            w.Key("current_target_0x558"); w.Str("0x" + target.ToString("x"));
+            if (target != 0)
+            {
+                w.Key("current_target_instance_id"); w.Int(Mem.I32(Memory, target + (ulong)InstanceIdOffset));
+                w.Key("current_target_antialiasing_0xd0"); w.Int(Mem.I32(Memory, target + UnityPlayerLayout.RenderTextureAntiAliasing));
+            }
+            w.Key("gfxdevice_single_pass_stereo_0x21e8"); w.Int(Mem.I32(Memory, GfxDevice() + UnityPlayerLayout.GfxSinglePassStereo));
             w.End('}');
         }
+
+        // UnityEngine.Object.GetOffsetOfInstanceIDInCPlusPlusObject (internal call used by
+        // GetInstanceID itself) - read once; pure.
+        public static readonly int InstanceIdOffset = (int)typeof(UnityEngine.Object)
+            .GetMethod("GetOffsetOfInstanceIDInCPlusPlusObject", BindingFlags.Static | BindingFlags.NonPublic).Invoke(null, null);
 
         void Matrix(JsonOut w, ulong a)
         {
@@ -350,6 +390,73 @@ namespace HS2Codex.FramePairProbe
             w.Key("flags_0x128"); w.Str("0x" + flags.ToString("x8"));
             w.Key("scene_handle_0x160"); w.Int(handle);
             w.Key("is_visible_bit"); w.Bool((flags & UnityPlayerLayout.RendererVisibleBit) != 0 && handle != -1);
+            ulong b = p + UnityPlayerLayout.RendererBase;
+            w.Key("base_renderer_local_to_world_0x08"); Matrix(w, b + UnityPlayerLayout.BaseL2W);
+            w.Key("base_renderer_previous_local_to_world_0x48"); Matrix(w, b + UnityPlayerLayout.BasePrevL2W);
+            w.Key("base_renderer_transform_update_frame_0xbc"); w.Raw(Mem.U32(Memory, b + UnityPlayerLayout.BaseUpdateFrame).ToString(CultureInfo.InvariantCulture));
+            w.Key("base_renderer_flags_0xf0"); w.Str("0x" + Mem.U32(Memory, b + UnityPlayerLayout.BaseFlags).ToString("x8"));
+            w.Key("base_renderer_flatten_block_hex"); w.Str(Mem.Hex(Mem.Bytes(Memory, b + UnityPlayerLayout.BaseBlockStart, UnityPlayerLayout.BaseBlockLength)));
+            if (r is SkinnedMeshRenderer) WriteSkinFields(w, r, p);
+            w.End('}');
+        }
+
+        void WriteSkinFields(JsonOut w, Renderer r, ulong p)
+        {
+            w.Key("smr_has_last_position_data_0x255"); w.Int(Mem.U8(Memory, p + UnityPlayerLayout.SmrHasLastPosition));
+            w.Key("smr_force_matrix_recalc_0x256"); w.Int(Mem.U8(Memory, p + UnityPlayerLayout.SmrForceMatrixRecalc));
+            w.Key("smr_dirty_0x28c"); w.Int(Mem.U8(Memory, p + UnityPlayerLayout.SmrDirty));
+            ulong s0 = Mem.U64(Memory, p + UnityPlayerLayout.SmrSkinBuffer), s1 = Mem.U64(Memory, p + UnityPlayerLayout.SmrPrevSkinBuffer);
+            w.Key("smr_skin_buffer_0x258"); w.Str("0x" + s0.ToString("x"));
+            w.Key("smr_prev_skin_buffer_0x260"); w.Str("0x" + s1.ToString("x"));
+            if (SkinSlots != null)
+            {
+                w.Key("skin_buffer_holds_frame"); w.Int(SkinSlots.HoldsFrame(s0));
+                w.Key("prev_skin_buffer_holds_frame"); w.Int(SkinSlots.HoldsFrame(s1));
+            }
+        }
+
+        public SkinSlotTracker SkinSlots;
+
+        public void WriteSkinOnly(JsonOut w, Renderer r) { WriteSkinFields(w, r, Ptr(r)); }
+
+        public ulong SkinBuffer(SkinnedMeshRenderer r) { return Mem.U64(Memory, Ptr(r) + UnityPlayerLayout.SmrSkinBuffer); }
+
+        public void WriteSharedMaterialData(JsonOut w, Material m)
+        {
+            ulong smd = Mem.U64(Memory, Ptr(m) + UnityPlayerLayout.MaterialPropertiesHolder);
+            w.Begin('{');
+            w.Key("caster_pass_values_hash_0xd0"); w.Raw(Mem.U32(Memory, smd + UnityPlayerLayout.SmdCasterPassHash).ToString(CultureInfo.InvariantCulture));
+            w.Key("state_block_values_hash_0xd4"); w.Raw(Mem.U32(Memory, smd + UnityPlayerLayout.SmdStateBlockHash).ToString(CultureInfo.InvariantCulture));
+            w.Key("flags_0xd8"); w.Str("0x" + Mem.U32(Memory, smd + UnityPlayerLayout.SmdFlags).ToString("x8"));
+            w.Key("material_instance_id_0xdc"); w.Int(Mem.I32(Memory, smd + UnityPlayerLayout.SmdInstanceId));
+            w.End('}');
+        }
+
+        public void WriteRenderTextureCompact(JsonOut w, RenderTexture rt)
+        {
+            ulong p = Ptr(rt);
+            w.Begin('{');
+            w.Key("id"); w.Int(rt.GetInstanceID()); w.Key("name"); w.Str(rt.name);
+            w.Key("is_created"); w.Bool(rt.IsCreated());
+            var d = rt.descriptor;
+            w.Key("descriptor"); w.Begin('{');
+            w.Key("width"); w.Int(d.width); w.Key("height"); w.Int(d.height); w.Key("msaaSamples"); w.Int(d.msaaSamples);
+            w.Key("volumeDepth"); w.Int(d.volumeDepth); w.Key("colorFormat"); w.Str(d.colorFormat.ToString()); w.Key("depthBufferBits"); w.Int(d.depthBufferBits);
+            w.Key("dimension"); w.Str(d.dimension.ToString()); w.Key("shadowSamplingMode"); w.Str(d.shadowSamplingMode.ToString());
+            w.Key("vrUsage"); w.Str(d.vrUsage.ToString()); w.Key("flags"); w.Str(d.flags.ToString()); w.Key("memoryless"); w.Str(d.memoryless.ToString());
+            w.Key("sRGB"); w.Bool(d.sRGB); w.Key("useMipMap"); w.Bool(d.useMipMap); w.Key("autoGenerateMips"); w.Bool(d.autoGenerateMips);
+            w.Key("enableRandomWrite"); w.Bool(d.enableRandomWrite); w.Key("bindMS"); w.Bool(d.bindMS);
+            w.End('}');
+            w.Key("filterMode"); w.Str(rt.filterMode.ToString()); w.Key("anisoLevel"); w.Int(rt.anisoLevel); w.Key("mipMapBias"); w.Num(rt.mipMapBias);
+            w.Key("wrapModeU"); w.Str(rt.wrapModeU.ToString()); w.Key("wrapModeV"); w.Str(rt.wrapModeV.ToString()); w.Key("wrapModeW"); w.Str(rt.wrapModeW.ToString());
+            w.Key("native"); w.Begin('{');
+            w.Key("texture_id_0x50"); w.Int(Mem.I32(Memory, p + UnityPlayerLayout.TextureId));
+            w.Key("antialiasing_0xd0"); w.Int(Mem.I32(Memory, p + UnityPlayerLayout.RenderTextureAntiAliasing));
+            ulong entry = Mem.U64(Memory, p + UnityPlayerLayout.RenderTextureTempEntry);
+            w.Key("temp_entry_0x138"); w.Str("0x" + entry.ToString("x"));
+            var desc = Mem.Bytes(Memory, p + UnityPlayerLayout.RenderTextureDesc, 4 * UnityPlayerLayout.DescDwords);
+            w.Key("desc_key_0xc8"); w.Begin('['); for (int i = 0; i < UnityPlayerLayout.DescDwords; i++) w.Raw(BitConverter.ToUInt32(desc, 4 * i).ToString(CultureInfo.InvariantCulture)); w.End(']');
+            w.End('}');
             w.End('}');
         }
 
@@ -390,6 +497,19 @@ namespace HS2Codex.FramePairProbe
             w.Key("graphics_caps_video_memory_mb_0xd8_f32"); w.Num(BitConverter.ToSingle(Mem.Bytes(Memory, caps + UnityPlayerLayout.CapsVideoMemoryMB, 4), 0));
             w.Key("graphics_caps_max_render_texture_size_0xf8"); w.Int(Mem.I32(Memory, caps + UnityPlayerLayout.CapsMaxRenderTextureSize));
             w.Key("graphics_settings_tier_cascaded_shadow_maps"); w.Int(Mem.U8(Memory, graphics + (ulong)(UnityPlayerLayout.GraphicsSettingsTierStride * tier) + UnityPlayerLayout.GraphicsSettingsTierCascaded));
+            uint d0 = Mem.U32(Memory, caps + UnityPlayerLayout.CapsD0);
+            w.Key("graphics_caps_0xd0_u32"); w.Str("0x" + d0.ToString("x8"));
+            w.Key("graphics_caps_0xd0_bit7"); w.Bool((d0 & 0x80) != 0);
+            w.Key("graphics_caps_0xdd_u8"); w.Int(Mem.U8(Memory, caps + UnityPlayerLayout.CapsDD));
+            w.Key("graphics_caps_0x3a1_u8"); w.Int(Mem.U8(Memory, caps + UnityPlayerLayout.Caps3A1));
+            var c3fc = Mem.Bytes(Memory, caps + UnityPlayerLayout.Caps3FC, 4);
+            w.Key("graphics_caps_0x3fc_u32"); w.Raw(BitConverter.ToUInt32(c3fc, 0).ToString(CultureInfo.InvariantCulture));
+            w.Key("graphics_caps_0x3fc_f32"); w.Num(BitConverter.ToSingle(c3fc, 0));
+            var c404 = Mem.Bytes(Memory, caps + UnityPlayerLayout.Caps404, 4);
+            w.Key("graphics_caps_0x404_u32"); w.Raw(BitConverter.ToUInt32(c404, 0).ToString(CultureInfo.InvariantCulture));
+            w.Key("graphics_caps_0x404_f32"); w.Num(BitConverter.ToSingle(c404, 0));
+            w.Key("build_settings_0xfa"); w.Int(Mem.U8(Memory, build + UnityPlayerLayout.BuildFlagFA));
+            w.Key("gfxdevice_single_pass_stereo_0x21e8"); w.Int(Mem.I32(Memory, GfxDevice() + UnityPlayerLayout.GfxSinglePassStereo));
             w.End('}');
         }
 

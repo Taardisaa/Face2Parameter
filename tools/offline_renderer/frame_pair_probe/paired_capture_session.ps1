@@ -1,22 +1,27 @@
 <#
-One user-run paired-capture session (probe v5): deploy the FramePairProbe, launch
+One user-run paired-capture session (probe v6): deploy the FramePairProbe, launch
 HS2 through the audited early RenderDoc bootstrap, restore Doorstop config, write
 probe requests, and remove the probe afterwards. Every deployed/original file is
 hash-pinned; any mismatch stops before changing anything further.
 
 Bulky data (scene exports, raw texels, RDCs, bridge PNG) goes to the fresh
-E:\HS2_offline_renderer_data\paired_session_v5_1_20261021 (outside the game root,
+E:\HS2_offline_renderer_data\paired_session_v6_20261025 (outside the game root,
 user decision 2026-10-20); small receipts go to the HS2Mod session directory.
+The v5.0.1 version of this script is kept in deprecated\paired_capture_session_v5_1.ps1.
 
   .\paired_capture_session.ps1 launch          # deploy probe + early-bootstrap launch
   .\paired_capture_session.ps1 restore-config  # after the game reaches its menu
   .\paired_capture_session.ps1 request -RequestMode frame        [-Frames 8 -TriggerIndex 3]
   .\paired_capture_session.ps1 request -RequestMode renderstyle  -BodyJson <file>  [-Frames 8 -TriggerIndex 3]
+       (both: [-DriverHooks 1|0] [-Meshes ALL|<comma list>]; defaults 1 and ALL)
+  .\paired_capture_session.ps1 request -RequestMode quit         # clean exit via ExitDialog.GameEnd(false)
   .\paired_capture_session.ps1 cleanup         # after the game has exited
 #>
 param(
     [Parameter(Mandatory)][ValidateSet('launch', 'restore-config', 'request', 'cleanup')][string]$Mode,
-    [ValidateSet('frame', 'renderstyle')][string]$RequestMode,
+    [ValidateSet('frame', 'renderstyle', 'quit')][string]$RequestMode,
+    [ValidateSet('0', '1')][string]$DriverHooks = '1',
+    [string]$Meshes = 'ALL',
     [string]$BodyJson,
     [int]$Frames = 8,
     [int]$TriggerIndex = 3
@@ -26,9 +31,9 @@ $ErrorActionPreference = 'Stop'
 $Game      = 'E:\HoneySelect2_ArcticFox'
 $F2P       = 'C:\Users\13666\Workspace\Face2Parameter'
 $Scope     = 'C:\Users\13666\Workspace\HS2Mod\artifacts\chenger_reference_fit_20261012'
-$Session   = "$Scope\paired_capture_session_v5_1_20261021"
-$Bulk      = 'E:\HS2_offline_renderer_data\paired_session_v5_1_20261021'
-$ProbeSrc  = "$F2P\outputs\offline_renderer_probe_v5_20261020\build_v5_1\HS2_FramePairProbe.dll"
+$Session   = "$Scope\paired_capture_session_v6_20261025"
+$Bulk      = 'E:\HS2_offline_renderer_data\paired_session_v6_20261025'
+$ProbeSrc  = "$F2P\outputs\offline_renderer_probe_v6_20261025\build_v6\HS2_FramePairProbe.dll"
 $ManifestSrc = "$F2P\outputs\offline_renderer_probe_v5_20261020\shader_manifest_v5.tsv"
 $ProbeDir  = "$Game\BepInEx\plugins\HS2_FramePairProbe"
 $Bootstrap = "$F2P\outputs\offline_renderer_repair_20261012\early_bootstrap_cpu_v2\HS2_RenderDocBootstrap.dll"
@@ -40,7 +45,7 @@ $UnityPlayer = "$Game\UnityPlayer.dll"
 $MinFreeGB = 100
 
 $Pinned = @{
-    Probe       = 'c07ff77dc93b7d5b6246f1a16010887b161db87b607e994d87434584b7503443'
+    Probe       = '42da95fdbb8c51862dc31e7452f15ee834c327ce9a45ddededf5b8844c2c7868'
     Manifest    = 'e403c5ad5524ece1d362329716777cf8f20d774a8d9d6e9e827459daf5ff2036'
     Bootstrap   = 'fa4927883805f3473205ccd54ecc4f5d80f5d05f02778133447013b8c4197391'
     RenderDoc   = '809da38e3867d9fd09cc5c30dd5310500dee75e999166d7a14ad1ef6e9eca65d'
@@ -102,7 +107,7 @@ switch ($Mode) {
         Write-Host 'Doorstop config restored to original.'
     }
     'request' {
-        if (-not $RequestMode) { throw '-RequestMode frame|renderstyle is required' }
+        if (-not $RequestMode) { throw '-RequestMode frame|renderstyle|quit is required' }
         Require "$ProbeDir\HS2_FramePairProbe.dll" $Pinned.Probe 'Deployed probe'
         Require "$Bulk\shader_manifest_v5.tsv" $Pinned.Manifest 'Session shader manifest'
         Require $Readback $Pinned.Readback 'Installed native readback'
@@ -112,6 +117,15 @@ switch ($Mode) {
         $free = FreeGB $Bulk
         if ($free -lt $MinFreeGB) { throw "Only $free GB free on $($Bulk.Substring(0, 2)); $MinFreeGB GB required" }
         $nonce = [guid]::NewGuid().ToString('N')
+        if ($RequestMode -eq 'quit') {
+            # Small receipt only; the probe writes quit_request_receipt.json, then calls the game's exit.
+            $text = "Mode=quit`nNonce=$nonce`nOutDir=$Session\quit_$nonce`n"
+            [IO.File]::WriteAllText("$Session\request_$nonce.ini", $text, (New-Object Text.UTF8Encoding $false))
+            [IO.File]::WriteAllText("$ProbeDir\HS2_FramePairProbe.request.tmp", $text, (New-Object Text.UTF8Encoding $false))
+            Move-Item "$ProbeDir\HS2_FramePairProbe.request.tmp" "$ProbeDir\HS2_FramePairProbe.request.ini"
+            Write-Host "Quit request nonce=$nonce receipt=$Session\quit_$nonce\quit_request_receipt.json; wait for the HoneySelect2 process to exit"
+            break
+        }
         $lines = @(
             "Mode=$RequestMode", "Nonce=$nonce",
             "OutDir=$Bulk\window_$nonce", "RawOutDir=$Bulk\raw_$nonce",
@@ -121,7 +135,7 @@ switch ($Mode) {
             "ReadbackDll=$Readback", "ExpectedReadbackSha256=$($Pinned.Readback)",
             'RawTimeoutSeconds=900', 'RawMinFreeGB=50',
             "ShaderManifest=$Bulk\shader_manifest_v5.tsv",
-            'Meshes=o_head,o_namida,o_tang,o_eyelashes,o_eyeshadow,o_eyebase_L,o_eyebase_R,o_tooth')
+            "Meshes=$Meshes", "DriverHooks=$DriverHooks")
         if ($RequestMode -eq 'renderstyle') {
             if (-not $BodyJson -or -not (Test-Path $BodyJson)) { throw '-BodyJson <bridge capture body file> is required for renderstyle' }
             $body = Get-Content -Raw $BodyJson | ConvertFrom-Json

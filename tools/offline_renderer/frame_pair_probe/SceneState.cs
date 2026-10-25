@@ -173,7 +173,7 @@ namespace HS2Codex.FramePairProbe
             var dropped = ctx.PruneDestroyed();
             var w = new JsonOut(1 << 22);
             w.Begin('{');
-            w.Key("schema_version"); w.Raw("5");
+            w.Key("schema_version"); w.Raw("6");
             w.Key("window_index"); w.Int(windowIndex);
             w.Key("frame_count"); w.Int(Time.frameCount);
             w.Key("rendered_frame_count"); w.Int(Time.renderedFrameCount);
@@ -274,6 +274,13 @@ namespace HS2Codex.FramePairProbe
             // temporaries, CTAA/PPv2 persistent RTs. Rows are emitted in "textures".
             w.Key("render_texture_ids"); w.Begin('[');
             foreach (var rt in Resources.FindObjectsOfTypeAll<RenderTexture>()) { ctx.Add(rt); w.Int(rt.GetInstanceID()); }
+            w.End(']');
+            w.Key("render_textures_compact"); w.Begin('[');
+            foreach (var rt in Resources.FindObjectsOfTypeAll<RenderTexture>().OrderBy(x => x.GetInstanceID())) w.GuardValue(r => ctx.Native.WriteRenderTextureCompact(r, rt));
+            w.End(']');
+            w.Key("skinned_renderers_outside_any_chara"); w.Begin('[');
+            foreach (var smr in Resources.FindObjectsOfTypeAll<SkinnedMeshRenderer>().Where(x => x.gameObject.scene.IsValid() && x.GetComponentInParent<AIChara.ChaControl>() == null))
+                Ref(w, smr);
             w.End(']');
 
             w.Key("destroyed_references_dropped"); w.Begin('['); foreach (var id in dropped) w.Int(id); w.End(']');
@@ -513,6 +520,7 @@ namespace HS2Codex.FramePairProbe
             foreach (var tag in new[] { "RenderType", "Queue", "LightMode", "IgnoreProjector", "DisableBatching", "ForceNoShadowCasting", "PreviewType", "CanUseSpriteAtlas" })
             { w.Key(tag); w.Str(m.GetTag(tag, false, null)); }
             w.End('}');
+            w.Guard("shared_material_data", s => ctx.Native.WriteSharedMaterialData(s, m));
             SheetSnapshot sheet = null;
             w.Guard("native_sheet", s =>
             {
