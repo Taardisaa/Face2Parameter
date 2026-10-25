@@ -1,0 +1,27 @@
+{
+ "date": "2026-10-25",
+ "reason": "rebind to the 2026-10-25 live re-runs (exact model.py, bridge 0.31.14)",
+ "changes": [
+  {
+   "file": "tools\\abmx_stable_lowering\\test_strict_metadata_guard.py",
+   "old": [
+    "MANIFEST=ROOT.parent/'HS2Mod/artifacts/infrastructure_live_20261005/abmx_lowered_v2/live_cases.json'",
+    "MANIFEST_SHA='ab4fc82a6f1dffe665936913f3970c599a13d3286f7012b399adeff121c37aed'"
+   ],
+   "new_manifest": "E:\\HS2_offline_renderer_data\\abmx_rerun_20261025\\abmx_lowered_v2\\live_cases.json",
+   "new_sha256": "5c905920c4f9e60ca355a3fff31b698d271b4d275f62fe357ffcc0d0cbed2864"
+  },
+  {
+   "file": "tools\\native_radial_target\\test_asset_provider.py",
+   "old_prefix": "ROOT.parent/'HS2Mod/artifacts/infrastructure_live_20261006/native_radial_drivers_head3_v1/",
+   "replacements": 2,
+   "new_dir": "E:/HS2_offline_renderer_data/abmx_rerun_20261025/native_radial_drivers_head3_v1"
+  },
+  {
+   "file": "tools\\native_radial_target\\test_asset_provider_strict.py",
+   "old_prefix": "ROOT.parent/'HS2Mod/artifacts/infrastructure_live_20261006/native_radial_drivers_head3_v1/",
+   "replacements": 1,
+   "new_dir": "E:/HS2_offline_renderer_data/abmx_rerun_20261025/native_radial_drivers_head3_v1"
+  }
+ ]
+}

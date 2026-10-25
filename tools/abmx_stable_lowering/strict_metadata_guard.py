@@ -11,7 +11,7 @@ from tools.abmx_multibone.geometry import DEFAULT_BONES
 
 REVISION='strict_metadata_v1'
 FROZEN_COMPILER_SHA256='0f721b16d3812e4e04a5e29bd57156e896e44876ec9b75adf7337061084cb8d8'
-METADATA_CONTRACT_SHA256='30585454692ed9c6c4370f4d937619dc91968582a2f162240856b8940938b868'
+METADATA_CONTRACT_SHA256='a7b78b2b01ebc8d2376e1482161d24052095a8d9bf51fe262dc4a96453268bae'  # v2 review (bridge 0.31.14, HS2Mod edc12ea); v1 30585454... in stable_lowering_review_v1/deprecated/
 DEFAULT_METADATA_CONTRACT=Path(__file__).resolve().parents[3]/'HS2Mod/artifacts/ocular_visibility_audit_20261005/stable_lowering_review_v1/new_strict_metadata_contract.json'
 
 

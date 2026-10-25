@@ -30,12 +30,15 @@ def main():
     ap.add_argument('--old-contract', type=Path, required=True)
     ap.add_argument('--out-contract', type=Path, required=True)
     ap.add_argument('--record', type=Path, help='directory receiving freeze.json/interface.json/source_guard.json/tests.txt')
+    ap.add_argument('--v1', type=Path, help='wrap this re-staged V1 asset contract instead of the recorded descriptor')
     args = ap.parse_args()
     if args.out_contract.exists():
         raise ValueError('New immutable contract path required')
     old = read(args.old_contract)
     v1 = old['v1_descriptor']
-    if sha(v1['path']) != v1['sha256']:
+    if args.v1 is not None:      # V1 re-staged through stage_from_identity for a new identity history
+        v1 = {'path': str(args.v1.resolve()), 'sha256': sha(args.v1)}
+    elif sha(v1['path']) != v1['sha256']:
         raise ValueError('Recorded V1 descriptor changed')
     t0 = time.perf_counter()
     with tempfile.TemporaryDirectory(dir=args.out_contract.parent.parent) as tmp:

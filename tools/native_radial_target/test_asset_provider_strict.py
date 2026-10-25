@@ -14,6 +14,9 @@ from tools.abmx_stable_lowering.compiler import digest_json
 from tools.native_radial_target import asset_provider_strict as strict
 
 ROOT=Path(__file__).resolve().parents[2]
+# 2026-10-25 live head3 re-run (exact model.py). Previous binding: HS2Mod/artifacts/infrastructure_live_20261006/
+# native_radial_drivers_head3_v1, see tools/abmx_refreeze/deprecated/.
+HEAD3_LIVE=Path('E:/HS2_offline_renderer_data/abmx_rerun_20261025/native_radial_drivers_head3_v1')
 
 
 class StrictProviderTests(unittest.TestCase):
@@ -99,7 +102,7 @@ class StrictProviderTests(unittest.TestCase):
         with self.assertRaises(TypeError):pickle.dumps(self.provider)
 
     def test_source_only_target_uses_all8_unchanged_gate(self):
-        artifact=read(ROOT.parent/'HS2Mod/artifacts/infrastructure_live_20261006/native_radial_drivers_head3_v1/compiled_execution.json')
+        artifact=read(HEAD3_LIVE/'compiled_execution.json')
         target=self.provider.independent_target(artifact,read(artifact['compiler_inputs']['contract_path']),source_gaze_policy='frozen_source_locals')
         checks=target['evidence']['source_mesh_checks']
         self.assertEqual(len(checks),8)

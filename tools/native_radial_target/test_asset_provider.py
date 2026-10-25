@@ -21,6 +21,9 @@ from tools.native_radial_target.asset_provider import (
 )
 
 ROOT=Path(__file__).resolve().parents[2]
+# 2026-10-25 live head3 re-run (exact model.py). Previous binding: HS2Mod/artifacts/infrastructure_live_20261006/
+# native_radial_drivers_head3_v1, see tools/abmx_refreeze/deprecated/.
+HEAD3_LIVE=Path('E:/HS2_offline_renderer_data/abmx_rerun_20261025/native_radial_drivers_head3_v1')
 
 
 class AssetProviderTests(unittest.TestCase):
@@ -29,7 +32,7 @@ class AssetProviderTests(unittest.TestCase):
         out=ROOT/'outputs/native_radial_target_20261006';out.mkdir(exist_ok=True,parents=True)
         cls.tmp=tempfile.TemporaryDirectory(prefix='asset_provider_tests_',dir=out)
         cls.dir=Path(cls.tmp.name)
-        cls.artifact=read(ROOT.parent/'HS2Mod/artifacts/infrastructure_live_20261006/native_radial_drivers_head3_v1/compiled_execution.json')
+        cls.artifact=read(HEAD3_LIVE/'compiled_execution.json')
         cls.history=cls.artifact['compiler_inputs']['history'];cls.abmx=cls.artifact['compiler_inputs']['contract_path']
         cls.source=read(cls.history['geometry']['path'])
         report=read(ROOT/'outputs/native_radial_target_20261006/source_asset_audit_v2/head3_source.json')
@@ -115,7 +118,7 @@ class AssetProviderTests(unittest.TestCase):
         with self.assertRaises(ValueError):self.provider.verify_snapshot_assets(s)
 
     def test_candidate_source_cannot_select_assets(self):
-        candidate=ROOT.parent/'HS2Mod/artifacts/infrastructure_live_20261006/native_radial_drivers_head3_v1/early.json'
+        candidate=HEAD3_LIVE/'early.json'
         h=copy.deepcopy(self.history);h['geometry']={'path':str(candidate),'sha256':sha(candidate)}
         with self.assertRaisesRegex(ValueError,'Candidate'):stage_from_identity(h,self.abmx,self.overrides,self.dir/'candidate_source_forbidden')
         self.assertFalse((self.dir/'candidate_source_forbidden').exists())

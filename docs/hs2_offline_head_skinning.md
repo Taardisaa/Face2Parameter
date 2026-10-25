@@ -851,3 +851,44 @@ Remaining:
 - a new strict-metadata review;
 - a staged asset contract for the new head3 history, if those 3 tests are to
   bind to the new records.
+
+### 10.5 Rebinding the 6 tests to the 2026-10-25 live records (coordinator decision)
+
+- **Test fixtures rebound.** The fixture constants in three test files now point
+  at `E:/HS2_offline_renderer_data/abmx_rerun_20261025/`:
+  - `test_strict_metadata_guard.py`: `MANIFEST` and `MANIFEST_SHA` (`5c905920…`);
+  - `test_asset_provider.py` and `test_asset_provider_strict.py`: a
+    `HEAD3_LIVE` directory.
+
+  The old bindings are recorded in
+  `tools/abmx_refreeze/deprecated/test_bindings_superseded_20261025.json`
+  and in git.
+- **New strict-metadata review.** It was written by
+  `tools/abmx_refreeze/strict_metadata_contract.py` at the original path
+  `HS2Mod/artifacts/ocular_visibility_audit_20261005/stable_lowering_review_v1/new_strict_metadata_contract.json`.
+  The v1 contract is in `deprecated/`.
+  - Bound to the committed bridge sources at HS2Mod `edc12ea` (0.31.14). The
+    three producer files in the working tree equal their committed blobs.
+  - The installed `efa943cb…` bridge is an IL-patched build in which only
+    `HttpServer.HandleRequest` changed. Its `MakerAbmxService`,
+    `MakerAbmxTrace` and `MakerGeometryService` decompile identically to an
+    offline Release build of `edc12ea`
+    (`E:/…/skinning_20261025/strict_review_v2/`).
+  - The `MakerGeometryService` sections were re-reviewed at lines 43, 70–71 and
+    81–88.
+  - Every invariant of the unchanged proposed strict revision holds on the new
+    live record: 12/12 serial prefix, wrapper types/MVID/frame, and the session
+    and frame binding.
+  - The guard's `METADATA_CONTRACT_SHA256` now pins `a7b78b2b…`.
+- **Head3 asset contract re-staged.** `outputs/native_radial_target_20261006/asset_provider_final_v1`
+  was rebuilt by `tools/abmx_refreeze/asset_provider_bundle.py`:
+  - `stage_from_identity` from the new head3 identity history, using the same
+    o_tooth explicit-zipmod override;
+  - prepare, the asset guard, and the source-only target (worst 4.16e-7);
+  - `test_asset_provider` 15/15.
+
+  The old bundle is in `deprecated/`.
+- **Strict contracts re-wrapped.** `strict_provider_final_v1` and
+  `strict_provider_smoke_v1` were wrapped around the re-staged V1 (`--v1`).
+  The 2026-10-24 versions are in `deprecated/refreeze_20261024/`.
+  `test_asset_provider_strict` passes 8/8.

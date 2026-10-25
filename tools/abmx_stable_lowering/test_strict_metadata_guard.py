@@ -10,8 +10,10 @@ from tools.abmx_stable_lowering.compiler import verify_execution_guard
 from tools.abmx_multibone.geometry import DEFAULT_BONES
 
 ROOT=Path(__file__).resolve().parents[2]
-MANIFEST=ROOT.parent/'HS2Mod/artifacts/infrastructure_live_20261005/abmx_lowered_v2/live_cases.json'
-MANIFEST_SHA='ab4fc82a6f1dffe665936913f3970c599a13d3286f7012b399adeff121c37aed'
+# 2026-10-25 live re-run (exact model.py, bridge 0.31.14). Previous binding: the 2026-10-05 record
+# HS2Mod/artifacts/infrastructure_live_20261005/abmx_lowered_v2 (ab4fc82a...), see tools/abmx_refreeze/deprecated/.
+MANIFEST=Path('E:/HS2_offline_renderer_data/abmx_rerun_20261025/abmx_lowered_v2/live_cases.json')
+MANIFEST_SHA='5c905920c4f9e60ca355a3fff31b698d271b4d275f62fe357ffcc0d0cbed2864'
 
 
 def actual_inputs():
