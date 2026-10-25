@@ -252,12 +252,25 @@ class CapturedHeadForward:
             raise ValueError('Declared Apply count 1..32 required')
         if baseline_mode not in ('captured','card_load'):
             raise ValueError('baseline_mode must be captured or card_load')
-        local={i:{k:copy.deepcopy(r[k]) for k in ('local_position','local_rotation_xyzw','local_scale')}
-               for i,r in self.transforms.items()}
-        modifiers=copy.deepcopy(self.modifiers)
         if baseline_mode=='card_load':
-            self._card_load_baselines(local,modifiers,native if native is not None else self.identity['native59'])
+            # _card_load_baselines is a pure function of this model's fixed transforms and
+            # modifiers and of the native values: memoized exactly (copies of its outputs).
+            card_native=native if native is not None else self.identity['native59']
+            key=tuple(float(np.float32(v)) for v in card_native)
+            cache=self.__dict__.setdefault('_card_load_cache',{})
+            if key not in cache:
+                local={i:{k:list(r[k]) for k in ('local_position','local_rotation_xyzw','local_scale')}
+                       for i,r in self.transforms.items()}
+                modifiers=copy.deepcopy(self.modifiers)
+                self._card_load_baselines(local,modifiers,card_native)
+                cache[key]=(local,modifiers)
+            local={i:{k:list(v) for k,v in r.items()} for i,r in cache[key][0].items()}
+            modifiers=copy.deepcopy(cache[key][1])
             native=None
+        else:
+            local={i:{k:copy.deepcopy(r[k]) for k in ('local_position','local_rotation_xyzw','local_scale')}
+                   for i,r in self.transforms.items()}
+            modifiers=copy.deepcopy(self.modifiers)
         allowed=set(IDENTITY)|{'name','remove'}
         if any(not isinstance(p,dict) or set(p)-allowed or 'name' not in p for p in patches):
             raise ValueError('Explicit supported patch fields required')

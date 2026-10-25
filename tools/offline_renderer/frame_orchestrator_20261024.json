@@ -588,5 +588,231 @@
    "_HasLastPositionData": 192,
    "_MotionVectorDepthBias": 192
   }
+ },
+ "candidate_rendering_20261025": {
+  "api": "src/render/hs2pipe/candidate.py",
+  "cli": "tools/offline_renderer/render_candidate.py",
+  "executor": "outputs/offline_renderer_executor_20261020/build_v5/frame_executor.exe (--serve)",
+  "outputs": "E:/HS2_offline_renderer_data/candidate_20261025",
+  "renders": [
+   {
+    "run": "run_v2",
+    "name": "identity",
+    "repeat": 0,
+    "unsupported": null,
+    "target_sha256_raw": "1480f828dd64f1480741a68910d83e233e384a6a01986ab8c4df761f1f530220",
+    "equal_template_replay": true,
+    "equal_reference_png_pixels": true,
+    "pixels_differing": 0,
+    "diff_bbox": null,
+    "total_s": 13.890246391296387
+   },
+   {
+    "run": "run_v2",
+    "name": "chin_tip_down_002",
+    "repeat": 0,
+    "unsupported": null,
+    "target_sha256_raw": "a770e2e59d6feefc8f71b1e35ae82158b22146d579b03a767049e44e751bccac",
+    "equal_template_replay": false,
+    "equal_reference_png_pixels": false,
+    "pixels_differing": 66338,
+    "diff_bbox": [
+     55,
+     1040,
+     896,
+     1447
+    ],
+    "total_s": 11.125678539276123
+   },
+   {
+    "run": "run_v2",
+    "name": "chin_low_forward_002",
+    "repeat": 0,
+    "unsupported": null,
+    "target_sha256_raw": "4c135f0ba62f39cad473d5ee4ee6415fb6259b034ca3c70c577d827c5bdaa21d",
+    "equal_template_replay": false,
+    "equal_reference_png_pixels": false,
+    "pixels_differing": 13510,
+    "diff_bbox": [
+     156,
+     1051,
+     896,
+     1447
+    ],
+    "total_s": 11.796818494796753
+   },
+   {
+    "run": "run_v2",
+    "name": "chin_rs_wider_x108",
+    "repeat": 0,
+    "unsupported": null,
+    "target_sha256_raw": "699b87868dab13d7a4198b127ecd6ce7524770185f3eb9995366ede6f19657cb",
+    "equal_template_replay": false,
+    "equal_reference_png_pixels": false,
+    "pixels_differing": 123920,
+    "diff_bbox": [
+     45,
+     725,
+     1085,
+     1447
+    ],
+    "total_s": 11.146119832992554
+   },
+   {
+    "run": "run_v5",
+    "name": "identity",
+    "repeat": 0,
+    "unsupported": null,
+    "target_sha256_raw": "1480f828dd64f1480741a68910d83e233e384a6a01986ab8c4df761f1f530220",
+    "equal_template_replay": true,
+    "equal_reference_png_pixels": true,
+    "pixels_differing": 0,
+    "diff_bbox": null,
+    "total_s": 1.0737223625183105
+   },
+   {
+    "run": "run_v5",
+    "name": "identity",
+    "repeat": 1,
+    "unsupported": null,
+    "target_sha256_raw": "1480f828dd64f1480741a68910d83e233e384a6a01986ab8c4df761f1f530220",
+    "equal_template_replay": true,
+    "equal_reference_png_pixels": true,
+    "pixels_differing": 0,
+    "diff_bbox": null,
+    "total_s": 0.9552593231201172
+   },
+   {
+    "run": "run_v5",
+    "name": "chin_tip_down_002",
+    "repeat": 0,
+    "unsupported": null,
+    "target_sha256_raw": "a770e2e59d6feefc8f71b1e35ae82158b22146d579b03a767049e44e751bccac",
+    "equal_template_replay": false,
+    "equal_reference_png_pixels": false,
+    "pixels_differing": 66338,
+    "diff_bbox": [
+     55,
+     1040,
+     896,
+     1447
+    ],
+    "total_s": 0.9705629348754883
+   },
+   {
+    "run": "run_v5",
+    "name": "chin_tip_down_002",
+    "repeat": 1,
+    "unsupported": null,
+    "target_sha256_raw": "a770e2e59d6feefc8f71b1e35ae82158b22146d579b03a767049e44e751bccac",
+    "equal_template_replay": false,
+    "equal_reference_png_pixels": false,
+    "pixels_differing": 66338,
+    "diff_bbox": [
+     55,
+     1040,
+     896,
+     1447
+    ],
+    "total_s": 1.9708092212677002
+   },
+   {
+    "run": "run_v5",
+    "name": "chin_low_forward_002",
+    "repeat": 0,
+    "unsupported": null,
+    "target_sha256_raw": "4c135f0ba62f39cad473d5ee4ee6415fb6259b034ca3c70c577d827c5bdaa21d",
+    "equal_template_replay": false,
+    "equal_reference_png_pixels": false,
+    "pixels_differing": 13510,
+    "diff_bbox": [
+     156,
+     1051,
+     896,
+     1447
+    ],
+    "total_s": 1.8856539726257324
+   },
+   {
+    "run": "run_v5",
+    "name": "chin_low_forward_002",
+    "repeat": 1,
+    "unsupported": null,
+    "target_sha256_raw": "4c135f0ba62f39cad473d5ee4ee6415fb6259b034ca3c70c577d827c5bdaa21d",
+    "equal_template_replay": false,
+    "equal_reference_png_pixels": false,
+    "pixels_differing": 13510,
+    "diff_bbox": [
+     156,
+     1051,
+     896,
+     1447
+    ],
+    "total_s": 1.8466439247131348
+   },
+   {
+    "run": "run_v5",
+    "name": "chin_rs_wider_x108",
+    "repeat": 0,
+    "unsupported": null,
+    "target_sha256_raw": "699b87868dab13d7a4198b127ecd6ce7524770185f3eb9995366ede6f19657cb",
+    "equal_template_replay": false,
+    "equal_reference_png_pixels": false,
+    "pixels_differing": 123920,
+    "diff_bbox": [
+     45,
+     725,
+     1085,
+     1447
+    ],
+    "total_s": 1.4283769130706787
+   },
+   {
+    "run": "run_v5",
+    "name": "chin_rs_wider_x108",
+    "repeat": 1,
+    "unsupported": null,
+    "target_sha256_raw": "699b87868dab13d7a4198b127ecd6ce7524770185f3eb9995366ede6f19657cb",
+    "equal_template_replay": false,
+    "equal_reference_png_pixels": false,
+    "pixels_differing": 123920,
+    "diff_bbox": [
+     45,
+     725,
+     1085,
+     1447
+    ],
+    "total_s": 1.719496488571167
+   },
+   {
+    "run": "run_v6",
+    "name": "native_index1_plus010",
+    "repeat": 0,
+    "unsupported": null,
+    "target_sha256_raw": "127d4e3c87ee43ab317d2b986661d2ecf2c40c9288af07d97f0aa5863da40c39",
+    "equal_template_replay": false,
+    "equal_reference_png_pixels": false,
+    "pixels_differing": 108163,
+    "diff_bbox": [
+     40,
+     479,
+     1074,
+     1392
+    ],
+    "total_s": 5.175082206726074
+   },
+   {
+    "run": "run_v6",
+    "name": "head_scale_unsupported",
+    "repeat": 0,
+    "unsupported": "o_bra_a: bones/transform moved but its skin/matrices are taken from the capture; o_top_camisole2_a: bones/transform moved but its skin/matrices are taken from the capture; Kamael_Valentine_Hair_03_HQ: bones/transform moved but its skin/matrices are taken from the capture; o_tooth: root bone/transform moved -> ObjectToWorld, bounds, culling, shadow fit and _PreviousM would change; o_tang: root bone/transform moved -> ObjectToWorld, bounds, culling, shadow fit and _PreviousM would change; o_namida: root bone/transform moved -> ObjectToWorld, bounds, culling, shadow fit and _PreviousM would change; o_head: root bone/transform moved -> ObjectToWorld, bounds, culling, shadow fit and _PreviousM would change; o_eyeshadow: root bone/transform moved -> ObjectToWorld, bounds, culling, shadow fit and _PreviousM would change; o_eyelashes: root bone/transform moved -> ObjectToWorld, bounds, culling, shadow fit and _PreviousM would change; o_eyebase_R: root bone/transform moved -> ObjectToWorld, bounds, culling, shadow fit and _PreviousM would change; o_eyebase_L: root bone/transform moved -> ObjectToWorld, bounds, culling, shadow fit and _PreviousM would change; o_body_cf: bones/transform moved but its skin/matrices are taken from the capture",
+    "target_sha256_raw": null,
+    "equal_template_replay": null,
+    "equal_reference_png_pixels": null,
+    "pixels_differing": null,
+    "diff_bbox": null,
+    "total_s": null
+   }
+  ]
  }
 }

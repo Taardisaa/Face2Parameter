@@ -1,6 +1,12 @@
 // HS2 offline renderer frame-program executor (D3D11, MSVC).
 //
 //   frame_executor.exe PROGRAM_DIR OUT_DIR [--warp] [--adapter-index N] [--debug-layer] [--hash-only]
+//   frame_executor.exe PROGRAM_DIR OUT_DIR --serve [--warp] [--adapter-index N]
+// --serve creates the device and every program object once, then executes the command list once per
+// request line read from stdin (JSON: {"out", "resource_data", "map_write_blobs", "readbacks", "hash_only"}).
+// Before every request each resource the frame writes (or a request patches) is restored to its
+// state after program creation: DEFAULT resources from a GPU copy taken at creation, DYNAMIC ones from
+// their initial bytes (Map WRITE_DISCARD).  One result line is printed per request.
 //
 // --hash-only computes and records every readback's SHA-256 without writing the raw bytes
 // (disk-constrained acceptance loops); the default writes <name>.raw.bin (+ .topdown.bin).
@@ -45,7 +51,7 @@
 #include <vector>
 
 namespace fs = std::filesystem;
-static const char* EXECUTOR_VERSION = "hs2_frame_executor/1";
+static const char* EXECUTOR_VERSION = "hs2_frame_executor/1+serve";
 
 // ------------------------------------------------------------------ errors
 struct Fail : std::runtime_error { using std::runtime_error::runtime_error; };
@@ -304,6 +310,14 @@ struct Executor {
     std::map<std::string, double> timing;
     std::vector<std::pair<double, uint64_t>> slowCreates;
 
+    // ---- serve mode state
+    std::unordered_map<size_t, std::vector<char>> cmdBlobOverride;      // command index -> replacement map_write bytes
+    std::unordered_map<uint64_t, Com<ID3D11Resource>> pristine;          // DEFAULT resources: copy after creation
+    std::unordered_map<uint64_t, std::vector<std::vector<char>>> pristineCpu;  // DYNAMIC resources: initial bytes
+    std::unordered_map<uint64_t, std::vector<uint32_t>> pristinePitch;   // row pitch per subresource (DYNAMIC textures)
+    std::set<uint64_t> restoreSet;
+    const J* readbackOverride = nullptr;
+    long long stopAfter = -1;                                            // serve: last command executed (-1: all)
     void claim(uint64_t id, const std::string& what) {
         if (!id) throw Fail(what + ": id 0 is reserved");
         if (!ids.insert(id).second) throw Fail(what + ": duplicate object id " + std::to_string(id));
@@ -978,19 +992,27 @@ struct Executor {
     fs::path out_dir() const { return out; }
 
     // ------------------------------------------------------------- run
-    void run() {
+    void setup() {
         auto T = [&](const char* k, std::chrono::steady_clock::time_point t0) {
             timing[k] = std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - t0).count(); };
         auto t0 = std::chrono::steady_clock::now(); createResources(); T("create_resources_ms", t0);
         t0 = std::chrono::steady_clock::now(); createViews(); createShadersAndStates(); T("create_views_shaders_states_ms", t0);
-        const J& cmds = prog.find("commands")->a.empty() ? *prog.find("commands") : *prog.find("commands");
+    }
+    void run() { setup(); execute(); report(); }
+    void execute() {
+        auto T = [&](const char* k, std::chrono::steady_clock::time_point t0) {
+            timing[k] = std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - t0).count(); };
+        auto t0 = std::chrono::steady_clock::now();
+        const J& cmds = *prog.find("commands");
         std::multimap<uint64_t, const J*> rbs;
-        for (const J& rb : prog.find("readbacks")->a) rbs.emplace(ju(*rb.find("after_command"), "readback.after_command"), &rb);
+        for (const J& rb : (readbackOverride ? *readbackOverride : *prog.find("readbacks")).a)
+            rbs.emplace(ju(*rb.find("after_command"), "readback.after_command"), &rb);
         for (auto& kv : rbs) if (kv.first >= cmds.a.size()) throw Fail("readback after_command beyond the command list");
         std::map<std::string, uint64_t> opCount;
         t0 = std::chrono::steady_clock::now();
         double readMs = 0;
         for (size_t i = 0; i < cmds.a.size(); ++i) {
+            if (stopAfter >= 0 && i > (size_t)stopAfter) break;
             const J& c = cmds.a[i];
             Fields f(c, "command");
             std::string op = js(f.req("op"), "command.op");
@@ -1020,8 +1042,14 @@ struct Executor {
             } else if (op == "map_write") {
                 Resource& R = resource(f.u32("resource"), where); UINT sub = f.u32("subresource");
                 if (sub >= R.subresources()) throw Fail(where + ": subresource");
-                mapWrite(R, sub, f.u32("map_type"), f.u32("map_flags"), ju(f.req("start"), where), ju(f.req("end"), where),
-                         blob(js(f.req("blob"), where)), where);
+                auto ov = cmdBlobOverride.find(i);
+                if (ov != cmdBlobOverride.end()) {
+                    js(f.req("blob"), where);
+                    mapWrite(R, sub, f.u32("map_type"), f.u32("map_flags"), ju(f.req("start"), where), ju(f.req("end"), where),
+                             ov->second, where);
+                } else
+                    mapWrite(R, sub, f.u32("map_type"), f.u32("map_flags"), ju(f.req("start"), where), ju(f.req("end"), where),
+                             blob(js(f.req("blob"), where)), where);
             } else if (op == "copy_resource") {
                 ctx->CopyResource(resource(f.u32("dst"), where).res.get(), resource(f.u32("src"), where).res.get());
             } else if (op == "copy_subresource_region") {
@@ -1062,6 +1090,12 @@ struct Executor {
         T("execute_commands_ms", t0); timing["readbacks_ms_included"] = readMs;
         HRESULT removed = dev->GetDeviceRemovedReason();
         if (FAILED(removed)) throw Fail("Device removed during execution HRESULT " + hex32((uint32_t)removed));
+        opCounts = opCount;
+    }
+    std::map<std::string, uint64_t> opCounts;
+    std::string report() {
+        const J& cmds = *prog.find("commands");
+        auto& opCount = opCounts;
         std::ostringstream o;
         o << "{\"schema\":\"hs2_frame_execution/1\",\"executor\":\"" << EXECUTOR_VERSION << "\",\"status\":\"pass\",\"adapter\":" << adapterJson
           << ",\"program_json_sha256\":\"" << programSha << "\",\"hash_only\":" << (hashOnly ? "true" : "false")
@@ -1071,9 +1105,136 @@ struct Executor {
         first = true; for (auto& kv : timing) { o << (first ? "" : ",") << "\"" << kv.first << "\":" << kv.second; first = false; }
         o << "},\"readbacks\":[" << readbackJson.str() << "\n]}";
         std::string s = o.str(); writeFile(out / "execution.json", s.data(), s.size());
-        std::cout << s << std::endl;
+        if (!serving) std::cout << s << std::endl;
+        return s;
     }
     std::string programSha;
+    bool serving = false;
+
+    // ------------------------------------------------------------- serve
+    void addWritten(std::set<uint64_t>& w, uint64_t viewId) {
+        auto it = viewResource.find(viewId); if (it != viewResource.end()) w.insert(it->second);
+    }
+    std::set<uint64_t> writtenResources() {
+        std::set<uint64_t> w;
+        for (const J& c : prog.find("commands")->a) {
+            const std::string& op = c.find("op")->s;
+            if (op == "clear_rtv" || op == "clear_dsv" || op == "clear_uav_float" || op == "clear_uav_uint" || op == "generate_mips")
+                addWritten(w, ju(*c.find("view"), "view"));
+            else if (op == "update_subresource" || op == "map_write") w.insert(ju(*c.find("resource"), "resource"));
+            else if (op == "copy_resource" || op == "copy_subresource_region" || op == "resolve") w.insert(ju(*c.find("dst"), "dst"));
+            else if (op == "dispatch") {
+                for (const J& u : c.find("state")->find("cs")->find("uavs")->a) addWritten(w, ju(*u.find("view"), "uav"));
+            } else if (op.rfind("draw", 0) == 0) {
+                const J* om = c.find("state")->find("om");
+                for (const J& r : om->find("render_targets")->a) addWritten(w, ju(*r.find("view"), "rtv"));
+                const J* ds = om->find("depth_stencil"); if (ds && !ds->isNull()) addWritten(w, ju(*ds, "dsv"));
+            }
+        }
+        return w;
+    }
+    const J* resourceJson(uint64_t id) {
+        for (const J& r : prog.find("resources")->a) if (ju(*r.find("id"), "id") == id) return &r;
+        return nullptr;
+    }
+    void keepPristine(uint64_t id) {
+        if (restoreSet.count(id)) return;
+        Resource& R = resource(id, "pristine");
+        if (R.usage() == D3D11_USAGE_IMMUTABLE) throw Fail("resource " + std::to_string(id) + " is IMMUTABLE and cannot be restored or patched");
+        if (R.usage() == D3D11_USAGE_DYNAMIC) {
+            const J* rj = resourceJson(id);
+            std::vector<std::vector<char>> subs(R.subresources()); std::vector<uint32_t> pitch(R.subresources(), 0);
+            const J* init = rj ? rj->find("initial") : nullptr;
+            if (init && !init->isNull()) {
+                for (const J& e : init->a) { uint32_t sidx = (uint32_t)ju(*e.find("subresource"), "sub");
+                    subs[sidx] = blob(e.find("blob")->s, false); pitch[sidx] = (uint32_t)ju(*e.find("row_pitch"), "rp"); }
+            } else {
+                for (uint32_t k = 0; k < R.subresources(); ++k) {
+                    uint64_t n = R.kind == Kind::Buffer ? R.bd.ByteWidth : byteSize(R.width(), R.height(), R.depth(), R.format(), k % R.mips);
+                    subs[k].assign((size_t)n, 0); pitch[k] = R.kind == Kind::Buffer ? R.bd.ByteWidth : (uint32_t)rowPitch(R.width(), R.format(), k % R.mips);
+                }
+            }
+            pristineCpu[id] = std::move(subs); pristinePitch[id] = std::move(pitch);
+        } else {
+            Com<ID3D11Resource> dup;
+            if (R.kind == Kind::Buffer) { Com<ID3D11Buffer> b; check(dev->CreateBuffer(&R.bd, nullptr, b.put()), "pristine buffer"); dup.p = b.p; b.p = nullptr; }
+            else if (R.kind == Kind::Tex1D) { Com<ID3D11Texture1D> t; check(dev->CreateTexture1D(&R.t1, nullptr, t.put()), "pristine tex1d"); dup.p = t.p; t.p = nullptr; }
+            else if (R.kind == Kind::Tex2D) { Com<ID3D11Texture2D> t; check(dev->CreateTexture2D(&R.t2, nullptr, t.put()), "pristine tex2d"); dup.p = t.p; t.p = nullptr; }
+            else { Com<ID3D11Texture3D> t; check(dev->CreateTexture3D(&R.t3, nullptr, t.put()), "pristine tex3d"); dup.p = t.p; t.p = nullptr; }
+            ctx->CopyResource(dup.get(), R.res.get());
+            pristine[id] = std::move(dup);
+        }
+        restoreSet.insert(id);
+    }
+    void writeDynamic(Resource& R, uint32_t sub, const std::vector<char>& data, uint32_t pitch) {
+        D3D11_MAPPED_SUBRESOURCE m{}; check(ctx->Map(R.res.get(), sub, D3D11_MAP_WRITE_DISCARD, 0, &m), "restore Map");
+        if (R.kind == Kind::Buffer) memcpy(m.pData, data.data(), std::min<size_t>(data.size(), R.bd.ByteWidth));
+        else {
+            uint32_t mip = sub % R.mips; int rows = (int)std::max(1u, R.height() >> mip); if (isBlockFormat(R.format())) rows = (rows + 3) / 4;
+            uint64_t row = rowPitch(R.width(), R.format(), mip);
+            for (int r = 0; r < rows; ++r) memcpy((char*)m.pData + (size_t)r * m.RowPitch, data.data() + (size_t)r * pitch, (size_t)row);
+        }
+        ctx->Unmap(R.res.get(), sub);
+    }
+    void restoreAll() {
+        for (uint64_t id : restoreSet) {
+            Resource& R = resource(id, "restore");
+            auto it = pristine.find(id);
+            if (it != pristine.end()) { ctx->CopyResource(R.res.get(), it->second.get()); continue; }
+            auto& subs = pristineCpu[id]; auto& pitch = pristinePitch[id];
+            for (uint32_t k = 0; k < subs.size(); ++k) writeDynamic(R, k, subs[k], pitch[k]);
+        }
+    }
+    void serve() {
+        setup();
+        for (uint64_t id : writtenResources()) keepPristine(id);
+        ctx->Flush();
+        std::cout << "{\"status\":\"ready\",\"restore_set\":" << restoreSet.size() << ",\"timing\":{\"create_resources_ms\":"
+                  << timing["create_resources_ms"] << ",\"create_views_shaders_states_ms\":" << timing["create_views_shaders_states_ms"]
+                  << "}}" << std::endl;
+        std::string line;
+        while (std::getline(std::cin, line)) {
+            if (line.empty()) continue;
+            try {
+                auto tr = std::chrono::steady_clock::now();
+                Parser rp{line.data(), line.data() + line.size()}; J req = rp.value();
+                out = fs::absolute(fs::path(req.find("out")->s));
+                if (fs::exists(out)) throw Fail("Fresh output directory required: " + out.string());
+                fs::create_directories(out);
+                const J* hj = req.find("hash_only"); hashOnly = hj && hj->t == J::Bool && hj->b;
+                restoreAll();
+                cmdBlobOverride.clear();
+                if (const J* mw = req.find("map_write_blobs"))
+                    for (auto& kv : mw->o) cmdBlobOverride[(size_t)std::stoull(kv.first)] = readFile(fs::path(kv.second.s));
+                if (const J* rd = req.find("resource_data"))
+                    for (auto& kv : rd->o) {
+                        uint64_t id = std::stoull(kv.first); keepPristine(id); Resource& R = resource(id, "resource_data");
+                        for (const J& e : kv.second.a) {
+                            uint32_t sidx = (uint32_t)ju(*e.find("subresource"), "sub"); auto data = readFile(fs::path(e.find("file")->s));
+                            uint32_t rpitch = (uint32_t)ju(*e.find("row_pitch"), "row_pitch"); uint32_t spitch = (uint32_t)ju(*e.find("slice_pitch"), "slice_pitch");
+                            if (R.kind == Kind::Buffer && data.size() != R.bd.ByteWidth) throw Fail("resource_data size differs from ByteWidth");
+                            if (R.usage() == D3D11_USAGE_DYNAMIC) writeDynamic(R, sidx, data, rpitch);
+                            else ctx->UpdateSubresource(R.res.get(), sidx, nullptr, data.data(), rpitch, spitch);
+                        }
+                    }
+                readbackOverride = req.find("readbacks");
+                const J* sa = req.find("stop_after"); stopAfter = sa ? (long long)ju(*sa, "stop_after") : -1;
+                if (readbackOverride) for (const J& rb : readbackOverride->a)
+                    if (stopAfter >= 0 && (long long)ju(*rb.find("after_command"), "after_command") > stopAfter)
+                        throw Fail("readback after stop_after");
+                readbackJson.str(""); readbackJson.clear(); firstReadback = true;
+                timing["restore_and_patch_ms"] = std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - tr).count();
+                execute();
+                std::string rep = report();
+                timing["request_total_ms"] = std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - tr).count();
+                std::cout << "{\"status\":\"pass\",\"out\":\"" << out.generic_string() << "\",\"request_total_ms\":" << timing["request_total_ms"]
+                          << ",\"restore_and_patch_ms\":" << timing["restore_and_patch_ms"] << ",\"execute_commands_ms\":" << timing["execute_commands_ms"] << "}" << std::endl;
+            } catch (const std::exception& e) {
+                std::string msg = e.what(), esc; for (char c : msg) { if (c == '"' || c == '\\') esc += '\\'; esc += c; }
+                std::cout << "{\"status\":\"fail\",\"error\":\"" << esc << "\"}" << std::endl;
+            }
+        }
+    }
 };
 
 int main(int argc, char** argv) {
@@ -1087,6 +1248,7 @@ int main(int argc, char** argv) {
             if (a == "--warp") warp = true;
             else if (a == "--debug-layer") debugLayer = true;
             else if (a == "--hash-only") ex.hashOnly = true;
+            else if (a == "--serve") ex.serving = true;
             else if (a == "--adapter-index" && i + 1 < argc) adapterIndex = std::stoi(argv[++i]);
             else throw Fail("Unknown argument " + a);
         }
@@ -1112,6 +1274,7 @@ int main(int argc, char** argv) {
         ex.createDevice(warp, adapterIndex, debugLayer);
         ex.timing["create_device_ms"] = std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - t0).count();
         fs::create_directories(ex.out);
+        if (ex.serving) { ex.serve(); return 0; }
         ex.run();
         return 0;
     } catch (const std::exception& e) {

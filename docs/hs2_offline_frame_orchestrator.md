@@ -477,3 +477,106 @@ capture resource. The orchestrator's `--resource-wiring` replaces their capture-
   every SkinnedMeshRenderer, not only the head surfaces.
 - Skin double-buffer slot timing: source trace open. Probe request: a field naming the frame
   held by each skinning slot at bridge time.
+
+## 10 Candidate rendering on the bridge frame (2026-10-25, offline)
+
+API `src/render/hs2pipe/candidate.py` (`BridgeCandidateRenderer`, `SessionConfig`); CLI
+`tools/offline_renderer/render_candidate.py`. Outputs: `E:/HS2_offline_renderer_data/candidate_20261025/`
+(`run_v2`: unoptimised renders and spot-check images; `run_v5`: optimised, timing; `run_v6`:
+native-slider and unsupported candidates).
+
+### 10.1 Chain
+
+1. **Head forward:** card + patch (bridge `{"bones": [...]}` ABMX format and/or `native59`) →
+   `CapturedHeadForward.evaluate(baseline_mode='card_load')` for each probe frame N−4..N.
+   Baseline: 98 skin-chain bones bit-equal to the probe in frames N−2..N.
+2. **Eye look:** the hosted `EyeLookController.LateUpdate` (installed IL, Mono JIT) runs over
+   N−4..N with the candidate locals; it rewrites `cf_J_look_L/R`.
+3. **Skinning:** `skin_from_locals` with the probe blendshape weights produces 22 uploads:
+   - slot 0 = N−2 (capture-start contents);
+   - slot 1 = N−1;
+   - post-bridge slot 0 = N.
+
+   For the baseline card all 22 are bit-equal to the capture.
+4. **Execution:** `frame_executor --serve` (`build_v5`) holds the run_v7 template program
+   resident. Per request it restores every frame-written resource, substitutes the streams,
+   runs to the capture target's last write (`stop_after`) and reads back 31690 in top-down
+   rows.
+
+### 10.2 Assumptions (stated)
+
+- The candidate is held constant over N−5..N (a static card loaded with these values).
+- The EyeLook hidden state at N−5 is reconstructed from the baseline export. On this window
+  the hosted EyeLook reproduces every exported look rotation 8746–8752. From deliberately wrong
+  seeds it converges by N−3 (8747), before the first consumed frame N−2.
+
+### 10.3 Dependencies a candidate changes
+
+Each candidate gets a computed check (`dependency_check`). The changed transforms are those
+whose float32 locals differ from the baseline in any frame; their descendants are added.
+
+- **Head surface root bone or transform moved** → `CandidateUnsupported`. ObjectToWorld,
+  WorldToObject, `_PreviousM` and the renderer bounds are all functions of the root TRS:
+  - bounds = local AABB × root matrix (`InitializePreparedInfo` 0xbdce90;
+    `CalculateTransformInfo_Prepared` 0xbdaca0; local AABB written only by `SetLocalAABB`
+    0x788010);
+  - `updateWhenOffscreen` is asserted false for every head surface (`SetUpdateWhenOffscreen`
+    0x788313).
+- **Any other renderer's bones, root or transform moved** (body, clothes, hair, accessories)
+  → `CandidateUnsupported`, because their skin and matrices come from the capture.
+  Example: `cf_J_Head` scale raises for o_bra_a, o_top_camisole2_a, the hair, o_tooth, o_tang
+  and o_namida.
+- **Otherwise these inputs are provably unchanged:**
+  - bounds, therefore culling and draw lists;
+  - shadow caster cull set and cascade fit;
+  - shadow caster order: its material hash (`Material::UpdateHashes` 0x84e3b0 →
+    `Pass::ComputePassValuesHash` 0x855f70) has no mesh, bone or bounds input;
+  - object matrices: asserted equal to the template per surface and frame.
+- **Recomputed:** the MV previous skin stream (N−1) and every eye-look-dependent bone.
+
+### 10.4 Results
+
+- **Identity:** baseline card, empty patch, all 22 streams substituted → raw target SHA
+  `1480f828…` = template replay; pixel-equal to `bridge_capture_2.png`.
+- **Spot check (`run_v2/spot_check_overview.png`, `spot_check_crops.png`):**
+
+  | candidate | pixels changed | bbox (x0,y0,x1,y1) |
+  |---|---|---|
+  | `cf_J_ChinTip_s` position y −0.02 | 66338 | 55,1040–896,1447 |
+  | `cf_J_ChinLow` position z +0.02 | 13510 | 156,1051–896,1447 |
+  | `cf_J_Chin_rs` scale x ×1.08 | 123920 | 45,725–1085,1447 |
+  | native index 1 (upper-face depth) +0.1 | 108163 | 40,479–1074,1392 |
+
+  The changes cover the chin and jaw outline, the chin's shadow and AO on the neck, and (for
+  the wider jaw) the cheeks and hair edges. Nothing changes above the cheeks for the chin
+  candidates.
+- **Timing per candidate** (resident executor; an idle GPU, though the GPU is shared with the
+  user's game):
+
+  | step | time |
+  |---|---|
+  | forward (5 frames) | 0.1–0.5 s |
+  | eye look | 0.02–0.1 s |
+  | skin | 0.01–0.35 s |
+  | executor round trip | 0.5–1.2 s (≈0.11–0.3 s inside the executor) |
+  | **total without PNG** | **≈1–2 s** |
+  | optional PNG encode | +1.6 s |
+
+  First-time setup is about 40 s.
+- **Optimisations, outputs byte-identical** (run_v3/v4/v5 target SHA = run_v2 for every
+  candidate):
+  - camera position cached;
+  - card-load baseline memoized (pure function of `native59`);
+  - typed copies;
+  - skin reuse when a surface's bone closure has no changed transform (float32 bit
+    comparison);
+  - resident executor;
+  - PNG optional.
+
+### 10.5 Gaps
+
+- Candidates moving a head surface's root, or any bone or transform of another renderer,
+  are rejected: body/clothes/hair skin inputs aren't exported (the v6 request stands).
+- The two stated assumptions in 10.2.
+- The skin double-buffer swap timing is untraced (§9.2).
+- Native acceptance of candidates happens later, in a game session.
