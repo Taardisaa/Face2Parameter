@@ -1,13 +1,14 @@
 <#
-One user-run paired-capture session (probe v6): deploy the FramePairProbe, launch
+One user-run paired-capture session (probe v6.1.0): deploy the FramePairProbe, launch
 HS2 through the audited early RenderDoc bootstrap, restore Doorstop config, write
 probe requests, and remove the probe afterwards. Every deployed/original file is
 hash-pinned; any mismatch stops before changing anything further.
 
 Bulky data (scene exports, raw texels, RDCs, bridge PNG) goes to the fresh
-E:\HS2_offline_renderer_data\paired_session_v6_20261025 (outside the game root,
+E:\HS2_offline_renderer_data\paired_session_v6_1_20261025 (outside the game root,
 user decision 2026-10-20); small receipts go to the HS2Mod session directory.
-The v5.0.1 version of this script is kept in deprecated\paired_capture_session_v5_1.ps1.
+Superseded versions are kept in deprecated\: paired_capture_session_v6_0.ps1 (probe 6.0.0)
+and paired_capture_session_v5_1.ps1 (probe 5.0.1).
 
   .\paired_capture_session.ps1 launch          # deploy probe + early-bootstrap launch
   .\paired_capture_session.ps1 restore-config  # after the game reaches its menu
@@ -31,9 +32,9 @@ $ErrorActionPreference = 'Stop'
 $Game      = 'E:\HoneySelect2_ArcticFox'
 $F2P       = 'C:\Users\13666\Workspace\Face2Parameter'
 $Scope     = 'C:\Users\13666\Workspace\HS2Mod\artifacts\chenger_reference_fit_20261012'
-$Session   = "$Scope\paired_capture_session_v6_20261025"
-$Bulk      = 'E:\HS2_offline_renderer_data\paired_session_v6_20261025'
-$ProbeSrc  = "$F2P\outputs\offline_renderer_probe_v6_20261025\build_v6\HS2_FramePairProbe.dll"
+$Session   = "$Scope\paired_capture_session_v6_1_20261025"
+$Bulk      = 'E:\HS2_offline_renderer_data\paired_session_v6_1_20261025'
+$ProbeSrc  = "$F2P\outputs\offline_renderer_probe_v6_1_20261025\build_v6_1\HS2_FramePairProbe.dll"
 $ManifestSrc = "$F2P\outputs\offline_renderer_probe_v5_20261020\shader_manifest_v5.tsv"
 $ProbeDir  = "$Game\BepInEx\plugins\HS2_FramePairProbe"
 $Bootstrap = "$F2P\outputs\offline_renderer_repair_20261012\early_bootstrap_cpu_v2\HS2_RenderDocBootstrap.dll"
@@ -45,7 +46,7 @@ $UnityPlayer = "$Game\UnityPlayer.dll"
 $MinFreeGB = 100
 
 $Pinned = @{
-    Probe       = '42da95fdbb8c51862dc31e7452f15ee834c327ce9a45ddededf5b8844c2c7868'
+    Probe       = '37a0b87cb006c10abddba6acbcecad894128cbbd4e86c5ec5fb5219407cee6ff'
     Manifest    = 'e403c5ad5524ece1d362329716777cf8f20d774a8d9d6e9e827459daf5ff2036'
     Bootstrap   = 'fa4927883805f3473205ccd54ecc4f5d80f5d05f02778133447013b8c4197391'
     RenderDoc   = '809da38e3867d9fd09cc5c30dd5310500dee75e999166d7a14ad1ef6e9eca65d'
@@ -69,7 +70,7 @@ function FreeGB($root) { [math]::Floor((Get-PSDrive -Name $root.Substring(0, 1))
 
 switch ($Mode) {
     'launch' {
-        Require $ProbeSrc $Pinned.Probe 'Probe v5 build'
+        Require $ProbeSrc $Pinned.Probe 'Probe v6.1.0 build'
         Require $ManifestSrc $Pinned.Manifest 'Shader manifest v5'
         Require $Bootstrap $Pinned.Bootstrap 'Bootstrap build'
         Require $RenderDoc $Pinned.RenderDoc 'RenderDoc 1.46'
@@ -89,7 +90,7 @@ switch ($Mode) {
         New-Item -ItemType Directory -Path $ProbeDir | Out-Null
         Copy-Item $ProbeSrc $ProbeDir
         Require "$ProbeDir\HS2_FramePairProbe.dll" $Pinned.Probe 'Deployed probe'
-        Write-Host "Probe v5 deployed: $ProbeDir; bulk data: $Bulk ($free GB free)"
+        Write-Host "Probe v6.1.0 deployed: $ProbeDir; bulk data: $Bulk ($free GB free)"
         # early_scope_game.py re-checks processes/hashes, creates the session dir, backs up the config and launches.
         python "$Scope\early_scope_game.py" launch --session $Session `
             --bootstrap $Bootstrap --bootstrap-sha $Pinned.Bootstrap `

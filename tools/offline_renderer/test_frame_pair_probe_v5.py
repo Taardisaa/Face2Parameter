@@ -169,10 +169,10 @@ class VerifierTests(unittest.TestCase):
             failed = {c['check'] for c in r['checks'] if not c['ok']}
             self.assertTrue({'bridge_markers', 'raw_jobs_resolved'} <= failed, failed)
 
-    def v6_window(self, tmp, hooks='1', drivers=True, errors=0, missing=None):
+    def v6_window(self, tmp, hooks='1', drivers=True, errors=0, missing=None, probe='HS2_FramePairProbe 6.0.0'):
         w = self.window(tmp, mode='frame')
         r = json.loads((w / 'capture_receipt.json').read_text(encoding='utf-8'))
-        r['probe'] = 'HS2_FramePairProbe 6.0.0'
+        r['probe'] = probe
         r['driver_hooks'] = None if hooks == '0' else {'installed': list(vps.HOOKS), 'errors': errors}
         (w / 'capture_receipt.json').write_text(json.dumps(r), encoding='utf-8')
         (w / 'request.ini').write_text('Mode=frame\nDriverHooks=%s\n' % hooks, encoding='utf-8')
@@ -204,6 +204,98 @@ class VerifierTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             r = vps.verify(self.index(bridge=False), self.v6_window(tmp, hooks='0', drivers=False), NONCE)
             self.assertTrue(r['accepted'], [c for c in r['checks'] if not c['ok']])
+
+    @staticmethod
+    def smr_native(**over):
+        nat = {'flags_0x128': '0x0', 'smr_mesh_0x1d8': '0x1234', 'smr_mesh_is_shared_mesh': True,
+               'smr_has_last_position_data_0x28d': 1, 'smr_force_matrix_recalc_0x28e': 0, 'smr_dirty_0x2c4': 0,
+               'smr_skin_buffer_0x290': '0x5000', 'smr_prev_skin_buffer_0x298': '0x6000',
+               'skin_buffer_holds_frame': 1000, 'prev_skin_buffer_holds_frame': 1001}
+        nat.update(over)
+        return nat
+
+    def v61_window(self, tmp, scene_rows, slot_rows, renders_rows=()):
+        w = self.v6_window(tmp, hooks='0', drivers=False, probe='HS2_FramePairProbe 6.1.0')
+        (w / 'frames' / 'scene_005.json').write_text(json.dumps({'renderers': list(scene_rows)}), encoding='utf-8')
+        (w / 'frames' / 'renders_005.json').write_text(json.dumps(
+            {'frame_count': 1002, 'records': [{'seq': 1, 'frame_count': 1002, 'data': {'renderers': list(renders_rows)}}]}), encoding='utf-8')
+        (w / 'frames' / 'drivers_004.json').write_text(json.dumps(
+            {'frame_count': 1001, 'records': [{'seq': 1, 'frame_count': 1001, 'skin_slots': list(slot_rows)}]}), encoding='utf-8')
+        return w
+
+    def test_v61_smr_fields_accepted(self):
+        smr = {'type': 'UnityEngine.SkinnedMeshRenderer', 'native': self.smr_native()}
+        mesh = {'type': 'UnityEngine.MeshRenderer', 'native': {'flags_0x128': '0x0'}}
+        with tempfile.TemporaryDirectory() as tmp:
+            w = self.v61_window(tmp, [smr, mesh], [{'renderer': -5, 'name': 'o_head', 'native': self.smr_native()}], [smr])
+            r = vps.verify(self.index(bridge=False), w, NONCE)
+            self.assertTrue(r['accepted'], [c for c in r['checks'] if not c['ok']])
+            ev = next(c['evidence'] for c in r['checks'] if c['check'] == 'smr_native_fields_v6_1')
+            self.assertEqual((ev['rows'], ev['captured_scene_rows']), (3, 1))
+
+    def test_v61_rejects_stale_keys_errors_and_mesh_mismatch(self):
+        good = {'type': 'UnityEngine.SkinnedMeshRenderer', 'native': self.smr_native()}
+        cases = [
+            {'type': 'UnityEngine.SkinnedMeshRenderer', 'native': self.smr_native(smr_skin_buffer_0x258='0x34')},
+            {'type': 'UnityEngine.SkinnedMeshRenderer', 'native_error': 'NativeReadError: Renderer+0x38+0x1a0 = 0x0 is not the sharedMesh'},
+            {'type': 'UnityEngine.SkinnedMeshRenderer', 'native': self.smr_native(smr_mesh_is_shared_mesh=False)},
+            {'type': 'UnityEngine.SkinnedMeshRenderer', 'native': {'flags_0x128': '0x0'}},
+        ]
+        for bad in cases:
+            with tempfile.TemporaryDirectory() as tmp:
+                r = vps.verify(self.index(bridge=False), self.v61_window(tmp, [good], [], [bad]), NONCE)
+                self.assertIn('smr_native_fields_v6_1', [c['check'] for c in r['checks'] if not c['ok']], bad)
+        with tempfile.TemporaryDirectory() as tmp:     # a failing driver skin-slot row fails the window too
+            slot = {'renderer': -5, 'name': 'o_head', 'native_error': 'NativeReadError: x'}
+            r = vps.verify(self.index(bridge=False), self.v61_window(tmp, [good], [slot]), NONCE)
+            self.assertFalse(r['accepted'])
+
+    def test_v61_requires_smr_rows_in_captured_scene(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            smr = {'type': 'UnityEngine.SkinnedMeshRenderer', 'native': self.smr_native()}
+            r = vps.verify(self.index(bridge=False), self.v61_window(tmp, [], [], [smr]), NONCE)
+            self.assertIn('smr_native_fields_v6_1', [c['check'] for c in r['checks'] if not c['ok']])
+
+    def v61_bridge_window(self, tmp, transforms=3, drop=None, short=None):
+        import base64
+        w = self.window(tmp)
+        r = json.loads((w / 'capture_receipt.json').read_text(encoding='utf-8'))
+        r['probe'] = 'HS2_FramePairProbe 6.1.0'
+        r['driver_hooks'] = None
+        (w / 'capture_receipt.json').write_text(json.dumps(r), encoding='utf-8')
+        (w / 'request.ini').write_text('Mode=renderstyle\nDriverHooks=0\n', encoding='utf-8')
+        (w / 'static.json').write_text(json.dumps({'transforms': [{'i': i} for i in range(transforms)]}), encoding='utf-8')
+        smr = {'type': 'UnityEngine.SkinnedMeshRenderer', 'native': self.smr_native()}
+        (w / 'frames' / 'scene_005.json').write_text(json.dumps({'renderers': [smr]}), encoding='utf-8')
+        recs = [{'seq': 1, 'frame_count': 1002, 'phase': 'pre_cull', 'bridge_render': None, 'data': {}}]
+        for o in range(16):
+            if o == drop:
+                data = {'character_transforms_error': 'InvalidOperationException: x'}
+            else:
+                n = transforms - 1 if o == short else transforms
+                data = {'character_transforms': {'order': 'static.json transforms', 'count': n,
+                        'transforms_f32': base64.b64encode(bytes(n * 33 * 4)).decode(),
+                        'active': base64.b64encode(bytes(n)).decode()}}
+            recs.append({'seq': 2 + o, 'frame_count': 1002, 'phase': 'pre_cull', 'bridge_render': {'ordinal': o}, 'data': data})
+            recs.append({'seq': 100 + o, 'frame_count': 1002, 'phase': 'pre_render', 'bridge_render': {'ordinal': o},
+                         'data': {'renderers': [smr]}})
+        (w / 'frames' / 'renders_005.json').write_text(json.dumps({'frame_count': 1002, 'records': recs}), encoding='utf-8')
+        return w
+
+    def test_v61_bridge_pre_cull_transforms(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            r = vps.verify(self.index(), self.v61_bridge_window(tmp), NONCE)
+            self.assertTrue(r['accepted'], [c for c in r['checks'] if not c['ok']])
+            self.assertIn('bridge_pre_cull_character_transforms', [c['check'] for c in r['checks']])
+        for kw in ({'drop': 7}, {'short': 3}):
+            with tempfile.TemporaryDirectory() as tmp:
+                r = vps.verify(self.index(), self.v61_bridge_window(tmp, **kw), NONCE)
+                self.assertIn('bridge_pre_cull_character_transforms', [c['check'] for c in r['checks'] if not c['ok']], kw)
+
+    def test_v60_smr_fields_observed_invalid(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            r = vps.verify(self.index(bridge=False), self.v6_window(tmp, hooks='0', drivers=False), NONCE)
+            self.assertIn('smr_fields_invalid_probe_6_0', [o['observation'] for o in r['observations']])
 
     def test_frame_mode_ignores_bridge_checks(self):
         with tempfile.TemporaryDirectory() as tmp:

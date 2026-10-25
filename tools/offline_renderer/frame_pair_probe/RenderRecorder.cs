@@ -51,6 +51,8 @@ namespace HS2Codex.FramePairProbe
         public readonly List<BridgeRender> BridgeRenders = new List<BridgeRender>();
         public Action<int, int> OnBridgeBegin, OnBridgeEnd;   // (frameCount, ordinal)
         public int Errors;
+        // static.json transform order; exported at every bridge render's pre_cull (6.1.0).
+        public Transform[] CharacterTransforms;
 
         public RenderRecorder(ExportContext ctx, List<string> log) { _ctx = ctx; _log = log; Refresh(); StartFrame(); }
 
@@ -131,6 +133,9 @@ namespace HS2Codex.FramePairProbe
                 Record(cam, "pre_cull", id, bridge, w =>
                 {
                     w.Key("camera_state"); CameraState(w, cam);
+                    // The bridge's PoseFreeze runs before Camera.Render, so these are the transforms
+                    // each bridge render culls and draws with (head_skinning.md §10.1).
+                    if (bridge != null) w.Guard("character_transforms", t => CharacterTransformBlock(t));
                     w.Guard("render_buffer_pool", p => Dedup(p, ref _lastPool, () => { var j = new JsonOut(); PoolWalker.Write(j, _ctx.Native.Pool()); return j.ToString(); }));
                 });
                 _open.Push(id);
@@ -202,6 +207,20 @@ namespace HS2Codex.FramePairProbe
         }
 
         BridgeRender BridgeOf(int id) { return BridgeRenders.FirstOrDefault(b => b.RenderId == id && b.FrameCount == Time.frameCount); }
+
+        void CharacterTransformBlock(JsonOut w)
+        {
+            var ts = CharacterTransforms;
+            if (ts == null) throw new InvalidOperationException("character transforms not set");
+            foreach (var t in ts) if (t == null) throw new InvalidOperationException("a character transform was destroyed during the window");
+            w.Begin('{');
+            w.Key("order"); w.Str("static.json transforms");
+            w.Key("count"); w.Int(ts.Length);
+            w.Key("transform_layout"); w.Str(FramePairProbe.TransformLayout);
+            w.Key("transforms_f32"); w.Str(FramePairProbe.B64(FramePairProbe.TransformRows(ts)));
+            w.Key("active"); w.Str(Convert.ToBase64String(FramePairProbe.ActiveFlags(ts)));
+            w.End('}');
+        }
 
         void Error(string phase, Exception e)
         {
@@ -323,7 +342,8 @@ namespace HS2Codex.FramePairProbe
         void RendererState(JsonOut w, Renderer r)
         {
             w.Begin('{');
-            w.Key("id"); w.Int(r.GetInstanceID()); w.Key("enabled"); w.Bool(r.enabled); w.Key("active_in_hierarchy"); w.Bool(r.gameObject.activeInHierarchy);
+            w.Key("id"); w.Int(r.GetInstanceID()); w.Key("type"); w.Str(r.GetType().FullName);
+            w.Key("enabled"); w.Bool(r.enabled); w.Key("active_in_hierarchy"); w.Bool(r.gameObject.activeInHierarchy);
             w.Key("layer"); w.Int(r.gameObject.layer); w.Key("is_visible"); w.Bool(r.isVisible);
             w.Guard("native", n => _ctx.Native.WriteRenderer(n, r));
             w.Key("bounds"); SceneState.Value(w, r.bounds, 0, _ctx);

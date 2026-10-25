@@ -151,8 +151,110 @@ HOOKS = ('fbs', 'chara_update_force', 'chara_late_update_force', 'abmx', 'neck',
 LATE_ORDER = ('fbs', 'chara_late_update_force', 'abmx', 'neck', 'eye')
 
 
+SMR_TYPE = 'UnityEngine.SkinnedMeshRenderer'
+# Probe 6.1.0: Renderer-relative offsets (Renderer+0x38 + the BaseRenderer-relative operands of
+# SkinnedMeshRenderer::AddAsRenderNode 0x77abe0). 6.0.0 read the BaseRenderer offsets from the
+# Renderer start; its keys below are invalid data.
+SMR_KEYS_V61 = ('smr_mesh_0x1d8', 'smr_mesh_is_shared_mesh', 'smr_has_last_position_data_0x28d',
+                'smr_force_matrix_recalc_0x28e', 'smr_dirty_0x2c4', 'smr_skin_buffer_0x290', 'smr_prev_skin_buffer_0x298')
+SMR_KEYS_V60 = ('smr_has_last_position_data_0x255', 'smr_force_matrix_recalc_0x256', 'smr_dirty_0x28c',
+                'smr_skin_buffer_0x258', 'smr_prev_skin_buffer_0x260')
+
+
+def probe_version(probe: str):
+    try:
+        return tuple(int(x) for x in probe.split()[1].split('.'))
+    except (IndexError, ValueError):
+        return ()
+
+
+def smr_rows(doc, path='', parent_key=None):
+    """(path, row) of every SkinnedMeshRenderer row: scene/renders renderer rows by their type,
+    driver skin_slots rows by position."""
+    if isinstance(doc, dict):
+        if doc.get('type') == SMR_TYPE or (parent_key == 'skin_slots' and 'renderer' in doc):
+            yield path, doc
+        for k, v in doc.items():
+            yield from smr_rows(v, path + '/' + k, k)
+    elif isinstance(doc, list):
+        for i, v in enumerate(doc):
+            yield from smr_rows(v, '%s[%d]' % (path, i), parent_key)
+
+
+def smr_row_problem(row):
+    if 'native_error' in row:
+        return 'native_error: ' + str(row['native_error'])
+    nat = row.get('native')
+    if not isinstance(nat, dict):
+        return 'no native section'
+    stale = [k for k in SMR_KEYS_V60 if k in nat]
+    if stale:
+        return 'v6.0 keys present: %s' % stale
+    missing = [k for k in SMR_KEYS_V61 if k not in nat]
+    if missing:
+        return 'missing: %s' % missing
+    if nat['smr_mesh_is_shared_mesh'] is not True:
+        return 'cached mesh is not sharedMesh'
+    return None
+
+
+def verify_smr_native(window, receipt, captured, frames, check, observe):
+    """Every SMR row of every exported frame carries the 6.1 fields with the cached-mesh check."""
+    version = probe_version(receipt.get('probe') or '')
+    if version[:2] == (6, 0):
+        observe('smr_fields_invalid_probe_6_0', 'smr_* and *_holds_frame were read from Renderer+offset instead of '
+                'Renderer+0x38+offset (SkinnedMeshRenderer::AddAsRenderNode 0x77abe0); not usable')
+        return
+    rows, bad = 0, []
+    scene_rows = 0
+    for f in sorted((window / 'frames').glob('*.json')):
+        if not f.name.startswith(('scene_', 'renders_', 'drivers_')):
+            continue
+        doc = json.loads(f.read_text(encoding='utf-8'))
+        for path, row in smr_rows(doc):
+            rows += 1
+            if captured in frames and f.name == 'scene_%03d.json' % frames.index(captured):
+                scene_rows += 1
+            problem = smr_row_problem(row)
+            if problem:
+                bad.append({'file': f.name, 'path': path, 'problem': problem})
+    check('smr_native_fields_v6_1', rows > 0 and scene_rows > 0 and not bad,
+          {'rows': rows, 'captured_scene_rows': scene_rows, 'bad': bad[:20], 'bad_count': len(bad)})
+
+
+def verify_bridge_transforms(window, receipt, captured, frames, check):
+    """Probe 6.1.0 renderstyle: every bridge render's pre_cull record carries the character
+    local/world TRS (static.json order, 33 float32 per transform) it is culled and drawn with."""
+    if receipt.get('mode') != 'renderstyle' or probe_version(receipt.get('probe') or '') < (6, 1):
+        return
+    import base64
+    count = len(json.loads((window / 'static.json').read_text(encoding='utf-8'))['transforms'])
+    n = receipt.get('bridge_expected_renders')
+    rows, bad = [], []
+    if captured in frames:
+        path = window / 'frames' / ('renders_%03d.json' % frames.index(captured))
+        if path.is_file():
+            for r in json.loads(path.read_text(encoding='utf-8'))['records']:
+                if r.get('phase') != 'pre_cull' or not r.get('bridge_render'):
+                    continue
+                ordinal = r['bridge_render']['ordinal']
+                rows.append(ordinal)
+                ct = (r.get('data') or {}).get('character_transforms')
+                if not isinstance(ct, dict):
+                    bad.append({'ordinal': ordinal, 'problem': 'missing',
+                                'error': (r.get('data') or {}).get('character_transforms_error') or r.get('data_error')})
+                    continue
+                size = len(base64.b64decode(ct.get('transforms_f32', '')))
+                if ct.get('count') != count or size != count * 33 * 4 or len(base64.b64decode(ct.get('active', ''))) != count:
+                    bad.append({'ordinal': ordinal, 'problem': 'size', 'count': ct.get('count'), 'bytes': size, 'static': count})
+    check('bridge_pre_cull_character_transforms', sorted(rows) == list(range(n or 0)) and not bad,
+          {'ordinals': rows, 'static_transforms': count, 'bad': bad[:20]})
+
+
 def verify_v6(window, receipt, captured, frames, check, observe):
     """Probe v6 additions: driver hooks (when requested), skin slots in renders."""
+    verify_smr_native(window, receipt, captured, frames, check, observe)
+    verify_bridge_transforms(window, receipt, captured, frames, check)
     req = {}
     for line in (window / 'request.ini').read_text(encoding='utf-8').splitlines():
         if '=' in line:

@@ -152,6 +152,15 @@ namespace HS2Codex.FramePairProbe
                 Validation.Add("info: BaseRenderer localToWorld bit-equal for " + equal + "/" + n + " MeshRenderers; mismatched: " + string.Join(", ", mismatched.ToArray()));
                 return n > 0 && equal * 10 >= n * 9;
             });
+            // Probe 6.1.0: the SkinnedMeshRenderer::AddAsRenderNode fields are BaseRenderer-relative;
+            // their base is accepted only when the cached Mesh* is the sharedMesh native object.
+            Check("SkinnedMeshRenderer Renderer+0x38+0x1a0 equals the sharedMesh native object for every scene SkinnedMeshRenderer", () =>
+            {
+                var smrs = renderers.OfType<SkinnedMeshRenderer>().ToArray();
+                foreach (var s in smrs) SmrNative.RequireMesh(Memory, Ptr(s), Ptr(s.sharedMesh), s.name + "#" + s.GetInstanceID());
+                Validation.Add("info: SkinnedMeshRenderer cached mesh checked " + smrs.Length);
+                return smrs.Length > 0;
+            });
             Check("renderer visibility bit equals Renderer.isVisible", () =>
                 renderers.All(r => ((Mem.U32(Memory, Ptr(r) + UnityPlayerLayout.RendererFlags) & UnityPlayerLayout.RendererVisibleBit) != 0
                                     && Mem.I32(Memory, Ptr(r) + UnityPlayerLayout.RendererSceneHandle) != -1) == r.isVisible));
@@ -400,14 +409,24 @@ namespace HS2Codex.FramePairProbe
             w.End('}');
         }
 
+        // Keys name the Renderer-relative offsets (= Renderer+0x38 + the BaseRenderer-relative
+        // operand of SkinnedMeshRenderer::AddAsRenderNode, see UnityPlayerLayout). The mesh check
+        // runs before any key is written; on a mismatch the whole native section becomes
+        // native_error and the verifier rejects the window.
         void WriteSkinFields(JsonOut w, Renderer r, ulong p)
         {
-            w.Key("smr_has_last_position_data_0x255"); w.Int(Mem.U8(Memory, p + UnityPlayerLayout.SmrHasLastPosition));
-            w.Key("smr_force_matrix_recalc_0x256"); w.Int(Mem.U8(Memory, p + UnityPlayerLayout.SmrForceMatrixRecalc));
-            w.Key("smr_dirty_0x28c"); w.Int(Mem.U8(Memory, p + UnityPlayerLayout.SmrDirty));
-            ulong s0 = Mem.U64(Memory, p + UnityPlayerLayout.SmrSkinBuffer), s1 = Mem.U64(Memory, p + UnityPlayerLayout.SmrPrevSkinBuffer);
-            w.Key("smr_skin_buffer_0x258"); w.Str("0x" + s0.ToString("x"));
-            w.Key("smr_prev_skin_buffer_0x260"); w.Str("0x" + s1.ToString("x"));
+            var smr = (SkinnedMeshRenderer)r;
+            ulong mesh = Ptr(smr.sharedMesh);
+            SmrNative.RequireMesh(Memory, p, mesh, r.name + "#" + r.GetInstanceID());
+            w.Key("smr_mesh_0x1d8"); w.Str("0x" + mesh.ToString("x"));
+            w.Key("smr_mesh_is_shared_mesh"); w.Bool(true);
+            w.Key("smr_has_last_position_data_0x28d"); w.Int(Mem.U8(Memory, UnityPlayerLayout.SmrField(p, UnityPlayerLayout.SmrBaseHasLastPosition)));
+            w.Key("smr_force_matrix_recalc_0x28e"); w.Int(Mem.U8(Memory, UnityPlayerLayout.SmrField(p, UnityPlayerLayout.SmrBaseForceMatrixRecalc)));
+            w.Key("smr_dirty_0x2c4"); w.Int(Mem.U8(Memory, UnityPlayerLayout.SmrField(p, UnityPlayerLayout.SmrBaseDirty)));
+            ulong s0 = Mem.U64(Memory, UnityPlayerLayout.SmrField(p, UnityPlayerLayout.SmrBaseSkinBuffer));
+            ulong s1 = Mem.U64(Memory, UnityPlayerLayout.SmrField(p, UnityPlayerLayout.SmrBasePrevSkinBuffer));
+            w.Key("smr_skin_buffer_0x290"); w.Str("0x" + s0.ToString("x"));
+            w.Key("smr_prev_skin_buffer_0x298"); w.Str("0x" + s1.ToString("x"));
             if (SkinSlots != null)
             {
                 w.Key("skin_buffer_holds_frame"); w.Int(SkinSlots.HoldsFrame(s0));
@@ -419,7 +438,8 @@ namespace HS2Codex.FramePairProbe
 
         public void WriteSkinOnly(JsonOut w, Renderer r) { WriteSkinFields(w, r, Ptr(r)); }
 
-        public ulong SkinBuffer(SkinnedMeshRenderer r) { return Mem.U64(Memory, Ptr(r) + UnityPlayerLayout.SmrSkinBuffer); }
+        // End-of-frame slot-0 observation; a cached-mesh mismatch throws and aborts the window.
+        public ulong SkinBuffer(SkinnedMeshRenderer r) { return SmrNative.SkinBuffer(Memory, Ptr(r), Ptr(r.sharedMesh), r.name + "#" + r.GetInstanceID()); }
 
         public void WriteSharedMaterialData(JsonOut w, Material m)
         {

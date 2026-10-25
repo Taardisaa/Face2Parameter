@@ -300,9 +300,36 @@ static class Program
         Check(s2 == s1 + 1, "sequence counter");
     }
 
+    // Probe 6.1.0: SkinnedMeshRenderer::AddAsRenderNode (0x77abe0) operands are relative to the
+    // BaseRenderer subobject at Renderer+0x38.
+    static void TestSmrNative()
+    {
+        Check(UnityPlayerLayout.SmrField(0x1000, UnityPlayerLayout.SmrBaseMesh) == 0x1000 + 0x1d8, "mesh at Renderer+0x1d8");
+        Check(UnityPlayerLayout.SmrField(0, UnityPlayerLayout.SmrBaseHasLastPosition) == 0x28d
+              && UnityPlayerLayout.SmrField(0, UnityPlayerLayout.SmrBaseForceMatrixRecalc) == 0x28e
+              && UnityPlayerLayout.SmrField(0, UnityPlayerLayout.SmrBaseSkinBuffer) == 0x290
+              && UnityPlayerLayout.SmrField(0, UnityPlayerLayout.SmrBasePrevSkinBuffer) == 0x298
+              && UnityPlayerLayout.SmrField(0, UnityPlayerLayout.SmrBaseDirty) == 0x2c4, "Renderer-relative skin field offsets");
+
+        var m = new FakeMemory();
+        ulong smr = m.Alloc(0x400), mesh = 0x7700ABCDUL;
+        m.U64(smr + 0x1d8, mesh);
+        m.U64(smr + 0x290, 0x5000); m.U64(smr + 0x298, 0x6000);
+        // The v6.0.0 (wrong) slots hold unrelated data, as observed for o_head.
+        m.U64(smr + 0x258, 0x16a00000034UL); m.U64(smr + 0x260, 0x3a);
+        Check(SmrNative.SkinBuffer(m, smr, mesh, "o_head") == 0x5000, "slot 0 read at Renderer+0x290 after the mesh check");
+        Throws<NativeReadError>(() => SmrNative.RequireMesh(m, smr, mesh + 8, "o_head"), "cached mesh differs from sharedMesh");
+        Throws<NativeReadError>(() => SmrNative.SkinBuffer(m, smr, 0, "o_head"), "null sharedMesh with a cached mesh");
+        Throws<NativeReadError>(() => SmrNative.RequireMesh(m, 0, mesh, "o_head"), "renderer without native object");
+        Throws<NativeReadError>(() => SmrNative.RequireMesh(m, 0x9990000, mesh, "o_head"), "unreadable renderer");
+        ulong empty = m.Alloc(0x400);
+        SmrNative.RequireMesh(m, empty, 0, "no_mesh");
+        Check(true, "null sharedMesh with null cached mesh accepted");
+    }
+
     static int Main()
     {
-        foreach (var t in new Action[] { TestPool, TestSheet, TestNameTables, TestRequest, TestJson, TestBridgeBody, TestV6 })
+        foreach (var t in new Action[] { TestPool, TestSheet, TestNameTables, TestRequest, TestJson, TestBridgeBody, TestV6, TestSmrNative })
         {
             try { t(); }
             catch (Exception e) { failures++; Console.WriteLine("FAIL (exception in " + t.Method.Name + "): " + e); }

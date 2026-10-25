@@ -138,12 +138,22 @@ namespace HS2Codex.FramePairProbe
         // (+0xbc transform update frame -> node+0xb4, +0xf0 flags -> node+0xe8 = Renderer+0x128).
         public const int RendererBase = 0x38, BaseL2W = 0x08, BasePrevL2W = 0x48, BaseUpdateFrame = 0xBC, BaseFlags = 0xF0;
         public const int BaseBlockStart = 0x08, BaseBlockLength = 0xF4;
-        // SkinnedMeshRenderer::AddAsRenderNode 0x77abe0: +0x28c re-skin (dirty) byte (cleared at
-        // 0x77ad53 after PrepareSkin/SkinOnGPU), +0x256 forceMatrixRecalculationPerRender test,
-        // +0x258 / +0x260 the two GfxBuffer* passed to MeshRenderingData::Init(mesh, mesh, [+0x258],
-        // [+0x260]) (skinned VB and previous-position VB), +0x255 _HasLastPositionData (0x77ae22 ->
-        // RenderNode+0xe8 bit 9).
-        public const int SmrHasLastPosition = 0x255, SmrForceMatrixRecalc = 0x256, SmrSkinBuffer = 0x258, SmrPrevSkinBuffer = 0x260, SmrDirty = 0x28C;
+        // SkinnedMeshRenderer::AddAsRenderNode 0x77abe0 is entered with this = the BaseRenderer
+        // subobject (rbx = Renderer+0x38): `lea rsi,[rbx-0x38]` (0x77ac43) is the SkinnedMeshRenderer*
+        // passed to GetActiveBlendShapeCount/SkinOnGPU/PrepareSkin, and rcx = rbx goes to
+        // Renderer::AddAsRenderNode (0x77ad8f). Its operands are therefore BASE-relative
+        // (v6.0.0 wrongly added them to Renderer*; probe 6.1.0 reads Renderer+0x38+offset):
+        //   [rbx+0x1a0] cached Mesh* (== [rsi+0x1d8] at 0x77ac8a; Mesh::CreateMesh test at 0x77ac0e),
+        //   [rbx+0x28c] re-skin (dirty) byte, cleared at 0x77ad53 after PrepareSkin/SkinOnGPU,
+        //   [rbx+0x256] forceMatrixRecalculationPerRender test,
+        //   [rbx+0x258] / [rbx+0x260] the two GfxBuffer* passed to MeshRenderingData::Init(mesh, mesh,
+        //   [+0x258], [+0x260]) (skinned VB and previous-position VB),
+        //   [rbx+0x255] _HasLastPositionData (0x77ae22 -> RenderNode+0xe8 bit 9).
+        // Renderer-relative: mesh +0x1d8, +0x28d, +0x28e, +0x290, +0x298, +0x2c4.
+        public const int SmrBaseMesh = 0x1A0, SmrBaseHasLastPosition = 0x255, SmrBaseForceMatrixRecalc = 0x256,
+                         SmrBaseSkinBuffer = 0x258, SmrBasePrevSkinBuffer = 0x260, SmrBaseDirty = 0x28C;
+        // Renderer* -> address of a BaseRenderer-relative SkinnedMeshRenderer field.
+        public static ulong SmrField(ulong renderer, int baseOffset) { return renderer + (ulong)RendererBase + (ulong)baseOffset; }
         // Material+0xb0 = SharedMaterialData* (GetWritableSharedMaterialData; Material::UpdateHashes
         // 0x84e3b0 writes +0xd0 = Pass::ComputePassValuesHash of the shadow-caster pass (caster sort
         // key bits 40..61), +0xd4 = ComputeStateBlockValuesHash; +0xd8 flags (bit 0 built, bit 1
@@ -805,6 +815,30 @@ namespace HS2Codex.FramePairProbe
         {
             int f;
             return buffer != 0 && _lastEndOfFrameSlot0.TryGetValue(buffer, out f) ? f : -1;
+        }
+    }
+
+    // SkinnedMeshRenderer native fields (probe 6.1.0). The BaseRenderer-relative layout of
+    // SkinnedMeshRenderer::AddAsRenderNode is used only when its cached Mesh*
+    // (Renderer+0x38+0x1a0) is exactly the native object of the renderer's sharedMesh
+    // (0 when sharedMesh is null); anything else fails closed.
+    internal static class SmrNative
+    {
+        public static ulong MeshAddress(ulong renderer) { return UnityPlayerLayout.SmrField(renderer, UnityPlayerLayout.SmrBaseMesh); }
+
+        public static void RequireMesh(IMemory m, ulong renderer, ulong sharedMesh, string name)
+        {
+            if (renderer == 0) throw new NativeReadError("SkinnedMeshRenderer " + name + " has no native object");
+            ulong got = Mem.U64(m, MeshAddress(renderer));
+            if (got != sharedMesh)
+                throw new NativeReadError("SkinnedMeshRenderer " + name + ": Renderer+0x38+0x1a0 = 0x" + got.ToString("x")
+                                          + " is not the sharedMesh native object 0x" + sharedMesh.ToString("x"));
+        }
+
+        public static ulong SkinBuffer(IMemory m, ulong renderer, ulong sharedMesh, string name)
+        {
+            RequireMesh(m, renderer, sharedMesh, name);
+            return Mem.U64(m, UnityPlayerLayout.SmrField(renderer, UnityPlayerLayout.SmrBaseSkinBuffer));
         }
     }
 

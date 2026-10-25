@@ -246,11 +246,12 @@ Probe 6.0.0 adds the BaseRenderer-relative offsets to the SMR pointer. So every
 `0x16a00000034` and `0x3a`.
 
 The fix is to read at `Renderer+0x38+offset`, and to fail closed unless
-`Renderer+0x38+0x1a0 == native(sharedMesh)`. It is not built yet.
+`Renderer+0x38+0x1a0 == native(sharedMesh)`. Probe 6.1.0 implements it (section 10).
 
 The skin-slot rule (bridge slot 0 = N−2, slot 1 = N−1) does not use these fields. It comes from
 pairing the captured vertex buffers with the exports, through `pair_head_surfaces.py` (head meshes
-only, see 9.3), so it still holds.
+only, see 9.3), so it still holds. The all-mesh run of the unchanged tool confirms it
+(`hs2_offline_head_skinning.md` §10.1).
 
 ### 9.2 Neck hook JIT check: no effect observed
 
@@ -286,7 +287,95 @@ idempotence property of the setter, not evidence about the JIT.
 
 - `pair_skin_capture.py` fails on Meshes=ALL exports: on a non-head surface the upload has 54186
   words and the generated buffer 49260. The session used `pair_head_surfaces.py`, which restricts
-  the unchanged tool to the 8 head meshes.
+  the unchanged tool to the 8 head meshes. **Resolved:** the cause was the TEXCOORD4 role label in
+  `gpu_skin_inputs.upload_points` (fixed by the skinning work, commit fc2b5d5,
+  `hs2_offline_head_skinning.md` §10.1). The wrapper is superseded and was moved to
+  `E:/HS2_offline_renderer_data/paired_session_v6_20261025/deprecated/pair_head_surfaces.py`; its
+  outputs (`pairing_head_2def4f9f…`) stay where they are.
 - `HS2Mod/tests/geometry_export/lowered_quality.py` refuses to run. Its guard reports that
   `tools/geometry_quality/mesh_quality.py` changed (commit 1a02d3f) and no refrozen configuration
   exists. It was not bypassed.
+
+## 10 Probe 6.1.0 (2026-10-25, built and tested; not launched)
+
+| item | value |
+|---|---|
+| build | `outputs/offline_renderer_probe_v6_1_20261025/build_v6_1/HS2_FramePairProbe.dll`; a clean `--no-incremental` rebuild into `rebuild_check/build` produced the same bytes |
+| SHA-256 | `37a0b87cb006c10abddba6acbcecad894128cbbd4e86c5ec5fb5219407cee6ff` |
+| plugin | `codex.hs2.framepairprobe` **6.1.0**; receipts and exports carry `HS2_FramePairProbe 6.1.0` |
+| session script | `paired_capture_session.ps1`, pinned to the new SHA, with fresh dirs `HS2Mod/…/paired_capture_session_v6_1_20261025` and `E:/HS2_offline_renderer_data/paired_session_v6_1_20261025` (neither exists yet) |
+| other pins | unchanged and re-checked against the installed files: bridge `efa943cb…`, readback `b1cb390a…`, Doorstop config `4e9baa18…`, UnityPlayer `5034cdc2…`, bootstrap `fa492788…`, manifest `e403c5ad…`. No dispatch request file is present. |
+| superseded (moved, not deleted) | 6.0.0 script → `frame_pair_probe/deprecated/paired_capture_session_v6_0.ps1`; the pre-rebuild `obj/` → `outputs/offline_renderer_probe_v6_1_20261025/rebuild_check/obj_before_rebuild` |
+
+The runbook in §6 is unchanged apart from the new pins and dirs. The BepInEx log must show
+`FramePairProbe 6.1.0 ready`.
+
+### 10.1 SkinnedMeshRenderer fields (fix of 9.1)
+
+- **Offsets.** `UnityPlayerLayout.SmrBase*` holds the BaseRenderer-relative operands of 0x77abe0:
+  mesh `0x1a0`, `0x255`, `0x256`, `0x258`, `0x260`, `0x28c`. Reads go through
+  `SmrField(renderer) = Renderer + 0x38 + offset`.
+- **Fail closed.** `SmrNative.RequireMesh` requires `[Renderer+0x38+0x1a0]` to equal the sharedMesh
+  native object (0 for a null sharedMesh). It is applied in three places:
+  - in `ValidateWithScene` for every scene SkinnedMeshRenderer, so a mismatch stops the window
+    before the trigger;
+  - before any skin key is written, so a mismatch makes the row's `native` a `native_error`;
+  - in the end-of-frame slot observation, so a mismatch aborts the window.
+- **Exported keys** are named by the Renderer-relative offset:
+  - `smr_mesh_0x1d8` and `smr_mesh_is_shared_mesh`;
+  - `smr_has_last_position_data_0x28d`, `smr_force_matrix_recalc_0x28e`, `smr_dirty_0x2c4`;
+  - `smr_skin_buffer_0x290`, `smr_prev_skin_buffer_0x298`;
+  - `skin_buffer_holds_frame` and `prev_skin_buffer_holds_frame`, as before.
+
+  The 6.0 key names are not reused.
+- **Renders rows** now carry `type`, so skinned-mesh rows can be identified in every export.
+
+### 10.2 Character transforms at every bridge render's pre_cull
+
+The bridge's `PoseFreeze.Apply` runs before `Camera.Render`, so each bridge render culls and draws
+with the frozen pose. Each bridge render's `pre_cull` record now carries
+`data.character_transforms`:
+- `order` = `static.json transforms` and `count`;
+- `transform_layout` (the frame-export layout of 33 float32 per transform: local TRS, world
+  position and rotation, localToWorld);
+- `transforms_f32` and the `active` flags.
+
+The encoding is the frame exporter's own (`FramePairProbe.TransformRows`). Only getters are used.
+This supplies the poses needed for the 465 frozen-pose matrix rows (`hs2_offline_head_skinning.md`
+§10.1).
+
+### 10.3 Verifier and pairing tool
+
+- **`verify_probe_v5_session.py`.** Two new checks:
+  - `smr_native_fields_v6_1` (probe ≥ 6.1): every skinned-mesh row in every scene, renders and
+    drivers export must have the 6.1 keys and `smr_mesh_is_shared_mesh` true, with no
+    `native_error`, no 6.0 key and at least one row in the captured scene.
+  - `bridge_pre_cull_character_transforms` (renderstyle, probe ≥ 6.1): ordinals `0..n-1` must be
+    complete and sized to `static.json`.
+
+  For 6.0 windows the verifier records the observation `smr_fields_invalid_probe_6_0` instead.
+  The v6 mode-b window still verifies as accepted, 30/30
+  (`paired_session_v6_20261025/verify_v61tool_2def4f9f…`).
+- **`pair_skin_capture.py`.** All-mesh pairing needed no change to the tool itself (see 9.3). The
+  tool now also compares every object matrix against each bridge render's pre_cull pose, using the
+  same `paired_skin.unity_object_matrices`. It reports:
+  - per row: `o2w_bit_exact_bridge_renders` and `w2o_bit_exact_bridge_renders`, kept separate from
+    the frame hits;
+  - `bridge_pre_cull_poses` (status and ordinals);
+  - `object_matrix_summary` (counts only, no acceptance rule).
+
+  A partial or malformed pose export fails closed. On a 6.0 window the poses are reported as
+  absent.
+- **Regression.** On the v6 mode-b window, `skin`, `bindings` and the existing matrix keys equal the
+  skinning work's `skinning_20261025/pair_all_v2_2def4f9f…/pairing.json` exactly: 41 skin rows and
+  698 matrix rows, of which 465 match no frame, as before. The run is in
+  `E:/HS2_offline_renderer_data/probe_v6_1_tooling_20261025/`.
+
+### 10.4 Tests (CPU)
+
+| suite | result |
+|---|---|
+| `tests/ProbeCoreTests` | 61 passed. 8 are new `TestSmrNative` cases: offsets, the mesh check, null and unreadable cases, and that the 6.0 slots are not read. |
+| `test_frame_pair_probe_v5.py` | 16 passed. New: 6.1 skinned-mesh accept/reject/required-rows, the 6.0 observation, and bridge pre_cull transforms accept/reject. |
+| `test_pair_skin_capture.py` (new) | 4 passed: pose loading, older probe or frame mode, fail-closed cases, summary |
+| `test_paired_skin.py`, `test_gpu_skin_inputs.py` | 17 passed (unchanged) |

@@ -41,7 +41,7 @@ namespace HS2Codex.FramePairProbe
     [BepInPlugin("codex.hs2.framepairprobe", "HS2 Frame Pair Probe", Version)]
     public class FramePairProbe : BaseUnityPlugin
     {
-        public const string Version = "6.0.0";
+        public const string Version = "6.1.0";
         const string Magic = "HS2PAIRMARKERv01";
         const string BridgeMagic = "HS2PAIRBRIDGEv05";
         const string Tail = "HS2PAIRMARKEREND";
@@ -192,6 +192,7 @@ namespace HS2Codex.FramePairProbe
             _smrsForSlots = smrs;
             WriteStatic(Path.Combine(outDir, "static.json"), cha, transforms, smrs, index, new HashSet<string>(req.Meshes.Split(',')), outDir, native);
             var recorder = new RenderRecorder(ctx, log);
+            recorder.CharacterTransforms = transforms;
             _marker = MarkerTexture("HS2_FramePairProbe_marker");
             _bridgeBegin = MarkerTexture("HS2_FramePairProbe_bridge_begin");
             _bridgeEnd = MarkerTexture("HS2_FramePairProbe_bridge_end");
@@ -398,27 +399,16 @@ namespace HS2Codex.FramePairProbe
 
         static void WriteFrame(string path, int k, Transform[] transforms, SkinnedMeshRenderer[] smrs)
         {
-            var f = new float[transforms.Length * 33];
-            for (int i = 0; i < transforms.Length; i++)
-            {
-                var t = transforms[i];
-                int o = i * 33;
-                Put(f, ref o, t.localPosition); Put(f, ref o, t.localRotation); Put(f, ref o, t.localScale);
-                Put(f, ref o, t.position); Put(f, ref o, t.rotation);
-                var m = t.localToWorldMatrix;
-                for (int r = 0; r < 4; r++) for (int c = 0; c < 4; c++) f[o++] = m[r, c];
-            }
+            var f = TransformRows(transforms);
             var sb = new StringBuilder(1 << 20);
             sb.Append("{\"index\":").Append(k).Append(",\"frame_count\":").Append(Time.frameCount)
               .Append(",\"rendered_frame_count\":").Append(Time.renderedFrameCount)
               .Append(",\"realtime\":").Append(Time.realtimeSinceStartup.ToString("R", CultureInfo.InvariantCulture))
               .Append(",\"time\":").Append(Time.time.ToString("R", CultureInfo.InvariantCulture))
               .Append(",\"delta_time\":").Append(Time.deltaTime.ToString("R", CultureInfo.InvariantCulture))
-              .Append(",\"transform_layout\":\"localPosition3 localRotation4 localScale3 position3 rotation4 localToWorld16(row-major)\"")
+              .Append(",\"transform_layout\":\"").Append(TransformLayout).Append("\"")
               .Append(",\"transforms_f32\":\"").Append(B64(f)).Append("\",\"active\":\"");
-            var act = new byte[transforms.Length];
-            for (int i = 0; i < transforms.Length; i++) act[i] = (byte)(transforms[i].gameObject.activeInHierarchy ? 1 : 0);
-            sb.Append(Convert.ToBase64String(act)).Append("\",\"renderers\":[");
+            sb.Append(Convert.ToBase64String(ActiveFlags(transforms))).Append("\",\"renderers\":[");
             for (int s = 0; s < smrs.Length; s++)
             {
                 var r = smrs[s];
@@ -563,9 +553,35 @@ namespace HS2Codex.FramePairProbe
         static float[] V3(Vector3[] v) { var f = new float[v.Length * 3]; for (int i = 0; i < v.Length; i++) { f[3 * i] = v[i].x; f[3 * i + 1] = v[i].y; f[3 * i + 2] = v[i].z; } return f; }
         static float[] V2(Vector2[] v) { var f = new float[v.Length * 2]; for (int i = 0; i < v.Length; i++) { f[2 * i] = v[i].x; f[2 * i + 1] = v[i].y; } return f; }
         static float[] V4(Vector4[] v) { var f = new float[v.Length * 4]; for (int i = 0; i < v.Length; i++) { f[4 * i] = v[i].x; f[4 * i + 1] = v[i].y; f[4 * i + 2] = v[i].z; f[4 * i + 3] = v[i].w; } return f; }
+        // Per-transform rows in static.json order (frame exports and, since 6.1.0, every bridge
+        // render's pre_cull record). Getters only; nothing is written to the transforms.
+        internal const string TransformLayout = "localPosition3 localRotation4 localScale3 position3 rotation4 localToWorld16(row-major)";
+
+        internal static float[] TransformRows(Transform[] transforms)
+        {
+            var f = new float[transforms.Length * 33];
+            for (int i = 0; i < transforms.Length; i++)
+            {
+                var t = transforms[i];
+                int o = i * 33;
+                Put(f, ref o, t.localPosition); Put(f, ref o, t.localRotation); Put(f, ref o, t.localScale);
+                Put(f, ref o, t.position); Put(f, ref o, t.rotation);
+                var m = t.localToWorldMatrix;
+                for (int r = 0; r < 4; r++) for (int c = 0; c < 4; c++) f[o++] = m[r, c];
+            }
+            return f;
+        }
+
+        internal static byte[] ActiveFlags(Transform[] transforms)
+        {
+            var act = new byte[transforms.Length];
+            for (int i = 0; i < transforms.Length; i++) act[i] = (byte)(transforms[i].gameObject.activeInHierarchy ? 1 : 0);
+            return act;
+        }
+
         static void Put(float[] f, ref int o, Vector3 v) { f[o++] = v.x; f[o++] = v.y; f[o++] = v.z; }
         static void Put(float[] f, ref int o, Quaternion q) { f[o++] = q.x; f[o++] = q.y; f[o++] = q.z; f[o++] = q.w; }
-        static string B64(float[] f) { var b = new byte[f.Length * 4]; Buffer.BlockCopy(f, 0, b, 0, b.Length); return Convert.ToBase64String(b); }
+        internal static string B64(float[] f) { var b = new byte[f.Length * 4]; Buffer.BlockCopy(f, 0, b, 0, b.Length); return Convert.ToBase64String(b); }
         static string Safe(string s) { var sb = new StringBuilder(); foreach (var c in s) sb.Append(char.IsLetterOrDigit(c) ? c : '_'); return sb.ToString(); }
         static byte[] Hex(string s) { var b = new byte[s.Length / 2]; for (int i = 0; i < b.Length; i++) b[i] = Convert.ToByte(s.Substring(2 * i, 2), 16); return b; }
 

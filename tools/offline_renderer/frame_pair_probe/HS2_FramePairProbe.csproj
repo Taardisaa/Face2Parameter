@@ -6,7 +6,7 @@
     <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
     <AllowUnsafeBlocks>false</AllowUnsafeBlocks>
     <Deterministic>true</Deterministic>
-    <Version>6.0.0</Version>
+    <Version>6.1.0</Version>
     <HS2GameRoot Condition="'$(HS2GameRoot)' == ''">E:\HoneySelect2_ArcticFox</HS2GameRoot>
   </PropertyGroup>
   <ItemGroup>
