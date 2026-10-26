@@ -191,6 +191,31 @@ def normalize(scene, renders_doc, camera='Main Camera', render_index=0, seed=Non
     # per-render renderer state (bounds as Unity held them at this render's OnPreRender;
     # float32 printed round-trip)
     s['_render_renderers'] = {int(r['id']): r for r in (d.get('renderers') or [])}
+    # probe v7: RenderNode+0x100 (= Mesh+0x174, checked by the probe) of every node of this
+    # render's queues, exported at OnPostRender of the same render (render_id)
+    nodes = {}
+    queue_order = []
+    for r2 in resolve_records(renders_doc, seed):
+        if r2['phase'] == 'post_render' and r2.get('render_id') == rec.get('render_id'):
+            rn = r2['data'].get('render_nodes')
+            if isinstance(rn, dict) and rn.get('queues') is not None:
+                for q in rn['queues']:
+                    for idx, inst, mesh_id, check in q['nodes']:
+                        # node+0x100 as read (for mesh renderers the probe checked it against
+                        # the cached Mesh+0x174; other renderer types carry their own value)
+                        nodes[int(inst)] = int(mesh_id)
+                    if q['queue'].startswith('context_0x7d0'):
+                        queue_order = [int(n_[1]) for n_ in q['nodes']]
+    if nodes:
+        s['_render_nodes'] = nodes
+        s['_render_node_queue'] = queue_order
+    # probe v7: transform chains (top -> transform, local TRS) of the camera and its lights at
+    # this render's OnPreCull
+    for r2 in resolve_records(renders_doc, seed):
+        if r2['phase'] == 'pre_cull' and r2.get('render_id') == rec.get('render_id'):
+            tc = r2['data'].get('transform_chains')
+            if isinstance(tc, dict) and tc.get('camera_main_chain'):
+                s['_transform_chains'] = tc
     s['_v5'] = {'render_record': rec, 'camera': camera}
     return s
 

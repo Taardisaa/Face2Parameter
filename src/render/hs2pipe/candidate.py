@@ -463,17 +463,53 @@ class BridgeCandidateRenderer:
                 cur = parent[cur]
         out = {'renders': 0, 'rows': 0, 'root_trs_equal': 0, 'bounds_equal': 0, 'bounds_rows': 0,
                'animator_rewritten': None, 'forward_frozen_mismatch': [], 'mismatch': []}
+        # probe v7: the transforms the pose Animator writes (clip bindings of the current state,
+        # write-default-values: every bound transform); PoseFreeze's Update(0) writes exactly these
+        written = None
+        cb = cfg.session / ('pose_clip_bindings_%s.json' % cfg.nonce)
+        if cb.exists():
+            anim = json.loads(cb.read_text(encoding='utf-8'))['animators']
+            written = {tf[i]['id'] for a in anim for i in a['transforms_written_by_current_state']}
+            out['clip_binding_written'] = len(written)
         bone_bounds = set()
         self.__dict__.setdefault('_bone_aabbs', {})
         for k in sorted(pr):
             A = np.frombuffer(base64.b64decode(pc[k]['data']['character_transforms']['transforms_f32']),
                               F).reshape(-1, 33)
-            rewritten = {tf[i]['id'] for i in range(len(tf)) if A[i, 0:10].tobytes() != T1[i, 0:10].tobytes()}
+            differs = {tf[i]['id'] for i in range(len(tf)) if A[i, 0:10].tobytes() != T1[i, 0:10].tobytes()}
+            # second writer inside frame N before the bridge: Manager.Character.Update ->
+            # ChaControl.UpdateForce -> UpdateBlendShapeVoice (ChaControl.cs 5996..6025) sets
+            # cf_J_MouthMove localScale.x = FBSCtrlMouth.GetAdjustWidthScale() when
+            # fileStatus.mouthAdjustWidth; adjustWidthScale is 1f unless openRate > 0.2
+            # (FBSCtrlMouth.AdjustWidthScale); ABMX re-applies its modifier only in LateUpdate
+            mouth_ids = {t['id'] for t in tf if t['name'] == 'cf_J_MouthMove'}
+            if written is not None:
+                if not differs <= (written | mouth_ids):
+                    raise CandidateUnsupported('frozen locals differ from N-1 outside the clip-binding write set: %r'
+                                               % sorted(tf[self.index_of[t]]['name'] for t in differs - written)[:8])
+                rewritten = set(written)
+                out['diff_set_within_write_set'] = True
+                out['written_but_equal_to_n1'] = len(written - differs)
+            else:
+                rewritten = differs
             if out['animator_rewritten'] is None:
                 out['animator_rewritten'] = sorted(tf[self.index_of[t]]['name'] for t in rewritten)
+                out['animator_set_source'] = ('probe v7 pose_clip_bindings (current state)' if written is not None
+                                              else 'differs from the N-1 export (clip bindings not exported)')
             loc = {}
             for i, t in enumerate(tf):
                 tid = t['id']
+                if tid in mouth_ids and tid in fwd and tid not in rewritten:
+                    L = fwd[tid]
+                    sc = np.asarray(L['local_scale'], F).copy()
+                    sc[0] = F(1.0)                 # SetLocalScaleX(GetAdjustWidthScale()) = 1f
+                    g_ = (np.asarray(L['local_position'], F), np.asarray(L['local_rotation_xyzw'], F), sc)
+                    if np.concatenate(g_).tobytes() != A[i, 0:10].tobytes():
+                        raise CandidateUnsupported('cf_J_MouthMove frozen local differs from the UpdateBlendShapeVoice '
+                                                   'rule (adjustWidthScale != 1: mouth openRate > 0.2 branch)')
+                    out['mouth_adjust_width_rule'] = 'cf_J_MouthMove scale.x = 1f (UpdateBlendShapeVoice), equal'
+                    loc[tid] = g_
+                    continue
                 if tid in fwd and tid not in rewritten:
                     L = fwd[tid]
                     g_ = (np.asarray(L['local_position'], F), np.asarray(L['local_rotation_xyzw'], F),

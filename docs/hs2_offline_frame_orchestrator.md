@@ -834,3 +834,43 @@ acceptance.
   suffice.
 - **Still open:** the blend-shape branch 0x7a2ce3 (no current mesh needs it; it is reported
   if met).
+
+### 13.1 Probe v7 multi-yaw acceptance (2026-10-25)
+
+Outputs: `E:/HS2_offline_renderer_data/multiview_20261025/v7/w_<nonce8>/`. Each has
+`inspect/` (with `exit_receipt.json`), `capture_program/`, `frame_graph/`, the resource
+acceptance and wiring, `plan_v1/`, `template_v1/` and `identity_v1/`.
+
+| yaw | window | target | template (fresh oracle) | identity: card, empty patch | raw target SHA |
+|---|---|---|---|---|---|
+| 0 | 2daddb57 | 15092 | 959/959 | = replay = PNG | `836bf157…` |
+| +30 | c971d224 | 21735 | 959/959 | = replay = PNG | `d3e51716…` |
+| +45 | 321808bd | 22898 | 959/959 | = replay = PNG | `e519af38…` |
+| +60 | 2d90e5e1 | 24601 | 959/959 | = replay = PNG | `950fbb95…` |
+| +90 | 34ac9218 | 30864 | 959/959 | = replay = PNG | `26ab5576…` |
+| −90 | ed32db74 | 31817 | 959/959 | = replay = PNG | `85cfb80f…` |
+| −45 | 5c276666 | 37000 | 959/959 | = replay = PNG | `375c4543…` |
+
+- In every window:
+  - all 41 skin uploads from the card are equal to the capture;
+  - frozen root TRS 416/416 and bounds 416/416, hair bone bounds included;
+  - 0 external cbuffer variables;
+  - every draw list `equal` with **0 `mesh_id_tiebreak`** and no `equal_tie_order_external`;
+  - MV order generated 16/16.
+- Per bridge render, the camera (worldToCamera / cameraToWorld / culling) and the
+  camera-attached lights are generated from yaw. They are checked bit-exact against the
+  records (FrameGap otherwise) before use.
+
+**v7 fields consumed:**
+- **RenderNode+0x100** (`render_nodes`, post_render of the same render_id): these replace
+  the sharedMesh stand-in and the in-tie capture orders. Depth texture, depth normals, shadow
+  caster, motion vectors and forward opaque now sort on fully generated keys.
+- **Animator write set:** `pose_clip_bindings_<nonce>.json` (Idle_00, 345 transforms).
+  - The "differs from N−1" set is contained in it in every window; 260 written transforms
+    keep their N−1 value.
+  - One extra writer before the freeze: `Manager.Character.Update` → `ChaControl.UpdateForce`
+    → `UpdateBlendShapeVoice` sets `cf_J_MouthMove` localScale.x = `FBSCtrlMouth.GetAdjustWidthScale()`.
+    That value is 1f unless openRate > 0.2; ABMX re-applies its modifier only in LateUpdate.
+    The rule is implemented and equals the frozen export.
+- **CharaCamera / Lights Custom:** the `transform_chains` local TRS (with their −0.0
+  components) replace the identity assumption.

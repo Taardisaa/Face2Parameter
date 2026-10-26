@@ -915,5 +915,64 @@
    "blend-shape branch of bone bounds 0x7a2ce3",
    "yaw != 0 acceptance needs windows"
   ]
+ },
+ "multiview_v7_20261025": {
+  "outputs": "E:/HS2_offline_renderer_data/multiview_20261025/v7/",
+  "windows": {
+   "2d90e5e1": {
+    "name": "yaw +60",
+    "identity_sha256": "950fbb95f683f440803bb4dd3b04fd5879219bed0f2625fa3d79f93877c0a325",
+    "equal_replay": true,
+    "equal_png": true,
+    "template": "959/959"
+   },
+   "2daddb57": {
+    "name": "yaw 0",
+    "identity_sha256": "836bf1574ecf51d46af2aacca9555a0f171876ff453b1b6a97ae7354fb4e40a2",
+    "equal_replay": true,
+    "equal_png": true,
+    "template": "959/959"
+   },
+   "321808bd": {
+    "name": "yaw +45",
+    "identity_sha256": "e519af3886fa669bd05f1a6d5c20abbefef30ff2712169141b459b07c6f4ca19",
+    "equal_replay": true,
+    "equal_png": true,
+    "template": "959/959"
+   },
+   "34ac9218": {
+    "name": "yaw +90",
+    "identity_sha256": "26ab5576446717b790d7e05690c0ff57586a3e270ab9178a1d905328e020ef00",
+    "equal_replay": true,
+    "equal_png": true,
+    "template": "959/959"
+   },
+   "5c276666": {
+    "name": "yaw -45",
+    "identity_sha256": "375c45438938eadc8df3074682c611a2c4593e1fae6d9785a7043a1217168081",
+    "equal_replay": true,
+    "equal_png": true,
+    "template": "959/959"
+   },
+   "c971d224": {
+    "name": "yaw +30",
+    "identity_sha256": "d3e51716c4aa34981d3211955198dc9b9668c3f058ab0d14778de20177a5a270",
+    "equal_replay": true,
+    "equal_png": true,
+    "template": "959/959"
+   },
+   "ed32db74": {
+    "name": "yaw -90",
+    "identity_sha256": "85cfb80ff2c1d30ec5cfd3fbfbeed8dcdb5a0a9284d7be23a79836066cfea80d",
+    "equal_replay": true,
+    "equal_png": true,
+    "template": "959/959"
+   }
+  },
+  "v7_fields": [
+   "render_nodes RenderNode+0x100 -> 0 mesh_id_tiebreak",
+   "pose_clip_bindings write set (+ cf_J_MouthMove UpdateBlendShapeVoice rule)",
+   "transform_chains CharaCamera/Lights Custom"
+  ]
  }
 }

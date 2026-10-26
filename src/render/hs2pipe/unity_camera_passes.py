@@ -179,12 +179,27 @@ def _node_rows(rens, lib, gaps, cache):
             mats.append({'material_instance_id': int(m['id']), 'shader': sh, 'custom_render_queue': int(m['render_queue']),
                          'shader_render_queue': int(m['render_queue']), 'override_tags': over, 'raw': m})
         rp = r['raw']['properties']
-        nodes.append({'center': r['center'], 'shadow_casting_mode': r['shadow_casting_mode'], 'materials': mats,
-                      'layering': rules.layering_key(0, r['sorting_order']),
-                      'priority': int(rp.get('rendererPriority', 0)) & 0xFFFF, 'renderer': r})
-    gaps.append({'gap': 'depth_key_mesh_fields', 'detail': 'RenderNode+0x100 mesh id, +0xb8 first subset and '
-                 'static-batch fields are not exported; taken as 0 (only the lowest key bits; ties)'})
+        row = {'center': r['center'], 'shadow_casting_mode': r['shadow_casting_mode'], 'materials': mats,
+               'layering': rules.layering_key(0, r['sorting_order']),
+               'priority': int(rp.get('rendererPriority', 0)) & 0xFFFF, 'renderer': r}
+        if v7_mesh_id(r):
+            row['mesh_id'] = int(r['mesh_id'])
+        f = flatten_node_fields(r)
+        if f:
+            row['first_subset'] = f['first_subset']
+            row['static_batch_subset_count'] = f['static_batch_subset_count']
+        nodes.append(row)
+    if nodes and all('mesh_id' in n for n in nodes) and all('first_subset' in n for n in nodes):
+        gaps.append({'gap': 'depth_key_mesh_fields', 'detail': 'RenderNode+0x100 from probe v7 render_nodes; '
+                     '+0xb8 / +0xba from the BaseRenderer flatten block: every key bit generated'})
+    else:
+        gaps.append({'gap': 'depth_key_mesh_fields', 'detail': 'RenderNode+0x100 mesh id, +0xb8 first subset and '
+                     'static-batch fields are not exported; taken as 0 (only the lowest key bits; ties)'})
     return nodes
+
+
+def v7_mesh_id(r):
+    return str(r.get('mesh_id_source', '')).startswith('RenderNode+0x100')
 
 
 def depth_texture_plan(adapter, cam, lib, global_keywords, quality, gaps, cache=None):
@@ -202,7 +217,7 @@ def depth_texture_plan(adapter, cam, lib, global_keywords, quality, gaps, cache=
                                     global_keywords, quality)
         out.append({'pass_kind': 'depth_texture', 'renderer': r, 'material': mat['raw'], 'shader': e['shader']['name'],
                     'pass': p, 'light_mode': 'SHADOWCASTER', 'keywords': kw, 'key': e['key'],
-                    'tie': (e['key'],)})
+                    'tie': None if v7_mesh_id(r) else (e['key'],)})
     return out
 
 
@@ -283,12 +298,19 @@ def shadow_caster_plan(adapter, lib, global_keywords, quality, gaps, caster_ids,
             for pi in range(c['first'], c['end']):
                 nodes_by_hi.setdefault(hi_of[pi], set()).add(c['node'])
         tied = {k for k, v in nodes_by_hi.items() if len(v) > 1}
+        v7 = all(v7_mesh_id(n['renderer']) for n in nodes)
         for n in nodes:
+            if v7:
+                # probe v7: RenderNode+0x100 exported -> every key bit generated, no tie groups
+                n['mesh_id'] = int(n['renderer']['mesh_id'])
+                continue
             # bits 24..38 (RenderNode+0x100 = Mesh+0x174) not exported: decide only between parts of
             # different nodes that tie on the higher bits; those groups are labelled ('tie') and
             # their inner order is resolved by the caller (mesh_id_tiebreak, external:capture).
             # Parts of one node share the mesh id, so their relative order (subset bits) stays generated.
             n['mesh_id'] = 0
+        if v7:
+            tied = set()
         sorted_entries = ps.shadow_caster_draws(nodes, casters, parts, split=0, split_masks=[1] * len(casters),
                                                 cull_matrix=cull_matrix)
         for e in sorted_entries:
@@ -296,9 +318,11 @@ def shadow_caster_plan(adapter, lib, global_keywords, quality, gaps, caster_ids,
             hi = hi_of[e['part']]
             entries.append((node, part['material_index'], part['material'], part['subshader'],
                             ('hi', hi) if hi in tied else None, e['node']))
-        gaps.append({'gap': 'shadow_caster_order', 'detail': 'generated from SharedMaterialData+0xd0 (probe v6) '
-                     'and RenderNode fields (flatten block); %d key groups tie across nodes on the exported bits '
-                     '(order inside them needs RenderNode+0x100)' % len(tied)})
+        gaps.append({'gap': 'shadow_caster_order', 'detail': ('generated from SharedMaterialData+0xd0, the flatten '
+                     'block and RenderNode+0x100 (probe v7): every key bit generated' if v7 else
+                     'generated from SharedMaterialData+0xd0 (probe v6) and RenderNode fields (flatten block); %d key '
+                     'groups tie across nodes on the exported bits (order inside them needs RenderNode+0x100)'
+                     % len(tied))})
     else:
         for node in nodes:
             for mi, mat in enumerate(node['materials']):
@@ -339,7 +363,8 @@ def depth_normals_plan(adapter, cam, lib, global_keywords, gaps, cache=None):
         kw = frozenset(set(global_keywords) | set(mat['raw'].get('shader_keywords') or []))
         out.append({'pass_kind': 'depth_normals', 'renderer': r, 'material': mat['raw'], 'shader': rep['name'],
                     'pass': p, 'light_mode': p.light_mode, 'keywords': kw, 'subshader': d['subshader'],
-                    'key': d.get('key'), 'tie': (d.get('layering'), d.get('key'))})
+                    'key': d.get('key'),
+                    'tie': None if v7_mesh_id(r) else (d.get('layering'), d.get('key'))})
     gaps.append({'gap': 'depth_normals_shader_source', 'detail': 'GraphicsSettings builtin shader 4 taken as the '
                  'installed Hidden/Internal-DepthNormalsTexture (library copy)'})
     return out
@@ -413,7 +438,7 @@ def motion_vector_plan(adapter, cam, lib, global_keywords, gaps, included_render
                     # managed sharedMesh instance id, a stand-in): instanced entries of one
                     # (layering, queue, distance bucket) group are ordered by it -> 'tie'
                     'tie': (('mv_instancing', x['layering'], x['queue'], fr_bits24(x['distance']))
-                            if x['instancing_key'] else None),
+                            if x['instancing_key'] and not v7_mesh_id(node['renderer']) else None),
                     'sort_key': {'ro': e['ro'], 'layering': x['layering'], 'queue': x['queue'],
                                  'distance': x['distance'], 'instancing_key': x['instancing_key'],
                                  'priority': node.get('priority', 0), 'center': list(node['renderer'].get('center') or [])}})

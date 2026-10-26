@@ -44,17 +44,36 @@ WINDOWS = {
                    'patch': 'patch_chin_rs_wider_x108.json', 'target': 81031},
 }
 CARD_STATE = 'state_before_baseline.json'
+# probe v7 multi-yaw baseline windows (empty patch); per-window card state before the window
+V7_SESSION = Path('E:/HS2_offline_renderer_data/paired_session_v7_20261025')
+V7_ARTIFACTS = Path('C:/Users/13666/Workspace/HS2Mod/artifacts/chenger_reference_fit_20261012/'
+                    'paired_capture_session_v7_20261025')
+V7_OUT = Path('E:/HS2_offline_renderer_data/multiview_20261025/v7')
+for _yaw, _tag, _nonce, _target in (('0', '0', '2daddb57cebe4294bdf792ffaf382127', 15092),
+                                    ('+30', 'p30', 'c971d22436794d678e0b15fcc31f83db', 21735),
+                                    ('+45', 'p45', '321808bd7d6a4e4d836b2cdbb3ff8481', 22898),
+                                    ('+60', 'p60', '2d90e5e134114107921aba4827cfd9fd', 24601),
+                                    ('+90', 'p90', '34ac9218fd964d9cb95fe20a80c7ddd2', 30864),
+                                    ('-90', 'm90', 'ed32db74bb094d46bda6f1b096848f9e', 31817),
+                                    ('-45', 'm45', '5c27666617b9483bb3ffb910a967ed48', 37000)):
+    WINDOWS['v7_w_' + _nonce[:8]] = {
+        'nonce': _nonce, 'name': 'yaw %s' % _yaw, 'patch': None, 'target': _target, 'session': V7_SESSION,
+        'artifacts': V7_ARTIFACTS, 'out': V7_OUT / ('w_' + _nonce[:8]), 'card_state': 'state_before_yaw_%s.json' % _tag,
+        'png': V7_SESSION / ('bridge_capture_%s_yaw%s.png' % (_nonce, _tag.replace('p', '') if _tag != '0' else '0'))}
 
 
 def config(key, template_run):
     from src.render.hs2pipe.candidate import SessionConfig
     w = WINDOWS[key]
     patch = {'bones': []}
+    session, artifacts = w.get('session', SESSION), w.get('artifacts', ARTIFACTS)
+    out = w.get('out', OUT / key)
     if w['patch']:
-        patch = json.loads((ARTIFACTS / w['patch']).read_text(encoding='utf-8'))
-    cfg = SessionConfig(session=SESSION, nonce=w['nonce'], artifacts=ARTIFACTS, loaded_state=CARD_STATE,
-                        template_run=template_run, capture_program=OUT / key / 'capture_program',
-                        work=OUT / key / 'candidate_work', target_resource=w['target'], window_patch=patch)
+        patch = json.loads((artifacts / w['patch']).read_text(encoding='utf-8'))
+    cfg = SessionConfig(session=session, nonce=w['nonce'], artifacts=artifacts,
+                        loaded_state=w.get('card_state', CARD_STATE),
+                        template_run=template_run, capture_program=out / 'capture_program',
+                        work=out / 'candidate_work', target_resource=w['target'], window_patch=patch)
     return cfg, patch
 
 
@@ -96,7 +115,8 @@ def main(argv=None):
     w = WINDOWS[a.window]
     cfg, patch = config(a.window, None if a.pre_only else a.template_run)
     t0 = time.time()
-    report = {'window': a.window, 'nonce': w['nonce'], 'name': w['name'], 'patch': patch, 'card_state': CARD_STATE}
+    report = {'window': a.window, 'nonce': w['nonce'], 'name': w['name'], 'patch': patch,
+              'card_state': w.get('card_state', CARD_STATE)}
     try:
         r = BridgeCandidateRenderer(cfg, start_executor=not a.pre_only)
         report['skin_uploads'] = {'points': len(r.points), 'equal_captured': len(r.points)}
@@ -123,7 +143,7 @@ def main(argv=None):
             res = r.render(patch, a.out / 'identity', patch_all=True)
         finally:
             r.close()
-        ref = png_pixels(SESSION / ('bridge_capture_%s.png' % w['name']))
+        ref = png_pixels(w['png'] if 'png' in w else SESSION / ('bridge_capture_%s.png' % w['name']))
         diff = np.any(res.pixels != ref, axis=2)
         ys, xs = np.nonzero(diff)
         report['identity'] = {

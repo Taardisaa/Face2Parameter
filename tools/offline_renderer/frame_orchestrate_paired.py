@@ -689,11 +689,25 @@ def bridge_camera_pose(scene, req, geometry_path):
     from src.render.hs2pipe import bridge_camera as bc
     F_ = np.float32
     emu = shared_emulator()
-    geo = json.loads(Path(geometry_path).read_text(encoding='utf-8'))
-    gby = {t['name']: t for t in geo['transforms'] if t['name'] in ('CustomControl', 'CharaCustom')}
     ident = (np.zeros(3, F_), np.array([0, 0, 0, 1], F_), np.ones(3, F_))
-    chain = [ident] + [(np.asarray(gby[n]['local_position'], F_), np.asarray(gby[n]['local_rotation_xyzw'], F_),
-                        np.asarray(gby[n]['local_scale'], F_)) for n in ('CustomControl', 'CharaCustom')]
+
+    def trs(e):
+        return (np.asarray(e['local_position'], F_), np.asarray(e['local_rotation'], F_),
+                np.asarray(e['local_scale'], F_))
+    tc = scene.get('_transform_chains')
+    if tc:
+        # probe v7: the camera's parent chain as exported (top -> Main Camera), bottom-up here
+        cm = tc['camera_main_chain']
+        if cm[-1]['name'] != 'Main Camera':
+            raise fr.FrameGap('camera_main_chain does not end at Main Camera')
+        chain = [trs(e) for e in reversed(cm[:-1])]
+        chain_source = 'probe v7 transform_chains'
+    else:
+        geo = json.loads(Path(geometry_path).read_text(encoding='utf-8'))
+        gby = {t['name']: t for t in geo['transforms'] if t['name'] in ('CustomControl', 'CharaCustom')}
+        chain = [ident] + [(np.asarray(gby[n]['local_position'], F_), np.asarray(gby[n]['local_rotation_xyzw'], F_),
+                            np.asarray(gby[n]['local_scale'], F_)) for n in ('CustomControl', 'CharaCustom')]
+        chain_source = 'CharaCamera local TRS identity (labelled; not exported before v7)'
     cam = [c for c in scene['cameras'] if c['name'] == 'Main Camera' and c['active_in_hierarchy']
            and c['properties']['enabled']][0]
     p = cam['properties']
@@ -717,10 +731,15 @@ def bridge_camera_pose(scene, req, geometry_path):
         if rl is None or not rl['active_in_hierarchy'] or '/Main Camera[0]/' not in (l.get('path') or ''):
             continue
         tr = rl['transform']
-        below = [(np.asarray(tr['local_position'], F_), np.asarray(tr['local_rotation'], F_),
-                  np.asarray(tr['local_scale'], F_))]
-        if not l['path'].split('/Main Camera[0]/', 1)[1].count('/') == 0:
-            below.append(ident)          # Lights Custom (identity, labelled)
+        lc = [x for x in ((tc or {}).get('lights') or []) if int(x['light']['ref_id']) == int(l['id'])]
+        if lc:
+            names = [e['name'] for e in lc[0]['chain']]
+            below = [trs(e) for e in reversed(lc[0]['chain'][names.index('Main Camera') + 1:])]
+        else:
+            below = [(np.asarray(tr['local_position'], F_), np.asarray(tr['local_rotation'], F_),
+                      np.asarray(tr['local_scale'], F_))]
+            if not l['path'].split('/Main Camera[0]/', 1)[1].count('/') == 0:
+                below.append(ident)          # Lights Custom (identity, labelled; before v7)
         pos, rot = bc.attached_world(emu, below, pose)
         if (pos.tobytes() != np.asarray(tr['position'], F_).tobytes()
                 or rot.tobytes() != np.asarray(tr['rotation'], F_).tobytes()):
@@ -730,6 +749,7 @@ def bridge_camera_pose(scene, req, geometry_path):
         moved.append(l['id'])
     scene.setdefault('_bridge_overrides', {})['camera_pose'] = {
         'yaw': req.get('yaw', 0.0), 'look_rotation_path': pose['look_rotation_path'], 'lights': moved,
+        'parent_chain_source': chain_source,
         'source': 'hs2pipe.bridge_camera (generated; equal to the record)'}
 
 
@@ -1787,6 +1807,7 @@ def run(args):
               'generated_draws': len(em.records), 'spliced_commands': len(em.spliced),
               'spliced_by_reason': {}, 'draws': rows, 'gaps': gaps + em.gaps,
               'motion_vectors': [job.report_mv for job in jobs],
+              'bridge_camera': [(job.scene.get('_bridge_overrides') or {}).get('camera_pose') for job in jobs],
               'head_skin': getattr(em, 'skin_rows', []),
               'resource_wiring': getattr(em, 'wiring_rows', []),
               'grab_copies': getattr(em, 'grab_rows', []),

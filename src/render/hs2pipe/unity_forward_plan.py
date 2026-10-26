@@ -184,8 +184,12 @@ class SceneAdapter:
                         # STAND-IN (labelled): the managed sharedMesh instance id; the engine key is
                         # RenderNode+0x100 = Mesh+0x174 (not exported, v7 field request). Sorts whose
                         # outcome depends on it are reported as mesh_id_tiebreak where detected.
-                        'mesh_id': (p.get('sharedMesh') or {}).get('ref_id'),
-                        'mesh_id_source': 'managed sharedMesh instance id (stand-in for Mesh+0x174)',
+                        'mesh_id': (self.scene['_render_nodes'][int(r['id'])]
+                                    if int(r['id']) in (self.scene.get('_render_nodes') or {})
+                                    else (p.get('sharedMesh') or {}).get('ref_id')),
+                        'mesh_id_source': ('RenderNode+0x100 (probe v7 render_nodes)'
+                                           if int(r['id']) in (self.scene.get('_render_nodes') or {})
+                                           else 'managed sharedMesh instance id (stand-in for Mesh+0x174)'),
                         'center': b[0:3], 'extent': b[3:6], 'bounds_source': bounds_src,
                         'shadow_casting_mode': SHADOW_CASTING[enum_value(p['shadowCastingMode'])],
                         'receive_shadows': bool(p['receiveShadows']),
