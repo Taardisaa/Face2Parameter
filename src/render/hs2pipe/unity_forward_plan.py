@@ -92,6 +92,10 @@ class SceneAdapter:
         self.materials = {m['id']: m for m in scene['materials']}
         self.frame_renderers = {r['id']: r for r in (frame or {}).get('renderers', [])}
         self.gaps = []
+        # GraphicsCaps+0xd4 active tier (probe v6 native settings): tier-specific subprograms of an
+        # installed copy are filtered against it (shader_library tier rule, RVA 0x839403)
+        st = (scene.get('native') or {}).get('settings') or {}
+        self.tier = int(st['graphics_caps_active_tier_0xd4']) if 'graphics_caps_active_tier_0xd4' in st else None
 
     # ------------------------------------------------------------- camera
     def camera(self, name):
@@ -117,6 +121,20 @@ class SceneAdapter:
                                                                           p['nearClipPlane'], p['farClipPlane']))
         rect = p['pixelRect']
         mode = enum_value(p['depthTextureMode'])
+        # Transform::GetPosition of the camera (CalculateCullingParameters 0x65e2e4 -> CP+0x194,
+        # RO sort context +0x798, Camera::GetPosition 0x3a09f0).  _WorldSpaceCameraPos is a
+        # different value: the camera matrices' cameraToWorld column 3 (SetCameraShaderProps
+        # r14+0x80); the two differ by an ulp for some poses (v7 yaw +30)
+        tr = c.get('_transform') or {}
+        if c.get('_transform_position_generated') is not None:
+            tpos = [F(v) for v in c['_transform_position_generated']]
+            tsrc = 'generated (hs2pipe.bridge_camera world position, equal to the record transform)'
+        elif tr.get('position') is not None:
+            tpos = [F(v) for v in tr['position']]
+            tsrc = 'render record camera_state.transform.position (export)'
+        else:
+            tpos = [c2w[12], c2w[13], c2w[14]]
+            tsrc = 'cameraToWorldMatrix column 3 (stand-in: Transform position not exported)'
         flags = 0
         for part, bit in (('Depth', 1), ('DepthNormals', 2), ('MotionVectors', 4)):
             if part in str(p['depthTextureMode']).split('.', 1)[1].split('=')[0].replace(' ', '').split(','):
@@ -127,8 +145,8 @@ class SceneAdapter:
             'render_into_texture': bool(p.get('forceIntoRenderTexture')) or p.get('targetTexture') is not None,
             'near_clip': p['nearClipPlane'], 'far_clip': p['farClipPlane'], 'field_of_view': p['fieldOfView'],
             'aspect': p['aspect'], 'orthographic': p['orthographic'], 'orthographic_size': p['orthographicSize'],
-            'position': [c2w[12], c2w[13], c2w[14]],
-            'target': {'pixel_width': int(rect[2]), 'pixel_height': int(rect[3])},
+            'position': [c2w[12], c2w[13], c2w[14]], 'transform_position': tpos,
+            'target': {'pixel_width': int(rect[2]), 'pixel_height': int(rect[3])}, 'pixel_rect': list(rect),
             'depth_texture_mode': flags, 'clear_flags': enum_value(p['clearFlags']),
             'culling_mask': int(p['cullingMask']) & 0xFFFFFFFF,
             'previous_view_projection': row_major_to_memory(p['previousViewProjectionMatrix']),
@@ -136,16 +154,19 @@ class SceneAdapter:
             'transparency_sort_mode': enum_value(p['transparencySortMode']),
             'layer_cull_distances': p['layerCullDistances'], 'layer_cull_spherical': p['layerCullSpherical'],
             'culling_matrix': cull})
-        self.gaps.append({'gap': 'camera_transform_position', 'detail': 'position from cameraToWorldMatrix column 3'})
+        self.gaps.append({'gap': 'camera_transform_position', 'detail': 'Transform position (CP+0x194, sort context, '
+                          'Camera::GetPosition): %s; _WorldSpaceCameraPos: cameraToWorldMatrix column 3' % tsrc})
+        gen_cull = c.get('_generated_matrices')
         self.gaps.append({'gap': 'camera_implicit_flags', 'detail': ('implicit projection from Camera+0x4ec (probe v5 '
                           'native field)' if 'implicit_projection_flag_0x4ec' in native else 'implicit projection '
-                          'inferred by comparing the exported projection with SetPerspective') + '; culling matrix '
-                          'taken as explicit (Camera.cullingMatrix export)'})
+                          'inferred by comparing the exported projection with SetPerspective') + '; ' + (
+                          'worldToCamera / cameraToWorld / culling matrix (= projection x worldToCamera) %s' % gen_cull
+                          if gen_cull else 'culling matrix taken as explicit (Camera.cullingMatrix export)')})
         return cam
 
     def rules_camera(self, cam):
         return {'world_to_camera': cam.m('world_to_camera_matrix'), 'projection': cam.m('projection_matrix'),
-                'position': cam.get('position'), 'near': cam.f('near_clip'), 'far': cam.f('far_clip'),
+                'position': cam.get('transform_position'), 'near': cam.f('near_clip'), 'far': cam.f('far_clip'),
                 'culling_mask': cam.get('culling_mask'), 'layer_cull_distances': cam.get('layer_cull_distances'),
                 'layer_cull_spherical': cam.get('layer_cull_spherical'), 'implicit_culling_matrix': False,
                 'culling_matrix': cam.get('culling_matrix'), 'implicit_world_to_camera': True,
@@ -253,18 +274,27 @@ class SceneAdapter:
         copies = self.lib.copies(material['shader'])
         if not copies:
             raise PlanGap('shader %s not in the installed library' % material['shader'])
+        src = (self.scene.get('_material_shader_sources') or {}).get(int(material.get('id', 0) or 0))
+        if src is not None:
+            # hs2pipe.material_sources: the material's m_Shader PPtr names the installed copy
+            from .material_sources import copy_matches
+            hits = [c for c in copies if copy_matches(c, src)]
+            if len(hits) != 1:
+                raise PlanGap('material %s shader object %s/%s: %d library copies'
+                              % (material.get('name'), src.get('shader_source'), src.get('shader_path_id'), len(hits)))
+            return hits
         return copies
 
 
-def select_programs(copies, light_mode_pass_index, keywords, gaps, label):
+def select_programs(copies, light_mode_pass_index, keywords, gaps, label, tier=None):
     """Selected DXBC per stage, required identical across installed copies."""
     result = None
     for sh in copies:
-        shader, sub = sh.resolve(tier=None)
+        shader, sub = sh.resolve(tier=tier)
         pz = [x for x in sub.passes if x.index == light_mode_pass_index][0]
         progs = {}
         for st in pz.stages():
-            sel = pz.select(st, keywords, tier=None)
+            sel = pz.select(st, keywords, tier=tier)
             progs[st] = sel.dxbc_sha256 if sel else None
         if result is None:
             result = progs
@@ -330,7 +360,7 @@ def render_objects(adapter, cam):
     rc = adapter.rules_camera(cam)
     rens = adapter.node_queue(cam)
     mode, axis = rules.resolve_transparency_sort(rc, {'transparency_sort_mode': 0, 'transparency_sort_axis': (0, 0, 1)})
-    ctx = {'world_to_camera': cam.m('world_to_camera_matrix'), 'position': cam.get('position'),
+    ctx = {'world_to_camera': cam.m('world_to_camera_matrix'), 'position': cam.get('transform_position'),
            'sort_mode': mode, 'sort_axis': axis}
     nodes = []
     shaders = []
@@ -341,7 +371,7 @@ def render_objects(adapter, cam):
             if m is None:
                 raise PlanGap('null material slot on %s' % r['name'])
             copies = adapter.shader_copies(m)
-            shader, sub = copies[0].resolve(tier=None)
+            shader, sub = copies[0].resolve(tier=adapter.tier)
             mats.append({'shader_id': m['shader_id'], 'material_instance_id': m['id'],
                          'enable_instancing': m['enable_instancing'], 'custom_render_queue': m['render_queue'],
                          'shader_render_queue': m['render_queue']})
@@ -397,7 +427,7 @@ def forward_plan(adapter, cam, *, transparent, global_keywords, quality, has_hsr
         pz = passes[e['data'] & 0xFF]['pass']
         shader, _, copies = shaders[ro['node']][ro['material_index']]
         kw = renderer_pass_keywords(pz.light_mode, r, m, active, global_keywords, quality)
-        progs = select_programs(copies, pz.index, kw, adapter.gaps, r['name'])
+        progs = select_programs(copies, pz.index, kw, adapter.gaps, r['name'], tier=adapter.tier)
         draws.append(PlannedDraw('transparent' if transparent else 'opaque', r, ro['material_index'], m,
                                  shader.name, pz.index, pz.light_mode, tuple(sorted(kw)), progs,
                                  sort_data=e['data']))

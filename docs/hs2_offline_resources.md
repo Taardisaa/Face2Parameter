@@ -176,6 +176,38 @@ The index builder scripts in `scratch/` only call `SourceIndex.build` on
 registrations, item mods, and `fo_head` `ThumbAB` bundles. Promoting them to a repository
 CLI is a follow-up.
 
+## Shader copies, built-in textures and mesh streams (2026-10-25)
+
+Added for the external-input closure (orchestrator §13.2):
+
+- **Material shader copy** — `hs2pipe.material_sources` (CLI, output
+  `material_sources_v4.json` per v7 window). The chain is: acceptance prefab binding →
+  component `m_Materials[slot]` → material `m_Shader` PPtr, resolved in the renderer's own
+  bundle. Runtime replacements come from IL:
+  - `ChaControl.ChangeSettingHairShader`: `chara/hair_shader_mat.unity3d` hair_dithering or
+    hair_cutout, chosen by the card's `ChaFileHair.shaderType`;
+  - `InitBaseCustomTextureFace`: the item's MainAB MatData;
+  - the body material: a unique-name lookup.
+
+  The card's own bundles (fo_head_30, the uncensor and hair zipmods) form a second library
+  root (`external_closure_20261025/shader_library_card_v1/main`, `--library-extra`).
+- **GraphicsSettings built-in shaders** — `hs2pipe.graphics_settings`. The installed
+  `globalgamemanagers` GraphicsSettings references `unity_builtin_extra` path 62
+  (DepthNormals), 75 (MotionVectors) and 64 (ScreenSpaceShadows). The library copies are
+  checked against these objects.
+- **Built-in TexEnvs** — `bindings.resolve_texenv` / `builtin_texture_settings`. The texture of
+  a null or unset property follows `shaderprops::GetTexEnv` 0x85b850 → `GetDefaultTexEnv`
+  0x755480 (the per-dimension default table). The engine textures come from
+  `ReinitBuiltinTextures` 0x759c30. Their TextureSettings are: the Reset 0x7074e0 defaults,
+  aniso 0 from BuildTexture, Clamp for the cubemap builder, re-applied by
+  `Texture::SetAnisoLimit` 0x75b390. The exported UnityWhite / UnityBlackCube settings equal
+  this rule.
+- **Mesh streams** — `hs2pipe.ia_bindings.stream_bytes`. Each stream of the installed Mesh is
+  read from m_DataSize at a 16-byte aligned offset (the `mesh_streams_from_tree` rule) and
+  compared byte-for-byte with the captured vertex buffer when no acceptance row names the
+  buffer. Stream 2 (BlendWeight / BlendIndices, channels 12/13) is bound by the engine but
+  unused by the input layouts.
+
 ## Gaps (explicit)
 
 1. **ChaControl composites are not computed.** The face, body and clothes composite bytes

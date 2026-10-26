@@ -239,7 +239,8 @@ def flatten_node_fields(renderer):
             'center': list(struct.unpack_from('<3f', b, 0x80)), 'extent': list(struct.unpack_from('<3f', b, 0x8c))}
 
 
-def shadow_caster_plan(adapter, lib, global_keywords, quality, gaps, caster_ids, cache=None, cull_matrix=None):
+def shadow_caster_plan(adapter, lib, global_keywords, quality, gaps, caster_ids, cache=None, cull_matrix=None,
+                       membership_source=None):
     """Shadow-caster draws of the main directional light (``RenderShadowMaps``
     0x6a18b0 -> caster job 0x6a56c0 -> loop 0x6a0b00).
 
@@ -248,8 +249,9 @@ def shadow_caster_plan(adapter, lib, global_keywords, quality, gaps, caster_ids,
     ``Shader::GetShadowCasterPassToUse`` (0xbf96c0) contributes one draw with the
     ``SHADOWS_DEPTH`` keyword (SetShadowsKeywords for a directional light).
 
-    ``caster_ids``: the renderers of the light's shadow RenderNodeQueue (membership:
-    shadow-caster culling 0x6ac320, not readable -- ``caster_cull_set``, external).
+    ``caster_ids``: the renderers of the light's shadow RenderNodeQueue (membership: the
+    shadow-caster cull, ``unity_shadow_cull.directional_caster_set``, when
+    ``membership_source`` names it; otherwise external, gap ``caster_cull_set``).
     Order: with the probe v6 material hash (``SharedMaterialData+0xd0``) and node
     fields, the queue (scene-node order, BeginRenderQueueExtraction rule) is split into
     parts (0x69cfa0/0x69d310) and sorted by ShadowCasterSortData key (0x6a5880, QSort
@@ -258,8 +260,10 @@ def shadow_caster_plan(adapter, lib, global_keywords, quality, gaps, caster_ids,
     cache = {} if cache is None else cache
     by_id = {r['id']: r for r in adapter.renderers()}
     rens = [by_id[i] for i in caster_ids]
-    gaps.append({'gap': 'caster_cull_set', 'detail': 'shadow caster culling (0x6ac320) not readable: '
-                 'caster membership external:capture'})
+    if membership_source:
+        gaps.append({'gap': 'caster_cull_set', 'detail': membership_source})
+    else:
+        gaps.append({'gap': 'caster_cull_set', 'detail': 'shadow caster membership external:capture'})
     hashes = [m.get('shadow_caster_hash') for r in rens for m in r['materials'] if m is not None]
     fields = [flatten_node_fields(r) for r in rens]
     ordered_by_key = cull_matrix is not None and hashes and all(h is not None for h in hashes) and all(fields)
@@ -365,9 +369,25 @@ def depth_normals_plan(adapter, cam, lib, global_keywords, gaps, cache=None):
                     'pass': p, 'light_mode': p.light_mode, 'keywords': kw, 'subshader': d['subshader'],
                     'key': d.get('key'),
                     'tie': None if v7_mesh_id(r) else (d.get('layering'), d.get('key'))})
-    gaps.append({'gap': 'depth_normals_shader_source', 'detail': 'GraphicsSettings builtin shader 4 taken as the '
-                 'installed Hidden/Internal-DepthNormalsTexture (library copy)'})
+    gaps.append({'gap': 'depth_normals_shader_source', 'detail': builtin_shader_source(
+        lib, 'Hidden/Internal-DepthNormalsTexture', 'm_DepthNormals')})
     return out
+
+
+def builtin_shader_source(lib, name, setting):
+    """Label of a GraphicsSettings built-in shader: the installed globalgamemanagers'
+    GraphicsSettings.<setting> (Builtin mode) PPtr resolves to the library copy, or the earlier
+    'taken as' label when it does not / the asset is not readable."""
+    try:
+        from .graphics_settings import builtin_shader_objects, library_copy_is_setting
+        hits = [c for c in lib.copies(name) if library_copy_is_setting(c, setting)]
+        ref = builtin_shader_objects().get(setting) or {}
+    except Exception as e:                       # noqa: BLE001 - asset missing / unreadable
+        return 'GraphicsSettings %s not read (%s); %s taken as the installed library copy' % (setting, e, name)
+    if len(hits) == 1:
+        return ('generated: GraphicsSettings.%s (Builtin) = %s path %d (installed globalgamemanagers), the library '
+                'copy of %s' % (setting, ref.get('file'), ref.get('path_id'), name))
+    return 'GraphicsSettings.%s does not resolve to one library copy of %s (%d)' % (setting, name, len(hits))
 
 
 MV_MODES = {'Camera': ps.MV_CAMERA, 'Object': ps.MV_OBJECT, 'ForceNoMotion': ps.MV_FORCE_NO_MOTION}
@@ -378,17 +398,86 @@ def fr_bits24(d):
     return f32_bits(d) >> 24
 
 
+def render_node_flags_0xe8(renderer, native):
+    """RenderNode+0xe8 of a renderer: ``BaseRenderer::FlattenBasicData`` 0x650b50 copies
+    BaseRenderer+0xf0; ``SkinnedMeshRenderer::AddAsRenderNode`` replaces bit 9 with
+    SkinnedMeshRenderer+0x28d (Renderer+0x38+0x255, 0x77ae22..0x77ae37).  MeshRenderer
+    (0x77aad0) and ParticleSystemRenderer (0xb085d0) keep the flattened word."""
+    raw = native.get('base_renderer_flags_0xf0')
+    if raw is None:
+        return None
+    f = int(raw, 16) if isinstance(raw, str) else int(raw)
+    if renderer['kind'] == 'SkinnedMeshRenderer':
+        if native.get('smr_has_last_position_data_0x28d') is None:
+            return None
+        f = (f & ~0x200) | ((int(native['smr_has_last_position_data_0x28d']) & 1) << 9)
+    return f & 0xFFFFFFFF
+
+
+def compare_approximately(a, b, eps):
+    """``CompareApproximately(Matrix4x4f, Matrix4x4f, float)`` 0x7cb900: true iff
+    eps >= |a[i] - b[i]| for all 16 (comiss eps, d; jb -> false, NaN -> false)."""
+    import numpy as np
+    for x, y in zip(a, b):
+        d = abs(np.float32(x) - np.float32(y))
+        if not (eps >= d):
+            return False
+    return True
+
+
+def _has_mv_pass(shader):
+    sub = shader['subshaders'][shader['active_subshader']]
+    return any(p['light_mode'] == 'MOTIONVECTORS' for p in sub['passes'])
+
+
+def motion_vector_included(renderer, native, shader, update_stamp=None):
+    """DoMotionVectorRenderLoop inclusion of one opaque RO (0x6ca0a0..0x6ca12d):
+    mode = f & 0xc00 (0 -> skip); bit 9 -> include; node+0xb4 (BaseRenderer+0xbc) ==
+    RenderLoopContext+0x7bc (RendererUpdateManager+0x388) and !CompareApproximately(node+0,
+    node+0x40, Vector3f::epsilon) -> include; the RO shader's active subshader has a
+    MotionVectors pass (Pass+0x2f0 == 12) -> include; mode == ForceNoMotion (0x800) ->
+    include; else skip.  Returns (included or None, reason); None only when the unexported
+    stamp decides (a moved Object-mode RO without a MotionVectors pass)."""
+    from .unity_forward_rules import EPS_V3
+    f = render_node_flags_0xe8(renderer, native)
+    if f is None:
+        return None, 'RenderNode+0xe8 fields not exported'
+    if not f & 0xC00:
+        return False, 'mode Camera'
+    if f & 0x200:
+        return True, 'bit 9 (SkinnedMeshRenderer+0x28d)'
+    a = native.get('base_renderer_local_to_world_0x08')
+    b = native.get('base_renderer_previous_local_to_world_0x48')
+    if a is None or b is None:
+        return None, 'RenderNode matrices not exported'
+    moved = not compare_approximately(a, b, EPS_V3)
+    if moved:
+        if update_stamp is not None:
+            if int(native['base_renderer_transform_update_frame_0xbc']) == int(update_stamp):
+                return True, 'moved in this renderer update'
+        elif not (_has_mv_pass(shader) or (f & 0xC00) == 0x800):
+            return None, 'undecided: moved, needs RendererUpdateManager+0x388'
+    if _has_mv_pass(shader):
+        return True, 'shader MotionVectors pass'
+    if (f & 0xC00) == 0x800:
+        return True, 'ForceNoMotion'
+    return False, 'moved, stamp differs' if moved else 'not moved (CompareApproximately)'
+
+
 def motion_vector_plan(adapter, cam, lib, global_keywords, gaps, included_renderer_ids, cache=None):
     """Object motion-vector draws (DoMotionVectorRenderLoop 0x6c9b60) over the
     opaque RenderObjectData list.
 
     Candidate set (generated): opaque ROs whose MotionVectorGenerationMode is not
-    Camera.  Inclusion of a candidate also depends on SkinnedMeshRenderer+0x255
-    and the transform-update frame stamp (sorter gaps M1, M2), which the export
-    does not carry: the included renderer ids are an ``external:capture`` input
-    and are checked against the candidates.  Pass choice (own MotionVectors pass
-    or the internal shader's) and the order (MotionVectorRenderLoop
-    RenderObjectSorter 0x6c6f20 with Unity's qsort) are generated."""
+    Camera.  Inclusion (:func:`motion_vector_included`) is generated from the
+    per-render RenderNode fields (probe v6.1: BaseRenderer+0xf0 / +0x08 / +0x48 / +0xbc,
+    SkinnedMeshRenderer+0x28d).  The one unexported input, the renderer-update stamp
+    RendererUpdateManager+0x388, decides only a moved Object-mode RO without a
+    MotionVectors pass; such ROs keep the captured inclusion (labelled) or raise when no
+    capture set is given.  ``included_renderer_ids`` (the captured set, or None) is
+    checked against the generated set.  Pass choice (own MotionVectors pass or the
+    internal shader's) and the order (MotionVectorRenderLoop RenderObjectSorter 0x6c6f20
+    with Unity's qsort) are generated."""
     from .unity_forward_plan import render_objects
     cache = {} if cache is None else cache
     ro = render_objects(adapter, cam)
@@ -403,14 +492,31 @@ def motion_vector_plan(adapter, cam, lib, global_keywords, gaps, included_render
         nodes.append({'materials': mats, 'renderer': r, 'motion_vector_mode': MV_MODES[r['motion_vector_mode']],
                       'priority': int(r['raw']['properties'].get('rendererPriority', 0)) & 0xFFFF})
     candidates, entries = [], []
+    rr = adapter.scene.get('_render_renderers') or {}
+    generated, reasons, undecided = set(), {}, []
     for ri, x in enumerate(ro['opaque_ros']):
         node = nodes[x['node']]
         if node['motion_vector_mode'] == ps.MV_CAMERA:
             continue
-        candidates.append(node['renderer']['id'])
-        if node['renderer']['id'] not in included_renderer_ids:
-            continue
+        r = node['renderer']
+        candidates.append(r['id'])
         shader = node['materials'][x['material_index']]['shader']
+        native = (rr.get(r['id']) or {}).get('native') or (r['raw'].get('native') or {})
+        inc, why = motion_vector_included(r, native, shader)
+        reasons[r['name']] = why
+        f = render_node_flags_0xe8(r, native)
+        if f is not None and ((f >> 10) & 3) != node['motion_vector_mode']:
+            raise RuntimeError('%s: RenderNode+0xe8 motion-vector mode %d differs from the managed mode %d'
+                               % (r['name'], (f >> 10) & 3, node['motion_vector_mode']))
+        if inc is None:
+            undecided.append((r['name'], why))
+            if included_renderer_ids is None:
+                continue
+            inc = r['id'] in included_renderer_ids          # external:capture (labelled below)
+        if inc:
+            generated.add(r['id'])
+        else:
+            continue
         sub = shader['subshaders'][shader['active_subshader']]
         own = next((i for i, p in enumerate(sub['passes']) if p['light_mode'] == 'MOTIONVECTORS'), -1)
         if own >= 0:
@@ -419,10 +525,20 @@ def motion_vector_plan(adapter, cam, lib, global_keywords, gaps, included_render
             isub = internal['subshaders'][internal['active_subshader']]
             ip = next(i for i, p in enumerate(isub['passes']) if p['light_mode'] == 'MOTIONVECTORS')
             entries.append({'ro': ri, 'object_pass': False, 'pass': ip, 'shader': internal})
-    gaps.append({'gap': 'motion_vector_inclusion', 'detail': 'SkinnedMeshRenderer+0x255 and BaseRenderer+0xbc not '
-                 'exported: included renderers taken from the capture (external:capture)',
-                 'candidates_not_included': sorted(set(candidates) - set(included_renderer_ids)),
-                 'included_not_candidates': sorted(set(included_renderer_ids) - set(candidates))})
+    if included_renderer_ids is not None and generated != set(included_renderer_ids):
+        raise RuntimeError('generated motion-vector set %r differs from the capture %r'
+                           % (sorted(generated), sorted(included_renderer_ids)))
+    if undecided:
+        if included_renderer_ids is None:
+            raise RuntimeError('motion-vector inclusion undecided without RendererUpdateManager+0x388: %r'
+                               % undecided)
+        gaps.append({'gap': 'motion_vector_inclusion', 'detail': 'external:capture for ROs whose inclusion needs '
+                     'RendererUpdateManager+0x388 (not exported)', 'undecided': undecided, 'reasons': reasons})
+    else:
+        gaps.append({'gap': 'motion_vector_inclusion', 'detail': 'generated (DoMotionVectorRenderLoop 0x6ca0a0: '
+                     'RenderNode+0xe8 mode / bit 9 = SkinnedMeshRenderer+0x28d, CompareApproximately of node+0 and '
+                     '+0x40, MotionVectors pass, ForceNoMotion); the renderer-update stamp decided no RO',
+                     'reasons': reasons})
     out = []
     for e in ps.sort_motion_vectors(entries, ro['opaque_ros'], nodes):
         x = ro['opaque_ros'][e['ro']]

@@ -18,11 +18,14 @@ The chain, all from installed code or source-derived ports:
    streams substituted, executed by ``frame_executor --serve``; the 1086x1448 capture
    target is read back and written as a top-down PNG.
 
-Assumption (stated, as required): the candidate is held constant over the probe
-frames N-5..N (a static card that was loaded with these values), and the hidden
-EyeLook state at the window's first frame is the one reconstructed from the
-baseline export.  On this window the hosted EyeLook converges from deliberately
-wrong seeds by N-3, before the first consumed frame N-2.
+Candidate model (stated): the candidate is applied from the probe frame N-4 on (the
+locals of N-4..N come from card + patch).  The hidden EyeLook state entering N-4 is the
+game's own state exported by the probe's EyeLookController.LateUpdate hook (eye postfix of
+N-5 = prefix of N-4, ``eye_seed_state``) and the EyeLook target is the hook's
+EyeUpdateCalc target argument; for the window's own card + patch both are exact.  Windows
+without hook records (probe < 6) fall back to the reconstruction from the first frame's
+look rotation (labelled).  The mouth width written before the bridge freeze
+(UpdateBlendShapeVoice) is the exported FBSCtrlMouth.adjustWidthScale of N-1.
 
 Dependencies that read head geometry or bones are checked, not frozen (see
 ``dependency_check``): a candidate whose changed bones (or their descendants)
@@ -167,12 +170,29 @@ class BridgeCandidateRenderer:
         # hosted EyeLook (seeded at the window's first frame from the baseline export)
         self.eye = ela.Harness(self.win.static)
         self.ela = ela
-        # Camera.main position per eye-look frame (scene export of that frame; EyeLook target)
-        self.cameras, cam = {}, None
+        # probe driver hook records (drivers_NNN.json, probe v6+): EyeLookController.LateUpdate
+        # prefix/postfix (EyeUpdateCalc target and EyeObject hidden state), FaceBlendShape
+        # OnLateUpdate postfix (FBSCtrlMouth.adjustWidthScale), ChaControl.UpdateForce postfix
+        self.hooks = {}
+        for k in range(len(self.win.by_frame)):
+            dp = cfg.window / 'frames' / ('drivers_%03d.json' % k)
+            if dp.exists():
+                for rec in json.loads(dp.read_text(encoding='utf-8'))['records']:
+                    self.hooks[(int(rec['frame_count']), rec['hook'], rec['phase'])] = rec
+        # Camera.main position per eye-look frame: the EyeUpdateCalc target argument of that frame's
+        # eye prefix record (Camera.main.transform.position as the game passed it); without hook
+        # records, the scene export's cameraToWorld translation (labelled stand-in)
+        self.cameras, self.camera_source, cam = {}, {}, None
         for k, fc in enumerate(sorted(self.win.by_frame)):
             sc = cfg.window / 'frames' / ('scene_%03d.json' % k)
             cam = ela.camera_from_scene(sc)[0] if sc.exists() else cam
-            self.cameras[fc] = cam
+            pre = self.hooks.get((fc, 'eye', 'prefix'))
+            if pre is not None:
+                self.cameras[fc] = np.asarray(pre['call_arguments']['target_position'], F)
+                self.camera_source[fc] = 'eye prefix call_arguments.target_position'
+            else:
+                self.cameras[fc] = cam
+                self.camera_source[fc] = 'scene cameraToWorld translation (stand-in)'
         # skin upload points of the bridge capture (gpu_skin_inputs path of frame_skin)
         index = g.CaptureIndex(cfg.xml)
         writes, draws = g.simulate(index)
@@ -325,6 +345,37 @@ class BridgeCandidateRenderer:
                 'citations': SOURCE_CITATIONS}
 
     # ------------------------------------------------------------ streams
+    def eye_seed_state(self):
+        """EyeObject hidden state (angleH, angleV, dirUp) entering the first recomputed frame.
+
+        Probe v6+ windows: the game's own state, the eye postfix record of the window's first
+        frame (EyeLookController.LateUpdate postfix), checked equal to the prefix record of the
+        next frame (no writer between them).  For the window's card + patch this is exact; a
+        different candidate starts from the window's state and is applied from the next frame
+        on (the candidate model, stated in the report).  Older windows: reconstructed from
+        the first frame's look rotation (eye_look_acceptance.seed_state, labelled)."""
+        f0, f1 = self.eye_frames[0], self.eye_frames[1]
+        post, pre = self.hooks.get((f0, 'eye', 'postfix')), self.hooks.get((f1, 'eye', 'prefix'))
+        if post is None:
+            self.eye_seed_source = 'reconstructed from the first frame look rotation (no hook records)'
+            first = self.win.by_frame[f0]
+            return self.ela.seed_state('reconstructed', first['T'], self.eye)
+
+        def st(rec):
+            return [{'angleH': F(e['EyeObject.angleH']), 'angleV': F(e['EyeObject.angleV']),
+                     'dirUp': np.asarray(e['EyeObject.dirUp'], F)}
+                    for e in rec['eye_look_calc_fields']['EyeLookCalc.eyeObjs']]
+        s = st(post)
+        if pre is not None:
+            s1 = st(pre)
+            for a, b in zip(s, s1):
+                if (a['angleH'].tobytes() != b['angleH'].tobytes() or a['angleV'].tobytes() != b['angleV'].tobytes()
+                        or a['dirUp'].tobytes() != b['dirUp'].tobytes()):
+                    raise CandidateUnsupported('EyeLook state changes between the frame %d postfix and the '
+                                               'frame %d prefix' % (f0, f1))
+        self.eye_seed_source = 'game state: eye postfix record of frame %d (= prefix of %d)' % (f0, f1)
+        return s
+
     def _streams(self, patches, native):
         """Skinned stream bytes per upload chunk for a candidate (and the frame locals)."""
         from src.render.unity_skin_emu import skin_from_locals
@@ -340,7 +391,7 @@ class BridgeCandidateRenderer:
         h, ela = self.eye, self.ela
         first = self.win.by_frame[self.eye_frames[0]]
         h.apply_frame(first['T'])
-        h.el.set_state(ela.seed_state('reconstructed', first['T'], h))
+        h.el.set_state(self.eye_seed_state())
         cam = None
         for fc in self.eye_frames[1:]:
             fr = self.win.by_frame[fc]
@@ -483,6 +534,22 @@ class BridgeCandidateRenderer:
             # fileStatus.mouthAdjustWidth; adjustWidthScale is 1f unless openRate > 0.2
             # (FBSCtrlMouth.AdjustWidthScale); ABMX re-applies its modifier only in LateUpdate
             mouth_ids = {t['id'] for t in tf if t['name'] == 'cf_J_MouthMove'}
+            # GetAdjustWidthScale() at frame N's Update = FBSCtrlMouth.adjustWidthScale left by the
+            # frame N-1 FaceBlendShape OnLateUpdate (fbs postfix record, probe v6+); the call is made
+            # only when fileStatus.mouthAdjustWidth (UpdateForce postfix mouth record of frame N).
+            # FBS reads timers, Random and the expression state, never geometry: the value holds
+            # for every candidate.  TransformScaleEx.SetLocalScaleX writes scale.x only.
+            fbs_post = self.hooks.get((self.N - 1, 'fbs', 'postfix'))
+            uf_post = self.hooks.get((self.N, 'chara_update_force', 'postfix'))
+            if fbs_post is not None and uf_post is not None:
+                adjust_x = F(fbs_post['face_blend_shape_fields']['FaceBlendShape.MouthCtrl']
+                             ['FBSCtrlMouth.adjustWidthScale'])
+                adjust_on = bool(uf_post['mouth']['file_status_mouth_adjust_width'])
+                adjust_src = 'FBSCtrlMouth.adjustWidthScale of the frame N-1 fbs postfix (%r), fileStatus %r' % (
+                    float(adjust_x), adjust_on)
+            else:
+                adjust_x, adjust_on = F(1.0), True
+                adjust_src = 'asserted 1f (no driver hook records: openRate not exported)'
             if written is not None:
                 if not differs <= (written | mouth_ids):
                     raise CandidateUnsupported('frozen locals differ from N-1 outside the clip-binding write set: %r'
@@ -502,12 +569,14 @@ class BridgeCandidateRenderer:
                 if tid in mouth_ids and tid in fwd and tid not in rewritten:
                     L = fwd[tid]
                     sc = np.asarray(L['local_scale'], F).copy()
-                    sc[0] = F(1.0)                 # SetLocalScaleX(GetAdjustWidthScale()) = 1f
+                    if adjust_on:
+                        sc[0] = adjust_x           # SetLocalScaleX(GetAdjustWidthScale())
                     g_ = (np.asarray(L['local_position'], F), np.asarray(L['local_rotation_xyzw'], F), sc)
                     if np.concatenate(g_).tobytes() != A[i, 0:10].tobytes():
                         raise CandidateUnsupported('cf_J_MouthMove frozen local differs from the UpdateBlendShapeVoice '
-                                                   'rule (adjustWidthScale != 1: mouth openRate > 0.2 branch)')
-                    out['mouth_adjust_width_rule'] = 'cf_J_MouthMove scale.x = 1f (UpdateBlendShapeVoice), equal'
+                                                   'rule (%s)' % adjust_src)
+                    out['mouth_adjust_width_rule'] = ('cf_J_MouthMove scale.x = %s (UpdateBlendShapeVoice), equal'
+                                                      % adjust_src)
                     loc[tid] = g_
                     continue
                 if tid in fwd and tid not in rewritten:

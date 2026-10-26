@@ -377,6 +377,14 @@ class FrameEmitter:
             row['bytes'] = self.pool.snapshot(*row['key'])
         return out
 
+    def device_scissors(self):
+        """RS scissor rects of the most recent program command that carries a pipeline state."""
+        for c in reversed(self.b.program['commands']):
+            st = c.get('state')
+            if isinstance(st, dict) and 'rs' in st:
+                return st['rs'].get('scissors')
+        return None
+
     # ------------------------------------------------------------ draws
     def emit_draw(self, *, label, cap_index, stage_programs, pass_record, light_mode, values, material_floats,
                   device: ds.DeviceRaster, renderer_name, shader_name, keywords, notes=(), viewports=None,
@@ -434,13 +442,24 @@ class FrameEmitter:
         st.om.sample_mask = cst['om']['sample_mask']
         if viewports is None:
             st.rs.viewports = copy.deepcopy(cst['rs']['viewports'])
-            st.rs.scissors = copy.deepcopy(cst['rs']['scissors'])
             rec.external['viewport'] = 'camera pixel rect binding taken from the capture'
         else:
             st.rs.viewports = copy.deepcopy(viewports)
-            st.rs.scissors = copy.deepcopy(scissors if scissors is not None else cst['rs']['scissors'])
-            if scissors is None:
-                rec.external['scissor'] = 'scissor rect (disabled by the raster state) taken from the capture'
+        if scissors is not None:
+            st.rs.scissors = copy.deepcopy(scissors)
+        else:
+            # GfxDeviceD3D11Base::DisableScissor (0x546e80) only clears the scissor-enable flag and the
+            # cached raster state; RSSetScissorRects is issued by SetScissorRect (0x54c7b0) alone, so a
+            # draw without a scissor keeps the device rect of the last command that set one
+            prev = self.device_scissors()
+            if prev is not None and prev == cst['rs']['scissors']:
+                st.rs.scissors = copy.deepcopy(prev)
+                rec.notes.append('scissor rect: device state of the preceding command (DisableScissor 0x546e80)')
+            else:
+                st.rs.scissors = copy.deepcopy(cst['rs']['scissors'])
+                rec.external['scissor'] = ('scissor rect (disabled by the raster state): device rect left by a '
+                                           'command outside the program state (capture-start state or a '
+                                           'Clear / RenderTexture::SetActive) taken from the capture')
         prov = {'generator': GENERATOR, 'pass': label, 'renderer': renderer_name, 'shader': shader_name,
                 'capture_event': rec.capture_event, 'external': sorted(rec.external)}
         op = cap_cmd['op']

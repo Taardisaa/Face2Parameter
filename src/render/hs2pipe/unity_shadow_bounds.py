@@ -39,11 +39,11 @@ Conventions
 Explicit gaps (raise :class:`ShadowBoundsGap`, never approximated):
 
 * ``caster_cull_set`` -- membership of a renderer in the light's shadow
-  caster ``CullingOutput`` (kernel ``ProcessShadowCasterNodeVisibilityAnd
-  CullWithoutUmbra`` 0x6ac320 with planes from ``PrepareShadowedLight``
-  0x67eb30 / ``CalculateShadowCasterCull`` 0x679140, Umbra path, LOD) is not
-  transcribed; callers must supply ``shadow_cull_visible``.  The directional
-  post-cull predicate (``0x6a9eb0``) *is* transcribed in
+  caster ``CullingOutput``: the non-Umbra directional path (kernel 0x6ac320,
+  planes from ``PrepareShadowedLight`` 0x67eb30 / ``CalculateShadowCasterCull``
+  0x679140) is transcribed in :mod:`unity_shadow_cull`; the Umbra path and LOD
+  masks are not.  Callers supply ``shadow_cull_visible`` (from that module).
+  The directional post-cull predicate (``0x6a9eb0``) is
   :func:`directional_caster_post_cull`.
 * ``local_light_receiver_entry`` -- creation of a receiver-bounds entry for a
   non-directional light (``0x6cda58..0x6cdb76``) needs ``RenderLoop+0x748``,
@@ -426,8 +426,8 @@ def caster_bounds_minmax(casters, *, light_type, camera_frustum_planes=None,
     fallback = empty_minmax()
     for caster in casters:
         if 'shadow_cull_visible' not in caster:
-            raise ShadowBoundsGap('caster_cull_set: shadow caster culling (0x6ac320/0x67eb30) is not '
-                                  'transcribed; supply shadow_cull_visible per caster')
+            raise ShadowBoundsGap('caster_cull_set: supply shadow_cull_visible per caster '
+                                  '(unity_shadow_cull.directional_caster_set)')
         if caster['shadow_casting_mode'] not in SHADOW_CASTING_MODES:
             raise ValueError('unknown shadow_casting_mode %r' % (caster['shadow_casting_mode'],))
         if not caster['shadow_cull_visible']:

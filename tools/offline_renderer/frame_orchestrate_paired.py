@@ -40,22 +40,40 @@ from tools.offline_renderer.frame_structural_diff import (LIB_ROOTS, capture_pas
 REASON = 'paired capture 04d1 frame 26059 (capture_to_program --through-event 2210)'
 
 
-def _copy_pass(copy, sub_index, pass_index):
+def _copy_pass(copy, sub_index, pass_index, tier=None):
     sub = [x for x in copy.subshaders if x.index == sub_index][0]
     pz = [x for x in sub.passes if x.index == pass_index][0]
     if pz.type == 'use':
-        rows = copy.use_pass(pz, tier=None)
+        rows = copy.use_pass(pz, tier=tier)
         if len(rows) != 1:
             raise fr.FrameGap('UsePass resolved to %d passes' % len(rows))
         pz = rows[0]
     return pz
 
 
-def select_pass_programs(lib, pass_obj, keywords, captured):
-    """Selected Subprogram per stage of one pass.  All installed copies of the
-    pass's shader must agree; when they do not, the copy whose selection equals
-    the captured DXBC is used and labelled external:capture (bundle of the
-    material's shader not exported)."""
+def select_pass_programs(lib, pass_obj, keywords, captured, source=None, tier=None):
+    """Selected Subprogram per stage of one pass.
+
+    ``source``: the material's shader object (hs2pipe.material_sources record: the material's
+    m_Shader PPtr in the renderer's bundle).  With it, exactly that installed copy is used and
+    its selection must equal the captured DXBC (FrameGap otherwise).  Without it, all copies
+    must agree; when they do not, the copy whose selection equals the captured DXBC is used and
+    labelled external:capture."""
+    from src.render.hs2pipe import material_sources as msrc
+    if source is not None and 'shader_path_id' in source and source.get('shader_name') == pass_obj.shader.name:
+        # (a pass of another shader -- replacement, fallback or UsePass -- keeps the rule below)
+        hits = [c for c in lib.copies(pass_obj.shader.name) if msrc.copy_matches(c, source)]
+        if len(hits) != 1:
+            raise fr.FrameGap('material shader object %s/%s: %d library copies'
+                              % (source.get('shader_source'), source.get('shader_path_id'), len(hits)))
+        pz = _copy_pass(hits[0], pass_obj.subshader, pass_obj.index, tier)
+        sps = {st: (x.subprogram if x else None) for st, x in
+               {st: pz.select(st, keywords, tier=tier) for st in pz.stages()}.items()}
+        for st in ('vs', 'ps'):
+            if (sps.get(st).dxbc_sha256 if sps.get(st) else None) != captured.get(st):
+                raise fr.FrameGap('material shader copy %s selects other %s DXBC than the capture'
+                                  % (hits[0].source_label, st))
+        return pz, sps, None
     rows = []
     for copy in lib.copies(pass_obj.shader.name):
         pz = _copy_pass(copy, pass_obj.subshader, pass_obj.index)
@@ -724,6 +742,16 @@ def bridge_camera_pose(scene, req, geometry_path):
         if rm(p[k]).tobytes() != np.asarray(v, F_).tobytes():
             raise fr.FrameGap('generated camera %s (yaw %r) differs from the render record' % (k, req.get('yaw')))
         p[k] = [float(x) for x in np.asarray(v, F_).reshape(4, 4).T.ravel()]      # row-major as exported
+    # Transform world position (Transform::GetPosition: CullingParameters+0x194, the RO sort
+    # context, Camera::GetPosition); checked against the record's camera_state transform
+    wpos = np.asarray(pose['world_position'], F_)
+    rec_tr = cam.get('_transform') or {}
+    if rec_tr.get('position') is not None and np.asarray(rec_tr['position'], F_).tobytes() != wpos.tobytes():
+        raise fr.FrameGap('generated camera Transform position (yaw %r) differs from the render record'
+                          % req.get('yaw'))
+    cam['_transform_position_generated'] = [F_(x) for x in wpos]
+    cam['_generated_matrices'] = ("generated from yaw (hs2pipe.bridge_camera; culling with this render's "
+                                  "jittered projection), equal to the record")
     rec_lights = {l['id']: l for l in (scene['_v5']['render_record']['data'].get('lights') or [])}
     moved = []
     for l in scene['lights']:
@@ -851,6 +879,70 @@ def engine_textures(cap, job, label):
     return out_
 
 
+def camera_cull_inputs(cam):
+    """Camera fields of ``GetScriptableCullingParameters`` / ``CalculateCullingParameters``
+    (hs2pipe.unity_shadow_cull)."""
+    return {'projection': cam.m('projection_matrix'), 'world_to_camera': cam.m('world_to_camera_matrix'),
+            'position': cam.get('transform_position'), 'implicit': bool(cam.get('implicit_projection')),
+            'near': cam.f('near_clip'), 'far': cam.f('far_clip'), 'fov': cam.f('field_of_view'),
+            'aspect': cam.f('aspect'), 'orthographic': bool(cam.get('orthographic')),
+            'orthographic_size': cam.f('orthographic_size'), 'culling_mask': cam.get('culling_mask'),
+            'layer_cull_distances': cam.get('layer_cull_distances'),
+            'layer_cull_spherical': bool(cam.get('layer_cull_spherical'))}
+
+
+def generated_caster_cull(ad, cam, q, lp, scene):
+    """Shadow-caster cull output of the main directional light (hs2pipe.unity_shadow_cull):
+    ScriptableCullingParameters cull matrix (checked equal to the culling matrix the shadow
+    path uses), ShadowCullData, CalculateShadowCasterCull planes, kernel and post-cull."""
+    from src.render.hs2pipe import unity_shadow_bounds as sb, unity_shadow_cull as usc
+    from src.render.hs2pipe import unity_shadow_pass as usp, unity_forward as uf
+    import numpy as np
+    camd = camera_cull_inputs(cam)
+    scp = usc.scriptable_cull_matrices(camd)
+    if (np.asarray(scp['cull_world_to_clip_0x29c'], np.float32).tobytes()
+            != np.asarray(cam.m('culling_matrix'), np.float32).tobytes()):
+        raise fr.FrameGap('ScriptableCullingParameters+0x29c differs from the culling matrix of the shadow path')
+    sd = uf.shadow_distance_for_camera({'shadow_distance': q['shadowDistance']}, cam)
+    scd = sb.setup_shadow_cull_data(cull_world_to_clip=scp['cull_world_to_clip_0x29c'],
+                                    world_to_camera=cam.m('world_to_camera_matrix'), camera_near=cam.f('near_clip'),
+                                    camera_far=cam.f('far_clip'), shadow_distance_for_rendering=sd,
+                                    shadow_projection=sb.SHADOW_PROJECTION_CLOSE_FIT,
+                                    cull_position=cam.get('transform_position'),
+                                    is_orthographic=bool(cam.get('orthographic')), field_of_view=cam.f('field_of_view'))
+    lm = usp.light_matrix_no_scale(lp['world_position'], lp['world_rotation_xyzw'])
+    rr = scene.get('_render_renderers') or {}
+    nodes = [usc.scene_node(r, (rr.get(r['id']) or {}).get('native')) for r in ad.renderers()]
+    res = usc.directional_caster_set(nodes, camd, {'light_vec': lm[8:11], 'culling_mask': int(lp['cullingMask']),
+                                                   'layer_shadow_cull_distances': lp.get('layerShadowCullDistances')},
+                                     sd, scd)
+    res['source'] = ('generated: CalculateShadowCasterCull 0x679140 (%d planes), kernel 0x6ac320, post-cull '
+                     '0x6a9eb0; SceneNode LOD fields (Renderer+0x1a0) not exported, no LOD group (as the camera '
+                     'cull)' % len(res['planes']))
+    return res
+
+
+CAMERA_RECT_PASSES = ('depth_texture', 'depth_normals', 'forward_opaque', 'forward_transparent', 'motion_vectors',
+                      'motion_vectors_camera', 'skybox')
+
+
+def camera_viewport(cam, captured):
+    """D3D11 viewport of a camera pass: GfxDeviceD3D11Base::SetViewport (0x54d1e0) stores the rect,
+    FlipRectForSurface (0x8ccd50) flips y against the surface height and SetViewportInternal
+    (0x54d250) writes (x, y, w, h, 0, 1).  The camera passes set the camera pixel rect on targets
+    of the camera's pixel size; for a rect at the origin covering the target the flip is the
+    identity.  Returns None (capture binding kept, labelled) when the rect is not at the origin or
+    the generated viewport differs from the capture."""
+    rect = cam.get('pixel_rect') if 'pixel_rect' in cam.raw else None
+    if not rect or float(rect[0]) != 0.0 or float(rect[1]) != 0.0:
+        return None
+    vp = [{'TopLeftX': 0.0, 'TopLeftY': 0.0, 'Width': float(rect[2]), 'Height': float(rect[3]),
+           'MinDepth': 0.0, 'MaxDepth': 1.0}]
+    if len(captured) != 1 or any(float(captured[0][k]) != float(v) for k, v in vp[0].items()):
+        return None
+    return vp
+
+
 def adopt_tie_order(gl, cl, names, same, node_of=None):
     """Captured order inside runs of equal ``tie`` keys (entries whose sort keys tie on
     every exported bit; the deciding RenderNode+0x100 = Mesh+0x174 is not exported).
@@ -953,21 +1045,11 @@ def plan_render(ctx, job):
             ci = cap.command_at_event(c['event'])
             plan[ci] = [(label, g, c, ci)]
     # shadow map of the main directional light (RenderShadowMaps 0x6a18b0): cascade fit,
-    # caster VP, unity_LightShadowBias generated; caster membership/order external:capture
+    # caster VP, unity_LightShadowBias, caster membership and (v6+) order generated
     sm_cap = [d for p in passes if p['label'] == 'shadow_map' for d in p['draws']]
     if sm_cap and active['has_main_light']:
         from src.render.hs2pipe import unity_shadow_pass as usp, unity_shadows as ush
         from src.render.hs2pipe import unity_forward as uf, unity_math as um
-        by_mesh_s = {}
-        for r in ad.renderers():
-            by_mesh_s.setdefault(fr_mesh(r), []).append(r)
-        caster_ids = []
-        for d in sm_cap:
-            ids = [r['id'] for r in by_mesh_s.get(d['mesh'], [])]
-            if len(ids) != 1:
-                raise fr.FrameGap('shadow caster capture draw %s maps to renderers %r' % (d['mesh'], ids))
-            if ids[0] not in caster_ids:
-                caster_ids.append(ids[0])
         main = active['lights'][0]
         lp = main['raw']['properties']
         nst = scene['native']['settings']
@@ -979,6 +1061,42 @@ def plan_render(ctx, job):
             if d.renderer['id'] not in seen:
                 seen.add(d.renderer['id'])
                 receivers.append(d.renderer)
+        # caster membership generated: CullDirectionalShadowCasters 0x67af80 (CalculateShadowCasterCull
+        # 0x679140 planes, kernel 0x6ac320, post-cull 0x6a9eb0), hs2pipe.unity_shadow_cull; renderers
+        # without a ShadowCaster pass draw nothing and are left out of the bounds (fn 0x69d310)
+        cull = generated_caster_cull(ad, cam, q, lp, scene)
+        job.caster_cull = {k: v for k, v in cull.items() if k != 'nodes'}
+        cap_ids = []
+        by_mesh_s = {}
+        for r in ad.renderers():
+            by_mesh_s.setdefault(fr_mesh(r), []).append(r['id'])
+        for d in sm_cap:
+            ids = by_mesh_s.get(d['mesh'], [])
+            if len(ids) != 1:
+                raise fr.FrameGap('shadow caster capture draw %s maps to renderers %r' % (d['mesh'], ids))
+            if ids[0] not in cap_ids:
+                cap_ids.append(ids[0])
+        sc_gaps = []
+        sc_all = ucp.shadow_caster_plan(ad, lib, gk, quality, sc_gaps, cull['ids'], cache,
+                                        cull_matrix=cam.m('culling_matrix'), membership_source=cull['source'])
+        if not all(g.get('order_generated') for g in sc_all):
+            # pre-v6 exports (no SharedMaterialData+0xd0): the queue order stays the captured one
+            # (equal_order_external); the membership is still the generated set (checked below)
+            sc_gaps = []
+            gen_with_pass = {g['renderer']['id'] for g in sc_all}
+            if gen_with_pass != set(cap_ids):
+                raise fr.FrameGap('render %d generated shadow casters %r differ from the capture %r'
+                                  % (job.k, sorted(gen_with_pass), sorted(cap_ids)))
+            sc_all = ucp.shadow_caster_plan(ad, lib, gk, quality, sc_gaps, cap_ids, cache,
+                                            cull_matrix=cam.m('culling_matrix'), membership_source=cull['source'])
+        pgaps.extend(sc_gaps)
+        caster_ids = []
+        for g in sc_all:
+            if g['renderer']['id'] not in caster_ids:
+                caster_ids.append(g['renderer']['id'])
+        if set(caster_ids) != set(cap_ids):
+            raise fr.FrameGap('render %d generated shadow casters %r differ from the capture %r'
+                              % (job.k, sorted(caster_ids), sorted(cap_ids)))
         casters = [r for i in caster_ids for r in ad.renderers() if r['id'] == i]
         tgt = cam.get('target')
         sh = usp.directional_shadow(cam, lp, q, graphics, casters, receivers, main['id'],
@@ -1004,8 +1122,7 @@ def plan_render(ctx, job):
                   'bias_candidates': cand, 'caster_ids': caster_ids, 'soft_inputs': soft_inputs,
                   'split_distances': sh['split_distances']}
         job.shadow = shadow
-        sc_plan = ucp.shadow_caster_plan(ad, lib, gk, quality, pgaps, caster_ids, cache,
-                                         cull_matrix=cam.m('culling_matrix'))
+        sc_plan = sc_all
         names = [fr_mesh(g['renderer']) for g in sc_plan]
         sc_ties = 0
         if names != [d['mesh'] for d in sm_cap] and len(sc_plan) == len(sm_cap):
@@ -1048,6 +1165,8 @@ def plan_render(ctx, job):
             ss_shader = lib.copies('Hidden/Internal-ScreenSpaceShadows')
             if len(ss_shader) != 1:
                 raise fr.FrameGap('Hidden/Internal-ScreenSpaceShadows: %d installed copies' % len(ss_shader))
+            pgaps.append({'gap': 'builtin_shader_source', 'detail': ucp.builtin_shader_source(
+                lib, 'Hidden/Internal-ScreenSpaceShadows', 'm_ScreenSpaceShadows')})
             ss_shader = ss_shader[0]
             # soft: same BuildSettings/QualitySettings/caps chain as the bias branch without the
             # tier byte (0x69bc69..0x69bce4); force_inv: Camera+0x4ec == 0 (projection set by
@@ -1132,11 +1251,14 @@ def plan_render(ctx, job):
     # Camera::GetProjectionFar) (0x6c9e78 -> 0x68fc70: SetOrtho(0,1,0,1,near,far) ->
     # SetProjectionMatrix, SetViewMatrix(identity)); GfxDevice+0x21e8 == 0 (no single-pass
     # stereo) -> RenderFullScreenQuad 0x6ce370 with eye 2, whose mono path (0x6ce4a9) sets
-    # no matrices; the world matrix is not set by either
+    # no matrices; SetViewMatrix (GfxDevice::SetViewMatrix 0x8cf290) resets the world matrix to
+    # identity, so the quad draws with identity unity_ObjectToWorld (set at emission below)
     if mv_all and cam.get('render_into_texture'):
         mvsh = lib.copies('Hidden/Internal-MotionVectors')
         if len(mvsh) != 1:
             raise fr.FrameGap('Hidden/Internal-MotionVectors: %d installed copies' % len(mvsh))
+        pgaps.append({'gap': 'builtin_shader_source', 'detail': ucp.builtin_shader_source(
+            lib, 'Hidden/Internal-MotionVectors', 'm_MotionVectors')})
         mvsh, mvsub = mvsh[0].resolve(tier=None)
         qaa = int(q.get('antiAliasing', 0))
         target_aa = qaa if (qaa > 1 and scene_cam_allow_msaa(scene)) else 1
@@ -1175,7 +1297,11 @@ def plan_render(ctx, job):
             raise fr.FrameGap('motion-vector capture draw %s maps to renderers %r' % (d['mesh'], ids))
         included.append(ids[0])
     if mv_cap:
-        mv_plan, mv_candidates = ucp.motion_vector_plan(ad, cam, lib, gk, pgaps, set(included), cache)
+        try:
+            mv_plan, mv_candidates = ucp.motion_vector_plan(ad, cam, lib, gk, pgaps, set(included), cache)
+        except RuntimeError as e:
+            raise fr.FrameGap('render %d motion vectors: %s' % (job.k, e))
+        mv_inc = [g_ for g_ in pgaps if g_['gap'] == 'motion_vector_inclusion'][-1]
         names = [fr_mesh(d['renderer']) for d in mv_plan]
         ok = names == [d['mesh'] for d in mv_cap]
         mv_ties = 0
@@ -1194,7 +1320,9 @@ def plan_render(ctx, job):
         lists['motion_vectors'] = [{'status': ('equal_tie_order_external' if d.get('tie') is not None else 'equal')
                                     if ok else 'different'} for d in mv_plan]
         job.report_mv = {'generated_order': names, 'captured_order': [d['mesh'] for d in mv_cap],
-                         'candidates': len(mv_candidates), 'included_external': len(included),
+                         'candidates': len(mv_candidates), 'included': len(included),
+                         'inclusion': 'external:capture (partly)' if mv_inc.get('undecided') else 'generated',
+                         'inclusion_reasons': mv_inc.get('reasons'),
                          'sort_keys': {fr_mesh(d['renderer']): d.get('sort_key') for d in mv_plan}}
         cap_of = {}
         for rid, c in zip(included, mv_cap):
@@ -1390,7 +1518,12 @@ def run(args):
     seed = scene_v5.prior_seed(W, args.window_index)
     ctx.frame = json.loads((W / 'frames' / ('frame_%03d.json' % args.window_index)).read_text(encoding='utf-8'))
     ctx.static = json.loads((W / 'static.json').read_text(encoding='utf-8'))
-    lib = sl.ShaderLibrary([Path(args.library) / r for r in LIB_ROOTS])
+    lib = sl.ShaderLibrary([Path(args.library) / r for r in LIB_ROOTS] + [Path(x) for x in args.library_extra])
+    # hs2pipe.material_sources: the installed shader object of each material (m_Shader PPtr)
+    ctx.material_sources = {}
+    if args.material_sources:
+        ctx.material_sources = {int(k): v for k, v in json.loads(Path(args.material_sources).read_text(
+            encoding='utf-8'))['materials'].items() if 'shader_path_id' in v}
     cap = CaptureProgram(args.capture_program)
     ctx.lib, ctx.cap = lib, cap
     cap_passes, _ = capture_passes(Path(args.xml), Path(args.inspect))
@@ -1427,6 +1560,7 @@ def run(args):
         raise fr.FrameGap('bridge renders need --bridge-request (MakerRenderStyleService.Capture body)')
     for job in jobs:
         job.scene = scene_v5.normalize(scene_raw, renders_doc, 'Main Camera', job.render_index, seed)
+        job.scene['_material_shader_sources'] = ctx.material_sources
         if job.bridge:
             bridge_dof_focus(job.scene, bridge_req)
             if args.skin_geometry:
@@ -1568,7 +1702,6 @@ def run(args):
                 if job.chain:
                     job.scopes = chain_scopes(cap, lib, job, views_of, cdrv)
                     chain_first[job.chain['cis'][0]] = job
-        world_state = None
         grab_rows = []
         em.grab_rows = grab_rows
         for i, c in enumerate(cap.commands):
@@ -1596,7 +1729,6 @@ def run(args):
                     ev_ = cap.event(ci_)
                     if ev_ in event_pass:
                         last_cmd_of_pass[event_pass[ev_][0]] = (cdrv.cap_to_gen[ci_], ci_)
-                world_state = None
                 continue
             if i in skin_cmds:
                 u = skin_cmds[i]
@@ -1637,9 +1769,7 @@ def run(args):
                 continue
             if ppv is not None and i in segments:
                 segments[i]()
-                world_state = None
             if ppv is not None and i in ppv.skip:
-                world_state = None
                 em.skipped.append((i, 'replaced by generated PPv2'))
                 ev = cap.event(i)
                 if ev in event_pass and (c['op'] in DRAW_OPS or c['op'] == 'dispatch'):
@@ -1649,7 +1779,9 @@ def run(args):
                 fv, shadow, cam = job.fv, job.shadow, job.cam
                 idx = None
                 for label, g, cd, ci in job.plan[i]:
-                    pz, sps, why = select_pass_programs(lib, g['pass'], g['keywords'], {'vs': cd['vs'], 'ps': cd['ps']})
+                    pz, sps, why = select_pass_programs(lib, g['pass'], g['keywords'], {'vs': cd['vs'], 'ps': cd['ps']},
+                                                        ctx.material_sources.get(int(g['material'].get('id', 0) or 0)),
+                                                        tier=job.ad.tier)
                     if 'values' in g:
                         vals, notes = dict(g['values']), list(g.get('notes', []))
                     else:
@@ -1690,6 +1822,8 @@ def run(args):
                         devx = ds.shadow_caster_device(True)
                     if label == 'screenspace_shadows':
                         vp_override = g['viewport']
+                    if label in CAMERA_RECT_PASSES:
+                        vp_override = camera_viewport(cam, cap.commands[ci]['state']['rs']['viewports'])
                     if label == 'motion_vectors':
                         mv, src = fv.motion_vector_values(g['renderer'])
                         vals.update(mv)
@@ -1699,15 +1833,19 @@ def run(args):
                         for n in list(vals.get('_inputs', {})):
                             vals.pop(n, None)
                         notes = list(notes) + ['DIAGNOSTIC: material colours external:capture']
-                    if label == 'motion_vectors_camera' and world_state is not None:
-                        # neither LoadFullScreenOrthoMatrix nor the mono RenderFullScreenQuad path
-                        # sets the world matrix: the device keeps the last draw's (the skybox's
-                        # DeviceMVPMatricesState 0x68a1d0 restores the one before it)
+                    if label == 'motion_vectors_camera':
+                        # LoadFullScreenOrthoMatrix 0x68fc70 calls GfxDevice::SetViewMatrix (vtable
+                        # +0xe8 at 0x68fcc4), and GfxDevice::SetViewMatrix 0x8cf290 resets the world
+                        # matrix (SetIdentity of GfxDevice+0x2110 at 0x8cf2ed..0x8cf2f4); the mono
+                        # RenderFullScreenQuad path sets no matrix after it, so the quad draws with an
+                        # identity world matrix whatever the previous draw left
                         from src.render.hs2pipe import unity_math as um
-                        ok_, w2o = um.invert_general_3d(world_state)
-                        vals['unity_ObjectToWorld'] = list(world_state)
+                        ident_w = um.identity()
+                        ok_, w2o = um.invert_general_3d(ident_w)
+                        vals['unity_ObjectToWorld'] = list(ident_w)
                         vals['unity_WorldToObject'] = w2o
-                        notes = list(notes) + ['world matrix: device state left by the previous generated draw']
+                        notes = list(notes) + ['world matrix: identity (GfxDevice::SetViewMatrix 0x8cf290 inside '
+                                               'LoadFullScreenOrthoMatrix)']
                     if why:
                         notes = list(notes) + [why]
                     rec = em.emit_draw(label=label, cap_index=ci, stage_programs=sps, pass_record=pz,
@@ -1725,21 +1863,34 @@ def run(args):
                         # emitted command carries (the captured one)
                         deriver.set_scene(job.scene)
                         gsheet = ((job.scene.get('_v5') or {}).get('render_record') or {}).get('data', {}).get('global_sheet')
+                        sub_ = g.get('material_index', getattr(g.get('_planned'), 'submesh', None))
+                        if sub_ is None and 'material' in g and isinstance(g['renderer'].get('materials'), list):
+                            mi_ = [i_ for i_, m_ in enumerate(g['renderer']['materials'])
+                                   if m_ is not None and m_.get('id') == g['material'].get('id')]
+                            sub_ = mi_[0] if len(mi_) == 1 else None
                         bres = deriver.derive(cap.commands[ci]['state'], sps, g['material'], gsheet,
-                                              g['renderer'].get('id'), engine=engine_textures(cap, job, label))
+                                              g['renderer'].get('id'), engine=engine_textures(cap, job, label),
+                                              renderer=g['renderer'] if g['renderer'].get('id') is not None else None,
+                                              label=label, subset=sub_, cap_index=ci)
                         rec.bindings = bres
+                        if 'ia' in bres:
+                            # buffer slots from hs2pipe.ia_bindings (ExtractMeshBuffers 0x7a3f40 /
+                            # BindBuffersForDraw 0x5438e0); the layout object is the remaining capture input
+                            rec.external['ia'] = ('input layout object and topology: external:capture (VertexInputMasks '
+                                                  'of the program not exported); vertex/index buffer slots: %d derived, '
+                                                  '%d external (ia_bindings)' % (bres['ia']['derived'], bres['ia']['external']))
+                        if bres.get('draw_args') == 'derived':
+                            # SubMesh (indexCount, firstByte / index size, baseVertex) of the installed mesh
+                            rec.external.pop('draw_args', None)
+                            rec.notes.append('draw args: SubMesh of the installed mesh (ia_bindings.draw_args)')
                         rec.external['srvs_samplers'] = ('derived %d slot(s); external: %s'
                                                          % (bres['derived'], '; '.join(bres['external']) or 'none'))
                     idx = rec.command
-                    if label != 'skybox' and 'unity_ObjectToWorld' in vals:
-                        world_state = list(vals['unity_ObjectToWorld'])
                 if idx is None:
                     continue
             else:
                 ev = cap.event(i)
                 lab = event_pass.get(ev, (None, 'non-pass command'))[1]
-                if c['op'] in DRAW_OPS or c['op'] == 'dispatch':
-                    world_state = None
                 idx = em.splice(i, 'step not generated: ' + lab if c['op'] in DRAW_OPS or c['op'] == 'dispatch'
                                 else 'capture resource update / clear / copy (%s)' % lab)
             ev = cap.event(i)
@@ -1807,6 +1958,7 @@ def run(args):
               'generated_draws': len(em.records), 'spliced_commands': len(em.spliced),
               'spliced_by_reason': {}, 'draws': rows, 'gaps': gaps + em.gaps,
               'motion_vectors': [job.report_mv for job in jobs],
+              'shadow_caster_cull': [getattr(job, 'caster_cull', None) for job in jobs],
               'bridge_camera': [(job.scene.get('_bridge_overrides') or {}).get('camera_pose') for job in jobs],
               'head_skin': getattr(em, 'skin_rows', []),
               'resource_wiring': getattr(em, 'wiring_rows', []),
@@ -1963,6 +2115,9 @@ def main(argv=None):
     ap.add_argument('--window', required=True)
     ap.add_argument('--window-index', type=int, required=True)
     ap.add_argument('--library', required=True)
+    ap.add_argument('--library-extra', action='append', default=[],
+                    help='additional shader-library root (e.g. the card bundles: fo_head_NN, body/hair zipmods)')
+    ap.add_argument('--material-sources', help='hs2pipe.material_sources output: shader object per material')
     ap.add_argument('--capture-program', required=True)
     ap.add_argument('--executor', default=str(ROOT / 'outputs/offline_renderer_executor_20261020/build_v3/frame_executor.exe'))
     ap.add_argument('--shader-manifest', action='append', default=[],

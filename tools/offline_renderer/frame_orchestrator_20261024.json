@@ -974,5 +974,334 @@
    "pose_clip_bindings write set (+ cf_J_MouthMove UpdateBlendShapeVoice rule)",
    "transform_chains CharaCamera/Lights Custom"
   ]
+ },
+ "external_closure_20261025": {
+  "outputs": "E:/HS2_offline_renderer_data/external_closure_20261025/",
+  "doc": "docs/hs2_offline_frame_orchestrator.md section 13.2",
+  "windows_source": "E:/HS2_offline_renderer_data/multiview_20261025/v7/w_<nonce8>/ (template_v1 oracle reused)",
+  "runs": {
+   "v2": "caster cull, MV inclusion, camera transform position, EyeLook seed/target, mouth width, built-in TexEnvs",
+   "v3": "+ camera viewports, scissor device state, material shader copies (--material-sources, --library-extra shader_library_card_v1/main), active tier",
+   "v4": "+ IA buffer slots / draw arguments (hs2pipe.ia_bindings, check-only: emitted IA state and args stay captured), GraphicsSettings built-in shader labels; emitted commands identical to v3",
+   "v5": "+ camera motion-vector quad world matrix = identity (GfxDevice::SetViewMatrix 0x8cf290); final code"
+  },
+  "windows": {
+   "2daddb57": {
+    "name": "yaw 0",
+    "template_v2": "959/959",
+    "identity_v2": {
+     "equal_replay": true,
+     "equal_png": true,
+     "equal_v7_sha": true
+    },
+    "template_v3": "959/959",
+    "identity_v3": {
+     "equal_replay": true,
+     "equal_png": true,
+     "equal_v7_sha": true
+    },
+    "template_v4": "959/959",
+    "identity_v4": {
+     "equal_replay": true,
+     "equal_png": true
+    },
+    "template_v5": "959/959",
+    "identity_v5": {
+     "sha256": "836bf1574ecf51d46af2aacca9555a0f171876ff453b1b6a97ae7354fb4e40a2",
+     "equal_replay": true,
+     "equal_png": true,
+     "equal_v7_sha": true
+    },
+    "mv_quad_cbuffers_equal_v5": "16/16"
+   },
+   "c971d224": {
+    "name": "yaw +30",
+    "template_v2": "959/959",
+    "identity_v2": {
+     "equal_replay": true,
+     "equal_png": true,
+     "equal_v7_sha": true
+    },
+    "template_v3": "959/959",
+    "identity_v3": {
+     "equal_replay": true,
+     "equal_png": true,
+     "equal_v7_sha": true
+    },
+    "template_v4": "959/959",
+    "identity_v4": {
+     "equal_replay": true,
+     "equal_png": true
+    },
+    "template_v5": "959/959",
+    "identity_v5": {
+     "sha256": "d3e51716c4aa34981d3211955198dc9b9668c3f058ab0d14778de20177a5a270",
+     "equal_replay": true,
+     "equal_png": true,
+     "equal_v7_sha": true
+    },
+    "mv_quad_cbuffers_equal_v5": "16/16"
+   },
+   "321808bd": {
+    "name": "yaw +45",
+    "template_v2": "959/959",
+    "identity_v2": {
+     "equal_replay": true,
+     "equal_png": true,
+     "equal_v7_sha": true
+    },
+    "template_v3": "959/959",
+    "identity_v3": {
+     "equal_replay": true,
+     "equal_png": true,
+     "equal_v7_sha": true
+    },
+    "template_v4": "959/959",
+    "identity_v4": {
+     "equal_replay": true,
+     "equal_png": true
+    },
+    "template_v5": "959/959",
+    "identity_v5": {
+     "sha256": "e519af3886fa669bd05f1a6d5c20abbefef30ff2712169141b459b07c6f4ca19",
+     "equal_replay": true,
+     "equal_png": true,
+     "equal_v7_sha": true
+    },
+    "mv_quad_cbuffers_equal_v5": "16/16"
+   },
+   "2d90e5e1": {
+    "name": "yaw +60",
+    "template_v2": "959/959",
+    "identity_v2": {
+     "equal_replay": true,
+     "equal_png": true,
+     "equal_v7_sha": true
+    },
+    "template_v3": "959/959",
+    "identity_v3": {
+     "equal_replay": true,
+     "equal_png": true,
+     "equal_v7_sha": true
+    },
+    "template_v4": "959/959",
+    "identity_v4": "interrupted by the E: drive loss 20:39 (moved to deprecated/); superseded by v5",
+    "template_v5": "959/959",
+    "identity_v5": {
+     "sha256": "950fbb95f683f440803bb4dd3b04fd5879219bed0f2625fa3d79f93877c0a325",
+     "equal_replay": true,
+     "equal_png": true,
+     "equal_v7_sha": true
+    },
+    "mv_quad_cbuffers_equal_v5": "16/16"
+   },
+   "34ac9218": {
+    "name": "yaw +90",
+    "template_v2": "959/959",
+    "identity_v2": {
+     "equal_replay": true,
+     "equal_png": true,
+     "equal_v7_sha": true
+    },
+    "template_v3": "959/959",
+    "identity_v3": {
+     "equal_replay": true,
+     "equal_png": true,
+     "equal_v7_sha": true
+    },
+    "template_v4": "interrupted by the E: drive loss 20:39 (moved to deprecated/); superseded by v5",
+    "identity_v4": "interrupted by the E: drive loss 20:39 (moved to deprecated/); superseded by v5",
+    "template_v5": "959/959",
+    "identity_v5": {
+     "sha256": "26ab5576446717b790d7e05690c0ff57586a3e270ab9178a1d905328e020ef00",
+     "equal_replay": true,
+     "equal_png": true,
+     "equal_v7_sha": true
+    },
+    "mv_quad_cbuffers_equal_v5": "16/16"
+   },
+   "ed32db74": {
+    "name": "yaw -90",
+    "template_v2": "959/959",
+    "identity_v2": {
+     "equal_replay": true,
+     "equal_png": true,
+     "equal_v7_sha": true
+    },
+    "template_v3": "959/959",
+    "identity_v3": {
+     "equal_replay": true,
+     "equal_png": true,
+     "equal_v7_sha": true
+    },
+    "template_v4": "interrupted by the E: drive loss 20:39 (moved to deprecated/); superseded by v5",
+    "identity_v4": "interrupted by the E: drive loss 20:39 (moved to deprecated/); superseded by v5",
+    "template_v5": "959/959",
+    "identity_v5": {
+     "sha256": "85cfb80ff2c1d30ec5cfd3fbfbeed8dcdb5a0a9284d7be23a79836066cfea80d",
+     "equal_replay": true,
+     "equal_png": true,
+     "equal_v7_sha": true
+    },
+    "mv_quad_cbuffers_equal_v5": "16/16"
+   },
+   "5c276666": {
+    "name": "yaw -45",
+    "template_v2": "959/959",
+    "identity_v2": {
+     "equal_replay": true,
+     "equal_png": true,
+     "equal_v7_sha": true
+    },
+    "template_v3": "959/959",
+    "identity_v3": {
+     "equal_replay": true,
+     "equal_png": true,
+     "equal_v7_sha": true
+    },
+    "template_v4": "interrupted by the E: drive loss 20:39 (moved to deprecated/); superseded by v5",
+    "identity_v4": "interrupted by the E: drive loss 20:39 (moved to deprecated/); superseded by v5",
+    "template_v5": "959/959",
+    "identity_v5": {
+     "sha256": "375c45438938eadc8df3074682c611a2c4593e1fae6d9785a7043a1217168081",
+     "equal_replay": true,
+     "equal_png": true,
+     "equal_v7_sha": true
+    },
+    "mv_quad_cbuffers_equal_v5": "16/16"
+   }
+  },
+  "closed": {
+   "shadow_caster_cull_membership": {
+    "module": "hs2pipe.unity_shadow_cull",
+    "chain": "CullDirectionalShadowCasters 0x67af80 -> PrepareShadowedLight 0x67eb30 -> CalculateShadowCasterCull 0x679140 (edge plane 0x677cd0, tables 0x14ae790/0x14ae7d8/0x14ae7e8) -> CalculateCustomCullingParameters 0x6403c0 -> kernel 0x6ac320 -> post 0x6a9eb0; SetupShadowCullData 0x6815f0; cull matrix GetScriptableCullingParameters 0x7b9201..0x7b93b4; SceneNode AddToScene 0x739540 / AddRendererInternal 0x68ae10",
+    "result": "generated set = captured set in 112/112 bridge renders (7 windows x 16)"
+   },
+   "motion_vector_inclusion": {
+    "chain": "DoMotionVectorRenderLoop 0x6ca0a0..0x6ca12d; RenderNode+0xe8 = BaseRenderer+0xf0, bit 9 = SkinnedMeshRenderer+0x28d (AddAsRenderNode 0x77ae22); CompareApproximately 0x7cb900",
+    "result": "generated 16/16 renders per window; renderer-update stamp decides no RO"
+   },
+   "camera_transform_position": "Transform position separate from cameraToWorld col 3 (1 ulp at yaw +30); CP+0x194, sort ctx+0x798, Camera::GetPosition 0x3a09f0; checked vs record",
+   "eye_look_seed_target": "eye postfix N-5 (= prefix N-4) and EyeUpdateCalc target argument of the prefix records; forward chain = export in N-4..N, 7/7 windows (pre_v1)",
+   "mouth_adjust_width": "FBSCtrlMouth.adjustWidthScale (fbs postfix N-1) + fileStatus.mouthAdjustWidth (UpdateForce postfix N); equal to the frozen export",
+   "builtin_texenv": "shaderprops::GetTexEnv 0x85b850, GetBuiltinTexEnv 0x85aa80, GetDefaultTexEnv 0x755480, ReinitBuiltinTextures 0x759c30, TextureSettings Reset 0x7074e0 / SetAnisoLimit 0x75b390",
+   "viewport": "SetViewport 0x54d1e0 -> FlipRectForSurface -> SetViewportInternal; 1104 -> 0 external per window",
+   "scissor_disabled": "DisableScissor 0x546e80 issues no RSSetScissorRects: device state of the previous command",
+   "material_shader_copy": "hs2pipe.material_sources (prefab m_Materials -> m_Shader PPtr; ChangeSettingHairShader; InitBaseCustomTextureFace MatData); clothes_shader_bundle gap left only for BG dust",
+   "graphics_settings_builtin_shaders": "hs2pipe.graphics_settings: unity_builtin_extra 62 DepthNormals, 75 MotionVectors, 64 ScreenSpaceShadows",
+   "ia_slots_draw_args": {
+    "chain": "BindBuffersForDraw 0x5438e0, ExtractMeshBuffers 0x7a3f40, CalculateRequiredStreamCount 0x793d50, AddDefaultStreamsToMeshBuffers 0x793760, GetDefaultVertexBuffer 0x8cd0c0, MeshRenderingData::Init 0x7a5560",
+    "yaw0_v4": {
+     "bindings_derived": 13230,
+     "bindings_external": 866,
+     "draw_args_external": 160
+    },
+    "before": {
+     "bindings_derived": 8319,
+     "bindings_external": 5777,
+     "draw_args_external": 1264
+    }
+   },
+   "camera_mv_quad_world_matrix": {
+    "chain": "LoadFullScreenOrthoMatrix 0x68fc70 -> vtable +0xe8 (0x68fcc4) GfxDevice::SetViewMatrix 0x8cf290 -> SetIdentity 0x7d0a00 on GfxDevice+0x2110 (0x8cf2ed..0x8cf2f4); mono RenderFullScreenQuad sets no matrix",
+    "replaces": "previous generated draw world matrix (held only when the previous draw was the identity BG dust)",
+    "chin_a2": {
+     "front": {
+      "window": "w_246e80f9",
+      "template": "959/959",
+      "bindings": {
+       "derived": 12417,
+       "external": 863
+      },
+      "mv_quad_cbuffers_equal": "16/16",
+      "identity": {
+       "sha256": "2cde5dac0a2782ce5b47257778b37ab3bf59a42a7a4a48520285bf5ce2baef4a",
+       "equal_replay": true,
+       "equal_png": true
+      }
+     },
+     "oblique": {
+      "window": "w_5ed6d147",
+      "template": "959/959",
+      "bindings": {
+       "derived": 12417,
+       "external": 863
+      },
+      "mv_quad_cbuffers_equal": "16/16",
+      "identity": {
+       "sha256": "e772e36326f37be8040a99f1a3f0a9672cf0acbfaa0ea6537ce4ff1db6234706",
+       "equal_replay": true,
+       "equal_png": true
+      }
+     },
+     "right": {
+      "window": "w_f28a13ef",
+      "template": "959/959",
+      "bindings": {
+       "derived": 11937,
+       "external": 383
+      },
+      "mv_quad_cbuffers_equal": "16/16",
+      "identity": {
+       "sha256": "58c2409505493d17469d24d1ccbf9331c14d351169481ec09a699c3272a31254",
+       "equal_replay": true,
+       "equal_png": true
+      }
+     },
+     "left": {
+      "window": "w_a6fa11a8",
+      "template": "959/959",
+      "bindings": {
+       "derived": 11937,
+       "external": 383
+      },
+      "mv_quad_cbuffers_equal": "16/16",
+      "identity": {
+       "sha256": "1d917b2899cf38a496b5ad661283e4c31b10d603526b98342c574127422e4eef",
+       "equal_replay": true,
+       "equal_png": true
+      }
+     }
+    }
+   }
+  },
+  "yaw0_v4_draw_external_fields": {
+   "ia": 1264,
+   "srvs_samplers": 1264,
+   "om_targets": 1264,
+   "draw_args": 160,
+   "blit_dynamic_ring": 97,
+   "scissor": 48,
+   "textures": 17
+  },
+  "remaining_gaps": [
+   "IA input layout object/topology (VertexInputMasks not exported); IA slots of non-Mesh draws",
+   "draw args of non-mesh draws (160/window); RT allocation of in-render temporaries",
+   "engine RT samplers: _ShadowMapTexture comparison sampler, _CameraDepthTexture, _GrabTexture, CTAA _CameraMotionVectorsTexture (post-render render_textures rows missing)",
+   "scissor rects set outside the program state (48/window)",
+   "PPv2 CopyStd / Blit dynamic ring offsets (needs ring write offsets)",
+   "o_tang UnityPerDraw 160 vs 176 bytes in every installed copy; BG-dust Standard copy unidentified",
+   "SceneNode LOD fields (Renderer+0x1a0) assumed none",
+   "spliced work: segment 16, UI, BackCamera, non-pass updates",
+   "EyeLook seed for a synthetic candidate = window game state at N-5"
+  ],
+  "regressions": {
+   "with_code_before_v3 (regress/deprecated/*_v1)": {
+    "v5a_f8bf": "60/60 (86 draws equal)",
+    "v5b_5af9": "959/959",
+    "v6a_6a9a": "60/60",
+    "v61_766d": "959/959",
+    "v6b_2def": "pre-existing FrameGap: skin slots hold (51349, -1) (v6 smr fields)"
+   },
+   "with_final_code": {
+    "v5a": "60/60",
+    "v5b": "959/959",
+    "v6a": "60/60",
+    "v6b": "stopped: render 0 renderer -381402: skin slots hold (51349, -1), rule says (N-2, N-1)",
+    "v61": "959/959"
+   }
+  },
+  "tests": "tools/offline_renderer/test_external_closure.py 19/19",
+  "drive_loss": "E: USB/UASP SSD dropped 2026-10-25 20:39 under write load; chkdsk repaired the exFAT bitmap; interrupted runs moved to w_<nonce8>/deprecated/*_interrupted_20261025_2039; 138 JSON files parsed"
  }
 }

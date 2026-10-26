@@ -62,7 +62,16 @@ for _yaw, _tag, _nonce, _target in (('0', '0', '2daddb57cebe4294bdf792ffaf382127
         'png': V7_SESSION / ('bridge_capture_%s_yaw%s.png' % (_nonce, _tag.replace('p', '') if _tag != '0' else '0'))}
 
 
-def config(key, template_run):
+def register_windows_config(path):
+    """Register the views of a windows JSON (bulk session, artifacts, card_state, views) as windows."""
+    c = json.loads(Path(path).read_text(encoding='utf-8'))
+    for view, v in c['views'].items():
+        WINDOWS[view] = {'nonce': v['nonce'], 'name': view, 'patch': None, 'target': int(v['target']),
+                         'session': Path(c['bulk']), 'artifacts': Path(c['artifacts']), 'out': Path(v['dir']),
+                         'card_state': c['card_state'], 'png': Path(v['png'])}
+
+
+def config(key, template_run, work=None):
     from src.render.hs2pipe.candidate import SessionConfig
     w = WINDOWS[key]
     patch = {'bones': []}
@@ -73,7 +82,7 @@ def config(key, template_run):
     cfg = SessionConfig(session=session, nonce=w['nonce'], artifacts=artifacts,
                         loaded_state=w.get('card_state', CARD_STATE),
                         template_run=template_run, capture_program=out / 'capture_program',
-                        work=out / 'candidate_work', target_resource=w['target'], window_patch=patch)
+                        work=work or (out / 'candidate_work'), target_resource=w['target'], window_patch=patch)
     return cfg, patch
 
 
@@ -103,17 +112,26 @@ def png_pixels(path):
 
 def main(argv=None):
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument('--window', required=True, choices=sorted(WINDOWS))
+    ap.add_argument('--window', required=True,
+                    help='one of %s, or a view of --windows-config' % ', '.join(sorted(WINDOWS)))
+    ap.add_argument('--windows-config', type=Path,
+                    help='windows JSON with bulk / artifacts / card_state / views {view: nonce, dir, target, png} '
+                         '(the tools/chin_fit layout); its views are registered as windows')
     ap.add_argument('--template-run', type=Path, help='frame_orchestrate_paired run of this window (template)')
     ap.add_argument('--pre-only', action='store_true', help='forward / skin / frozen-pose checks, no execution')
     ap.add_argument('--out', required=True, type=Path)
+    ap.add_argument('--work', type=Path, help='scratch directory (default: the window directory candidate_work)')
     a = ap.parse_args(argv)
+    if a.windows_config:
+        register_windows_config(a.windows_config)
+    if a.window not in WINDOWS:
+        ap.error('unknown window %r' % a.window)
     from src.render.hs2pipe.candidate import BridgeCandidateRenderer
     if a.out.exists():
         raise FileExistsError('Fresh output directory required: %s' % a.out)
     a.out.mkdir(parents=True)
     w = WINDOWS[a.window]
-    cfg, patch = config(a.window, None if a.pre_only else a.template_run)
+    cfg, patch = config(a.window, None if a.pre_only else a.template_run, a.work)
     t0 = time.time()
     report = {'window': a.window, 'nonce': w['nonce'], 'name': w['name'], 'patch': patch,
               'card_state': w.get('card_state', CARD_STATE)}
@@ -125,6 +143,8 @@ def main(argv=None):
         (a.out / 'report.json').write_text(json.dumps(report, indent=1, default=str), encoding='utf-8')
         raise
     report['init_s'] = time.time() - t0
+    report['eye_seed_source'] = getattr(r, 'eye_seed_source', None)
+    report['eye_target_source'] = sorted(set(getattr(r, 'camera_source', {}).values()))
     report['forward_vs_export'] = forward_vs_export(r, r.baseline)
     report['frozen_pose'] = r.frozen_pose_check(r.baseline)
     if patch.get('bones'):
@@ -153,7 +173,7 @@ def main(argv=None):
             'patched': res.patched, 'changed_bones_vs_window': res.changed_bones, 'timings': res.timings}
     (a.out / 'report.json').write_text(json.dumps(report, indent=1, default=str), encoding='utf-8')
     print(json.dumps({k: report.get(k) for k in ('window', 'name', 'skin_uploads', 'card_only_vs_window',
-                                                  'identity')}, default=str))
+                                                  'identity', 'eye_seed_source', 'eye_target_source')}, default=str))
     print(json.dumps({'frozen': {k: v for k, v in report['frozen_pose'].items() if k != 'animator_rewritten'},
                       'forward_differ': [(x['frame'], len(x['differ'])) for x in report['forward_vs_export']]},
                      default=str))

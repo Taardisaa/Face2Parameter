@@ -187,6 +187,9 @@ def normalize(scene, renders_doc, camera='Main Camera', render_index=0, seed=Non
         rows[0]['properties'] = props
         rows[0]['matrices'] = {}
         rows[0]['_native'] = (d.get('camera_state') or {}).get('native') or {}
+        # Transform world position / rotation at this OnPreRender (Transform::GetPosition, read by
+        # CalculateCullingParameters 0x65e2e4, the RO sort context and Camera::GetPosition)
+        rows[0]['_transform'] = (d.get('camera_state') or {}).get('transform') or {}
         rows[0]['_render_record'] = {'seq': rec['seq'], 'bridge_render': rec.get('bridge_render')}
     # per-render renderer state (bounds as Unity held them at this render's OnPreRender;
     # float32 printed round-trip)

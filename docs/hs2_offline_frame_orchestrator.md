@@ -330,9 +330,11 @@ sheets (exact colours), light transform rotation, scene node handles. Numbers: �
   Camera+0x558 (current target) is null or its antiAliasing (RenderTexture+0xd0) > 1;
   `_NonJitteredVP`/`_PreviousVP` on the internal material; `LoadFullScreenOrthoMatrix(0,
   GetProjectionFar)` (0x68fc70: SetOrtho → SetProjectionMatrix, SetViewMatrix(identity));
-  `GetProjectionFar` (0x663750) transcribed; mono `RenderFullScreenQuad` sets no matrices, so the
-  world matrix is the device state left by the previous generated draw (the skybox restores its
-  own through `DeviceMVPMatricesState` 0x68a1d0).
+  `GetProjectionFar` (0x663750) transcribed; mono `RenderFullScreenQuad` sets no matrices.
+  Corrected 2026-10-25 (§13.2 item 10): `GfxDevice::SetViewMatrix` 0x8cf290 resets the world
+  matrix (GfxDevice+0x2110) to identity, so the quad draws with an identity world matrix. The
+  earlier "device state left by the previous generated draw" rule matched only because that
+  draw (BG dust) was itself identity.
 - OnRenderImage chain of Main Camera (component order: CustomRender 6, CTAA_PC 7):
   `capture_loop` CustomRender ops + `ctaa.on_render_image` from the v5 CTAA fields, lowered
   through `PluginLowering` / `UnityForwardLowering` with `ChainDriver`. Graphics.Blit to the
@@ -874,3 +876,183 @@ acceptance and wiring, `plan_v1/`, `template_v1/` and `identity_v1/`.
     The rule is implemented and equals the frozen export.
 - **CharaCamera / Lights Custom:** the `transform_chains` local TRS (with their −0.0
   components) replace the identity assumption.
+
+### 13.2 External-input closure (2026-10-25, offline)
+
+Outputs: `E:/HS2_offline_renderer_data/external_closure_20261025/` — per window `w_<nonce8>/`
+(`template_v2`/`identity_v2`: items 1-6; `template_v3`/`identity_v3`: + items 7-8 with
+`--library-extra` and `--material-sources`; `template_v4`/`identity_v4`: + item 9, four
+windows, interrupted by the drive loss; `template_v5`/`identity_v5`: final code, + item 10;
+`material_sources_v4.json`; `pre_v1`), `chin_a2/` (chin-fit windows), `regress/` (earlier
+frames), `shader_library_card_v1/` (the card's bundles), `disasm/` (dumps cited below; the
+item 10 dumps are in `disasm/mvquad/`). Superseded check-only probes are in
+`w_<nonce8>/deprecated/`. Receipt key `external_closure_20261025`.
+
+**Acceptance (final code, `template_v5` / `identity_v5`).** The E: USB SSD disconnected at
+20:39 during the earlier v4 batch (exFAT volume bitmap repaired by chkdsk, 0 bad sectors). The
+interrupted v4 runs are in `w_<nonce8>/deprecated/*_interrupted_20261025_2039`; every JSON left
+in the output tree parses. Because item 10 changed shared emission code, the final batch reran
+all seven windows with the final code instead of the four interrupted v4 cells. It ran one heavy
+job at a time to keep the drive's sustained write load low. The table shows the
+results; v2 and v3 identities also equal the v7 receipt SHAs.
+
+| yaw | window | v2 | v3 | v5 (final code) template / identity | MV quad UnityPerDraw |
+|---|---|---|---|---|---|
+| 0 | 2daddb57 | 959/959, = replay = PNG = v7 SHA | 959/959, = replay = PNG = v7 SHA | 959/959, = replay = PNG = v7 SHA | 16/16 |
+| +30 | c971d224 | 959/959, = replay = PNG = v7 SHA | 959/959, = replay = PNG = v7 SHA | 959/959, = replay = PNG = v7 SHA | 16/16 |
+| +45 | 321808bd | 959/959, = replay = PNG = v7 SHA | 959/959, = replay = PNG = v7 SHA | 959/959, = replay = PNG = v7 SHA | 16/16 |
+| +60 | 2d90e5e1 | 959/959, = replay = PNG = v7 SHA | 959/959, = replay = PNG = v7 SHA | 959/959, = replay = PNG = v7 SHA | 16/16 |
+| +90 | 34ac9218 | 959/959, = replay = PNG = v7 SHA | 959/959, = replay = PNG = v7 SHA | 959/959, = replay = PNG = v7 SHA | 16/16 |
+| −90 | ed32db74 | 959/959, = replay = PNG = v7 SHA | 959/959, = replay = PNG = v7 SHA | 959/959, = replay = PNG = v7 SHA | 16/16 |
+| −45 | 5c276666 | 959/959, = replay = PNG = v7 SHA | 959/959, = replay = PNG = v7 SHA | 959/959, = replay = PNG = v7 SHA | 16/16 |
+
+Earlier frames with the final code (`regress/*_v2`): v5.0.1 mode a 60/60, mode b 959/959,
+v6 mode a 60/60, v6.1 `766d8184` 959/959. v6 mode b stops on its pre-existing FrameGap
+(`render 0 renderer -381402: skin slots hold (51349, -1), rule says (N-2, N-1)`, the invalid
+v6 SMR fields), unchanged by this work.
+
+Chin-fit hair-off windows (`E:/HS2_offline_renderer_data/chin_fit_20261025/windows_a2`,
+outputs in `external_closure_20261025/chin_a2/`; `candidate_native_acceptance.py
+--windows-config configs/windows_a2.json --window <view>`):
+
+| view | window | template / identity (final code) | MV quad UnityPerDraw |
+|---|---|---|---|
+| front | w_246e80f9 | 959/959, = replay = PNG | 16/16 |
+| oblique | w_5ed6d147 | 959/959, = replay = PNG | 16/16 |
+| right | w_f28a13ef | 959/959, = replay = PNG | 16/16 |
+| left | w_a6fa11a8 | 959/959, = replay = PNG | 16/16 |
+
+**Closed (generated from scene state / installed assets; each checked against the capture):**
+
+1. **Shadow-caster cull membership** (`hs2pipe.unity_shadow_cull`,
+   `frame_orchestrate_paired.generated_caster_cull`). `CullDirectionalShadowCasters` 0x67af80:
+   `PrepareShadowedLight` 0x67eb30 → `CalculateShadowCasterCull` 0x679140 (camera planes
+   ShadowCullData+0x2ec facing the light, |n·L| > 0.01; silhouette edge planes 0x677cd0 over the
+   edge tables .rdata 0x14ae7d8/0x14ae7e8 and NDC table 0x14ae790; at most 10 planes) →
+   `CalculateCustomCullingParameters` 0x6403c0 (camera culling mask, scene mask, layer mode 0) →
+   kernel `ProcessShadowCasterNodeVisibilityAndCullWithoutUmbra` 0x6ac320 (negated SoA planes,
+   `rad < dist` rejects) → post-cull 0x6a9eb0. ShadowCullData+0x1c0 / +0x380 from
+   `SetupShadowCullData` 0x6818ff..0x681a3a with the ScriptableCullingParameters cull-matrix
+   selection 0x7b9201..0x7b93b4 (checked equal to the culling matrix the shadow path uses).
+   SceneNodes from `AddToScene` 0x739540 / `AddRendererInternal` 0x68ae10 (scene mask =
+   UnityScene ctor 0x820e56; bit 29 only `RemoveRenderer`). Result: generated set = captured set
+   in 112/112 bridge renders (7 windows × 16); the captured draw list remains the check.
+2. **Motion-vector inclusion** (`unity_camera_passes.motion_vector_included`).
+   DoMotionVectorRenderLoop 0x6ca0a0..0x6ca12d with RenderNode+0xe8 = BaseRenderer+0xf0 and bit 9 =
+   SkinnedMeshRenderer+0x28d (AddAsRenderNode 0x77ae22), `CompareApproximately` 0x7cb900 of
+   node+0/+0x40, MotionVectors pass, ForceNoMotion. The renderer-update stamp
+   (RendererUpdateManager+0x388) decides only a moved Object-mode RO without a MotionVectors pass;
+   none occurs (16/16 renders generated in every window).
+3. **Camera Transform position** is now separate from cameraToWorld column 3: they differ by one
+   ulp at yaw +30. Transform::GetPosition feeds CullingParameters+0x194, the RO sort context
+   (ctx+0x798), Camera::GetPosition (skybox) and the shadow cull; `_WorldSpaceCameraPos` keeps
+   column 3 (SetCameraShaderProps r14+0x80). Bridge renders: the generated pose world position,
+   checked against the record's `camera_state.transform.position`. Labels
+   `camera_transform_position` / `camera_implicit_flags` now name these generated sources.
+4. **EyeLook seed and target** (`candidate.eye_seed_state`): the game's own EyeObject state, the
+   eye postfix of N−5 (checked equal to the prefix of N−4), and the EyeUpdateCalc target argument
+   of each frame's prefix record (Camera.main.transform.position; the scene cameraToWorld
+   translation was a stand-in). With these, every window's forward chain equals the export in all
+   frames N−4..N (`pre_v1`: 0 differing transforms, 7/7 windows; two windows previously differed
+   in N−4/N−3).
+5. **Mouth width before the freeze** (`candidate.frozen_pose_check`): `FBSCtrlMouth.adjustWidthScale`
+   of the N−1 fbs postfix record and `fileStatus.mouthAdjustWidth` of the N UpdateForce postfix
+   (driver hooks), instead of the asserted 1f.
+6. **Built-in TexEnvs** (`bindings.resolve_texenv`). `shaderprops::GetTexEnv` 0x85b850: built-in
+   TexEnv name (GfxDevice+0x1eb8) → material sheet (texture of the requested dimension, else its
+   +0x14 built-in default, 0x85aa80) → global sheet → `GetDefaultTexEnv` 0x755480. Built-in
+   TexEnv k → texture from `ReinitBuiltinTextures` 0x759c30 (names from
+   `GenerateBuiltinTextures` 0x754620); unity_SpecCube0/1 = the default reflection texture of
+   `GenerateDefaultSample` 0x67d5d0; unity_ProbeVolumeSH = GetDefaultTexture(3D). Built-in
+   TextureSettings: Texture ctor Reset 0x7074e0, BuildTexture aniso 0 (0x2d2389), cubemap
+   builder Clamp (0x750622), re-applied by `Texture::SetAnisoLimit` 0x75b390 (FindObjectsOfType has
+   no hide-flag filter). The exported `UnityWhite` / `UnityBlackCube` settings equal the rule.
+7. **Viewports** of the camera passes (`frame_orchestrate_paired.camera_viewport`): SetViewport
+   0x54d1e0 → FlipRectForSurface → SetViewportInternal; generated from the camera pixel rect.
+   **Scissor rects** of draws with scissor disabled: `DisableScissor` 0x546e80 issues no
+   RSSetScissorRects, so the rect is the device state of the preceding command
+   (`FrameEmitter.device_scissors`).
+8. **Shader copy of each material** (`hs2pipe.material_sources`, `--material-sources`) from the
+   renderer's own bundle: acceptance prefab binding → component `m_Materials[slot]` → material
+   `m_Shader` PPtr. Runtime replacements from IL: `ChaControl.ChangeSettingHairShader` (hair →
+   `hair_shader_mat.unity3d` hair_dithering / hair_cutout by the card's `ChaFileHair.shaderType`),
+   face/clothes MatData from the item's MainAB (`InitBaseCustomTextureFace`), and a unique-name
+   lookup for the body material. The card's own bundles (fo_head_30, the body and hair zipmods) are
+   a second library root (`--library-extra`), and the device active tier (GraphicsCaps+0xd4) is
+   passed to program selection. This resolves o_top_camisole2_a (the `clothes_shader_bundle`
+   gap); GraphicsSettings (`hs2pipe.graphics_settings`) proves the DepthNormals / MotionVectors /
+   ScreenSpaceShadows library copies are the referenced objects (unity_builtin_extra 62/75/64).
+
+9. **IA buffer slots and draw arguments of mesh draws** (`hs2pipe.ia_bindings`,
+   `BindingDeriver.derive_ia`). `BindBuffersForDraw` 0x5438e0 sets slots [0, streamCount) and
+   leaves higher slots as device state. `ExtractMeshBuffers` 0x7a3f40 takes the rendering data's
+   streams (skinned: stream 0 = skinning output, `MeshRenderingData::Init` 0x7a5560); for motion
+   vectors it truncates to `CalculateRequiredStreamCount` 0x793d50 and appends the
+   previous-position stream. `AddDefaultStreamsToMeshBuffers` 0x793760 appends
+   `GetDefaultVertexBuffer` 0x8cd0c0 when Normal/Tangent/Color, or a texcoord below the mesh's
+   lowest one, is required but missing. Mesh streams come from the installed Mesh object of the
+   acceptance row (16-byte aligned stream offsets in m_DataSize), compared byte-for-byte with the
+   captured buffer. Draw arguments: SubMesh indexCount, firstByte / index size, baseVertex (a
+   material slot past the submesh count draws the last submesh). Yaw 0 window: bindings derived
+   13 230 / external 866 (before: 8 319 / 5 777); ±90: 12 991 / 625 and 12 990 / 626;
+   draw_args external 1 264 -> 160. The per-draw
+   `ia` label now separates the captured layout object from the derived slots.
+
+10. **Camera motion-vector quad world matrix.** `LoadFullScreenOrthoMatrix` 0x68fc70 calls
+    `GfxDevice::SetViewMatrix` (vtable +0xe8 at 0x68fcc4). `GfxDevice::SetViewMatrix` 0x8cf290
+    runs `SetIdentity` 0x7d0a00 on the world matrix at GfxDevice+0x2110 (0x8cf2ed..0x8cf2f4),
+    the same field `SetWorldMatrix` 0x8cf370 writes. The mono `RenderFullScreenQuad` path
+    (eye 2) sets no matrix after it; only its stereo branch calls `SetWorldMatrix(identity)`
+    (0x6ce481). So the quad's `unity_ObjectToWorld` / `unity_WorldToObject` are identity. The
+    earlier rule, "device state left by the previous generated draw", held only while the last
+    forward-opaque draw was the BG dust (identity). In the hair-off ±90 chin windows the last
+    draw is `o_shoes_bones` (a bone-root matrix), and the templates gave 895/959 (16 UnityPerDraw
+    cbuffers, then MV → CTAA → blits). With the fix they give 959/959. Test:
+    `DllTables.test_camera_motion_quad_world_matrix`.
+
+**Still external:capture (reason, the missing input):**
+
+- *IA input layout object and topology* (every draw) and the vertex/index buffer slots of
+  draws without an installed Mesh row (particles, the BG MeshRenderers, fullscreen quads), the
+  stale slot above streamCount of the first hair draw after a non-program command, and the
+  camisole motion-vector previous-position slot (its m_SourceMap-derived stream count differs).
+  The rest is closed in item 9. The program's real required-channel mask (the VertexInputMasks
+  passed to ExtractMeshBuffers) is not exported, so each derived slot is accepted only when it
+  equals the captured binding.
+- *Draw arguments* of non-mesh draws (160 per window: particles, Blit / CopyStd quads) and the
+  *render-target allocation*: the program binds capture RT resources; the RenderTexture
+  descriptors of the bridge temporaries are not in the pre-render `render_textures` rows
+  (allocated inside the render).
+- *Engine RT samplers*: `_ShadowMapTexture` (the Shadowmap temp: RenderShadowMaps
+  0x6a19cc..0x6a1a2a sets its filter from ShadowMapJobHeader+0x3c, GraphicsCaps+0x401 and the
+  tier byte; the comparison variant comes from D3D11Sampler flag bit 1, GetSampler 0x5520c0),
+  `_CameraDepthTexture`, `_GrabTexture` and the CTAA `_CameraMotionVectorsTexture` SRV/sampler:
+  their RenderTexture rows are not exported for this render.
+- *Scissor rects* left by a command outside the program state (48 per window: the first draw
+  of the frame and the first forward draw after the camera clear / SetActive).
+- *Dynamic VB/IB ring placement* (PPv2 CopyStd `args`, 16 per window; Graphics.Blit quads):
+  the ring offset advances by ~6789 vertices and 54 indices per bridge render, dominated by the
+  BG-dust particle geometry, and wraps; it needs the ring write offsets at frame start and the
+  particle vertex counts.
+- *Shader copies not resolved*: the BG-dust particles (`Standard`, map bundle not identified:
+  no acceptance row for particle renderers); o_tang binds a 160-byte UnityPerDraw while every
+  installed copy of `AIT/Skin Translucency simple` (fo_head_30 = the material's PPtr target,
+  fo_head_38, oo_base, the SAC_Innie zipmod) declares m_Size 176.
+- *SceneNode LOD fields* (Renderer+0x1a0 LODGroup): taken as no LOD group in the shadow-caster
+  cull, as in the camera cull.
+- *Spliced work*: the ordinary frame-N render after the bridge (segment 16), UI, BackCamera and
+  non-pass resource updates (unchanged).
+- *EyeLook for a synthetic candidate*: seeded with the window's game state at N−5 (exact for the
+  window's own card + patch); the candidate's own history before N−4 does not exist in the game.
+
+**Probe v8 field requests:**
+
+| field | where read | use |
+|---|---|---|
+| `[gRendererUpdateManager]+0x388` (u32; global .data 0x1547438), per Main Camera render at pre_render | DoRenderLoop copies it to RenderLoopContext+0x7bc (0x6b99c4..0x6b99d5); DoMotionVectorRenderLoop compares node+0xb4 with it (0x6ca0b7) | MV inclusion of moved Object-mode renderers without a MotionVectors pass |
+| raw SceneNode (RendererScene+0x88 + 0x20 × Renderer+0x160, 32 bytes) and the RendererCullData list index per renderer, per render | AddToScene 0x739540 | LOD fields and list membership of the caster/camera cull (now assumed none / one list) |
+| GraphicsCaps+0x3e0 (u32) and +0x401 (u8) | GetDefaultVertexBuffer 0x8cd0f9; RenderShadowMaps 0x6a19da | default-stream stride; Shadowmap filter |
+| ParserBindChannels / VertexInputMasks of each drawn program (the `VertexInputMasks` passed to ExtractMeshBuffers), or the GpuProgram channel mask | ExtractMeshBuffers 0x7a3f40 (arg word at rsp+0x88) | IA stream count and default stream |
+| D3D11 dynamic VBO/IB write offsets (GfxDeviceD3D11 dynamic buffer: current offset, size) at frame start and after each bridge render | DynamicVBO chunk allocation | CopyStd / Blit ring args |
+| `render_textures` rows at post_render (not only pre_render) for the temporaries allocated in the render (Shadowmap, Screenspace ShadowMap, Camera DepthTexture, motion-vector RT, GrabPass Temp), with TextureSettings and the RenderTexture descriptor | RenderBufferManager::GetTempBuffer 0x7562a0 | engine RT samplers, RT allocation |
+| per material: the Shader object's serialized identity (PersistentManager file path + local file id of `Material.shader`) | Object::GetInstanceID → PersistentManager::InstanceIDToSerializedObjectIdentifier | o_tang 160-byte layout, BG-dust `Standard` |
