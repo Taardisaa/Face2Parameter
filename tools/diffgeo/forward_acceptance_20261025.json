@@ -1,0 +1,844 @@
+{
+ "date": "2026-10-25",
+ "code": "src/render/diffgeo, tools/diffgeo (Face2Parameter on top of 45ac5b1, uncommitted)",
+ "outputs": "E:\\HS2_offline_renderer_data\\diffgeo_20261025",
+ "windows": {
+  "w_766d8184": {
+   "nonce": "766d81849ec147a881b4214169a54185",
+   "patch": {
+    "bones": []
+   },
+   "renderers": 15,
+   "streams": [
+    45,
+    45
+   ],
+   "locals": [
+    2727,
+    2727
+   ],
+   "branches_equal": true,
+   "hosted_eye_on_torch_locals_streams": [
+    45,
+    45
+   ],
+   "frozen_root": [
+    144,
+    144
+   ],
+   "capture_link": [
+    41,
+    41
+   ],
+   "torch_window_patch_s": 4.231546401977539,
+   "init_s": 39.43090486526489
+  },
+  "w_75e17db3": {
+   "nonce": "75e17db31ce44808a11abbeb7afef6a3",
+   "patch": {
+    "bones": [
+     {
+      "name": "cf_J_ChinTip_s",
+      "position": [
+       0.0,
+       -0.018943679,
+       0.000739015639
+      ],
+      "rotation": [
+       0.23740387,
+       0.0,
+       0.0
+      ],
+      "scale": [
+       1.0542556,
+       0.989540756,
+       1.04659534
+      ],
+      "length": 1.0
+     }
+    ]
+   },
+   "renderers": 15,
+   "streams": [
+    45,
+    45
+   ],
+   "locals": [
+    2727,
+    2727
+   ],
+   "branches_equal": true,
+   "hosted_eye_on_torch_locals_streams": [
+    45,
+    45
+   ],
+   "frozen_root": [
+    144,
+    144
+   ],
+   "capture_link": [
+    41,
+    41
+   ],
+   "torch_window_patch_s": 4.060749769210815,
+   "init_s": 39.46658182144165
+  },
+  "w_8a42b979": {
+   "nonce": "8a42b979a9454cdc8576bcb958bef814",
+   "patch": {
+    "bones": [
+     {
+      "name": "cf_J_ChinLow",
+      "position": [
+       0.0,
+       0.00141386688,
+       0.01893635511
+      ],
+      "rotation": [
+       -0.08257675,
+       0.0,
+       0.0
+      ],
+      "scale": [
+       1.03095818,
+       0.989446461,
+       1.01262188
+      ],
+      "length": 1.0
+     }
+    ]
+   },
+   "renderers": 15,
+   "streams": [
+    45,
+    45
+   ],
+   "locals": [
+    2727,
+    2727
+   ],
+   "branches_equal": true,
+   "hosted_eye_on_torch_locals_streams": [
+    45,
+    45
+   ],
+   "frozen_root": [
+    144,
+    144
+   ],
+   "capture_link": [
+    41,
+    41
+   ],
+   "torch_window_patch_s": 3.125978469848633,
+   "init_s": 31.1840922832489
+  },
+  "w_0b3351d6": {
+   "nonce": "0b3351d62a2d439f8af95db8de79d712",
+   "patch": {
+    "bones": [
+     {
+      "name": "cf_J_Chin_rs",
+      "position": [
+       0.0,
+       0.0,
+       0.0
+      ],
+      "rotation": [
+       0.0169920921,
+       0.0,
+       0.0
+      ],
+      "scale": [
+       1.079827848,
+       0.976284444,
+       1.00938332
+      ],
+      "length": 1.01894879
+     }
+    ]
+   },
+   "renderers": 15,
+   "streams": [
+    45,
+    45
+   ],
+   "locals": [
+    2727,
+    2727
+   ],
+   "branches_equal": true,
+   "hosted_eye_on_torch_locals_streams": [
+    45,
+    45
+   ],
+   "frozen_root": [
+    144,
+    144
+   ],
+   "capture_link": [
+    41,
+    41
+   ],
+   "torch_window_patch_s": 2.753087043762207,
+   "init_s": 35.36988115310669
+  },
+  "front": {
+   "nonce": "246e80f92d934ff283bb0ce7ccef1032",
+   "patch": {
+    "bones": []
+   },
+   "renderers": 14,
+   "streams": [
+    42,
+    42
+   ],
+   "locals": [
+    2712,
+    2712
+   ],
+   "branches_equal": true,
+   "hosted_eye_on_torch_locals_streams": [
+    42,
+    42
+   ],
+   "frozen_root": [
+    128,
+    128
+   ],
+   "capture_link": null,
+   "torch_window_patch_s": 3.3300979137420654,
+   "init_s": 26.844082355499268
+  }
+ },
+ "extra": [
+  {
+   "window": "w_766d8184",
+   "name": "chin_q0_encoded",
+   "streams_exact": 45,
+   "streams": 45,
+   "locals_exact": 2727,
+   "locals": 2727,
+   "eye": "exact chain window state (EyeLook input closure untouched; checked bitwise)",
+   "exact_s": 0.5340290069580078,
+   "torch_s": 0.9002010822296143
+  },
+  {
+   "window": "w_766d8184",
+   "name": "chin_q_random_0",
+   "streams_exact": 45,
+   "streams": 45,
+   "locals_exact": 2727,
+   "locals": 2727,
+   "eye": "exact chain window state (EyeLook input closure untouched; checked bitwise)",
+   "exact_s": 0.902620792388916,
+   "torch_s": 0.9794619083404541
+  },
+  {
+   "window": "w_766d8184",
+   "name": "chin_q_random_1",
+   "streams_exact": 45,
+   "streams": 45,
+   "locals_exact": 2727,
+   "locals": 2727,
+   "eye": "exact chain window state (EyeLook input closure untouched; checked bitwise)",
+   "exact_s": 0.881472110748291,
+   "torch_s": 0.9511466026306152
+  },
+  {
+   "window": "w_766d8184",
+   "name": "chin_q_random_2",
+   "streams_exact": 45,
+   "streams": 45,
+   "locals_exact": 2727,
+   "locals": 2727,
+   "eye": "exact chain window state (EyeLook input closure untouched; checked bitwise)",
+   "exact_s": 0.8781731128692627,
+   "torch_s": 0.9760298728942871
+  },
+  {
+   "window": "w_766d8184",
+   "name": "chin_q_random_3",
+   "streams_exact": 45,
+   "streams": 45,
+   "locals_exact": 2727,
+   "locals": 2727,
+   "eye": "exact chain window state (EyeLook input closure untouched; checked bitwise)",
+   "exact_s": 0.7908992767333984,
+   "torch_s": 0.9635987281799316
+  },
+  {
+   "window": "w_766d8184",
+   "name": "chin_tip_scale_x_+1",
+   "streams_exact": 45,
+   "streams": 45,
+   "locals_exact": 2727,
+   "locals": 2727,
+   "eye": "exact chain window state (EyeLook input closure untouched; checked bitwise)",
+   "exact_s": 0.900991678237915,
+   "torch_s": 0.9373972415924072
+  },
+  {
+   "window": "w_766d8184",
+   "name": "chin_low_pos_z_-1",
+   "streams_exact": 45,
+   "streams": 45,
+   "locals_exact": 2727,
+   "locals": 2727,
+   "eye": "exact chain window state (EyeLook input closure untouched; checked bitwise)",
+   "exact_s": 0.9603345394134521,
+   "torch_s": 0.9450643062591553
+  },
+  {
+   "window": "w_766d8184",
+   "name": "cheeklow_pair_rot_y_+1",
+   "streams_exact": 45,
+   "streams": 45,
+   "locals_exact": 2727,
+   "locals": 2727,
+   "eye": "exact chain window state (EyeLook input closure untouched; checked bitwise)",
+   "exact_s": 0.8293533325195312,
+   "torch_s": 0.896334171295166
+  },
+  {
+   "window": "w_766d8184",
+   "name": "native59_card_perturbed",
+   "streams_exact": 45,
+   "streams": 45,
+   "locals_exact": 2727,
+   "locals": 2727,
+   "eye": "hosted EyeLookController on the torch locals (detached, held constant)",
+   "exact_s": 1.6003623008728027,
+   "torch_s": 3.453948736190796
+  },
+  {
+   "window": "w_766d8184",
+   "name": "native59_random_with_key_ends",
+   "streams_exact": 45,
+   "streams": 45,
+   "locals_exact": 2727,
+   "locals": 2727,
+   "eye": "hosted EyeLookController on the torch locals (detached, held constant)",
+   "exact_s": 1.5970780849456787,
+   "torch_s": 3.3593900203704834
+  },
+  {
+   "window": "w_766d8184",
+   "name": "remove_cf_J_ChinLow",
+   "streams_exact": 45,
+   "streams": 45,
+   "locals_exact": 2727,
+   "locals": 2727,
+   "eye": "hosted EyeLookController on the torch locals (detached, held constant)",
+   "exact_s": 1.0940141677856445,
+   "torch_s": 1.8662662506103516
+  },
+  {
+   "window": "front",
+   "name": "chin_q0_encoded",
+   "streams_exact": 42,
+   "streams": 42,
+   "locals_exact": 2712,
+   "locals": 2712,
+   "eye": "exact chain window state (EyeLook input closure untouched; checked bitwise)",
+   "exact_s": 0.47051239013671875,
+   "torch_s": 0.7966394424438477
+  },
+  {
+   "window": "front",
+   "name": "chin_q_random_0",
+   "streams_exact": 42,
+   "streams": 42,
+   "locals_exact": 2712,
+   "locals": 2712,
+   "eye": "exact chain window state (EyeLook input closure untouched; checked bitwise)",
+   "exact_s": 0.5878233909606934,
+   "torch_s": 0.8594217300415039
+  },
+  {
+   "window": "front",
+   "name": "chin_q_random_1",
+   "streams_exact": 42,
+   "streams": 42,
+   "locals_exact": 2712,
+   "locals": 2712,
+   "eye": "exact chain window state (EyeLook input closure untouched; checked bitwise)",
+   "exact_s": 0.6961438655853271,
+   "torch_s": 0.8829753398895264
+  },
+  {
+   "window": "front",
+   "name": "chin_q_random_2",
+   "streams_exact": 42,
+   "streams": 42,
+   "locals_exact": 2712,
+   "locals": 2712,
+   "eye": "exact chain window state (EyeLook input closure untouched; checked bitwise)",
+   "exact_s": 0.6733930110931396,
+   "torch_s": 0.891045093536377
+  },
+  {
+   "window": "front",
+   "name": "chin_q_random_3",
+   "streams_exact": 42,
+   "streams": 42,
+   "locals_exact": 2712,
+   "locals": 2712,
+   "eye": "exact chain window state (EyeLook input closure untouched; checked bitwise)",
+   "exact_s": 0.6825697422027588,
+   "torch_s": 0.8731639385223389
+  },
+  {
+   "window": "front",
+   "name": "chin_tip_scale_x_+1",
+   "streams_exact": 42,
+   "streams": 42,
+   "locals_exact": 2712,
+   "locals": 2712,
+   "eye": "exact chain window state (EyeLook input closure untouched; checked bitwise)",
+   "exact_s": 0.7079408168792725,
+   "torch_s": 0.8118906021118164
+  },
+  {
+   "window": "front",
+   "name": "chin_low_pos_z_-1",
+   "streams_exact": 42,
+   "streams": 42,
+   "locals_exact": 2712,
+   "locals": 2712,
+   "eye": "exact chain window state (EyeLook input closure untouched; checked bitwise)",
+   "exact_s": 0.585519552230835,
+   "torch_s": 0.767810583114624
+  },
+  {
+   "window": "front",
+   "name": "cheeklow_pair_rot_y_+1",
+   "streams_exact": 42,
+   "streams": 42,
+   "locals_exact": 2712,
+   "locals": 2712,
+   "eye": "exact chain window state (EyeLook input closure untouched; checked bitwise)",
+   "exact_s": 0.7100348472595215,
+   "torch_s": 0.7917728424072266
+  },
+  {
+   "window": "front",
+   "name": "native59_card_perturbed",
+   "streams_exact": 42,
+   "streams": 42,
+   "locals_exact": 2712,
+   "locals": 2712,
+   "eye": "hosted EyeLookController on the torch locals (detached, held constant)",
+   "exact_s": 1.2643935680389404,
+   "torch_s": 2.7444701194763184
+  },
+  {
+   "window": "front",
+   "name": "native59_random_with_key_ends",
+   "streams_exact": 42,
+   "streams": 42,
+   "locals_exact": 2712,
+   "locals": 2712,
+   "eye": "hosted EyeLookController on the torch locals (detached, held constant)",
+   "exact_s": 1.3563308715820312,
+   "torch_s": 2.798495054244995
+  },
+  {
+   "window": "front",
+   "name": "remove_cf_J_ChinLow",
+   "streams_exact": 42,
+   "streams": 42,
+   "locals_exact": 2712,
+   "locals": 2712,
+   "eye": "hosted EyeLookController on the torch locals (detached, held constant)",
+   "exact_s": 1.1246752738952637,
+   "torch_s": 1.7182505130767822
+  }
+ ],
+ "gradient_check": {
+  "max_rel_err_f64": 9.16020866938306e-06,
+  "max_rel_err_one_sided_at_key_boundaries": 1.502329060481371e-07,
+  "key_boundary_parameters": [
+   [
+    "native59",
+    54,
+    "straddles a key segment boundary (25-key table)"
+   ],
+   [
+    "native59",
+    55,
+    "straddles a key segment boundary (25-key table)"
+   ],
+   [
+    "native59",
+    56,
+    "straddles a key segment boundary (25-key table)"
+   ],
+   [
+    "native59",
+    57,
+    "straddles a key segment boundary (25-key table)"
+   ],
+   [
+    "native59",
+    58,
+    "straddles a key segment boundary (25-key table)"
+   ]
+  ],
+  "max_rel_diff_exact_vs_f64": 1.015316670252718e-05,
+  "zero_gradient_parameters": [],
+  "f64_forward_s": 1.4847748279571533,
+  "f64_backward_s": 0.3205990791320801,
+  "exact_forward_s": 2.629254102706909,
+  "exact_backward_s": 0.6147181987762451,
+  "per_group_max_rel_err": {
+   "cf_J_ChinTip_s.scale": 1.0999979868516248e-07,
+   "cf_J_ChinTip_s.position": 1.3885506172877216e-07,
+   "cf_J_ChinTip_s.rotation": 9.47256575159498e-08,
+   "cf_J_ChinLow.scale": 7.912542731953135e-08,
+   "cf_J_ChinLow.position": 3.2233475245827e-08,
+   "cf_J_ChinLow.rotation": 4.1729147868212883e-07,
+   "cf_J_Chin_rs.scale": 9.575425645122008e-08,
+   "cf_J_Chin_rs.position": 1.3604775830944944e-08,
+   "cf_J_Chin_rs.rotation": 6.410661875328519e-08,
+   "cf_J_CheekLow_L.scale": 1.9178207751208005e-07,
+   "cf_J_CheekLow_L.position": 1.4304428525759721e-06,
+   "cf_J_CheekLow_L.rotation": 6.346340933157648e-08,
+   "cf_J_CheekLow_R.scale": 3.524653406137929e-07,
+   "cf_J_CheekLow_R.position": 2.3103972262457013e-07,
+   "cf_J_CheekLow_R.rotation": 2.5496183408280357e-08,
+   "native59": 9.16020866938306e-06
+  }
+ },
+ "proxy_demo": {
+  "label": "PROXY of the chin objective (not the authoritative score)",
+  "fit_dir": "E:\\HS2_offline_renderer_data\\chin_fit_20261025\\deprecated\\fit_v2_stopped_by_user_dfols_cancelled",
+  "spearman_cost": 0.8727272727272729,
+  "pearson_cost": 0.9196063066825233,
+  "patches": [
+   {
+    "evaluation": 0,
+    "exact_cost": 0.008521666090026461,
+    "proxy_cost": 0.008521666090026463,
+    "exact_view_rms_px": {
+     "front": 10.011460202817998,
+     "oblique": 15.482464686645393,
+     "right": 8.23855795599482,
+     "left": 8.074849277934955
+    },
+    "proxy_view_rms_px": {
+     "front": 10.011460202817998,
+     "oblique": 15.482464686645393,
+     "right": 8.23855795599482,
+     "left": 8.074849277934955
+    }
+   },
+   {
+    "evaluation": 79,
+    "exact_cost": 0.007324400976934535,
+    "proxy_cost": 0.008035458929351579,
+    "exact_view_rms_px": {
+     "front": 9.414678685162102,
+     "oblique": 14.207314958152244,
+     "right": 8.209496142722676,
+     "left": 7.086130122489862
+    },
+    "proxy_view_rms_px": {
+     "front": 9.509495282995598,
+     "oblique": 15.324117210730572,
+     "right": 8.191301624106535,
+     "left": 7.101745681224056
+    }
+   },
+   {
+    "evaluation": 78,
+    "exact_cost": 0.007406865897801475,
+    "proxy_cost": 0.008036749884448156,
+    "exact_view_rms_px": {
+     "front": 9.411813179353059,
+     "oblique": 14.356256139359441,
+     "right": 8.205417589743774,
+     "left": 7.0672601576648235
+    },
+    "proxy_view_rms_px": {
+     "front": 9.509968348393958,
+     "oblique": 15.326499641006459,
+     "right": 8.193093590999162,
+     "left": 7.0979980063263595
+    }
+   },
+   {
+    "evaluation": 57,
+    "exact_cost": 0.007441440363241485,
+    "proxy_cost": 0.008059711427606295,
+    "exact_view_rms_px": {
+     "front": 9.359219391787196,
+     "oblique": 14.4161878940811,
+     "right": 8.23098344778539,
+     "left": 7.101521370229402
+    },
+    "proxy_view_rms_px": {
+     "front": 9.524873335813686,
+     "oblique": 15.336400462673524,
+     "right": 8.206847950108177,
+     "left": 7.139260696656194
+    }
+   },
+   {
+    "evaluation": 50,
+    "exact_cost": 0.007460419540025545,
+    "proxy_cost": 0.008049395751381834,
+    "exact_view_rms_px": {
+     "front": 9.377314121139879,
+     "oblique": 14.441148011125287,
+     "right": 8.224563555768217,
+     "left": 7.103724118651687
+    },
+    "proxy_view_rms_px": {
+     "front": 9.529171830174391,
+     "oblique": 15.320674042338814,
+     "right": 8.200789896503512,
+     "left": 7.139091212340994
+    }
+   },
+   {
+    "evaluation": 73,
+    "exact_cost": 0.0075096908127801915,
+    "proxy_cost": 0.00803701243419828,
+    "exact_view_rms_px": {
+     "front": 9.429658564320782,
+     "oblique": 14.519215915324994,
+     "right": 8.20525548235281,
+     "left": 7.067399865706891
+    },
+    "proxy_view_rms_px": {
+     "front": 9.519369159759991,
+     "oblique": 15.321992371618897,
+     "right": 8.195081755583885,
+     "left": 7.097626667958661
+    }
+   },
+   {
+    "evaluation": 28,
+    "exact_cost": 0.008087456540388999,
+    "proxy_cost": 0.008581481323015928,
+    "exact_view_rms_px": {
+     "front": 9.712882609766496,
+     "oblique": 14.942634032962664,
+     "right": 8.26079225790207,
+     "left": 8.037152542244707
+    },
+    "proxy_view_rms_px": {
+     "front": 9.98693908064542,
+     "oblique": 15.587325009455379,
+     "right": 8.275947912997317,
+     "left": 8.03487591123205
+    }
+   },
+   {
+    "evaluation": 21,
+    "exact_cost": 0.008412861967239631,
+    "proxy_cost": 0.008235898315994663,
+    "exact_view_rms_px": {
+     "front": 9.692635801136708,
+     "oblique": 15.67645973568358,
+     "right": 8.09947903253334,
+     "left": 7.637206713568448
+    },
+    "proxy_view_rms_px": {
+     "front": 9.810821818846472,
+     "oblique": 15.38067328619223,
+     "right": 8.069067699871018,
+     "left": 7.577858653437532
+    }
+   },
+   {
+    "evaluation": 34,
+    "exact_cost": 0.008499274178608232,
+    "proxy_cost": 0.0085127397448591,
+    "exact_view_rms_px": {
+     "front": 9.728877603048398,
+     "oblique": 15.579075819752914,
+     "right": 8.23855795599482,
+     "left": 8.074849277934955
+    },
+    "proxy_view_rms_px": {
+     "front": 10.009973905747682,
+     "oblique": 15.469281792511532,
+     "right": 8.23855795599482,
+     "left": 8.074849277934955
+    }
+   },
+   {
+    "evaluation": 19,
+    "exact_cost": 0.008546379859281915,
+    "proxy_cost": 0.008545592875615798,
+    "exact_view_rms_px": {
+     "front": 10.028887248926786,
+     "oblique": 15.510030451036261,
+     "right": 8.247094760395385,
+     "left": 8.072928388425128
+    },
+    "proxy_view_rms_px": {
+     "front": 10.000119840550036,
+     "oblique": 15.52314581049514,
+     "right": 8.254888354214382,
+     "left": 8.062959676312817
+    }
+   },
+   {
+    "evaluation": 24,
+    "exact_cost": 0.009217687921509591,
+    "proxy_cost": 0.009162242748406017,
+    "exact_view_rms_px": {
+     "front": 10.29480460037082,
+     "oblique": 15.995435626565873,
+     "right": 8.481317786196781,
+     "left": 8.895991115913358
+    },
+    "proxy_view_rms_px": {
+     "front": 10.427731344055035,
+     "oblique": 15.843672516825885,
+     "right": 8.490151387231709,
+     "left": 8.898950237310133
+    }
+   }
+  ],
+  "directional_check": [
+   {
+    "h": 0.01,
+    "central_fd": -0.005779882087288135,
+    "autograd": -0.0054590450136153094
+   },
+   {
+    "h": 0.003,
+    "central_fd": -0.005512097449846276,
+    "autograd": -0.0054590450136153094
+   },
+   {
+    "h": 0.001,
+    "central_fd": -0.0054706187234757064,
+    "autograd": -0.0054590450136153094
+   }
+  ],
+  "views": {
+   "front": {
+    "record_root_head": {
+     "id": -85860,
+     "position": [
+      0.101950862,
+      14.4498758,
+      -0.0612231679
+     ],
+     "rotation": [
+      0.0102760764,
+      0.00240410049,
+      -0.009302502,
+      0.999901235
+     ]
+    },
+    "root_relative_stream_window_difference_max": 0.0,
+    "frozen_root_equals_record": true,
+    "baseline_anchor_max_px": 5.115327869530574
+   },
+   "oblique": {
+    "record_root_head": {
+     "id": -85860,
+     "position": [
+      0.101950862,
+      14.4498758,
+      -0.0612231679
+     ],
+     "rotation": [
+      0.0102760764,
+      0.00240410049,
+      -0.009302502,
+      0.999901235
+     ]
+    },
+    "root_relative_stream_window_difference_max": 1.3113021850585938e-06,
+    "frozen_root_equals_record": true,
+    "baseline_anchor_max_px": 0.02145971030978444
+   },
+   "right": {
+    "record_root_head": {
+     "id": -85860,
+     "position": [
+      0.101950862,
+      14.4498758,
+      -0.0612231679
+     ],
+     "rotation": [
+      0.0102760764,
+      0.00240410049,
+      -0.009302502,
+      0.999901235
+     ]
+    },
+    "root_relative_stream_window_difference_max": 1.430511474609375e-06,
+    "frozen_root_equals_record": true,
+    "baseline_anchor_max_px": 2.7974767704551438
+   },
+   "left": {
+    "record_root_head": {
+     "id": -85860,
+     "position": [
+      0.101950862,
+      14.4498758,
+      -0.0612231679
+     ],
+     "rotation": [
+      0.0102760764,
+      0.00240410049,
+      -0.009302502,
+      0.999901235
+     ]
+    },
+    "root_relative_stream_window_difference_max": 7.450580596923828e-07,
+    "frozen_root_equals_record": true,
+    "baseline_anchor_max_px": 2.8250192547218864
+   }
+  }
+ },
+ "timing": {
+  "window": "front",
+  "cpu_only": true,
+  "threads": 24,
+  "exact_candidate_streams": {
+   "median_s": 0.747552499989979,
+   "min_s": 0.6622482999955537,
+   "n": 5
+  },
+  "exact_same_scope": {
+   "median_s": 0.19335860000865068,
+   "min_s": 0.17390770000929479,
+   "n": 5
+  },
+  "torch_exact_forward": {
+   "median_s": 0.18518260000564624,
+   "min_s": 0.08934340000269003,
+   "n": 5
+  },
+  "torch_exact_forward_backward": {
+   "median_s": 0.3712497000087751,
+   "min_s": 0.3561898000043584,
+   "n": 5
+  },
+  "torch_f64_forward_backward": {
+   "median_s": 0.20056500000646338,
+   "min_s": 0.199182500000461,
+   "n": 5
+  },
+  "proxy_loss_and_grad_4_views": {
+   "median_s": 0.9484001000091666,
+   "min_s": 0.9318296999990707,
+   "n": 5
+  },
+  "exact_renderer_fit_evaluation_s": {
+   "median_s": 15.72,
+   "n": 85,
+   "source": "E:\\HS2_offline_renderer_data\\chin_fit_20261025\\deprecated\\fit_v2_stopped_by_user_dfols_cancelled\\evaluations.jsonl",
+   "note": "GPU frame executor, four views, MediaPipe and guard; one objective value, no gradient"
+  }
+ }
+}
