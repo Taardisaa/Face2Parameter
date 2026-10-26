@@ -5,7 +5,8 @@ probe requests, and remove the probe afterwards. Every deployed/original file is
 hash-pinned; any mismatch stops before changing anything further.
 
 Bulky data (scene exports, raw texels, RDCs, bridge PNG) goes to the fresh
-E:\HS2_offline_renderer_data\paired_session_v7_20261025 (outside the game root,
+E:\HS2_offline_renderer_data\chin_fit_20261025\paired_session_a2 (chin-fit session A2; session A
+was stopped at the title screen; the v7 multi-yaw session used paired_session_v7_20261025; outside the game root,
 user decision 2026-10-20); small receipts go to the HS2Mod session directory.
 Superseded versions are kept in deprecated\: paired_capture_session_v6_1.ps1 (probe 6.1.0),
 paired_capture_session_v6_0.ps1 (probe 6.0.0) and paired_capture_session_v5_1.ps1 (probe 5.0.1).
@@ -44,8 +45,8 @@ $ErrorActionPreference = 'Stop'
 $Game      = 'E:\HoneySelect2_ArcticFox'
 $F2P       = 'C:\Users\13666\Workspace\Face2Parameter'
 $Scope     = 'C:\Users\13666\Workspace\HS2Mod\artifacts\chenger_reference_fit_20261012'
-$Session   = "$Scope\paired_capture_session_v7_20261025"
-$Bulk      = 'E:\HS2_offline_renderer_data\paired_session_v7_20261025'
+$Session   = "$Scope\paired_capture_session_chinfit_a2_20261025"
+$Bulk      = 'E:\HS2_offline_renderer_data\chin_fit_20261025\paired_session_a2'
 $ProbeSrc  = "$F2P\outputs\offline_renderer_probe_v7_20261025\build_v7\HS2_FramePairProbe.dll"
 $ManifestSrc = "$F2P\outputs\offline_renderer_probe_v5_20261020\shader_manifest_v5.tsv"
 $ProbeDir  = "$Game\BepInEx\plugins\HS2_FramePairProbe"
